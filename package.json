@@ -24,9 +24,26 @@
     "directories": {
       "output": "dist"
     },
-    "win":   { "target": "nsis" },
-    "mac":   { "target": "dmg" },
-    "linux": { "target": "AppImage" }
+    "win": {
+      "target": [
+        { "target": "nsis",     "arch": ["x64"] },
+        { "target": "msi",      "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ]
+    },
+    "mac": {
+      "target": [
+        { "target": "dmg", "arch": ["x64", "arm64"] },
+        { "target": "pkg", "arch": ["x64", "arm64"] }
+      ]
+    },
+    "linux": {
+      "target": [
+        { "target": "AppImage", "arch": ["x64"] },
+        { "target": "deb",      "arch": ["x64"] },
+        { "target": "rpm",      "arch": ["x64"] }
+      ]
+    }
   },
   "devDependencies": {
     "electron": "^36.0.0",
