@@ -2,6 +2,10 @@
   "name": "structweb3d",
   "version": "0.1.0",
   "description": "Aplicación educativa de análisis estructural 3D",
+  "author": {
+    "name": "jpreyes",
+    "email": "jpreyes.c@gmail.com"
+  },
   "main": "main.js",
   "scripts": {
     "start": "electron .",
