@@ -9,6 +9,7 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "create-icons": "node scripts/create-icons.js",
     "build:win": "electron-builder --win",
     "build:mac": "electron-builder --mac",
     "build:linux": "electron-builder --linux"
@@ -29,17 +30,21 @@
       "output": "dist"
     },
     "win": {
+      "icon": "assets/icon.ico",
       "target": [
         { "target": "nsis",     "arch": ["x64"] },
+        { "target": "msi",      "arch": ["x64"] },
         { "target": "portable", "arch": ["x64"] }
       ]
     },
     "mac": {
+      "icon": "assets/icon.icns",
       "target": [
         { "target": "dmg", "arch": ["x64", "arm64"] }
       ]
     },
     "linux": {
+      "icon": "assets/icon.png",
       "target": [
         { "target": "AppImage", "arch": ["x64"] },
         { "target": "deb",      "arch": ["x64"] },
@@ -49,6 +54,8 @@
   },
   "devDependencies": {
     "electron": "^36.0.0",
-    "electron-builder": "^25.0.0"
+    "electron-builder": "^25.0.0",
+    "png2icons": "^2.0.1",
+    "sharp": "^0.34.5"
   }
 }
