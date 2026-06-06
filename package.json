@@ -17,6 +17,7 @@
   "build": {
     "appId": "com.structweb3d.app",
     "productName": "StructWeb3D",
+    "asar": false,
     "files": [
       "index.html",
       "style.css",

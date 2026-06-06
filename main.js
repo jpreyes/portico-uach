@@ -4,6 +4,10 @@ const fs   = require('fs');
 
 const isMac = process.platform === 'darwin';
 
+// Allow WebGL on machines with basic/integrated GPUs
+app.commandLine.appendSwitch('ignore-gpu-blocklist');
+app.commandLine.appendSwitch('enable-gpu-rasterization');
+
 // ── Main window ────────────────────────────────────────────────────────────
 function createWindow() {
   const win = new BrowserWindow({
@@ -21,6 +25,21 @@ function createWindow() {
 
   win.loadFile('index.html');
   win.once('ready-to-show', () => win.show());
+
+  // Log renderer errors to a file next to the app so they can be inspected
+  const logPath = path.join(app.getPath('userData'), 'error.log');
+  win.webContents.on('did-fail-load', (_e, code, desc, url) => {
+    fs.appendFileSync(logPath, `[did-fail-load] ${code} ${desc} ${url}\n`);
+  });
+  win.webContents.on('render-process-gone', (_e, details) => {
+    fs.appendFileSync(logPath, `[render-process-gone] ${JSON.stringify(details)}\n`);
+    dialog.showErrorBox('StructWeb3D — error de renderizado',
+      `El proceso gráfico terminó inesperadamente.\nRazón: ${details.reason}\n\nLog: ${logPath}`);
+  });
+  win.webContents.on('console-message', (_e, level, msg, line, src) => {
+    if (level >= 2) fs.appendFileSync(logPath, `[console:${level}] ${src}:${line} ${msg}\n`);
+  });
+
   return win;
 }
 
