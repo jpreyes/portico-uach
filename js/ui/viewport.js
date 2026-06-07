@@ -814,78 +814,95 @@ export class Viewport {
     }
   }
 
+  // Andrew's monotone chain — returns convex hull of [{x,y}] in CCW order
+  _convexHull(pts) {
+    if (pts.length < 3) return pts.slice();
+    const sorted = [...pts].sort((a, b) => a.x !== b.x ? a.x - b.x : a.y - b.y);
+    const cross = (o, a, b) =>
+      (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+    const lower = [], upper = [];
+    for (const p of sorted) {
+      while (lower.length >= 2 && cross(lower[lower.length-2], lower[lower.length-1], p) <= 0)
+        lower.pop();
+      lower.push(p);
+    }
+    for (let i = sorted.length - 1; i >= 0; i--) {
+      const p = sorted[i];
+      while (upper.length >= 2 && cross(upper[upper.length-2], upper[upper.length-1], p) <= 0)
+        upper.pop();
+      upper.push(p);
+    }
+    lower.pop(); upper.pop();
+    return [...lower, ...upper];
+  }
+
   _buildDiaphragmViz(d) {
     const nodes = d.nodes
       .map(id => this.app.model.nodes.get(id))
       .filter(Boolean);
     if (nodes.length < 2) return null;
 
-    const grp = new THREE.Group();
-    const DIA_COL = 0x00bcd4;  // cyan
-    const CM_COL  = 0xff7043;  // orange-red
+    const grp    = new THREE.Group();
+    const DIA_COL = 0x00bcd4;  // cyan  — diaphragm outline
+    const CM_COL  = 0xff7043;  // orange — CM marker
+    const CR_COL  = 0x00e5ff;  // bright cyan — CR / master marker
 
-    // Bounding box of floor nodes
-    let xMin=Infinity, xMax=-Infinity, yMin=Infinity, yMax=-Infinity;
-    for (const n of nodes) {
-      if (n.x < xMin) xMin = n.x; if (n.x > xMax) xMax = n.x;
-      if (n.y < yMin) yMin = n.y; if (n.y > yMax) yMax = n.y;
-    }
-    const pad = 0.3;
-    const cx = (xMin+xMax)/2, cy = (yMin+yMax)/2;
-    const w = xMax - xMin + pad*2, h = yMax - yMin + pad*2;
+    // ── Convex-hull floor shape ────────────────────────────────────────────
+    const PAD  = 0.25;
+    const hull = this._convexHull(nodes.map(n => ({ x: n.x, y: n.y })));
 
-    // Semi-transparent floor plane (also serves as click target)
+    // Expand slightly outward from hull centroid
+    const hcx = hull.reduce((s, p) => s + p.x, 0) / hull.length;
+    const hcy = hull.reduce((s, p) => s + p.y, 0) / hull.length;
+    const padded = hull.map(p => ({
+      x: p.x + (p.x >= hcx ? PAD : -PAD),
+      y: p.y + (p.y >= hcy ? PAD : -PAD),
+    }));
+
+    // Filled polygon (click target).
+    // m2t: model(x,y,z)→Three(x,z,y).  ShapeGeometry in XY + rotation.x=+π/2
+    // gives local(x,y)→world(x, d.z, y)  ✓
+    const shape = new THREE.Shape(padded.map(p => new THREE.Vector2(p.x, p.y)));
     const planeMat = new THREE.MeshBasicMaterial({
-      color: DIA_COL, transparent: true, opacity: 0.06,
-      side: THREE.DoubleSide, depthWrite: false
+      color: DIA_COL, transparent: true, opacity: 0.07,
+      side: THREE.DoubleSide, depthWrite: false,
     });
-    const planeGeo = new THREE.PlaneGeometry(w, h);
-    const plane = new THREE.Mesh(planeGeo, planeMat);
-    // In Three.js Y-up, floor plane is rotated: model(cx,cy,z) → three(cx,z,cy)
-    plane.position.set(cx, d.z, cy);
-    plane.rotation.x = -Math.PI / 2;
+    const plane = new THREE.Mesh(new THREE.ShapeGeometry(shape), planeMat);
+    plane.position.set(0, d.z, 0);
+    plane.rotation.x = Math.PI / 2;
     plane.userData = { type: 'diaphragm', id: d.id };
     grp.add(plane);
 
-    // Outline rectangle
-    const corners = [
-      this.m2t(xMin-pad, yMin-pad, d.z),
-      this.m2t(xMax+pad, yMin-pad, d.z),
-      this.m2t(xMax+pad, yMax+pad, d.z),
-      this.m2t(xMin-pad, yMax+pad, d.z),
-      this.m2t(xMin-pad, yMin-pad, d.z),
-    ];
-    const outlineGeo = new THREE.BufferGeometry().setFromPoints(corners);
-    grp.add(new THREE.Line(outlineGeo,
-      new THREE.LineBasicMaterial({ color: DIA_COL, transparent: true, opacity: 0.7 })
+    // Polygon outline
+    const outlinePts = [...padded, padded[0]].map(p => this.m2t(p.x, p.y, d.z));
+    grp.add(new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(outlinePts),
+      new THREE.LineBasicMaterial({ color: DIA_COL, transparent: true, opacity: 0.75 }),
     ));
 
-    // Connect master node to CM with dashed-style segments
+    // ── CM and CR markers ──────────────────────────────────────────────────
     const masterId = d.masterId || d.nodes[0];
     const master   = this.app.model.nodes.get(masterId);
     if (master) {
-      const cmx = (d.cm?.x ?? cx) + (d.eccentricity?.ex ?? 0);
-      const cmy = (d.cm?.y ?? cy) + (d.eccentricity?.ey ?? 0);
-      const linePts = [this.m2t(master.x, master.y, d.z), this.m2t(cmx, cmy, d.z)];
+      const crx = master.x, cry = master.y;
+      const cmx = (d.cm?.x ?? hcx) + (d.eccentricity?.ex ?? 0);
+      const cmy = (d.cm?.y ?? hcy) + (d.eccentricity?.ey ?? 0);
+
+      // Line CR → CM
       grp.add(new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints(linePts),
-        new THREE.LineBasicMaterial({ color: CM_COL, transparent: true, opacity: 0.5 })
+        new THREE.BufferGeometry().setFromPoints([
+          this.m2t(crx, cry, d.z), this.m2t(cmx, cmy, d.z)
+        ]),
+        new THREE.LineBasicMaterial({ color: CM_COL, transparent: true, opacity: 0.5 }),
       ));
 
-      // CM marker (cross + circle)
-      const s = 0.25;
-      const crossPts = [
-        this.m2t(cmx-s, cmy, d.z), this.m2t(cmx+s, cmy, d.z)
-      ];
-      const crossPts2 = [
-        this.m2t(cmx, cmy-s, d.z), this.m2t(cmx, cmy+s, d.z)
-      ];
+      // CM marker: cross + circle (orange)
+      const s = 0.25, R = 0.35, nSeg = 16;
       const cmMat = new THREE.LineBasicMaterial({ color: CM_COL });
-      grp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(crossPts),  cmMat));
-      grp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(crossPts2), cmMat));
-
-      // Circle around CM
-      const R = 0.35, nSeg = 16;
+      grp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(
+        [this.m2t(cmx-s, cmy, d.z), this.m2t(cmx+s, cmy, d.z)]), cmMat));
+      grp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(
+        [this.m2t(cmx, cmy-s, d.z), this.m2t(cmx, cmy+s, d.z)]), cmMat));
       const circPts = [];
       for (let i = 0; i <= nSeg; i++) {
         const a = (i / nSeg) * Math.PI * 2;
@@ -893,17 +910,31 @@ export class Viewport {
       }
       grp.add(new THREE.Line(
         new THREE.BufferGeometry().setFromPoints(circPts),
-        new THREE.LineBasicMaterial({ color: CM_COL, transparent: true, opacity: 0.8 })
+        new THREE.LineBasicMaterial({ color: CM_COL, transparent: true, opacity: 0.8 }),
       ));
-
-      // Clickable sphere at CM position (invisible but raycast target)
+      // Invisible click sphere at CM
       const cmSphere = new THREE.Mesh(
         new THREE.SphereGeometry(R * 1.1, 8, 8),
-        new THREE.MeshBasicMaterial({ color: CM_COL, transparent: true, opacity: 0.0 })
+        new THREE.MeshBasicMaterial({ color: CM_COL, transparent: true, opacity: 0.0 }),
       );
       cmSphere.position.copy(this.m2t(cmx, cmy, d.z));
       cmSphere.userData = { type: 'cm-sphere', diaId: d.id };
       grp.add(cmSphere);
+
+      // CR marker: square outline (bright cyan) at master node position
+      const hs = 0.32;  // half-side
+      const crMat = new THREE.LineBasicMaterial({ color: CR_COL });
+      const sqPts = [
+        this.m2t(crx-hs, cry-hs, d.z), this.m2t(crx+hs, cry-hs, d.z),
+        this.m2t(crx+hs, cry+hs, d.z), this.m2t(crx-hs, cry+hs, d.z),
+        this.m2t(crx-hs, cry-hs, d.z),
+      ];
+      grp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(sqPts), crMat));
+      // Diagonal cross inside square
+      grp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(
+        [this.m2t(crx-hs, cry-hs, d.z), this.m2t(crx+hs, cry+hs, d.z)]), crMat));
+      grp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(
+        [this.m2t(crx+hs, cry-hs, d.z), this.m2t(crx-hs, cry+hs, d.z)]), crMat));
     }
 
     grp.userData = { type: 'diaphragm', id: d.id };

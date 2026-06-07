@@ -409,3 +409,7 @@ export function autoDetectDiaphragms(model, zTol = 0.01, skipGroundFloor = true)
 
   return { diaphragms: createdDiaphragms, nodes: createdNodes };
 }
+
+// ── Exported helpers for UI (CM/CR recalculation, mass display) ───────────────
+export const computeFloorCM           = _floorCM;
+export const computeTributaryWeights  = _tributaryWeights;
