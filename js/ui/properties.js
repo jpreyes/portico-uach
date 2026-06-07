@@ -1,6 +1,7 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // PropertiesPanel — right-side panel: node/element properties + mat/sec tabs
 // ──────────────────────────────────────────────────────────────────────────────
+import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js';
 
 export class PropertiesPanel {
   constructor(panelEl, app) {
@@ -229,6 +230,7 @@ export class PropertiesPanel {
     this._switchTab('sel');
     const results = this.app._results;
     this._tabContents.sel.innerHTML = this._nodeHTML(node)
+      + this._nodeDiaphragmHTML(node)
       + (results ? this._nodeResultsHTML(node, results) : '')
       + this._nodeLoadsHTML(node);
     this._bindNodeEvents(node);
@@ -443,6 +445,55 @@ export class PropertiesPanel {
         this.renderElemsGrid();
       });
     });
+  }
+
+  // ── Diaphragm membership + tributary mass for a node ──────────────────────
+  _nodeDiaphragmHTML(node) {
+    const model = this.app.model;
+    const rows  = [];
+
+    for (const d of model.diaphragms.values()) {
+      if (!d.nodes.includes(node.id)) continue;
+
+      const isMaster = (d.masterId === node.id) ||
+                       (!d.masterId && d.nodes[0] === node.id);
+      const floorNodes = d.nodes.map(id => model.nodes.get(id)).filter(Boolean);
+      let massRow = '';
+
+      if (d.mass?.m > 0 && floorNodes.length >= 1) {
+        const weights = computeTributaryWeights(floorNodes, model, d.z);
+        const w       = weights.get(node.id) ?? 0;
+        const mNode   = w * d.mass.m;
+        massRow = `<div class="prop-row">
+          <div class="prop-field"><label>Masa tributaria</label>
+            <span class="prop-val">${mNode.toFixed(3)} ton
+              (${(w*100).toFixed(1)} % de ${d.mass.m} ton)</span>
+          </div>
+        </div>`;
+      }
+
+      rows.push(`
+        <div class="prop-section" style="border-top:1px solid #00bcd433;margin-top:6px;padding-top:6px">
+          <div class="prop-title" style="color:#00bcd4">
+            Diafragma #${d.id} — ${d.name}${isMaster ? ' &nbsp;<span style="color:#00e5ff;font-weight:bold">[Nodo CR]</span>' : ''}
+          </div>
+          <div class="prop-row">
+            <div class="prop-field"><label>Z piso</label>
+              <span class="prop-val">${d.z} m</span>
+            </div>
+            <div class="prop-field"><label>CM</label>
+              <span class="prop-val">(${+(d.cm?.x??0).toFixed(3)}, ${+(d.cm?.y??0).toFixed(3)})</span>
+            </div>
+            <div class="prop-field"><label>CR</label>
+              <span class="prop-val">(${+(d.cr?.x??0).toFixed(3)}, ${+(d.cr?.y??0).toFixed(3)})</span>
+            </div>
+          </div>
+          ${massRow}
+        </div>`);
+    }
+
+    if (rows.length === 0) return '';
+    return `<div class="prop-group">${rows.join('')}</div>`;
   }
 
   // ── Node form ──────────────────────────────────────────────────────────────
@@ -1195,17 +1246,26 @@ export class PropertiesPanel {
           <div class="prop-field"><label>Z piso (m)</label>
             <input type="number" data-df="z" value="${d.z}" step="0.1">
           </div>
-          <div class="prop-field"><label>Nodo Master ID</label>
+          <div class="prop-field"><label>Nodo CR (master) ID</label>
             <input type="number" data-df="masterId" value="${d.masterId || d.nodes[0]}" step="1" min="1">
           </div>
         </div>
-        <div class="prop-title" style="margin-top:8px;">Centro de Masa</div>
+        <div class="prop-title" style="margin-top:8px;">Centro de Rigidez (CR) — calculado</div>
+        <div class="prop-row">
+          <div class="prop-field"><label>CR x (m)</label>
+            <input type="number" data-df="cr.x" value="${+(d.cr?.x ?? 0).toFixed(4)}" step="0.01" readonly style="opacity:.6">
+          </div>
+          <div class="prop-field"><label>CR y (m)</label>
+            <input type="number" data-df="cr.y" value="${+(d.cr?.y ?? 0).toFixed(4)}" step="0.01" readonly style="opacity:.6">
+          </div>
+        </div>
+        <div class="prop-title" style="margin-top:8px;">Centro de Masa (CM) — calculado</div>
         <div class="prop-row">
           <div class="prop-field"><label>CM x (m)</label>
-            <input type="number" data-df="cm.x" value="${d.cm?.x ?? 0}" step="0.01">
+            <input type="number" data-df="cm.x" value="${+(d.cm?.x ?? 0).toFixed(4)}" step="0.01" readonly style="opacity:.6">
           </div>
           <div class="prop-field"><label>CM y (m)</label>
-            <input type="number" data-df="cm.y" value="${d.cm?.y ?? 0}" step="0.01">
+            <input type="number" data-df="cm.y" value="${+(d.cm?.y ?? 0).toFixed(4)}" step="0.01" readonly style="opacity:.6">
           </div>
         </div>
         <div class="prop-title" style="margin-top:8px;">Masa Concentrada</div>
@@ -1234,6 +1294,7 @@ export class PropertiesPanel {
           </div>
         </div>
         <div class="card-actions">
+          <button class="btn-recalc-dia" style="flex:1">⟳ Recalcular CM/CR</button>
           <button class="btn-danger btn-del-dia" style="flex:1">Eliminar</button>
         </div>
       </div>
@@ -1242,30 +1303,73 @@ export class PropertiesPanel {
     // Toggle expand
     card.querySelector('.mat-card-head').addEventListener('click', () => card.classList.toggle('open'));
 
-    // Save on change
+    // ── helpers ────────────────────────────────────────────────────────────
+    const get    = sel => card.querySelector(`[data-df="${sel}"]`)?.value;
+    const getNum = sel => parseFloat(get(sel)) || 0;
+    const setVal = (sel, v) => {
+      const el = card.querySelector(`[data-df="${sel}"]`);
+      if (el) el.value = typeof v === 'number' ? +v.toFixed(4) : v;
+    };
+
+    // Recompute CM and CR from current node list; update read-only fields
+    const recalcCMCR = (nodeIds, floorZ) => {
+      const model      = this.app.model;
+      const floorNodes = nodeIds.map(id => model.nodes.get(id)).filter(Boolean);
+      if (floorNodes.length < 2) return {};
+
+      const weights = computeTributaryWeights(floorNodes, model, floorZ);
+      const cm      = computeFloorCM(floorNodes, weights);
+      const cr      = computeFloorCR(model, new Set(nodeIds), floorZ);
+
+      setVal('cm.x', cm.x); setVal('cm.y', cm.y);
+      if (cr) { setVal('cr.x', cr.x); setVal('cr.y', cr.y); }
+      return { cm, cr };
+    };
+
+    // ── Save on any field change ────────────────────────────────────────────
     const saveCard = () => {
       this.app.snapshot();
-      const get = sel => card.querySelector(`[data-df="${sel}"]`)?.value;
-      const getNum = sel => parseFloat(get(sel)) || 0;
-
       const nodesStr = get('nodes') || '';
-      const nodeIds = nodesStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+      const nodeIds  = nodesStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+      const floorZ   = getNum('z');
 
       this.app.model.diaphragms.set(d.id, {
         ...d,
-        name:        get('name') || d.name,
-        z:           getNum('z'),
-        masterId:    parseInt(get('masterId')) || nodeIds[0],
-        cm:          { x: getNum('cm.x'), y: getNum('cm.y') },
-        mass:        { m: getNum('mass.m'), Icm: getNum('mass.Icm') },
-        eccentricity:{ ex: getNum('ecc.ex'), ey: getNum('ecc.ey') },
-        nodes:       nodeIds
+        name:         get('name') || d.name,
+        z:            floorZ,
+        masterId:     parseInt(get('masterId')) || nodeIds[0],
+        cm:           { x: getNum('cm.x'), y: getNum('cm.y') },
+        cr:           { x: getNum('cr.x'), y: getNum('cr.y') },
+        mass:         { m: getNum('mass.m'), Icm: getNum('mass.Icm') },
+        eccentricity: { ex: getNum('ecc.ex'), ey: getNum('ecc.ey') },
+        nodes:        nodeIds,
       });
       this.app.viewport.refreshDiaphragms();
       this.app.markDirty();
     };
 
-    card.querySelectorAll('input').forEach(inp => inp.addEventListener('change', saveCard));
+    // Auto-recalc CM/CR when the nodes list changes
+    card.querySelector('[data-df="nodes"]').addEventListener('change', () => {
+      const nodesStr = get('nodes') || '';
+      const nodeIds  = nodesStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+      recalcCMCR(nodeIds, getNum('z'));
+      saveCard();
+    });
+
+    // Other inputs just save
+    card.querySelectorAll('input:not([data-df="nodes"])').forEach(inp =>
+      inp.addEventListener('change', saveCard)
+    );
+
+    // Recalculate button
+    card.querySelector('.btn-recalc-dia').addEventListener('click', () => {
+      const nodesStr = get('nodes') || '';
+      const nodeIds  = nodesStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+      const { cm, cr } = recalcCMCR(nodeIds, getNum('z'));
+      if (!cm) { this.app.toast('Necesitas ≥ 2 nodos válidos', 'warn'); return; }
+      saveCard();
+      this.app.toast('CM y CR recalculados', 'ok');
+    });
 
     card.querySelector('.btn-del-dia').addEventListener('click', () => {
       this.app.snapshot();
