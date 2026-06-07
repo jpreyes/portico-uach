@@ -54,7 +54,10 @@ export class Model {
     if (props.y !== undefined) n.y = +props.y;
     if (props.z !== undefined) n.z = +props.z;
     if (props.restraints) Object.assign(n.restraints, props.restraints);
-    if (props.nodeMass)   Object.assign(n.nodeMass,   props.nodeMass);
+    if (props.nodeMass) {
+      if (!n.nodeMass) n.nodeMass = { mx: 0, my: 0, mz: 0 };
+      Object.assign(n.nodeMass, props.nodeMass);
+    }
     return n;
   }
 

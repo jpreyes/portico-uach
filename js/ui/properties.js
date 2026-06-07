@@ -229,8 +229,10 @@ export class PropertiesPanel {
     this._switchVTab('modelo');
     this._switchTab('sel');
     const results = this.app._results;
+    let diaphHTML = '';
+    try { diaphHTML = this._nodeDiaphragmHTML(node); } catch (e) { console.warn('nodeDiaphragmHTML:', e); }
     this._tabContents.sel.innerHTML = this._nodeHTML(node)
-      + this._nodeDiaphragmHTML(node)
+      + diaphHTML
       + (results ? this._nodeResultsHTML(node, results) : '')
       + this._nodeLoadsHTML(node);
     this._bindNodeEvents(node);
@@ -499,7 +501,7 @@ export class PropertiesPanel {
   // ── Node form ──────────────────────────────────────────────────────────────
   _nodeHTML(node) {
     const r  = node.restraints;
-    const nm = node.nodeMass ?? { mx: 0, my: 0, mz: 0 };
+    const nm = node.nodeMass || { mx: 0, my: 0, mz: 0 };
     const dof = ['ux','uy','uz','rx','ry','rz'];
     const labels = ['UX','UY','UZ','RX','RY','RZ'];
     const checks = dof.map((d, i) =>
