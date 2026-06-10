@@ -1229,16 +1229,28 @@ export class Viewport {
     for (const [, mesh] of this._nodeMeshes) mesh.visible = false;
     for (const [, grp]  of this._suppGroups)  grp.visible  = false;
 
+    // Hermite cubic interpolation — smooth deformed shape (8 pts per element)
+    const NPTS = 8;
     for (const elem of this.app.model.elements.values()) {
-      const dc1 = results.getDeformedCoords(elem.n1, scale);
-      const dc2 = results.getDeformedCoords(elem.n2, scale);
-      const d1  = Math.hypot(...results.getNodeDisp(elem.n1).slice(0,3));
-      const d2  = Math.hypot(...results.getNodeDisp(elem.n2).slice(0,3));
-      const t   = maxD > 1e-12 ? (d1+d2)/2/maxD : 0;
-      const geo = new THREE.BufferGeometry().setFromPoints([
-        this.m2t(dc1.x, dc1.y, dc1.z), this.m2t(dc2.x, dc2.y, dc2.z)
-      ]);
-      const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: _dispColor(t) }));
+      const n1  = this.app.model.nodes.get(elem.n1);
+      const n2  = this.app.model.nodes.get(elem.n2);
+      const pts = [];
+      for (let k = 0; k <= NPTS; k++) {
+        const xi = k / NPTS;
+        const d  = results.getElemAtXi(elem.id, xi);
+        if (!d) break;
+        pts.push(this.m2t(
+          n1.x + xi*(n2.x - n1.x) + scale*d.ux,
+          n1.y + xi*(n2.y - n1.y) + scale*d.uy,
+          n1.z + xi*(n2.z - n1.z) + scale*d.uz
+        ));
+      }
+      if (pts.length < 2) continue;
+      const dmid = results.getElemAtXi(elem.id, 0.5);
+      const tmid = (maxD > 1e-12 && dmid)
+        ? Math.hypot(dmid.ux, dmid.uy, dmid.uz) / maxD : 0;
+      const geo  = new THREE.BufferGeometry().setFromPoints(pts);
+      const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: _dispColor(tmid) }));
       this._scene.add(line);
       this._resultObjects.push(line);
     }

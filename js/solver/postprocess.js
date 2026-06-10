@@ -7,7 +7,7 @@
 // For UDL this reduces to the exact parabolic formula.
 // Displacements at arbitrary xi use cubic Hermite shape functions.
 // ──────────────────────────────────────────────────────────────────────────────
-import { localAxes, stiffnessMatrix, transformMatrix, fixedEndForces } from './timoshenko.js';
+import { localAxes, stiffnessMatrix, transformMatrix, fixedEndForces, applyReleases } from './timoshenko.js';
 import { getNodeDOFs } from './assembler.js';
 
 function _toLocalLoad(load, ey, ez) {
@@ -105,12 +105,29 @@ export class Results {
       for (let j = 0; j < 12; j++)
         ue_local[i] += T[i][j] * ue_global[j];
 
+    // For elements with end releases (hinges), use the condensed stiffness so
+    // that recovered end forces automatically satisfy the release condition
+    // (e.g. zero moment at a pinned end). The FEF is still computed for the
+    // full fixed-fixed case; any residual at released DOFs is zeroed below.
+    const hasRel = elem.releases && elem.releases.some(r => r);
+    const Ke_eff = hasRel
+      ? applyReleases(Ke_local, elem.releases.map(r => r !== 0))
+      : Ke_local;
+
     const fe = Array(12).fill(0);
     for (let i = 0; i < 12; i++)
       for (let j = 0; j < 12; j++)
-        fe[i] += Ke_local[i][j] * ue_local[j];
+        fe[i] += Ke_eff[i][j] * ue_local[j];
 
     this._addFEF(elem, fe, ey, ez, L);
+
+    // Enforce release conditions: zero released force components
+    // (handles any FEF residual that survived for distributed-load cases)
+    if (hasRel) {
+      for (let i = 0; i < 12; i++) {
+        if (elem.releases[i]) fe[i] = 0;
+      }
+    }
 
     // Actual distributed load intensities (local y, z) — needed for correct M(x), V(x)
     const { qy, qz } = this._computeActualLoads(elem, ey, ez);

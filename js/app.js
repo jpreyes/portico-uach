@@ -3,12 +3,12 @@
 // ──────────────────────────────────────────────────────────────────────────────
 import { Model }           from './model/model.js';
 import { Serializer }      from './model/serializer.js';
-import { Viewport }        from './ui/viewport.js?v=12';
+import { Viewport }        from './ui/viewport.js?v=13';
 import { PropertiesPanel } from './ui/properties.js';
 import { MenuBar }         from './ui/menu.js';
 import { UndoStack }       from './utils/undo.js';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=12';
-import { Results }                         from './solver/postprocess.js?v=12';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=13';
+import { Results }                         from './solver/postprocess.js?v=13';
 import { ModalSolver }                     from './solver/modal_solver.js';
 import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js';
 import { ModalResults }                    from './solver/modal_results.js';
@@ -825,11 +825,17 @@ class App {
     const model = this.model;
 
     // Nodes without connected elements
+    // (diaphragm master/CR nodes are constraint-only — not structural elements)
     const connectedNodes = new Set();
     for (const e of model.elements.values()) {
       connectedNodes.add(e.n1); connectedNodes.add(e.n2);
     }
-    const floating = [...model.nodes.keys()].filter(id => !connectedNodes.has(id));
+    const diaphragmMasters = new Set(
+      [...model.diaphragms.values()].map(d => d.masterId).filter(id => id != null)
+    );
+    const floating = [...model.nodes.keys()].filter(
+      id => !connectedNodes.has(id) && !diaphragmMasters.has(id)
+    );
     if (floating.length > 0) {
       const list = floating.slice(0, 5).join(', ') + (floating.length > 5 ? '…' : '');
       warnings.push(`⚠ ${floating.length} nodo(s) sin elementos: [${list}]`);
