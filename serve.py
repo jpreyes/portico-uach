@@ -6,6 +6,13 @@ import http.server, socketserver, os
 PORT = 8765
 
 class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
+    def guess_type(self, path):
+        ctype = super().guess_type(path)
+        if isinstance(ctype, str):
+            if ctype in ('text/javascript', 'application/javascript', 'text/css', 'text/html'):
+                ctype = ctype + '; charset=UTF-8'
+        return ctype
+
     def end_headers(self):
         self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
         self.send_header('Pragma', 'no-cache')

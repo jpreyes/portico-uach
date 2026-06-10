@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>StructWeb3D</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=11">
   <script type="importmap">
   {
     "imports": {
@@ -18,7 +18,7 @@
 <body>
 <div id="app">
 
-  <!-- ══ MENUBAR ══ -->
+  <!-- �?�? MENUBAR �?�? -->
   <header id="menubar">
     <div class="brand">StructWeb3D <span class="brand-sub">v1.0</span></div>
 
@@ -99,7 +99,7 @@
     </div>
   </header>
 
-  <!-- ══ MAIN CONTENT ══ -->
+  <!-- �?�? MAIN CONTENT �?�? -->
   <div id="main">
 
     <!-- LEFT TOOLBAR -->
@@ -175,6 +175,22 @@
           <label>Snap</label>
           <input type="number" id="snap-size" value="0.5" step="0.25" min="0" max="20" title="Tamaño del snap a grilla">
         </div>
+        <!-- P2-6: Toggle node IDs (D) -->
+        <div class="vp-ctrl">
+          <button id="btn-toggle-ids"
+            title="Mostrar/ocultar IDs de nodos  D"
+            style="background:transparent;border:1px solid var(--border2);
+                   color:var(--text-muted);padding:2px 8px;border-radius:3px;
+                   cursor:pointer;font-size:11px;white-space:nowrap">IDs</button>
+        </div>
+        <!-- P4-13: Toggle extruded sections (X) -->
+        <div class="vp-ctrl">
+          <button id="btn-toggle-extrude"
+            title="Vista extruida de secciones  X"
+            style="background:transparent;border:1px solid var(--border2);
+                   color:var(--text-muted);padding:2px 8px;border-radius:3px;
+                   cursor:pointer;font-size:11px;white-space:nowrap">3D</button>
+        </div>
         <div class="vp-hint" id="vp-hint"></div>
       </div>
 
@@ -194,9 +210,31 @@
         </div>
         <div class="vp-ctrl">
           <label>Escala</label>
-          <input type="number" id="result-scale" value="100" step="10" min="0.1">
+          <input type="range" id="result-scale-range" min="-2" max="4" step="0.1" value="2"
+            style="width:70px;cursor:pointer">
+          <input type="number" id="result-scale" value="100" step="10" min="0.01"
+            style="width:62px">
         </div>
         <div id="result-summary"></div>
+        <!-- P2-4: Colorbar -->
+        <div id="colorbar-wrap" style="display:none;margin-top:4px;padding:4px 8px;
+            background:rgba(13,17,23,0.82);border:1px solid var(--border);
+            border-radius:var(--radius);backdrop-filter:blur(4px)">
+          <canvas id="colorbar-canvas" width="150" height="14"
+            style="border-radius:3px;display:block"></canvas>
+          <div style="display:flex;justify-content:space-between;
+              font-size:9px;color:var(--text-muted);margin-top:2px;font-family:monospace">
+            <span id="cb-min">0</span><span id="cb-mid">—</span><span id="cb-max">max</span>
+          </div>
+        </div>
+        <!-- P2-5: Export PNG -->
+        <div class="vp-ctrl" style="margin-top:2px">
+          <button id="btn-export-img"
+            title="Exportar imagen PNG"
+            style="background:transparent;border:1px solid var(--accent);
+                   color:var(--accent);padding:2px 8px;border-radius:3px;
+                   cursor:pointer;font-size:11px">📷 PNG</button>
+        </div>
       </div>
 
       <!-- Load case selector — visible during model editing -->
@@ -251,7 +289,7 @@
 
       <div id="panel-content">
 
-        <!-- ══ MODELO ══ -->
+        <!-- �?�? MODELO �?�? -->
         <div id="vpanel-modelo" class="vpanel-content active">
           <div id="panel-tabs">
             <button class="ptab active" data-tab="sel">Sel.</button>
@@ -284,6 +322,11 @@
             <div id="ptab-sec" class="ptab-content">
               <div id="sec-list"></div>
               <button class="btn-add" id="btn-add-sec">＋ Agregar Sección</button>
+              <!-- P3-9: Section calculator -->
+              <button class="btn-add" id="btn-section-calc"
+                style="background:rgba(0,188,212,0.1);color:#00bcd4;border-color:#00838f;margin-top:4px">
+                ⊞ Calculadora de Sección
+              </button>
             </div>
 
             <div id="ptab-dia" class="ptab-content">
@@ -295,7 +338,7 @@
           </div>
         </div>
 
-        <!-- ══ RESULTADOS ══ -->
+        <!-- �?�? RESULTADOS �?�? -->
         <div id="vpanel-resultados" class="vpanel-content">
           <div id="res-tabs">
             <button class="rtab active" data-rtab="modal">Modal</button>
@@ -323,9 +366,10 @@
 
   </div><!-- /#main -->
 
-  <!-- ══ STATUSBAR ══ -->
+  <!-- �?�? STATUSBAR �?�? -->
   <footer id="statusbar">
     <span id="sb-mode">Modo: Seleccionar</span>
+    <progress id="sb-progress" max="100" value="0" class="hidden"></progress>
     <span id="sb-coords">X: —&nbsp; Y: —&nbsp; Z: —</span>
     <span id="sb-sel">Sin selección</span>
     <span id="sb-model">Nodos: 0 | Elem: 0</span>
@@ -348,6 +392,78 @@
 
 <!-- numeric.js para solver (Fase 2+) -->
 <script src="/lib/numeric.js"></script>
-<script type="module" src="js/app.js"></script>
+<script type="module" src="js/app.js?v=11"></script>
+
+<!-- P2-7: Styled tooltip engine — replaces native browser title tooltips -->
+<div id="sw-tooltip"></div>
+<script>
+(function() {
+  const tip = document.getElementById('sw-tooltip');
+  let hideTimer = null;
+
+  function formatText(raw) {
+    // Split "Label  Shortcut" (2+ spaces) to render shortcut as key badge
+    const m = raw.match(/^(.*?)\s{2,}(\S.*)$/);
+    if (m) {
+      return m[1].trim() + ' <span class="sw-tip-key">' + m[2].trim() + '</span>';
+    }
+    return raw;
+  }
+
+  function show(el, e) {
+    clearTimeout(hideTimer);
+    const text = el._swTip;
+    if (!text) return;
+    tip.innerHTML = formatText(text);
+    tip.classList.add('visible');
+    reposition(e);
+  }
+
+  function reposition(e) {
+    const margin = 12;
+    const tw = tip.offsetWidth  || 180;
+    const th = tip.offsetHeight || 28;
+    let x = e.clientX + 14;
+    let y = e.clientY + 18;
+    if (x + tw + margin > window.innerWidth)  x = e.clientX - tw - 8;
+    if (y + th + margin > window.innerHeight) y = e.clientY - th - 8;
+    tip.style.left = x + 'px';
+    tip.style.top  = y + 'px';
+  }
+
+  function hide() {
+    hideTimer = setTimeout(function() { tip.classList.remove('visible'); }, 60);
+  }
+
+  // First mouseover: strip native title, store as _swTip, mark element
+  document.addEventListener('mouseover', function(e) {
+    const el = e.target.closest('[title]');
+    if (!el) return;
+    el._swTip = el.getAttribute('title');
+    el.removeAttribute('title');
+    el.setAttribute('data-sw-tipped', '1');
+    show(el, e);
+  }, true);
+
+  // Subsequent hovers on already-converted elements
+  document.addEventListener('mouseover', function(e) {
+    const el = e.target.closest('[data-sw-tipped]');
+    if (el) show(el, e);
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (tip.classList.contains('visible')) reposition(e);
+  });
+
+  document.addEventListener('mouseout', function(e) {
+    if (e.target.closest('[data-sw-tipped],[title]')) hide();
+  });
+
+  document.addEventListener('mousedown', function() {
+    tip.classList.remove('visible');
+  });
+})();
+</script>
 </body>
 </html>
+

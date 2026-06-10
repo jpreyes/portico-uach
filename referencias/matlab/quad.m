@@ -1,0 +1,531 @@
+function []=quad2n()
+clear all
+close all
+%------------------------ QUAD2  ---------------------------
+disp('==========================================');
+disp('         PROGRAM QUAD2                    ');
+disp('    2-D STRESS ANALYSIS USING 4-NODE      ');
+disp(' QUADRILATERAL ELEMENTS WITH TEMPERATURE  ');
+disp('   T.R.Chandrupatla and A.D.Belegundu     ');
+disp('==========================================');
+
+InputData;
+Bandwidth;
+Stiffness;
+ModifyForBC;
+BandSolver;
+StressCalc;
+ReactionCalc;
+Output;
+
+%------------------------  function InputData  ---------------------------
+function [] = InputData();
+global NN NE NM NDIM NEN NDN
+global ND NL NCH NPR NMPC NBW
+global X NOC F AREA MAT TH DT S
+global PM NU U MPC BT STRESS REACT
+global CNST
+global TITLE FILE1 FILE2 FILE3
+global LINP LOUT LOUT2
+global NQ
+global LC IPL
+
+disp('  1) Plane Stress Analysis');
+disp('  2) Plane Strain Analysis');
+LC = input('  Choose 1(default) or 2 :');
+if isempty(LC) | LC<1 | LC>2 
+   LC = 1;
+end
+
+disp(blanks(1));
+FILE1 = input('Input Data File Name ','s');
+LINP  = fopen(FILE1,'r');
+FILE2 = input('Output Data File Name ','s');
+LOUT  = fopen(FILE2,'w');
+
+DUMMY = fgets(LINP);
+TITLE = fgets(LINP);
+DUMMY = fgets(LINP);
+TMP = str2num(fgets(LINP));
+[NN, NE, NM, NDIM, NEN, NDN] = deal(TMP(1),TMP(2),TMP(3),TMP(4),TMP(5),TMP(6));
+
+NQ = NDN * NN;
+
+DUMMY = fgets(LINP);
+TMP = str2num(fgets(LINP));
+[ND, NL, NMPC]= deal(TMP(1),TMP(2),TMP(3));
+
+NPR=3; %E, NU, ALPHA
+
+% Dimensioned for minimum 3 properties
+disp(blanks(1));
+disp('PLOT CHOICE');
+disp('  1) No Plot Data');
+disp('  2) Create Data File for in-plane Shear Stress');
+disp('  3) Create Data File for Von Mises Stress');
+IPL = input('  Choose 1(defalut), 2, or 3 :');
+%     --- default is no data
+if isempty(IPL) | IPL<1 | IPL>3
+   IPL = 1;
+end
+if IPL > 1 
+    disp(blanks(1));
+    FILE3 = input('Give Data File Name for Element Stresses ','s');
+    LOUT2  = fopen(FILE3,'w');
+end
+
+%----- Coordinates -----
+DUMMY = fgets(LINP);
+for I=1:NN
+   TMP = str2num(fgets(LINP));
+   [N, X(N,:)]=deal(TMP(1),TMP(2:1+NDIM));
+end
+%----- Connectivity -----
+DUMMY = fgets(LINP);
+for I=1:NE
+   TMP = str2num(fgets(LINP));
+   [N,NOC(N,:), MAT(N,:), TH(N,:), DT(N,:)] = ...
+      deal(TMP(1),TMP(2:1+NEN), TMP(2+NEN), TMP(3+NEN), TMP(4+NEN));
+end
+
+%----- Specified Displacements -----
+DUMMY = fgets(LINP);
+for I=1:ND
+   TMP = str2num(fgets(LINP));
+   [NU(I,:),U(I,:)] = deal(TMP(1), TMP(2));
+end
+%----- Component Loads -----
+DUMMY = fgets(LINP);
+F = zeros(NQ,1);
+for I=1:NL
+   TMP = str2num(fgets(LINP));
+   [N,F(N)]=deal(TMP(1),TMP(2));
+end
+
+%----- Material Properties -----
+DUMMY = fgets(LINP);
+for I=1:NM
+   TMP = str2num(fgets(LINP));
+   [N, PM(N,:)] = deal(TMP(1), TMP(2:NPR+1));
+end
+%----- Multi-point Constraints B1*Qi+B2*Qj=B0
+if NMPC > 0
+   DUMMY = fgets(LINP);
+   for I=1:NMPC
+   	TMP = str2num(fgets(LINP));
+      [BT(I,1), MPC(I,1), BT(I,2), MPC(I,2), BT(I,3)] = ...
+         			deal(TMP(1),TMP(2),TMP(3),TMP(4),TMP(5));
+   end
+end
+fclose(LINP);
+
+%------------------------  function Bandwidth  ---------------------------
+function []=Bandwidth();
+global NN NE NM NDIM NEN NDN
+global ND NL NCH NPR NMPC NBW
+global X NOC F AREA MAT TH DT S
+global PM NU U MPC BT STRESS REACT
+global CNST
+global TITLE FILE1 FILE2
+global LINP LOUT
+%----- Bandwidth NBW from Connectivity NOC() and MPC
+NBW = 0;
+for I = 1:NE
+   NMIN = NOC(I, 1);
+   NMAX = NOC(I, 1);
+   for J = 2:3
+      if NMIN > NOC(I, J); NMIN = NOC(I, J); end
+      if NMAX < NOC(I, J); NMAX = NOC(I, J); end
+   end
+   NTMP = NDN * (NMAX - NMIN + 1);
+   if NBW < NTMP; NBW = NTMP; end
+end
+for I = 1:NMPC
+   NABS = abs(MPC(I, 1) - MPC(I, 2)) + 1;
+   if (NBW < NABS); NBW = NABS; end
+end
+disp(blanks(1));
+disp(sprintf('Bandwidth = %d', NBW));
+
+%------------------------  function Stiffness  ---------------------------
+function []=Stiffness();
+global NN NE NM NDIM NEN NDN
+global ND NL NCH NPR NMPC NBW
+global X NOC F AREA MAT TH DT S
+global PM NU U MPC BT STRESS REACT
+global CNST
+global TITLE FILE1 FILE2
+global LINP LOUT
+global NQ
+global LC IPL
+global XNI
+
+%----- Global Stiffness Matrix
+S = zeros(NQ,NBW);
+
+%----- Corner Nodes and Integration Points
+C = .57735026919;
+XNI(1, 1) = -C;
+XNI(1, 2) = -C;
+XNI(2, 1) = C;
+XNI(2, 2) = -C;
+XNI(3, 1) = C;
+XNI(3, 2) = C;
+XNI(4, 1) = -C;
+XNI(4, 2) = C;
+
+for N = 1:NE
+   disp(sprintf('Forming Stiffness Matrix of Element %d', N));
+   
+%--------  Element Stiffness and Temperature Load  -----
+   TL = zeros(8,1);
+   SE = zeros(8);
+   DTE = DT(N);
+%  --- Weight Factor is ONE
+%  --- Loop on Integration Points
+   for IP = 1:4
+%  ---  Get DB Matrix at Integration Point IP
+        XI = XNI(IP, 1);
+        ETA = XNI(IP, 2);
+        [DJ, D, B, DB] = dbmat(N, LC, MAT, PM, NOC, X ,XI,ETA);
+        THICK = TH(N);
+        
+%  --- Element Stiffness Matrix  SE
+       for I = 1:8
+          for J = 1:8
+              C = 0;
+              for K = 1:3
+                 C = C + B(K, I) * DB(K, J) * DJ * THICK;
+              end
+ 				SE(I, J) = SE(I, J) + C;
+           end
+       end
+%  --- Determine Temperature Load TL
+       AL = PM(MAT(N), 3);
+   	 PNU = PM(MAT(N), 2);
+       C = AL * DTE;
+       if (LC == 2); C = (1 + PNU) * C; end
+       for I = 1:8
+          TL(I) = TL(I) + THICK * DJ * C * (DB(1, I) + DB(2, I));
+       end
+   end 
+   disp('.... Placing in Global Locations');
+   for II = 1:NEN
+      NRT = NDN * (NOC(N, II) - 1);
+      for IT = 1:NDN
+         NR = NRT + IT;
+         I = NDN * (II - 1) + IT;
+         for JJ = 1:NEN
+            NCT = NDN * (NOC(N, JJ) - 1);
+            for JT = 1:NDN
+               J = NDN * (JJ - 1) + JT;
+               NC = NCT + JT - NR + 1;
+               if (NC > 0)
+                  S(NR, NC) = S(NR, NC) + SE(I, J);
+               end
+            end
+         end
+         F(NR) = F(NR) + TL(I);
+      end
+   end
+end
+
+%------------------------  function ModifyForBC  ---------------------------
+function []=ModifyForBC();
+global NN NE NM NDIM NEN NDN
+global ND NL NCH NPR NMPC NBW
+global X NOC F AREA MAT TH DT S
+global PM NU U MPC BT STRESS REACT
+global CNST
+global TITLE FILE1 FILE2
+global LINP LOUT
+global NQ
+
+%----- Decide Penalty Parameter CNST -----
+CNST = 0;
+for I = 1:NQ
+   if CNST < S(I, 1); CNST = S(I, 1); end
+end
+CNST = CNST * 10000;
+
+%----- Modify for Boundary Conditions -----
+%    --- Displacement BC ---
+for I = 1:ND
+   N = NU(I);
+   S(N, 1) = S(N, 1) + CNST;
+   F(N) = F(N) + CNST * U(I);
+end
+%--- Multi-point Constraints ---
+for I = 1:NMPC
+   I1 = MPC(I, 1);
+   I2 = MPC(I, 2);
+   S(I1, 1) = S(I1, 1) + CNST * BT(I, 1) * BT(I, 1);
+   S(I2, 1) = S(I2, 1) + CNST * BT(I, 2) * BT(I, 2);
+   IR = I1;
+   if IR > I2; IR = I2; end
+   IC = abs(I2 - I1) + 1;
+   S(IR, IC) = S(IR, IC) + CNST * BT(I, 1) * BT(I, 2);
+   F(I1) = F(I1) + CNST * BT(I, 1) * BT(I, 3);
+   F(I2) = F(I2) + CNST * BT(I, 2) * BT(I, 3);
+end
+
+%------------------------  function BandSolver  ---------------------------
+function []=BandSolver();
+global NN NE NM NDIM NEN NDN
+global ND NL NCH NPR NMPC NBW
+global X NOC F AREA MAT TH DT S
+global PM NU U MPC BT STRESS REACT
+global CNST
+global TITLE FILE1 FILE2
+global LINP LOUT
+global NQ
+%----- Equation Solving using Band Solver -----
+disp('Solving using Band Solver(bansol.m)');
+[F] = bansol(NQ,NBW,S,F);
+
+
+%------------------------  function StressCalc  ---------------------------
+function []=StressCalc();
+global NN NE NM NDIM NEN NDN
+global ND NL NCH NPR NMPC NBW
+global X NOC F AREA MAT TH DT S
+global PM NU U MPC BT STRESS VSTRESS MSTRESS REACT
+global CNST
+global TITLE FILE1 FILE2
+global LINP LOUT
+global LC IPL
+global XNI
+
+%-----  Stress Calculations -----
+%--- Stresses at Integration Points
+fprintf(LOUT,'ELEM#	 von Mises Stresses at 4 Integ_points\n');
+
+for N = 1:NE
+	fprintf(LOUT,'  %d',N);
+	for IP = 1:4
+	   XI = XNI(IP,1); ETA = XNI(IP,2);
+      [DJ, D, B, DB] = dbmat(N, LC, MAT, PM, NOC, X ,XI,ETA);
+%     --- Stress Evaluation
+      for I = 1:NEN
+         IN = NDN * (NOC(N, I) - 1);
+         II = NDN * (I - 1);
+         for J = 1:NDN
+            Q(II + J) = F(IN + J);
+         end
+      end
+      AL = PM(MAT(N), 3);
+      PNU = PM(MAT(N), 2);
+      C1 = AL * DT(N);
+      if LC == 2; C1 = C1 * (1 + PNU); end
+	   for I = 1:3
+         C = 0;
+         for K = 1:8
+            C = C + DB(I, K) * Q(K);
+         end
+         STR(I) = C - C1 * (D(I, 1) + D(I, 2));
+      end
+%     --- Von Mises Stress at Centroid
+      C = 0;
+      if LC == 2; C = PNU * (STR(1) + STR(2)); end
+      C1 = (STR(1)-STR(2))^2 + (STR(2)-C)^2 + (C-STR(1))^2;
+      SV = sqrt(.5 * C1 + 3 * STR(3)^2);
+      VSTRESS(N,IP) = SV;
+%      --- Maximum Shear Stress R
+      R = sqrt(.25 * (STR(1) - STR(2))^2 + (STR(3))^2);
+      MSTRESS(N,IP) = R;   
+   end
+end
+
+%------------------------  function ReactionCalc  ---------------------------
+function []=ReactionCalc();
+global NN NE NM NDIM NEN NDN
+global ND NL NCH NPR NMPC NBW
+global X NOC F AREA MAT TH DT S
+global PM NU U MPC BT STRESS REACT
+global CNST
+global TITLE FILE1 FILE2
+global LINP LOUT
+%----- Reaction Calculation -----
+disp(blanks(1));
+
+for I = 1:ND
+   N = NU(I);
+   REACT(I) = CNST * (U(I) - F(N));
+end
+
+%------------------------  function Output  ---------------------------
+function []=Output();
+global NN NE NM NDIM NEN NDN
+global ND NL NCH NPR NMPC NBW
+global X NOC F AREA MAT TH DT S
+global PM NU U MPC BT STRESS VSTRESS MSTRESS REACT
+global CNST
+global TITLE FILE1 FILE2 FILE3
+global LINP LOUT LOUT2
+global LC IPL
+
+disp(sprintf('Output for Input Data from file %s\n',FILE1));
+fprintf(LOUT,'Output for Input Data from file %s\n',FILE1);
+
+disp(TITLE);
+fprintf(LOUT,'%s\n',TITLE);
+if LC == 1; fprintf(LOUT,'Plane Stress Analysis\n'); end
+if LC == 2; fprintf(LOUT,'Plane Strain Analysis\n'); end
+
+disp(' Node#    X-Displ         Y-Displ');
+fprintf(LOUT,' Node#    X-Displ         Y-Displ\n');
+I=[1:NN]';
+% print a matrix
+disp(sprintf(' %4d %15.4E %15.4E\n',[I,F(2*I-1),F(2*I)]'));
+fprintf(LOUT,' %4d %15.4E %15.4E\n',[I,F(2*I-1),F(2*I)]');
+
+%----- Reaction Calculation -----
+disp(sprintf('  DOF#     Reaction'));
+fprintf(LOUT,'  DOF#     Reaction\n');
+for I = 1:ND
+   N = NU(I);
+   disp(sprintf(' %4d %15.4E',N,REACT(I)));
+   fprintf(LOUT,' %4d %15.4E\n',N,REACT(I));
+end
+
+if IPL ==2
+   fprintf(LOUT2,'Max. in-plane Shear Stress\n');
+elseif IPL ==3
+	fprintf(LOUT2,'Von Mises Stress\n');
+end
+
+%-----  Stress Calculations -----
+%--- Stresses at Integration Points
+disp(sprintf('ELEM#	 von Mises Stresses at 4 Integ_points'));
+fprintf(LOUT,'ELEM#	 von Mises Stresses at 4 Integ_points\n');
+
+for N = 1:NE
+	disp(sprintf('%5d  %14.4E %14.4E %14.4E %14.4E',N,VSTRESS(N,1:4)));
+	fprintf(LOUT,'%5d  %14.4E %14.4E %14.4E %14.4E\n',N,VSTRESS(N,1:4));
+	if IPL == 2
+%--- Maximum Shear Stress R
+	fprintf(LOUT2,'%14.4E %14.4E %14.4E %14.4E\n',MSTRESS(N,1:4));
+   elseif IPL == 3
+%--- Von Mises Stress at Integration Point
+	fprintf(LOUT2,'%14.4E %14.4E %14.4E %14.4E\n',VSTRESS(N,1:4));
+   end
+end
+
+fclose(LOUT);
+disp(blanks(1)); 
+disp('-----    All Calculations are done    -----');
+disp(sprintf('The Results are available in the text file %s', FILE2));
+disp('View using a text processor');
+if (IPL > 1)
+   fclose(LOUT2);
+   disp(sprintf('Element Stress Data in file %s', FILE3));
+   disp('Run BESTFITQ and then CONTOUR1 or CONTOUR2 to plot stresses');
+end
+
+
+%------------------------  dbmat  ---------------------------
+function [DJ, D, B, DB] = dbmat(N, LC, MAT, PM, NOC, X,XI,ETA);
+
+%  --- Material Properties
+   M = MAT(N);
+   E = PM(M, 1);
+   PNU = PM(M, 2);
+   AL = PM(M, 3);
+%  --- D() Matrix
+   if LC == 1
+%  --- Plane Stress
+      C1 = E / (1 - PNU^2);
+      C2 = C1 * PNU;
+   else
+%  --- Plane Strain
+      C = E / ((1 + PNU) * (1 - 2 * PNU));
+      C1 = C * (1 - PNU);
+      C2 = C * PNU;
+   end
+   C3 = .5 * E / (1 + PNU);
+   
+   D(1, 1) = C1;
+   D(1, 2) = C2;
+   D(1, 3) = 0;
+   D(2, 1) = C2;
+   D(2, 2) = C1;
+   D(2, 3) = 0;
+   D(3, 1) = 0;
+   D(3, 2) = 0;
+   D(3, 3) = C3;
+
+%  -------  DB()  MATRIX  ------
+%  --- Nodal Coordinates
+      N1 = NOC(N, 1);
+      N2 = NOC(N, 2);
+      N3 = NOC(N, 3);
+      N4 = NOC(N, 4);
+      X1 = X(N1, 1);
+      Y1 = X(N1, 2);
+      X2 = X(N2, 1);
+      Y2 = X(N2, 2);
+      X3 = X(N3, 1);
+      Y3 = X(N3, 2);
+      X4 = X(N4, 1);
+      Y4 = X(N4, 2);
+%  --- Formation of Jacobian  TJ
+      TJ11 = ((1 - ETA) * (X2 - X1) + (1 + ETA) * (X3 - X4)) / 4;
+      TJ12 = ((1 - ETA) * (Y2 - Y1) + (1 + ETA) * (Y3 - Y4)) / 4;
+      TJ21 = ((1 - XI) * (X4 - X1) + (1 + XI) * (X3 - X2)) / 4;
+      TJ22 = ((1 - XI) * (Y4 - Y1) + (1 + XI) * (Y3 - Y2)) / 4;
+%  --- Determinant of the JACOBIAN
+      DJ = TJ11 * TJ22 - TJ12 * TJ21;
+%  --- A(3,4) Matrix relates Strains to
+%  --- Local Derivatives of u
+      A(1, 1) = TJ22 / DJ;
+      A(2, 1) = 0;
+      A(3, 1) = -TJ21 / DJ;
+      A(1, 2) = -TJ12 / DJ;
+      A(2, 2) = 0;
+      A(3, 2) = TJ11 / DJ;
+      A(1, 3) = 0;
+      A(2, 3) = -TJ21 / DJ;
+      A(3, 3) = TJ22 / DJ;
+      A(1, 4) = 0;
+      A(2, 4) = TJ11 / DJ;
+      A(3, 4) = -TJ12 / DJ;
+%  --- G(4,8) Matrix relates Local Derivatives of u
+%  --- to Local Nodal Displacements q(8)
+      G = zeros(4, 8);
+      
+      G(1, 1) = -(1 - ETA) / 4;
+      G(2, 1) = -(1 - XI) / 4;
+      G(3, 2) = -(1 - ETA) / 4;
+      G(4, 2) = -(1 - XI) / 4;
+      G(1, 3) = (1 - ETA) / 4;
+      G(2, 3) = -(1 + XI) / 4;
+      G(3, 4) = (1 - ETA) / 4;
+      G(4, 4) = -(1 + XI) / 4;
+      G(1, 5) = (1 + ETA) / 4;
+      G(2, 5) = (1 + XI) / 4;
+      G(3, 6) = (1 + ETA) / 4;
+      G(4, 6) = (1 + XI) / 4;
+      G(1, 7) = -(1 + ETA) / 4;
+      G(2, 7) = (1 - XI) / 4;
+      G(3, 8) = -(1 + ETA) / 4;
+      G(4, 8) = (1 - XI) / 4;
+%  --- B(3,8) Matrix Relates Strains to q
+      for I = 1:3
+         for J = 1:8
+            C = 0;
+            for K = 1:4
+               C = C + A(I, K) * G(K, J);
+            end
+			 B(I, J) = C;
+         end
+      end     
+%  --- DB(3,8) Matrix relates Stresses to q(8)
+      for I = 1:3
+         for J = 1:8
+           C = 0;
+	        for K = 1:3
+              C = C + D(I, K) * B(K, J);
+           end 
+			  DB(I, J) = C;
+         end
+      end

@@ -3,15 +3,17 @@
 // ──────────────────────────────────────────────────────────────────────────────
 import { Model }           from './model/model.js';
 import { Serializer }      from './model/serializer.js';
-import { Viewport }        from './ui/viewport.js';
+import { Viewport }        from './ui/viewport.js?v=11';
 import { PropertiesPanel } from './ui/properties.js';
 import { MenuBar }         from './ui/menu.js';
 import { UndoStack }       from './utils/undo.js';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js';
-import { Results }                         from './solver/postprocess.js';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=11';
+import { Results }                         from './solver/postprocess.js?v=11';
 import { ModalSolver }                     from './solver/modal_solver.js';
+import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js';
+import { ModalResults }                    from './solver/modal_results.js';
 import { SpectrumSolver }                  from './solver/spectrum_solver.js';
-import { autoDetectDiaphragms }            from './solver/diaphragm.js';
+import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js';
 
 class App {
   constructor() {
@@ -65,7 +67,25 @@ class App {
 
     // Results type/scale changes
     document.getElementById('result-type')?.addEventListener('change', () => this._refreshResultView());
-    document.getElementById('result-scale')?.addEventListener('change', () => this._refreshResultView());
+    document.getElementById('result-scale')?.addEventListener('change', () => {
+      this._refreshResultView();
+      // Sync range slider
+      const v = parseFloat(document.getElementById('result-scale')?.value) || 1;
+      const logV = Math.log10(Math.max(v, 1e-3));
+      const rangeEl = document.getElementById('result-scale-range');
+      if (rangeEl) rangeEl.value = Math.max(-2, Math.min(4, logV));
+    });
+    document.getElementById('result-scale-range')?.addEventListener('input', e => {
+      const scale = Math.pow(10, parseFloat(e.target.value));
+      const numEl = document.getElementById('result-scale');
+      if (numEl) numEl.value = +scale.toPrecision(3);
+      if (this._results) this._refreshResultView();
+    });
+
+    // Toolbar extras
+    document.getElementById('btn-toggle-ids')?.addEventListener('click', () => this.viewport.toggleIds());
+    document.getElementById('btn-toggle-extrude')?.addEventListener('click', () => this.viewport.toggleExtruded());
+    document.getElementById('btn-export-img')?.addEventListener('click', () => this.exportViewportPNG());
 
     // F5 / F6 / F7 shortcuts
     document.addEventListener('keydown', e => {
@@ -241,11 +261,11 @@ class App {
     if (this.model.nodes.size === 0 || this.model.elements.size === 0) {
       this.toast('El modelo debe tener nodos y elementos', 'warn'); return;
     }
-    const hasSupport = [...this.model.nodes.values()]
-      .some(n => Object.values(n.restraints).some(v => v));
-    if (!hasSupport) {
-      this.toast('El modelo no tiene apoyos — agregue restricciones a los nodos', 'warn'); return;
-    }
+    // P4-14: pre-analysis validation
+    const valWarns = this._validateModel();
+    const valErrors = valWarns.filter(w => w.startsWith('⛔'));
+    if (valErrors.length > 0) { this.toast(valErrors[0], 'error'); return; }
+    if (valWarns.length > 0)  { this.toast(`${valWarns[0]}`, 'warn'); }
 
     const btn = document.getElementById('btn-run');
     if (btn) btn.classList.add('running');
@@ -266,6 +286,9 @@ class App {
         this.panel._switchVTab('resultados');
         this.panel._switchRTab('estatico');
         this.panel.renderStaticResults();
+
+        // Kick off background diagram pre-computation (shows progress bar)
+        this._precomputeDiagramsAsync(this._results);
       } catch (err) {
         this.toast(`Error: ${err.message}`, 'error');
         console.error(err);
@@ -274,6 +297,40 @@ class App {
         document.getElementById('sb-mode').textContent = 'Modo: Resultados';
       }
     }, 20);
+  }
+
+  // Pre-computes diagram data for all elements in background chunks so the UI
+  // stays responsive and the progress bar advances visibly.
+  _precomputeDiagramsAsync(results) {
+    const TYPES    = ['N', 'Vy', 'Vz', 'T', 'My', 'Mz'];
+    const NPTS     = 20;
+    const CHUNK    = 12;   // elements per setTimeout slice
+    const elemKeys = [...this.model.elements.keys()];
+    const total    = elemKeys.length;
+    if (total === 0) return;
+
+    const progressEl = document.getElementById('sb-progress');
+    const modeEl     = document.getElementById('sb-mode');
+    if (progressEl) { progressEl.value = 0; progressEl.classList.remove('hidden'); }
+
+    let i = 0;
+    const tick = () => {
+      i = results.precomputeChunk(elemKeys, TYPES, NPTS, i, CHUNK);
+      const pct = Math.round(i / total * 100);
+      if (progressEl) progressEl.value = pct;
+      if (modeEl && i < total) modeEl.textContent = `Diagramas (${i}/${total})…`;
+
+      if (i < total) {
+        setTimeout(tick, 0);
+      } else {
+        if (progressEl) progressEl.classList.add('hidden');
+        if (modeEl) modeEl.textContent = 'Modo: Resultados';
+        // Refresh force diagram if one is currently displayed
+        const type = document.getElementById('result-type')?.value;
+        if (type && type !== 'deformed') this._refreshResultView();
+      }
+    };
+    setTimeout(tick, 30);
   }
 
   _refreshResultView(autoScale = false) {
@@ -321,7 +378,7 @@ class App {
   }
 
   // ── Modal analysis ─────────────────────────────────────────────────────────
-  runModal() {
+  async runModal() {
     if (this.model.nodes.size === 0 || this.model.elements.size === 0) {
       this.toast('El modelo debe tener nodos y elementos', 'warn'); return;
     }
@@ -331,41 +388,136 @@ class App {
       this.toast('El modelo no tiene apoyos', 'warn'); return;
     }
 
-    // Ask for number of modes
-    const nModesRaw = prompt('Número de modos a extraer:', '10');
-    if (nModesRaw === null) return;
-    const nModes = Math.max(1, Math.min(50, parseInt(nModesRaw) || 10));
+    // HTML modal instead of native prompt()
+    const nModes = await this._modalNModesDialog();
+    if (nModes === null) return;
 
     const btn = document.getElementById('btn-run');
     if (btn) btn.classList.add('running');
     document.getElementById('sb-mode').textContent = 'Análisis modal…';
 
-    setTimeout(() => {
-      try {
-        const solver = new ModalSolver();
-        this._modalResults = solver.solve(this.model, nModes);
-        this._modalMode    = 0;
-        this._modalPlaying = false;
+    try {
+      // ── Assemble stiffness / mass on main thread ─────────────────────────────
+      const nodeIndex = buildNodeIndex(this.model);
+      const { K, M, nDOF } = assembleK(this.model, nodeIndex);
 
-        const f1 = this._modalResults.freq[0].toFixed(3);
-        const T1 = this._modalResults.period[0].toFixed(3);
-        this.toast(
-          `Modal OK — ${this._modalResults.nModes} modos | f₁=${f1} Hz | T₁=${T1} s`, 'ok'
-        );
-
-        this._setupModalOverlay();
-        this._refreshModalView();
-        this.panel._switchVTab('resultados');
-        this.panel._switchRTab('modal');
-        this.panel.renderModalResults();
-      } catch (err) {
-        this.toast(`Error modal: ${err.message}`, 'error');
-        console.error(err);
-      } finally {
-        if (btn) btn.classList.remove('running');
-        document.getElementById('sb-mode').textContent = 'Modo: Modal';
+      // Extract free DOFs
+      const freeDOF = [];
+      for (const node of this.model.nodes.values()) {
+        const d = getNodeDOFs(nodeIndex, node.id);
+        const r = node.restraints;
+        [r.ux, r.uy, r.uz, r.rx, r.ry, r.rz].forEach((fixed, li) => {
+          if (!fixed) freeDOF.push(d[li]);
+        });
       }
-    }, 20);
+      if (freeDOF.length === 0) throw new Error('No hay grados de libertad libres.');
+      const nF = freeDOF.length;
+
+      // Build Kff / Mff as flat Float64Arrays for zero-copy transfer to worker
+      const Kff_flat = new Float64Array(nF * nF);
+      const Mff_flat = new Float64Array(nF * nF);
+      for (let i = 0; i < nF; i++) {
+        for (let j = 0; j < nF; j++) {
+          Kff_flat[i * nF + j] = K[freeDOF[i] * nDOF + freeDOF[j]];
+          Mff_flat[i * nF + j] = M[freeDOF[i] * nDOF + freeDOF[j]];
+        }
+      }
+
+      // ── Run Stodola in a Web Worker (non-blocking) ───────────────────────────
+      const modes = await new Promise((resolve, reject) => {
+        const worker = new Worker(new URL('./solver/modal_worker.js', import.meta.url));
+        worker.postMessage({ Kff_flat, Mff_flat, nF, nModes },
+          [Kff_flat.buffer, Mff_flat.buffer]); // transfer — zero copy
+        worker.onmessage = (ev) => {
+          worker.terminate();
+          if (ev.data.error) reject(new Error(ev.data.error));
+          else               resolve(ev.data.modes);
+        };
+        worker.onerror = (ev) => {
+          worker.terminate();
+          reject(new Error(ev.message || 'Error en worker modal'));
+        };
+      });
+
+      this._modalResults = new ModalResults(this.model, nodeIndex, freeDOF, modes, M, nDOF);
+      this._modalMode    = 0;
+      this._modalPlaying = false;
+
+      const f1 = this._modalResults.freq[0].toFixed(3);
+      const T1 = this._modalResults.period[0].toFixed(3);
+      this.toast(
+        `Modal OK — ${this._modalResults.nModes} modos | f₁=${f1} Hz | T₁=${T1} s`, 'ok'
+      );
+
+      this._setupModalOverlay();
+      this._refreshModalView();
+      this.panel._switchVTab('resultados');
+      this.panel._switchRTab('modal');
+      this.panel.renderModalResults();
+    } catch (err) {
+      this.toast(`Error modal: ${err.message}`, 'error');
+      console.error(err);
+    } finally {
+      if (btn) btn.classList.remove('running');
+      document.getElementById('sb-mode').textContent = 'Modo: Modal';
+    }
+  }
+
+  /** HTML modal dialog — ask for number of modes (replaces native prompt). */
+  _modalNModesDialog() {
+    return new Promise(resolve => {
+      const overlay = document.getElementById('modal-overlay');
+      document.getElementById('modal-title').textContent = 'Análisis Modal';
+      document.getElementById('modal-cancel').style.display = '';
+      document.getElementById('modal-body').innerHTML = `
+        <div class="prop-row">
+          <div class="prop-field">
+            <label>Número de modos a extraer (1–50)</label>
+            <input type="number" id="modal-nmodes" value="10" min="1" max="50" step="1"
+              style="width:90px">
+          </div>
+          <div class="prop-field" style="justify-content:flex-end">
+            <span style="color:var(--text-muted);font-size:11px">
+              Recomendado:<br>≥ 3 × número de pisos.
+            </span>
+          </div>
+        </div>`;
+      overlay.classList.remove('hidden');
+      setTimeout(() => {
+        const el = document.getElementById('modal-nmodes');
+        el?.focus(); el?.select();
+      }, 50);
+      overlay._resolve = () => {
+        const v = parseInt(document.getElementById('modal-nmodes')?.value) || 10;
+        resolve(Math.max(1, Math.min(50, v)));
+      };
+      overlay._reject = () => resolve(null);
+    });
+  }
+
+  /** Generic single-input prompt modal (replaces native prompt). */
+  _promptModal(title, label, defaultValue = '') {
+    return new Promise(resolve => {
+      const overlay = document.getElementById('modal-overlay');
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('modal-cancel').style.display = '';
+      document.getElementById('modal-body').innerHTML = `
+        <div class="prop-field">
+          <label>${label}</label>
+          <input type="text" id="modal-prompt-inp" value="${defaultValue}"
+            style="width:100%;margin-top:4px">
+        </div>`;
+      overlay.classList.remove('hidden');
+      setTimeout(() => {
+        const el = document.getElementById('modal-prompt-inp');
+        el?.focus(); el?.select();
+      }, 50);
+      overlay._resolve = () => {
+        const v = document.getElementById('modal-prompt-inp')?.value?.trim();
+        resolve(v || null);
+      };
+      overlay._reject = () => resolve(null);
+    });
   }
 
   _setupModalOverlay() {
@@ -642,6 +794,55 @@ class App {
     });
   }
 
+  // ── P1-2: Refresh stale CR values after loading a .s3d file ──────────────
+  _refreshDiaphragmCRs() {
+    for (const d of this.model.diaphragms.values()) {
+      const nodeIds = d.nodes.filter(id => this.model.nodes.has(id));
+      if (nodeIds.length < 2) continue;
+      const floorNodeSet = new Set(nodeIds);
+      const cr = computeFloorCR(this.model, floorNodeSet, d.z);
+      if (!cr) continue;
+      d.cr = cr;
+
+      // Update masterId if the saved one is at the wrong position
+      const CTOL = 0.05;
+      const existingMaster = this.model.nodes.get(d.masterId);
+      const masterMisplaced = !existingMaster
+        || Math.abs(existingMaster.x - cr.x) > CTOL
+        || Math.abs(existingMaster.y - cr.y) > CTOL;
+      if (masterMisplaced) {
+        const match = nodeIds
+          .map(id => this.model.nodes.get(id))
+          .find(n => n && Math.abs(n.x - cr.x) < CTOL && Math.abs(n.y - cr.y) < CTOL);
+        if (match) d.masterId = match.id;
+      }
+    }
+  }
+
+  // ── P4-14: Pre-analysis model validation ──────────────────────────────────
+  _validateModel() {
+    const warnings = [];
+    const model = this.model;
+
+    // Nodes without connected elements
+    const connectedNodes = new Set();
+    for (const e of model.elements.values()) {
+      connectedNodes.add(e.n1); connectedNodes.add(e.n2);
+    }
+    const floating = [...model.nodes.keys()].filter(id => !connectedNodes.has(id));
+    if (floating.length > 0) {
+      const list = floating.slice(0, 5).join(', ') + (floating.length > 5 ? '…' : '');
+      warnings.push(`⚠ ${floating.length} nodo(s) sin elementos: [${list}]`);
+    }
+
+    // No supports
+    const hasSupport = [...model.nodes.values()]
+      .some(n => Object.values(n.restraints).some(v => v));
+    if (!hasSupport) warnings.push('⛔ No hay apoyos — el modelo es inestable');
+
+    return warnings;
+  }
+
   // ── Load case management ───────────────────────────────────────────────────
   _initLoadCaseUI() {
     this._activeLcId = ensureDefaultLC(this.model);
@@ -659,8 +860,11 @@ class App {
         this.refreshLoads();
       }
     });
-    document.getElementById('btn-add-lc')?.addEventListener('click', () => {
-      const name = prompt('Nombre del caso de carga:', `LC${this.model.loadCases.size + 1}`);
+    document.getElementById('btn-add-lc')?.addEventListener('click', async () => {
+      const name = await this._promptModal(
+        'Nuevo Caso de Carga', 'Nombre:',
+        `LC${this.model.loadCases.size + 1}`
+      );
       if (!name) return;
       this.snapshot();
       const lc = this.model.addLoadCase(name);
@@ -738,10 +942,17 @@ class App {
         const solver = new StaticSolver();
         let nodeIndex = null, nDOF = 0;
         let cU = null, cR = null;
+        const combinedEF = new Map();   // elemId → combined element forces
+        const totalFactors = combo.factors.length;
 
-        for (const { lcId, factor } of combo.factors) {
+        for (let fi = 0; fi < totalFactors; fi++) {
+          const { lcId, factor, selfWeight: sw = false } = combo.factors[fi];
           const f = parseFloat(factor) || 0;
           const isSpectral = typeof lcId === 'string' && lcId.startsWith('esp');
+
+          // Progress update
+          const sbEl = document.getElementById('sb-mode');
+          if (sbEl) sbEl.textContent = `Combinación "${combo.name}" … (${fi+1}/${totalFactors})`;
 
           if (isSpectral) {
             const sr = this._spectrumResults.get(lcId);
@@ -759,22 +970,37 @@ class App {
           } else {
             const numId = typeof lcId === 'number' ? lcId : parseInt(lcId);
             if (!this.model.loadCases.has(numId)) continue;
-            const res = solver.solve(this.model, numId, false);
+            // Solve this LC (with per-factor self-weight flag)
+            const res = solver.solve(this.model, numId, !!sw);
             if (!cU) {
               nodeIndex = res.nodeIndex;
               nDOF = res.u.length;
               cU = new Float64Array(nDOF);
               cR = new Float64Array(nDOF);
             }
+            // Superpose displacements and reactions
             for (let i = 0; i < nDOF; i++) {
               cU[i] += f * res.u[i];
               cR[i] += f * res.reactions[i];
+            }
+            // Superpose element forces directly (they already include FEF — correct)
+            for (const [eid, ef] of res._elemForces) {
+              if (!ef) continue;
+              const cur = combinedEF.get(eid);
+              if (!cur) {
+                // Clone first occurrence scaled by factor
+                combinedEF.set(eid, _scaleEF(ef, f));
+              } else {
+                // Accumulate
+                _addScaledEF(cur, ef, f);
+              }
             }
           }
         }
         if (!cU) { this.toast('Sin casos de carga válidos en la combinación', 'warn'); return; }
 
-        this._results = new Results(this.model, nodeIndex, cU, cR, new Float64Array(nDOF));
+        this._results = new Results(this.model, nodeIndex, cU, cR, new Float64Array(nDOF),
+                                    null, false, combinedEF.size ? combinedEF : null);
         const d = this._results.getMaxDisp();
         this.toast(`"${combo.name}" OK | δmax=${d.toExponential(2)}`, 'ok');
         document.getElementById('result-type').value = 'deformed';
@@ -874,6 +1100,7 @@ class App {
   _loadJSON(text, filename) {
     try {
       this.model = this.serializer.fromJSON(text);
+      this._refreshDiaphragmCRs();   // P1-2: fix stale CR/masterId from saved files
       this.undoStack.clear();
       this._dirty = false;
       this.viewport.renderModel(this.model);
@@ -1029,6 +1256,18 @@ class App {
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   }
 
+  // ── P2-5: Export viewport as PNG ──────────────────────────────────────────
+  exportViewportPNG() {
+    // Force a render pass so the canvas buffer is current
+    this.viewport._renderer.render(this.viewport._scene, this.viewport._camera);
+    const url = this.viewport._renderer.domElement.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `structweb3d_${new Date().toISOString().slice(0,19).replace(/[T:]/g,'-')}.png`;
+    a.click();
+    this.toast('Imagen exportada', 'ok');
+  }
+
   // ── Toast notifications ────────────────────────────────────────────────────
   toast(msg, type = '') {
     const container = document.getElementById('toast-container');
@@ -1111,6 +1350,8 @@ class App {
         case 'n':      this.viewport.setMode('addnode');    break;
         case 'e':      this.viewport.setMode('addelem');    break;
         case 'r':      this.viewport.setMode('addsupport'); break;
+        case 'd':      this.viewport.toggleIds();           break;
+        case 'x':      this.viewport.toggleExtruded();      break;
         case 'delete':
         case 'backspace': this.deleteSelected();            break;
         case 'home':   this.viewport.zoomExtents();         break;
@@ -1153,7 +1394,22 @@ function _parseSpectrum(text) {
   return pts;
 }
 
+// ── Element-force superposition helpers for load combinations ─────────────────
+const _EF_SCALAR_KEYS = ['N','Vy1','Vz1','T','My1','Mz1','Vy2','Vz2','My2','Mz2',
+                          'Vmax','Mmax','Nabs','qy','qz'];
+
+function _scaleEF(ef, factor) {
+  const out = { ...ef };   // copy geometry (ex,ey,ez,L,_ue)
+  for (const k of _EF_SCALAR_KEYS) out[k] = (ef[k] ?? 0) * factor;
+  return out;
+}
+
+function _addScaledEF(target, ef, factor) {
+  for (const k of _EF_SCALAR_KEYS) target[k] = (target[k] ?? 0) + (ef[k] ?? 0) * factor;
+}
+
 // ── Bootstrap ────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   window.app = new App();
 });
+

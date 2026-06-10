@@ -53,6 +53,7 @@ export class PropertiesPanel {
 
     document.getElementById('btn-add-mat')?.addEventListener('click',    () => this._addMaterial());
     document.getElementById('btn-add-sec')?.addEventListener('click',    () => this._addSection());
+    document.getElementById('btn-section-calc')?.addEventListener('click', () => this._sectionCalculatorDialog());
     document.getElementById('btn-add-dia')?.addEventListener('click',    () => this.app.addDiaphragmManual());
     document.getElementById('btn-detect-dia')?.addEventListener('click', () => this.app.autoDetectDiaphragms());
     document.getElementById('btn-add-combo')?.addEventListener('click',  () => this._addCombination());
@@ -998,9 +999,13 @@ export class PropertiesPanel {
                 `<option value="${s.id}" ${s.id === fac.lcId ? 'selected' : ''}>${s.name}</option>`
               ).join('')}</optgroup>`
             : '';
+          const swChecked = fac.selfWeight ? 'checked' : '';
           row.innerHTML = `
             <select class="fac-lc">${staticOpts}${specOpts}</select>
             <input type="number" class="fac-val" value="${fac.factor}" step="0.1" placeholder="factor">
+            <label title="Incluir peso propio en este caso" style="font-size:10px;white-space:nowrap;gap:2px;display:flex;align-items:center;">
+              <input type="checkbox" class="fac-sw" ${swChecked}> PP
+            </label>
             <button class="combo-del-factor" title="Eliminar">×</button>`;
           row.querySelector('.fac-lc').addEventListener('change', e => {
             const v = e.target.value;
@@ -1009,6 +1014,10 @@ export class PropertiesPanel {
           });
           row.querySelector('.fac-val').addEventListener('change', e => {
             combo.factors[idx].factor = parseFloat(e.target.value) || 0;
+            this.app.markDirty();
+          });
+          row.querySelector('.fac-sw').addEventListener('change', e => {
+            combo.factors[idx].selfWeight = e.target.checked;
             this.app.markDirty();
           });
           row.querySelector('.combo-del-factor').addEventListener('click', () => {
@@ -1138,6 +1147,192 @@ export class PropertiesPanel {
       this.renderSections();
     });
     return card;
+  }
+
+  // ── P3-9: Section calculator dialog ───────────────────────────────────────
+  _sectionCalculatorDialog() {
+    const overlay = document.getElementById('modal-overlay');
+    document.getElementById('modal-title').textContent = 'Calculadora de Sección';
+    document.getElementById('modal-cancel').style.display = '';
+
+    // Standard section database (values in SI: A [m²], Iz/Iy [m⁴], J [m⁴])
+    const IPE = {
+      'IPE100':{A:10.3e-4,Iz:171e-8,  Iy:15.9e-8, J:1.20e-8},
+      'IPE120':{A:13.2e-4,Iz:318e-8,  Iy:27.7e-8, J:1.74e-8},
+      'IPE140':{A:16.4e-4,Iz:541e-8,  Iy:44.9e-8, J:2.45e-8},
+      'IPE160':{A:20.1e-4,Iz:869e-8,  Iy:68.3e-8, J:3.60e-8},
+      'IPE180':{A:23.9e-4,Iz:1317e-8, Iy:100.9e-8,J:4.79e-8},
+      'IPE200':{A:28.5e-4,Iz:1943e-8, Iy:142e-8,  J:6.98e-8},
+      'IPE220':{A:33.4e-4,Iz:2772e-8, Iy:205e-8,  J:9.07e-8},
+      'IPE240':{A:39.1e-4,Iz:3892e-8, Iy:284e-8,  J:12.7e-8},
+      'IPE270':{A:45.9e-4,Iz:5790e-8, Iy:420e-8,  J:15.9e-8},
+      'IPE300':{A:53.8e-4,Iz:8356e-8, Iy:604e-8,  J:20.1e-8},
+      'IPE330':{A:62.6e-4,Iz:11770e-8,Iy:788e-8,  J:28.2e-8},
+      'IPE360':{A:72.7e-4,Iz:16270e-8,Iy:1043e-8, J:37.3e-8},
+      'IPE400':{A:84.5e-4,Iz:23130e-8,Iy:1318e-8, J:51.1e-8},
+      'IPE450':{A:98.8e-4,Iz:33740e-8,Iy:1676e-8, J:66.9e-8},
+      'IPE500':{A:116e-4, Iz:48200e-8,Iy:2142e-8, J:89.3e-8},
+    };
+    const HEB = {
+      'HEB100':{A:26.0e-4,Iz:450e-8,  Iy:167e-8,  J:9.25e-8},
+      'HEB120':{A:34.0e-4,Iz:864e-8,  Iy:318e-8,  J:13.8e-8},
+      'HEB140':{A:43.0e-4,Iz:1509e-8, Iy:550e-8,  J:20.1e-8},
+      'HEB160':{A:54.3e-4,Iz:2492e-8, Iy:889e-8,  J:31.2e-8},
+      'HEB180':{A:65.3e-4,Iz:3831e-8, Iy:1363e-8, J:42.2e-8},
+      'HEB200':{A:78.1e-4,Iz:5696e-8, Iy:2003e-8, J:59.3e-8},
+      'HEB220':{A:91.0e-4,Iz:8091e-8, Iy:2843e-8, J:76.6e-8},
+      'HEB240':{A:106e-4, Iz:11260e-8,Iy:3923e-8, J:102e-8},
+      'HEB260':{A:118e-4, Iz:14920e-8,Iy:5135e-8, J:124e-8},
+      'HEB280':{A:131e-4, Iz:19270e-8,Iy:6595e-8, J:144e-8},
+      'HEB300':{A:149e-4, Iz:25170e-8,Iy:8563e-8, J:185e-8},
+    };
+
+    const ipeOpts = Object.keys(IPE).map(k=>`<option value="${k}">${k}</option>`).join('');
+    const hebOpts = Object.keys(HEB).map(k=>`<option value="${k}">${k}</option>`).join('');
+
+    document.getElementById('modal-body').innerHTML = `
+      <div class="prop-row cols1" style="margin-bottom:8px">
+        <div class="prop-field">
+          <label>Forma de sección</label>
+          <select id="sc-shape">
+            <option value="rect">Rectangular (b × h)</option>
+            <option value="circ">Circular sólida (D)</option>
+            <option value="hrect">Rectangular hueca</option>
+            <option value="hcirc">Tubular circular</option>
+            <option value="ipe">Perfil IPE (tabla)</option>
+            <option value="heb">Perfil HEB (tabla)</option>
+          </select>
+        </div>
+      </div>
+      <div id="sc-inputs" style="margin-bottom:8px"></div>
+      <div id="sc-results" style="background:rgba(255,255,255,0.03);padding:8px;
+          border-radius:4px;font-size:11px;font-family:monospace;color:var(--text)">
+        — Selecciona una forma —
+      </div>`;
+
+    overlay.classList.remove('hidden');
+
+    const shapeEl   = document.getElementById('sc-shape');
+    const inputsEl  = document.getElementById('sc-inputs');
+    const resEl     = document.getElementById('sc-results');
+    let   lastData  = null;
+
+    const shapes = {
+      rect: `
+        <div class="prop-row">
+          <div class="prop-field"><label>b (m)</label>
+            <input type="number" id="sc-b" value="0.30" step="0.01" min="0.001"></div>
+          <div class="prop-field"><label>h (m)</label>
+            <input type="number" id="sc-h" value="0.50" step="0.01" min="0.001"></div>
+        </div>`,
+      circ: `
+        <div class="prop-row cols1">
+          <div class="prop-field"><label>D (m)</label>
+            <input type="number" id="sc-D" value="0.40" step="0.01" min="0.001"></div>
+        </div>`,
+      hrect: `
+        <div class="prop-row">
+          <div class="prop-field"><label>b (m)</label>
+            <input type="number" id="sc-b" value="0.40" step="0.01" min="0.01"></div>
+          <div class="prop-field"><label>h (m)</label>
+            <input type="number" id="sc-h" value="0.60" step="0.01" min="0.01"></div>
+          <div class="prop-field"><label>t espesor (m)</label>
+            <input type="number" id="sc-t" value="0.06" step="0.005" min="0.001"></div>
+        </div>`,
+      hcirc: `
+        <div class="prop-row">
+          <div class="prop-field"><label>D ext (m)</label>
+            <input type="number" id="sc-D" value="0.40" step="0.01" min="0.01"></div>
+          <div class="prop-field"><label>t espesor (m)</label>
+            <input type="number" id="sc-t" value="0.02" step="0.005" min="0.001"></div>
+        </div>`,
+      ipe:  `<div class="prop-field"><label>Perfil IPE</label>
+               <select id="sc-ipe">${ipeOpts}</select></div>`,
+      heb:  `<div class="prop-field"><label>Perfil HEB</label>
+               <select id="sc-heb">${hebOpts}</select></div>`,
+    };
+
+    const g = id => parseFloat(document.getElementById(id)?.value) || 0;
+    const kappa = 5 / 6;
+
+    const calc = () => {
+      const shape = shapeEl.value;
+      let A, Iz, Iy, J, Avy, Avz, name;
+
+      if (shape === 'rect') {
+        const b = g('sc-b'), h = g('sc-h');
+        A = b * h; Iz = b * h ** 3 / 12; Iy = h * b ** 3 / 12;
+        J = (b < h ? b : h) ** 3 * (b > h ? b : h) / 3 * (1 - 0.63 * Math.min(b,h)/Math.max(b,h));
+        Avy = kappa * b * h; Avz = kappa * b * h;
+        name = `Rect ${(b*100).toFixed(0)}×${(h*100).toFixed(0)}cm`;
+      } else if (shape === 'circ') {
+        const r = g('sc-D') / 2;
+        A = Math.PI * r ** 2; Iz = Iy = Math.PI * r ** 4 / 4;
+        J = Math.PI * r ** 4 / 2; Avy = Avz = 0.9 * A;
+        name = `Circ Ø${(r*200).toFixed(0)}cm`;
+      } else if (shape === 'hrect') {
+        const b = g('sc-b'), h = g('sc-h'), t = g('sc-t');
+        const bi = b-2*t, hi = h-2*t;
+        A = b*h - bi*hi; Iz = (b*h**3 - bi*hi**3)/12; Iy = (h*b**3 - hi*bi**3)/12;
+        J = 2*t*(b-t)**2*(h-t)**2/(b+h-2*t);
+        Avy = Avz = 2*h*t;
+        name = `Rect ${(b*100).toFixed(0)}×${(h*100).toFixed(0)}×${(t*100).toFixed(1)}cm`;
+      } else if (shape === 'hcirc') {
+        const D = g('sc-D'), t = g('sc-t'), ro = D/2, ri = D/2 - t;
+        A = Math.PI*(ro**2 - ri**2); Iz = Iy = Math.PI*(ro**4 - ri**4)/4;
+        J = Math.PI*(ro**4 - ri**4)/2; Avy = Avz = A * 0.5;
+        name = `Tubo Ø${(D*100).toFixed(0)}×${(t*100).toFixed(1)}cm`;
+      } else if (shape === 'ipe') {
+        const p = document.getElementById('sc-ipe')?.value || 'IPE200';
+        const d = IPE[p]; if (!d) return;
+        ({A,Iz,Iy,J} = d); Avy = Avz = A * 0.5; name = p;
+      } else if (shape === 'heb') {
+        const p = document.getElementById('sc-heb')?.value || 'HEB200';
+        const d = HEB[p]; if (!d) return;
+        ({A,Iz,Iy,J} = d); Avy = Avz = A * 0.5; name = p;
+      }
+
+      if (!A || A <= 0) { resEl.innerHTML = '<span style="color:var(--warn)">⚠ Dimensiones inválidas</span>'; return; }
+      lastData = { name, A, Iz, Iy, J, Avy: Avy||kappa*A, Avz: Avz||kappa*A, kappay: kappa, kappaz: kappa };
+
+      resEl.innerHTML = `<table style="width:100%;border-collapse:collapse">
+        ${[
+          ['Nombre', `<b>${name}</b>`],
+          ['A  (m²)', A.toExponential(4)],
+          ['Iz (m⁴)', Iz.toExponential(4)],
+          ['Iy (m⁴)', Iy.toExponential(4)],
+          ['J  (m⁴)', J.toExponential(4)],
+          ['Avy (m²)', (Avy||kappa*A).toExponential(4)],
+          ['Avz (m²)', (Avz||kappa*A).toExponential(4)],
+        ].map(([l,v]) =>
+          `<tr><td style="color:var(--text-muted);padding:2px 8px 2px 0">${l}</td>
+               <td>${v}</td></tr>`
+        ).join('')}
+      </table>`;
+    };
+
+    const rebind = () => {
+      inputsEl.querySelectorAll('input,select').forEach(el => el.addEventListener('input', calc));
+      calc();
+    };
+
+    inputsEl.innerHTML = shapes[shapeEl.value] || '';
+    rebind();
+    shapeEl.addEventListener('change', () => {
+      inputsEl.innerHTML = shapes[shapeEl.value] || '';
+      rebind();
+    });
+
+    overlay._resolve = () => {
+      if (!lastData) return;
+      this.app.snapshot();
+      this.app.model.addSection(lastData);
+      this.app.markDirty();
+      this.renderSections();
+      this._switchTab('sec');
+      this.app.toast(`Sección "${lastData.name}" creada`, 'ok');
+    };
+    overlay._reject = () => {};
   }
 
   _addSection() {

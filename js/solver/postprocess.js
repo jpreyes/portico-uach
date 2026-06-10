@@ -1,65 +1,83 @@
 // ──────────────────────────────────────────────────────────────────────────────
-// Results — post-processing: displacements, internal forces, reactions
+// Results — post-processing: displacements, internal forces, reactions.
+//
+// Internal forces are computed by equilibrium integration:
+//   V(x) = V(0) - ∫₀ˣ q(t) dt
+//   M(x) = M(0) + ∫₀ˣ V(t) dt
+// For UDL this reduces to the exact parabolic formula.
+// Displacements at arbitrary xi use cubic Hermite shape functions.
 // ──────────────────────────────────────────────────────────────────────────────
-import { localAxes, stiffnessMatrix, transformMatrix } from './timoshenko.js';
+import { localAxes, stiffnessMatrix, transformMatrix, fixedEndForces } from './timoshenko.js';
 import { getNodeDOFs } from './assembler.js';
 
+function _toLocalLoad(load, ey, ez) {
+  const w   = load.w;
+  const dir = load.dir || 'globalZ';
+  if (dir === 'localY') return [{ d: 'y', w }];
+  if (dir === 'localZ') return [{ d: 'z', w }];
+  if (dir === 'localX') return [{ d: 'x', w }];
+  const g = dir === 'globalX' ? [1,0,0] : dir === 'globalY' ? [0,1,0] : [0,0,1];
+  const wy = w * (g[0]*ey[0] + g[1]*ey[1] + g[2]*ey[2]);
+  const wz = w * (g[0]*ez[0] + g[1]*ez[1] + g[2]*ez[2]);
+  const res = [];
+  if (Math.abs(wy) > 1e-14) res.push({ d: 'y', w: wy });
+  if (Math.abs(wz) > 1e-14) res.push({ d: 'z', w: wz });
+  return res;
+}
+
 export class Results {
-  constructor(model, nodeIndex, u, reactions, F_ext) {
+  /**
+   * @param {object|null} precomputedElemForces  Map<elemId, ef> — used for combinations
+   *   to avoid re-deriving FEFs from a combined u vector (which would be wrong).
+   *   When set, _computeAllElemForces is skipped.
+   */
+  constructor(model, nodeIndex, u, reactions, F_ext, lcId = null, selfWeight = false, precomputedElemForces = null) {
     this.model      = model;
     this.nodeIndex  = nodeIndex;
-    this.u          = u;          // Float64Array[nDOF] — global displacements
-    this.reactions  = reactions;  // Float64Array[nDOF] — support reactions
-    this.F_ext      = F_ext;      // Float64Array[nDOF] — external forces
+    this.u          = u;
+    this.reactions  = reactions;
+    this.F_ext      = F_ext;
+    this.lcId       = lcId;
+    this.selfWeight = selfWeight;
 
-    // Cache element forces
     this._elemForces = new Map();
-    this._computeAllElemForces();
+    this._diagCache  = null;   // filled by precomputeDiagrams()
+    if (precomputedElemForces) {
+      this._elemForces = precomputedElemForces;
+    } else {
+      this._computeAllElemForces();
+    }
   }
 
-  // ── Node displacements ────────────────────────────────────────────────────
-  /** Returns [ux, uy, uz, rx, ry, rz] in global coords for a node */
+  // ── Node displacements ───────────────────────────────────────────────────────
   getNodeDisp(nodeId) {
     const d = getNodeDOFs(this.nodeIndex, nodeId);
     return d.map(i => this.u[i]);
   }
 
-  /** Returns [Rx, Ry, Rz, Rmx, Rmy, Rmz] support reaction at node */
   getReaction(nodeId) {
     const d = getNodeDOFs(this.nodeIndex, nodeId);
     return d.map(i => this.reactions[i]);
   }
 
-  /** Displaced node coordinates (for deformed shape) */
   getDeformedCoords(nodeId, scale = 1) {
     const node = this.model.nodes.get(nodeId);
-    const d = this.getNodeDisp(nodeId);
-    return {
-      x: node.x + scale * d[0],
-      y: node.y + scale * d[1],
-      z: node.z + scale * d[2]
-    };
+    const d    = this.getNodeDisp(nodeId);
+    return { x: node.x + scale*d[0], y: node.y + scale*d[1], z: node.z + scale*d[2] };
   }
 
-  /** Max absolute translational displacement (for auto-scale) */
   getMaxDisp() {
     let maxD = 0;
     for (const id of this.model.nodes.keys()) {
-      const d = this.getNodeDisp(id);
+      const d   = this.getNodeDisp(id);
       const mag = Math.sqrt(d[0]**2 + d[1]**2 + d[2]**2);
       if (mag > maxD) maxD = mag;
     }
     return maxD;
   }
 
-  // ── Element internal forces ───────────────────────────────────────────────
-  /**
-   * Returns {N, Vy1, Vz1, T, My1, Mz1, Vy2, Vz2, My2, Mz2}
-   * Positive N = tension, positive moments follow right-hand rule
-   */
-  getElemForces(elemId) {
-    return this._elemForces.get(elemId);
-  }
+  // ── Element internal forces ──────────────────────────────────────────────────
+  getElemForces(elemId) { return this._elemForces.get(elemId); }
 
   _computeAllElemForces() {
     for (const elem of this.model.elements.values()) {
@@ -78,53 +96,106 @@ export class Results {
     const Ke_local = stiffnessMatrix(L, mat, sec);
     const T        = transformMatrix(ex, ey, ez);
 
-    // Global element displacements
     const d1 = getNodeDOFs(this.nodeIndex, elem.n1);
     const d2 = getNodeDOFs(this.nodeIndex, elem.n2);
     const ue_global = [...d1, ...d2].map(i => this.u[i]);
 
-    // Local displacements: ue_local = T · ue_global
     const ue_local = Array(12).fill(0);
-    for (let i=0; i<12; i++)
-      for (let j=0; j<12; j++)
+    for (let i = 0; i < 12; i++)
+      for (let j = 0; j < 12; j++)
         ue_local[i] += T[i][j] * ue_global[j];
 
-    // Local forces: fe_local = Ke_local · ue_local
     const fe = Array(12).fill(0);
-    for (let i=0; i<12; i++)
-      for (let j=0; j<12; j++)
+    for (let i = 0; i < 12; i++)
+      for (let j = 0; j < 12; j++)
         fe[i] += Ke_local[i][j] * ue_local[j];
 
-    // fe[0] is the restoring force at n1 in local x (axial reaction)
-    // Axial tension = -fe[0] (positive = tension, negative = compression)
+    this._addFEF(elem, fe, ey, ez, L);
+
+    // Actual distributed load intensities (local y, z) — needed for correct M(x), V(x)
+    const { qy, qz } = this._computeActualLoads(elem, ey, ez);
+
     return {
-      N:    -fe[0],     // Axial force (+ tension)
-      Vy1:   fe[1],     // Shear local y at n1
-      Vz1:   fe[2],     // Shear local z at n1
-      T:     fe[3],     // Torsion
-      My1:   fe[4],     // Moment about local y at n1
-      Mz1:   fe[5],     // Moment about local z at n1
-      Vy2:  -fe[7],     // Shear local y at n2 (opposite sign convention)
-      Vz2:  -fe[8],     // Shear local z at n2
-      My2:  -fe[10],    // Moment about local y at n2
-      Mz2:  -fe[11],    // Moment about local z at n2
-      // Convenience
+      N:    -fe[0],
+      Vy1:   fe[1],
+      Vz1:   fe[2],
+      T:     fe[3],
+      My1:   fe[4],
+      Mz1:   fe[5],
+      Vy2:  -fe[7],
+      Vz2:  -fe[8],
+      My2:  -fe[10],
+      Mz2:  -fe[11],
       Vmax:  Math.max(Math.abs(fe[1]), Math.abs(fe[7]), Math.abs(fe[2]), Math.abs(fe[8])),
       Mmax:  Math.max(Math.abs(fe[5]), Math.abs(fe[11]), Math.abs(fe[4]), Math.abs(fe[10])),
       Nabs:  Math.abs(fe[0]),
-      // Local axes (for diagram rendering)
+      qy, qz,   // actual load intensity (local coords) — NOT inferred from end forces
       ex, ey, ez, L,
+      _ue: ue_local,
     };
   }
 
-  // ── Global summary ────────────────────────────────────────────────────────
+  _addFEF(elem, fe, ey, ez, L) {
+    const lc = this.lcId ? this.model.loadCases.get(this.lcId) : null;
+    if (lc) {
+      for (const load of lc.loads) {
+        if (load.type !== 'dist' || load.elemId !== elem.id) continue;
+        for (const { d, w } of _toLocalLoad(load, ey, ez)) {
+          const fef = fixedEndForces(L, { dir: d, w });
+          for (let i = 0; i < 12; i++) fe[i] += fef[i];
+        }
+      }
+    }
+
+    if (this.selfWeight) {
+      const mat = this.model.materials.get(elem.matId);
+      const sec = this.model.sections.get(elem.secId);
+      if (mat && sec && mat.rho > 0) {
+        const w_sw = -(mat.rho * sec.A);
+        for (const { d, w } of _toLocalLoad({ w: w_sw, dir: 'globalZ' }, ey, ez)) {
+          const fef = fixedEndForces(L, { dir: d, w });
+          for (let i = 0; i < 12; i++) fe[i] += fef[i];
+        }
+      }
+    }
+  }
+
+  // Returns actual distributed load {qy, qz} on element in local coords.
+  // This is the source-of-truth for M(x)/V(x) — never infer q from end forces.
+  _computeActualLoads(elem, ey, ez) {
+    let qy = 0, qz = 0;
+    const lc = this.lcId ? this.model.loadCases.get(this.lcId) : null;
+    if (lc) {
+      for (const load of lc.loads) {
+        if (load.type !== 'dist' || load.elemId !== elem.id) continue;
+        for (const { d, w } of _toLocalLoad(load, ey, ez)) {
+          if (d === 'y') qy += w;
+          else if (d === 'z') qz += w;
+        }
+      }
+    }
+    if (this.selfWeight) {
+      const mat = this.model.materials.get(elem.matId);
+      const sec = this.model.sections.get(elem.secId);
+      if (mat && sec && mat.rho > 0) {
+        const w_sw = -(mat.rho * sec.A);
+        for (const { d, w } of _toLocalLoad({ w: w_sw, dir: 'globalZ' }, ey, ez)) {
+          if (d === 'y') qy += w;
+          else if (d === 'z') qz += w;
+        }
+      }
+    }
+    return { qy, qz };
+  }
+
+  // ── Global summary ───────────────────────────────────────────────────────────
   getSummary() {
     let maxU = 0, maxUNode = null;
     let maxN = 0, maxV = 0, maxM = 0;
     let maxNElem = null, maxVElem = null, maxMElem = null;
 
     for (const node of this.model.nodes.values()) {
-      const d = this.getNodeDisp(node.id);
+      const d   = this.getNodeDisp(node.id);
       const mag = Math.sqrt(d[0]**2 + d[1]**2 + d[2]**2);
       if (mag > maxU) { maxU = mag; maxUNode = node.id; }
     }
@@ -139,51 +210,185 @@ export class Results {
     return { maxU, maxUNode, maxN, maxNElem, maxV, maxVElem, maxM, maxMElem };
   }
 
-  // ── Data for diagram rendering (list of {x,y} points along element) ───────
+  // ── Diagram pre-computation (sub-element sampling) ───────────────────────────
   /**
-   * Returns diagram points for a given force component.
-   * type: 'N'|'Vy'|'Vz'|'T'|'My'|'Mz'
-   * Returns [{pos3d, val}] — position along element axis in model coordinates, and value
+   * Pre-computes and caches diagram data for all elements × all force types.
+   * Subsequent getDiagramData calls return instantly from cache.
+   * Call this after the main solve; it is called in chunks by App._precomputeDiagramsAsync.
+   * @param {string[]} types  Force type keys to cache
+   * @param {number}   nPts   Sample points per element (default 20)
    */
-  getDiagramData(elemId, type, nPts = 10) {
+  precomputeDiagrams(types = ['N','Vy','Vz','T','My','Mz'], nPts = 20) {
+    if (!this._diagCache) this._diagCache = new Map();
+    for (const elemId of this.model.elements.keys()) {
+      const ec = {};
+      for (const t of types) ec[t] = this._computeDiagramData(elemId, t, nPts);
+      this._diagCache.set(elemId, ec);
+    }
+  }
+
+  // Pre-computes a chunk of elements (start…start+count-1) for chunked async use.
+  // Returns the next start index (equals total when done).
+  precomputeChunk(elemKeys, types, nPts, start, count) {
+    if (!this._diagCache) this._diagCache = new Map();
+    const end = Math.min(start + count, elemKeys.length);
+    for (let i = start; i < end; i++) {
+      const elemId = elemKeys[i];
+      const ec = {};
+      for (const t of types) ec[t] = this._computeDiagramData(elemId, t, nPts);
+      this._diagCache.set(elemId, ec);
+    }
+    return end;
+  }
+
+  // ── Diagram data ─────────────────────────────────────────────────────────────
+  /**
+   * Returns { pts, extremes, maxVal, minVal } for force diagram rendering.
+   * Uses cache when pre-computed; otherwise computes analytically on-demand.
+   * Equilibrium integration is exact for UDL.
+   */
+  getDiagramData(elemId, type, nPts = 20) {
+    if (this._diagCache) {
+      const cached = this._diagCache.get(elemId)?.[type];
+      if (cached) return cached;
+    }
+    return this._computeDiagramData(elemId, type, nPts);
+  }
+
+  _computeDiagramData(elemId, type, nPts = 20) {
     const f = this.getElemForces(elemId);
-    if (!f) return [];
+    if (!f) return { pts: [], extremes: [], maxVal: 0, minVal: 0 };
     const elem = this.model.elements.get(elemId);
     const n1   = this.model.nodes.get(elem.n1);
     const n2   = this.model.nodes.get(elem.n2);
     const L    = f.L;
 
-    // Linear variation along element (exact for uniform loads and no intermediate loads)
     const val1 = type === 'N'  ? f.N
                : type === 'Vy' ? f.Vy1
                : type === 'Vz' ? f.Vz1
                : type === 'T'  ? f.T
                : type === 'My' ? f.My1
-               : /* Mz */        f.Mz1;
+               :                  f.Mz1;
 
-    const val2 = type === 'N'  ? f.N           // constant
-               : type === 'Vy' ? -f.Vy2
-               : type === 'Vz' ? -f.Vz2
+    const val2 = type === 'N'  ? f.N
+               : type === 'Vy' ? f.Vy2
+               : type === 'Vz' ? f.Vz2
                : type === 'T'  ? f.T
                : type === 'My' ? -f.My2
-               : /* Mz */       -f.Mz2;
+               :                  -f.Mz2;
 
+    const isMz = type === 'Mz';
+    const isMy = type === 'My';
+    const isVy = type === 'Vy';
+    const isVz = type === 'Vz';
+    const isMoment = isMz || isMy;
+    const isShear  = isVy || isVz;
+
+    // Use ACTUAL distributed load from element forces (not inferred from end shears).
+    // Inferred q = (V1+V2)/L is wrong when nodal forces co-exist with dist. loads.
+    const qy = f.qy ?? 0;   // local-y distributed load intensity
+    const qz = f.qz ?? 0;   // local-z distributed load intensity
+    const q  = isMz ? qy : isMy ? qz : isVy ? qy : isVz ? qz : 0;
+    const V1 = isMz ? f.Vy1 : isMy ? f.Vz1 : isVy ? f.Vy1 : isVz ? f.Vz1 : 0;
+
+    const N   = Math.max(nPts, 20);
     const pts = [];
-    for (let i=0; i<=nPts; i++) {
-      const xi = i / nPts;
-      const v  = val1 * (1-xi) + val2 * xi;
-      // Position in model coordinates
+    let maxVal = -Infinity, minVal = Infinity;
+
+    for (let i = 0; i <= N; i++) {
+      const xi  = i / N;
+      const x   = xi * L;
+      let v;
+      if (isMoment) {
+        v = val1 - V1*x - 0.5*q*x*x;   // M(x) = M₀ − V�?x − ½qx²  (FEM sign: M'=−V)
+      } else if (isShear) {
+        v = V1 + q*x;                   // V(x) = V�? + qx            (from left free body)
+      } else {
+        v = val1*(1 - xi) + val2*xi;    // linear (axial, torsion)
+      }
       const pos = {
-        x: n1.x + xi * (n2.x - n1.x),
-        y: n1.y + xi * (n2.y - n1.y),
-        z: n1.z + xi * (n2.z - n1.z)
+        x: n1.x + xi*(n2.x-n1.x),
+        y: n1.y + xi*(n2.y-n1.y),
+        z: n1.z + xi*(n2.z-n1.z),
       };
+      if (v > maxVal) maxVal = v;
+      if (v < minVal) minVal = v;
       pts.push({ pos, val: v });
     }
-    return pts;
+
+    // Inner extreme for moments: x* where V(x*)=0 → V1 + q·x* = 0 → x* = −V1/q
+    const extremes = [];
+    if (isMoment && Math.abs(q) > 1e-12) {
+      const xS = -V1 / q;
+      if (xS > L*1e-4 && xS < L*(1 - 1e-4)) {
+        const xi  = xS / L;
+        const vE  = val1 - V1*xS - 0.5*q*xS*xS;
+        const pos = {
+          x: n1.x + xi*(n2.x-n1.x),
+          y: n1.y + xi*(n2.y-n1.y),
+          z: n1.z + xi*(n2.z-n1.z),
+        };
+        extremes.push({ pos, val: vE, xi });
+        if (vE > maxVal) maxVal = vE;
+        if (vE < minVal) minVal = vE;
+      }
+    }
+
+    return { pts, extremes, maxVal, minVal };
   }
 
-  // ── CSV export ────────────────────────────────────────────────────────────
+  // ── Force + displacement at arbitrary xi ─────────────────────────────────────
+  /**
+   * Returns { N, Vy, Vz, T, My, Mz, ux, uy, uz } at xi ∈ [0,1].
+   * Forces use equilibrium integration (exact for UDL).
+   * Displacements use cubic Hermite interpolation (exact for Bernoulli beam).
+   */
+  getElemAtXi(elemId, xi) {
+    const f = this.getElemForces(elemId);
+    if (!f) return null;
+
+    const L   = f.L;
+    const x   = xi * L;
+
+    // ── Forces by equilibrium (use stored actual loads, not inferred from ends) ──
+    const qy  = f.qy ?? 0;
+    const qz  = f.qz ?? 0;
+
+    const N_val  = f.N;
+    const T_val  = f.T;
+    const Vy_val = f.Vy1 + qy * x;                  // V(x) = V�? + qy·x
+    const Vz_val = f.Vz1 + qz * x;                  // V(x) = V�? + qz·x
+    const Mz_val = f.Mz1 - f.Vy1*x - 0.5*qy*x*x;   // M(x) = M�? − V�?·x − ½qy·x²
+    const My_val = f.My1 - f.Vz1*x - 0.5*qz*x*x;
+
+    // ── Displacements by Hermite interpolation ────────────────────────────
+    const ue = f._ue;   // local DOFs stored by _computeElemForces
+    let ux = 0, uy = 0, uz = 0;
+
+    if (ue) {
+      const t  = xi;
+      const H1 = 1 - 3*t*t + 2*t*t*t;
+      const H2 = t - 2*t*t + t*t*t;     // multiplied by L below
+      const H3 = 3*t*t - 2*t*t*t;
+      const H4 = -t*t + t*t*t;           // multiplied by L below
+
+      // Local displacements
+      const ux_l = ue[0]*(1-t) + ue[6]*t;
+      const uy_l = H1*ue[1] + H2*L*ue[5] + H3*ue[7] + H4*L*ue[11];
+      const uz_l = H1*ue[2] - H2*L*ue[4] + H3*ue[8] - H4*L*ue[10];
+
+      // Transform back to global: u_global = T^T · u_local (only translational part)
+      const ex = f.ex, ey = f.ey, ez = f.ez;
+      // T^T for the translational block: col vectors are ex, ey, ez
+      ux = ex[0]*ux_l + ey[0]*uy_l + ez[0]*uz_l;
+      uy = ex[1]*ux_l + ey[1]*uy_l + ez[1]*uz_l;
+      uz = ex[2]*ux_l + ey[2]*uy_l + ez[2]*uz_l;
+    }
+
+    return { N: N_val, Vy: Vy_val, Vz: Vz_val, T: T_val, My: My_val, Mz: Mz_val, ux, uy, uz };
+  }
+
+  // ── CSV export ───────────────────────────────────────────────────────────────
   toCSV() {
     const lines = ['# StructWeb3D — Resultados del Análisis Estático'];
     const u = this.model.units;
@@ -218,3 +423,4 @@ export class Results {
     return lines.join('\r\n');
   }
 }
+

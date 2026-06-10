@@ -610,6 +610,8 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 #sb-sel   { flex: 1; }
 #sb-model { white-space: nowrap; }
 #sb-units { color: var(--text); font-weight: 600; white-space: nowrap; }
+#sb-progress { width: 80px; height: 6px; border: none; border-radius: 3px; vertical-align: middle; accent-color: var(--accent); }
+#sb-progress.hidden { display: none; }
 
 /* ── Modal ───────────────────────────────────────────────────── */
 #modal-overlay {
@@ -1081,6 +1083,17 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 .res-table .cum-ok  { color: var(--success); font-weight: 700; }
 .res-table .cum-warn { color: var(--warn); }
 
+/* ── P2-6: IDs / extrude toggle active state ─────────────────── */
+#btn-toggle-ids.active,
+#btn-toggle-extrude.active {
+  background: rgba(79,195,247,0.15) !important;
+  border-color: #4fc3f7 !important;
+  color: #4fc3f7 !important;
+}
+
+/* ── P3-8: Range slider in results overlay ───────────────────── */
+#result-scale-range { accent-color: var(--success); }
+
 /* ── Combinations tab ────────────────────────────────────────── */
 .combo-card {
   background: var(--bg3);
@@ -1144,3 +1157,183 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   white-space: nowrap;
 }
 .combo-run-btn:hover { background: rgba(63,185,80,0.25); }
+
+/* ── P2-7: Custom styled tooltips ─────────────────────────────────────────── */
+#sw-tooltip {
+  position: fixed;
+  z-index: 9999;
+  background: #1a2332;
+  color: #e0e6ed;
+  font-size: 11.5px;
+  font-family: var(--font);
+  padding: 5px 9px;
+  border-radius: 4px;
+  border: 1px solid rgba(136,192,255,0.25);
+  box-shadow: 0 3px 12px rgba(0,0,0,0.55);
+  pointer-events: none;
+  white-space: pre;        /* preserve  double-space before shortcuts */
+  max-width: 260px;
+  white-space: normal;
+  line-height: 1.4;
+  opacity: 0;
+  transition: opacity 0.12s;
+  transform: translateY(4px);
+  transition: opacity 0.12s, transform 0.12s;
+}
+#sw-tooltip.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+/* keyboard shortcut hint styled differently */
+#sw-tooltip .sw-tip-key {
+  display: inline-block;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 3px;
+  padding: 0 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  margin-left: 4px;
+  vertical-align: middle;
+  color: #a8c7fa;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Element inspector panel (floating, results mode)
+   ══════════════════════════════════════════════════════════════ */
+.elem-inspector {
+  position: fixed;
+  z-index: 120;
+  width: 280px;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  font-size: 12px;
+  color: var(--text);
+  user-select: none;
+}
+.elem-inspector.hidden { display: none; }
+
+.insp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  border-radius: var(--radius) var(--radius) 0 0;
+  cursor: move;
+}
+.insp-title {
+  font-weight: 600;
+  color: var(--node-col);
+  font-size: 12px;
+}
+.insp-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}
+.insp-close:hover { color: var(--danger); }
+
+.insp-meta {
+  padding: 4px 8px;
+  font-size: 10px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.insp-tabs {
+  display: flex;
+  gap: 1px;
+  padding: 4px 6px 0;
+  background: var(--bg3);
+}
+.insp-tab {
+  flex: 1;
+  padding: 3px 0;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 3px 3px 0 0;
+  background: var(--bg4);
+  color: var(--text-muted);
+  font-size: 10px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+}
+.insp-tab.active {
+  background: var(--bg2);
+  color: var(--node-col);
+  border-color: var(--border2);
+}
+.insp-tab:hover:not(.active) { color: var(--text); }
+
+.insp-svg-wrap {
+  padding: 2px 6px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+}
+.insp-svg {
+  width: 100%;
+  height: 70px;
+  display: block;
+}
+
+.insp-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.insp-xi-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  white-space: nowrap;
+  color: var(--text-muted);
+  min-width: 68px;
+}
+.insp-xi-label b { color: var(--text); }
+.insp-xi-slider {
+  flex: 1;
+  accent-color: var(--accent);
+  height: 3px;
+}
+
+.insp-forces {
+  padding: 4px 0 6px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+}
+.ifr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3px 4px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.ifr:nth-child(3n) { border-right: none; }
+.ifr span:first-child {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.ifv {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text);
+  margin-top: 1px;
+}
+.ifr-disp .ifv { color: var(--success); }
+.ifr-disp span:first-child { color: #56d364; }

@@ -117,27 +117,20 @@ export function assembleF(model, nodeIndex, lcId, selfWeight = false) {
         const { ex, ey, ez, L } = localAxes(n1, n2);
         const T = transformMatrix(ex, ey, ez);
 
-        // Determine local direction and magnitude
-        let localLoad = _toLocalDistLoad(load, ex, ey, ez, L);
-
-        // Fixed-end forces in local coords
-        const f_local = fixedEndForces(L, localLoad);
-
-        // Transform to global: f_global = T^T · f_local
-        const f_global = Array(12).fill(0);
-        for (let i=0; i<12; i++)
-          for (let j=0; j<12; j++)
-            f_global[i] += T[j][i] * f_local[j];  // T^T
-
-        // Add to global F (note: equivalent nodal loads → add with negative sign
-        // because fixed-end forces are reactions; load = -FEF)
         const ed = [...dofs(nodeIndex, elem.n1), ...dofs(nodeIndex, elem.n2)];
-        for (let i=0; i<12; i++) F[ed[i]] -= f_global[i];
+        for (const ll of _toLocalDistLoad(load, ex, ey, ez)) {
+          const f_local = fixedEndForces(L, ll);
+          const f_global = Array(12).fill(0);
+          for (let i=0; i<12; i++)
+            for (let j=0; j<12; j++)
+              f_global[i] += T[j][i] * f_local[j];
+          for (let i=0; i<12; i++) F[ed[i]] -= f_global[i];
+        }
       }
     }
   }
 
-  // Self-weight: gravity in -Z direction
+  // Self-weight: gravity in -Z direction — full FEF (forces + moments)
   if (selfWeight) {
     for (const elem of model.elements.values()) {
       const n1  = model.nodes.get(elem.n1);
@@ -147,14 +140,17 @@ export function assembleF(model, nodeIndex, lcId, selfWeight = false) {
       if (!n1 || !n2 || !mat || !sec) continue;
 
       const { ex, ey, ez, L } = localAxes(n1, n2);
-      const T = transformMatrix(ex, ey, ez);
-
-      const W = mat.rho * sec.A * L;  // total element weight (ton·g or kN depending on units)
-      // Apply as -Z equivalent nodal force (split equally between nodes)
-      const d1 = dofs(nodeIndex, elem.n1);
-      const d2 = dofs(nodeIndex, elem.n2);
-      F[d1[2]] -= W / 2;  // Fz at node 1 (global Z = index 2)
-      F[d2[2]] -= W / 2;  // Fz at node 2
+      const T  = transformMatrix(ex, ey, ez);
+      const ed = [...dofs(nodeIndex, elem.n1), ...dofs(nodeIndex, elem.n2)];
+      const swLoad = { w: -(mat.rho * sec.A), dir: 'globalZ' };
+      for (const ll of _toLocalDistLoad(swLoad, ex, ey, ez)) {
+        const f_local = fixedEndForces(L, ll);
+        const f_global = Array(12).fill(0);
+        for (let i=0; i<12; i++)
+          for (let j=0; j<12; j++)
+            f_global[i] += T[j][i] * f_local[j];
+        for (let i=0; i<12; i++) F[ed[i]] -= f_global[i];
+      }
     }
   }
 
@@ -162,27 +158,25 @@ export function assembleF(model, nodeIndex, lcId, selfWeight = false) {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────
-function _toLocalDistLoad(load, ex, ey, ez, L) {
-  // load.dir: 'localY' | 'localZ' | 'localX' | 'globalX' | 'globalY' | 'globalZ'
-  const w = load.w;
+// Returns array of {dir, w} components in local coordinates (both y and z as needed).
+function _toLocalDistLoad(load, ex, ey, ez) {
+  const w   = load.w;
   const dir = load.dir || 'globalZ';
 
-  if (dir === 'localY') return { dir: 'y', w };
-  if (dir === 'localZ') return { dir: 'z', w };
-  if (dir === 'localX') return { dir: 'x', w };
+  if (dir === 'localY') return [{ dir: 'y', w }];
+  if (dir === 'localZ') return [{ dir: 'z', w }];
+  if (dir === 'localX') return [{ dir: 'x', w }];
 
-  // Global direction → decompose onto local axes
-  const gDir = dir === 'globalX' ? [1,0,0]
-             : dir === 'globalY' ? [0,1,0]
-             : [0,0,1]; // globalZ
+  const g = dir === 'globalX' ? [1,0,0]
+          : dir === 'globalY' ? [0,1,0]
+          : [0,0,1];
 
-  // Project w·gDir onto local axes
-  const wy_local = w * (gDir[0]*ey[0] + gDir[1]*ey[1] + gDir[2]*ey[2]);
-  const wz_local = w * (gDir[0]*ez[0] + gDir[1]*ez[1] + gDir[2]*ez[2]);
-
-  // Return dominant component (for simplicity; full decomposition needs superposition)
-  if (Math.abs(wy_local) >= Math.abs(wz_local)) return { dir: 'y', w: wy_local };
-  return { dir: 'z', w: wz_local };
+  const wy = w * (g[0]*ey[0] + g[1]*ey[1] + g[2]*ey[2]);
+  const wz = w * (g[0]*ez[0] + g[1]*ez[1] + g[2]*ez[2]);
+  const res = [];
+  if (Math.abs(wy) > 1e-14) res.push({ dir: 'y', w: wy });
+  if (Math.abs(wz) > 1e-14) res.push({ dir: 'z', w: wz });
+  return res;
 }
 
 // ── Export DOF helper (used by solver) ────────────────────────────────────
