@@ -250,11 +250,25 @@ NODE,   2,  5.0,  0.0,  0.0,   1,  1,  1,  1,  1,  1
 NODE,   3,  0.0,  0.0,  3.5,   0,  0,  0,  0,  0,  0
 NODE,   4,  5.0,  0.0,  3.5,   0,  0,  0,  0,  0,  0
 
+# Sin rótulas (columnas de liberación omitidas → todas en 0):
 TYPE,     ID,  n1, n2, matId, secId
 ELEMENT,   1,   1,  3,     1,     1
 ELEMENT,   2,   2,  4,     1,     1
-ELEMENT,   3,   3,  4,     1,     1
+
+# Con rótulas Mz en ambos extremos (DOF r5 y r11 = rz1 y rz2):
+# TYPE,    ID,  n1, n2, matId, secId, r0,r1,r2,r3,r4,r5, r6,r7,r8,r9,r10,r11
+ELEMENT,   3,   3,  4,     1,     1,  0, 0, 0, 0, 0, 1,  0, 0, 0, 0,  0,  1
 ```
+
+**Orden de los 12 DOFs de liberación:** `[ux1, uy1, uz1, rx1, ry1, rz1, ux2, uy2, uz2, rx2, ry2, rz2]`  
+`1 = libera ese grado de libertad (rótula), 0 = fijo`
+
+Casos habituales:
+- Rótula Mz en extremo 1: columna 6 = 1 → `…, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0`
+- Rótula Mz en extremo 2: columna 12 = 1 → `…, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1`
+- Viga biarticualda (Mz en ambos): → `…, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1`
+
+Las columnas de liberación son **opcionales** — si se omiten, el elemento es empotrado-empotrado.
 
 Descargar plantilla: **Archivo → Descargar Plantilla CSV**
 

@@ -7,8 +7,8 @@
 // For UDL this reduces to the exact parabolic formula.
 // Displacements at arbitrary xi use cubic Hermite shape functions.
 // ──────────────────────────────────────────────────────────────────────────────
-import { localAxes, stiffnessMatrix, transformMatrix, fixedEndForces, applyReleases } from './timoshenko.js';
-import { getNodeDOFs } from './assembler.js';
+import { localAxes, stiffnessMatrix, transformMatrix, fixedEndForces, applyReleases, condenseFEF } from './timoshenko.js?v=16';
+import { getNodeDOFs } from './assembler.js?v=16';
 
 function _toLocalLoad(load, ey, ez) {
   const w   = load.w;
@@ -119,7 +119,7 @@ export class Results {
       for (let j = 0; j < 12; j++)
         fe[i] += Ke_eff[i][j] * ue_local[j];
 
-    this._addFEF(elem, fe, ey, ez, L);
+    this._addFEF(elem, fe, ey, ez, L, Ke_local, hasRel ? elem.releases.map(r => r !== 0) : null);
 
     // Enforce release conditions: zero released force components
     // (handles any FEF residual that survived for distributed-load cases)
@@ -152,13 +152,14 @@ export class Results {
     };
   }
 
-  _addFEF(elem, fe, ey, ez, L) {
+  _addFEF(elem, fe, ey, ez, L, Ke_local = null, relBool = null) {
     const lc = this.lcId ? this.model.loadCases.get(this.lcId) : null;
     if (lc) {
       for (const load of lc.loads) {
         if (load.type !== 'dist' || load.elemId !== elem.id) continue;
         for (const { d, w } of _toLocalLoad(load, ey, ez)) {
-          const fef = fixedEndForces(L, { dir: d, w });
+          let fef = fixedEndForces(L, { dir: d, w });
+          if (Ke_local && relBool) fef = condenseFEF(Ke_local, relBool, fef);
           for (let i = 0; i < 12; i++) fe[i] += fef[i];
         }
       }
@@ -170,7 +171,8 @@ export class Results {
       if (mat && sec && mat.rho > 0) {
         const w_sw = -(mat.rho * sec.A);
         for (const { d, w } of _toLocalLoad({ w: w_sw, dir: 'globalZ' }, ey, ez)) {
-          const fef = fixedEndForces(L, { dir: d, w });
+          let fef = fixedEndForces(L, { dir: d, w });
+          if (Ke_local && relBool) fef = condenseFEF(Ke_local, relBool, fef);
           for (let i = 0; i < 12; i++) fe[i] += fef[i];
         }
       }

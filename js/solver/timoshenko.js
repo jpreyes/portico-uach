@@ -229,6 +229,39 @@ export function applyReleases(Ke, releases) {
   return result;
 }
 
+// ── Condense fixed-end forces for released DOFs ───────────────────────────────
+// f*[free] = f[free] - Kfr · Krr^-1 · f[released];  f*[released] = 0
+export function condenseFEF(Ke, releases, fef) {
+  const n = 12;
+  const free = [], rel = [];
+  for (let i = 0; i < n; i++) {
+    if (releases[i]) rel.push(i);
+    else free.push(i);
+  }
+  if (rel.length === 0) return fef;
+
+  const Kfr = free.map(i => rel.map(j => Ke[i][j]));
+  const Krr = rel.map(i => rel.map(j => Ke[i][j]));
+  const KrrInv = invertSmall(Krr);
+  if (!KrrInv) {
+    const res = [...fef];
+    for (const r of rel) res[r] = 0;
+    return res;
+  }
+
+  const fr = rel.map(r => fef[r]);
+  const KrrInv_fr = rel.map((_, j) =>
+    rel.reduce((s, _, k) => s + KrrInv[j][k] * fr[k], 0)
+  );
+
+  const result = [...fef];
+  for (let i = 0; i < free.length; i++) {
+    result[free[i]] -= rel.reduce((s, _, k) => s + Kfr[i][k] * KrrInv_fr[k], 0);
+  }
+  for (const r of rel) result[r] = 0;
+  return result;
+}
+
 // Simple Gauss-Jordan inversion for small matrices
 function invertSmall(M) {
   const n = M.length;

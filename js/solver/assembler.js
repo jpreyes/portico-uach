@@ -4,8 +4,8 @@
 import {
   localAxes, stiffnessMatrix, massMatrix,
   transformMatrix, globalStiffness,
-  applyReleases, fixedEndForces
-} from './timoshenko.js';
+  applyReleases, fixedEndForces, condenseFEF
+} from './timoshenko.js?v=16';
 import { applyDiaphragmConstraints, applyDiaphragmMass } from './diaphragm.js';
 
 // ── Node index (contiguous 0-based numbering) ─────────────────────────────
@@ -45,7 +45,7 @@ export function assembleK(model, nodeIndex) {
     const Me = massMatrix(L, mat, sec);
 
     // Apply end releases (hinges)
-    const hasRelease = elem.releases.some(r => r !== 0);
+    const hasRelease = elem.releases?.some(r => r !== 0);
     if (hasRelease) {
       Ke = applyReleases(Ke, elem.releases.map(r => r !== 0));
     }
@@ -116,10 +116,14 @@ export function assembleF(model, nodeIndex, lcId, selfWeight = false) {
 
         const { ex, ey, ez, L } = localAxes(n1, n2);
         const T = transformMatrix(ex, ey, ez);
+        const hasRelease = elem.releases?.some(r => r !== 0);
+        const relBool    = hasRelease ? elem.releases.map(r => r !== 0) : null;
+        const Ke_loc     = (hasRelease && mat && sec) ? stiffnessMatrix(L, mat, sec) : null;
 
         const ed = [...dofs(nodeIndex, elem.n1), ...dofs(nodeIndex, elem.n2)];
         for (const ll of _toLocalDistLoad(load, ex, ey, ez)) {
-          const f_local = fixedEndForces(L, ll);
+          let f_local = fixedEndForces(L, ll);
+          if (Ke_loc) f_local = condenseFEF(Ke_loc, relBool, f_local);
           const f_global = Array(12).fill(0);
           for (let i=0; i<12; i++)
             for (let j=0; j<12; j++)
@@ -142,9 +146,13 @@ export function assembleF(model, nodeIndex, lcId, selfWeight = false) {
       const { ex, ey, ez, L } = localAxes(n1, n2);
       const T  = transformMatrix(ex, ey, ez);
       const ed = [...dofs(nodeIndex, elem.n1), ...dofs(nodeIndex, elem.n2)];
+      const hasRel_sw  = elem.releases?.some(r => r !== 0);
+      const relBool_sw = hasRel_sw ? elem.releases.map(r => r !== 0) : null;
+      const Ke_loc_sw  = hasRel_sw ? stiffnessMatrix(L, mat, sec) : null;
       const swLoad = { w: -(mat.rho * sec.A), dir: 'globalZ' };
       for (const ll of _toLocalDistLoad(swLoad, ex, ey, ez)) {
-        const f_local = fixedEndForces(L, ll);
+        let f_local = fixedEndForces(L, ll);
+        if (Ke_loc_sw) f_local = condenseFEF(Ke_loc_sw, relBool_sw, f_local);
         const f_global = Array(12).fill(0);
         for (let i=0; i<12; i++)
           for (let j=0; j<12; j++)

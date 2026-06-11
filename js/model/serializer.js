@@ -38,7 +38,10 @@ export class Serializer {
     for (const d of (obj.materials || []))  { m.materials.set(d.id, d); }
     for (const d of (obj.sections  || []))  { m.sections.set(d.id, d); }
     for (const d of (obj.nodes     || []))  { m.nodes.set(d.id, d); }
-    for (const d of (obj.elements  || []))  { m.elements.set(d.id, d); }
+    for (const d of (obj.elements  || []))  {
+      if (!d.releases) d.releases = Array(12).fill(0);
+      m.elements.set(d.id, d);
+    }
     for (const d of (obj.diaphragms|| []))  { m.diaphragms.set(d.id, d); }
     for (const d of (obj.loadCases    || [])) { m.loadCases.set(d.id, d); }
     for (const d of (obj.combinations || [])) { m.combinations.set(d.id, d); }
@@ -100,9 +103,12 @@ export class Serializer {
     }
     lines.push('#');
 
-    lines.push('# TYPE, ID, n1, n2, mat_id, sec_id');
+    lines.push('# TYPE, ID, n1, n2, mat_id, sec_id[, r0..r11  1=libera 0=fijo]');
     for (const e of model.elements.values()) {
-      lines.push(`ELEMENT, ${e.id}, ${e.n1}, ${e.n2}, ${e.matId}, ${e.secId}`);
+      const rel = e.releases ?? Array(12).fill(0);
+      const hasRel = rel.some(r => r !== 0);
+      const relStr = hasRel ? ', ' + rel.join(', ') : '';
+      lines.push(`ELEMENT, ${e.id}, ${e.n1}, ${e.n2}, ${e.matId}, ${e.secId}${relStr}`);
     }
     lines.push('#');
 
@@ -181,10 +187,12 @@ export class Serializer {
 
     // ── Elements ──────────────────────────────────────────────────────────────
     for (const { cols, line } of parsed.ELEMENT) {
-      // ELEMENT, id, n1, n2, mat_id, sec_id
+      // ELEMENT, id, n1, n2, mat_id, sec_id[, r0..r11]
       if (cols.length < 6) { errors.push(`Línea ${line}: ELEMENT necesita 6 columnas`); continue; }
-      const [, id, n1, n2, matId, secId] = cols;
-      const obj = { id: +id, n1: +n1, n2: +n2, matId: +matId, secId: +secId, releases: Array(12).fill(0) };
+      const [, id, n1, n2, matId, secId, ...relCols] = cols;
+      const releases = Array(12).fill(0);
+      for (let i = 0; i < Math.min(relCols.length, 12); i++) releases[i] = +relCols[i] || 0;
+      const obj = { id: +id, n1: +n1, n2: +n2, matId: +matId, secId: +secId, releases };
       if (!model.nodes.has(obj.n1)) { errors.push(`Línea ${line}: nodo n1=${obj.n1} no existe`); continue; }
       if (!model.nodes.has(obj.n2)) { errors.push(`Línea ${line}: nodo n2=${obj.n2} no existe`); continue; }
       model.elements.set(obj.id, obj);
@@ -246,13 +254,17 @@ NODE,   8,  5.0,   0.0,   6.0,   0,  0,  0,  0,  0,  0
 NODE,   9,  10.0,  0.0,   6.0,   0,  0,  0,  0,  0,  0
 
 # ── ELEMENTOS ──────────────────────────────────────────────────
-# TYPE,    ID, n1, n2, mat_id, sec_id
+# TYPE,    ID, n1, n2, mat_id, sec_id[, r0, r1, r2, r3, r4, r5, r6, r7, r8, r9,r10,r11]
+# DOF orden: [ux1,uy1,uz1,rx1,ry1,rz1, ux2,uy2,uz2,rx2,ry2,rz2]  1=libera  0=fijo
+# Las columnas de liberacion son opcionales (default 0 = sin rotulas)
 ELEMENT,   1,  1,  4,  1,      1
 ELEMENT,   2,  2,  5,  1,      1
 ELEMENT,   3,  3,  6,  1,      1
 ELEMENT,   4,  4,  7,  1,      1
 ELEMENT,   5,  5,  8,  1,      1
 ELEMENT,   6,  6,  9,  1,      1
+# Vigas con rotulas Mz en ambos extremos (viga simplemente apoyada):
+# ELEMENT, 7,  4,  5,  1,      2,  0,0,0,0,0,1, 0,0,0,0,0,1
 ELEMENT,   7,  4,  5,  1,      2
 ELEMENT,   8,  5,  6,  1,      2
 ELEMENT,   9,  7,  8,  1,      2
