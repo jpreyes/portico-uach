@@ -797,8 +797,9 @@ export class Viewport {
       cam.position.set(c.x + d, c.y, c.z);
       cam.up.set(0, 1, 0);
     } else {
-      // mirar el plano X–Z desde −Y modelo (= −Z three): vista frontal clásica
-      cam.position.set(c.x, c.y, c.z - d);
+      // mirar el plano X–Z desde +Y modelo (= +Z three): vista frontal con
+      // X global hacia la DERECHA y Z (altura) hacia arriba — igual que "Frente XZ".
+      cam.position.set(c.x, c.y, c.z + d);
       cam.up.set(0, 1, 0);
     }
     cam.lookAt(c);
