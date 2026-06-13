@@ -274,7 +274,7 @@ button:focus-visible, select:focus-visible, input:focus-visible {
 #btn-enter:hover .arrow { transform: translateX(4px); }
 
 /* Botón secundario "Instalar app" (PWA) */
-#btn-install {
+#btn-install, #btn-manual {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -290,12 +290,12 @@ button:focus-visible, select:focus-visible, input:focus-visible {
   cursor: pointer;
   transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
 }
-#btn-install:hover {
+#btn-install:hover, #btn-manual:hover {
   background: rgba(56, 189, 248, 0.16);
   transform: translateY(-2px);
   box-shadow: 0 10px 28px rgba(56, 189, 248, 0.22);
 }
-#btn-install:active { transform: translateY(0); }
+#btn-install:active, #btn-manual:active { transform: translateY(0); }
 /* Pulso sutil cuando el navegador confirma que es instalable */
 #btn-install.ready { animation: install-pulse 2.4s ease-in-out infinite; }
 @keyframes install-pulse {
@@ -550,7 +550,7 @@ table.dcl-eq th { background: var(--bg3); color: var(--text-muted); text-align: 
 #help-overlay {
   position: fixed;
   inset: 0;
-  z-index: 8000;
+  z-index: 9500;   /* por encima de la portada (#landing = 9000): manual sobre la portada */
   background: rgba(4, 6, 10, 0.72);
   backdrop-filter: blur(6px);
   display: flex;

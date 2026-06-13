@@ -27,8 +27,8 @@
       window.dispatchEvent(new Event('pwa-installed'));
     });
   </script>
-  <link rel="stylesheet" href="style.css?v=30">
-  <link rel="stylesheet" href="ui-v2.css?v=30">
+  <link rel="stylesheet" href="style.css?v=31">
+  <link rel="stylesheet" href="ui-v2.css?v=31">
   <script type="importmap">
   {
     "imports": {
@@ -636,7 +636,7 @@
           <div>
             <h2 style="margin:0">PÓRTICO</h2>
             <p style="margin:2px 0 0;color:var(--text-muted)">Laboratorio virtual de análisis estructural 3D
-              · <b id="help-version">versión 30</b> · junio 2026</p>
+              · <b id="help-version">versión 31</b> · junio 2026</p>
           </div>
         </div>
         <p><b>Material docente</b> desarrollado por el <b>Dr. Juan Patricio Reyes C.</b> —
@@ -720,6 +720,7 @@
     </div>
     <div class="hero-actions">
       <button id="btn-enter">Entrar al laboratorio <span class="arrow">→</span></button>
+      <button id="btn-manual" type="button">📖 Manual de uso</button>
       <button id="btn-install" type="button">⤓ Instalar app</button>
     </div>
     <div class="hero-kbd">o presione <kbd>Enter</kbd></div>
@@ -745,11 +746,21 @@
     setTimeout(function () { landing.remove(); }, 700);
   }
   function onKey(e) {
+    // Si el manual (ayuda) está abierto sobre la portada, que él maneje las teclas
+    const help = document.getElementById('help-overlay');
+    if (help && !help.classList.contains('hidden')) return;
     e.stopPropagation();
     if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); enter(); }
   }
   document.getElementById('btn-enter').addEventListener('click', enter);
   document.addEventListener('keydown', onKey, true);
+
+  // ── Botón "Manual de uso" — abre la Ayuda sin entrar al laboratorio ──
+  document.getElementById('btn-manual')?.addEventListener('click', () => {
+    if (window.app && typeof window.app.openHelp === 'function') {
+      window.app.openHelp('guia');
+    }
+  });
 
   // ── Botón "Instalar app" (PWA) ──
   const installBtn = document.getElementById('btn-install');
@@ -792,7 +803,7 @@
 
 <!-- numeric.js para solver (Fase 2+) -->
 <script src="/lib/numeric.js"></script>
-<script type="module" src="js/app.js?v=30"></script>
+<script type="module" src="js/app.js?v=31"></script>
 
 <!-- PWA: registrar el service worker (offline). Solo en contexto seguro
      (https o localhost); el navegador deja navigator.serviceWorker undefined
