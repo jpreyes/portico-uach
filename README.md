@@ -1,4 +1,11 @@
-# StructWeb3D
+# PÓRTICO — Laboratorio Virtual de Análisis Estructural 3D
+
+Material docente desarrollado por **Dr. Juan Patricio Reyes C.** —
+Instituto de Obras Civiles, Facultad de Ciencias de la Ingeniería,
+Universidad Austral de Chile.
+
+Para estudiantes de **Arquitectura**, **Construcción** e
+**Ingeniería Civil en Obras Civiles**.
 
 Aplicación web de análisis estructural tridimensional para docencia.  
 No requiere instalación — solo un navegador moderno (Chrome, Edge, Firefox).

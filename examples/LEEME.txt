@@ -1,0 +1,28 @@
+CARPETA DE EJEMPLOS GUIADOS — PÓRTICO
+=====================================
+
+Coloque aquí los modelos de ejemplo (.s3d) y un archivo index.json
+que los describa. Apareceran automaticamente en Ayuda (F1) →
+"Ejemplos Guiados".
+
+Formato de index.json (lista JSON, una entrada por ejemplo):
+
+[
+  {
+    "archivo":     "viga_simple.s3d",
+    "titulo":      "1. Viga simplemente apoyada",
+    "descripcion": "UDL de 10 kN/m sobre 6 m. Verificar M_centro = wL^2/8 = 45 kN.m.",
+    "observar":    "Active el DCL del elemento y compare con el calculo manual."
+  },
+  {
+    "archivo":     "portico_2d.s3d",
+    "titulo":      "2. Portico plano con carga lateral",
+    "descripcion": "...",
+    "observar":    "..."
+  }
+]
+
+Notas:
+- "archivo" es el nombre del .s3d dentro de esta misma carpeta.
+- "observar" es opcional: aparece como sugerencia didactica en la tarjeta.
+- Los modelos se crean en la propia app: modele y use Archivo → Guardar.

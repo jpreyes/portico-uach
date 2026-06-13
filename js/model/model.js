@@ -19,6 +19,16 @@ export class Model {
 
     this.units = 'kN-m';
 
+    // Modo del proyecto, definido AL CREAR el modelo (Archivo → Nuevo):
+    //  '3D' = estructura tridimensional.
+    //  '2D' = pórtico plano X–Z: todos los nodos con Y=0, GDL fuera del plano
+    //         (uy, rx, rz) restringidos automáticamente en el análisis.
+    this.mode = '3D';
+
+    // Ejes de grilla (estilo SAP/ETABS): coordenadas por dirección global.
+    // x: ejes A,B,C…  y: ejes 1,2,3…  z: niveles de piso.
+    this.grids = { x: [], y: [], z: [] };
+
     this._initDefaults();
   }
 
@@ -42,6 +52,9 @@ export class Model {
       x: +x, y: +y, z: +z,
       restraints: { ux: 0, uy: 0, uz: 0, rx: 0, ry: 0, rz: 0, ...restraints },
       nodeMass:   { mx: 0, my: 0, mz: 0 },
+      // Apoyo elástico: rigidez de resorte por GDL global
+      // (kux/kuy/kuz en kN/m; krx/kry/krz en kN·m/rad). 0 = sin resorte.
+      springs:    { kux: 0, kuy: 0, kuz: 0, krx: 0, kry: 0, krz: 0 },
     };
     this.nodes.set(id, node);
     return node;
@@ -57,6 +70,10 @@ export class Model {
     if (props.nodeMass) {
       if (!n.nodeMass) n.nodeMass = { mx: 0, my: 0, mz: 0 };
       Object.assign(n.nodeMass, props.nodeMass);
+    }
+    if (props.springs) {
+      if (!n.springs) n.springs = { kux: 0, kuy: 0, kuz: 0, krx: 0, kry: 0, krz: 0 };
+      Object.assign(n.springs, props.springs);
     }
     return n;
   }
@@ -177,9 +194,18 @@ export class Model {
   removeDiaphragm(id) { return this.diaphragms.delete(id); }
 
   // ── Load Cases ─────────────────────────────────────────────────────────────
-  addLoadCase(name) {
+  // selfWeight: si true, el análisis de este caso incluye el peso propio de
+  // todos los elementos (típico del caso CM / carga muerta).
+  // type: 'static' (cargas asignadas, F5) o 'spectrum' (sísmico por espectro de
+  // respuesta, F7). Un caso espectral no admite cargas; specDir = 'X' | 'Y'.
+  addLoadCase(name, selfWeight = false, type = 'static', specDir = null) {
     const id = this._next('loadCases');
-    const lc = { id, name: name || `LC${id}`, loads: [] };
+    const lc = {
+      id, name: name || `LC${id}`, loads: [],
+      selfWeight: !!selfWeight,
+      type: type === 'spectrum' ? 'spectrum' : 'static',
+      specDir: type === 'spectrum' ? (specDir || 'X') : null,
+    };
     this.loadCases.set(id, lc);
     return lc;
   }

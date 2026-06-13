@@ -262,6 +262,36 @@ export function condenseFEF(Ke, releases, fef) {
   return result;
 }
 
+// ── Recuperar desplazamientos de GDL liberados ────────────────────────────────
+// En un extremo con rótula, el giro REAL del elemento difiere del giro nodal
+// (fue condensado). Para dibujar la deformada correctamente hay que recuperarlo:
+//   equilibrio en GDL liberado r:  Krf·uf + Krr·ur + fef_r = 0
+//   ⇒  ur = Krr⁻¹ · (−fef_r − Krf·uf)
+// Devuelve una copia de ue con los valores liberados sustituidos.
+export function recoverReleasedDisp(Ke, releases, ue, fef = null) {
+  const free = [], rel = [];
+  for (let i = 0; i < 12; i++) (releases[i] ? rel : free).push(i);
+  if (rel.length === 0) return ue;
+
+  const Krr = rel.map(r => rel.map(c => Ke[r][c]));
+  const inv = invertSmall(Krr);
+  if (!inv) return ue;
+
+  const rhs = rel.map(r => {
+    let s = -(fef ? (fef[r] || 0) : 0);
+    for (const f of free) s -= Ke[r][f] * ue[f];
+    return s;
+  });
+
+  const out = [...ue];
+  for (let i = 0; i < rel.length; i++) {
+    let s = 0;
+    for (let j = 0; j < rel.length; j++) s += inv[i][j] * rhs[j];
+    out[rel[i]] = s;
+  }
+  return out;
+}
+
 // Simple Gauss-Jordan inversion for small matrices
 function invertSmall(M) {
   const n = M.length;

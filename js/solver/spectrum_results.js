@@ -3,7 +3,7 @@
 // Exposes the same API as static Results so the viewport can reuse
 // showDeformed / showForceDiagram without modification.
 // ──────────────────────────────────────────────────────────────────────────────
-import { getNodeDOFs } from './assembler.js';
+import { getNodeDOFs } from './assembler.js?v=29';
 
 export class SpectrumResults {
   /**
@@ -120,7 +120,7 @@ export class SpectrumResults {
   toCSV() {
     const { direction, method, nModes, zeta } = this.meta;
     const lines = [
-      '# StructWeb3D — Resultados Espectro de Respuesta',
+      '# PÓRTICO — Resultados Espectro de Respuesta',
       `# Dirección: ${direction}  Método: ${method}  Modos: ${nModes}  ζ: ${zeta}`,
       '#',
       '# DESPLAZAMIENTOS COMBINADOS (envolvente)',

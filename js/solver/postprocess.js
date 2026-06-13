@@ -7,19 +7,23 @@
 // For UDL this reduces to the exact parabolic formula.
 // Displacements at arbitrary xi use cubic Hermite shape functions.
 // ──────────────────────────────────────────────────────────────────────────────
-import { localAxes, stiffnessMatrix, transformMatrix, fixedEndForces, applyReleases, condenseFEF } from './timoshenko.js?v=16';
-import { getNodeDOFs } from './assembler.js?v=16';
+import { localAxes, stiffnessMatrix, transformMatrix, fixedEndForces, applyReleases, condenseFEF, recoverReleasedDisp } from './timoshenko.js?v=29';
+import { getNodeDOFs } from './assembler.js?v=29';
 
-function _toLocalLoad(load, ey, ez) {
+function _toLocalLoad(load, ex, ey, ez) {
   const w   = load.w;
-  const dir = load.dir || 'globalZ';
+  const dir = load.dir || 'gravity';
   if (dir === 'localY') return [{ d: 'y', w }];
   if (dir === 'localZ') return [{ d: 'z', w }];
   if (dir === 'localX') return [{ d: 'x', w }];
-  const g = dir === 'globalX' ? [1,0,0] : dir === 'globalY' ? [0,1,0] : [0,0,1];
+  const g = dir === 'globalX' ? [1,0,0]
+          : dir === 'globalY' ? [0,1,0]
+          : [0,0,-1];   // 'gravity' and legacy 'globalZ' both mean downward (positive w = ↓)
+  const wx = w * (g[0]*ex[0] + g[1]*ex[1] + g[2]*ex[2]);
   const wy = w * (g[0]*ey[0] + g[1]*ey[1] + g[2]*ey[2]);
   const wz = w * (g[0]*ez[0] + g[1]*ez[1] + g[2]*ez[2]);
   const res = [];
+  if (Math.abs(wx) > 1e-14) res.push({ d: 'x', w: wx });
   if (Math.abs(wy) > 1e-14) res.push({ d: 'y', w: wy });
   if (Math.abs(wz) > 1e-14) res.push({ d: 'z', w: wz });
   return res;
@@ -100,7 +104,7 @@ export class Results {
     const d2 = getNodeDOFs(this.nodeIndex, elem.n2);
     const ue_global = [...d1, ...d2].map(i => this.u[i]);
 
-    const ue_local = Array(12).fill(0);
+    let ue_local = Array(12).fill(0);
     for (let i = 0; i < 12; i++)
       for (let j = 0; j < 12; j++)
         ue_local[i] += T[i][j] * ue_global[j];
@@ -109,17 +113,28 @@ export class Results {
     // that recovered end forces automatically satisfy the release condition
     // (e.g. zero moment at a pinned end). The FEF is still computed for the
     // full fixed-fixed case; any residual at released DOFs is zeroed below.
-    const hasRel = elem.releases && elem.releases.some(r => r);
+    const hasRel  = elem.releases && elem.releases.some(r => r);
+    const relBool = hasRel ? elem.releases.map(r => r !== 0) : null;
     const Ke_eff = hasRel
-      ? applyReleases(Ke_local, elem.releases.map(r => r !== 0))
+      ? applyReleases(Ke_local, relBool)
       : Ke_local;
+
+    // FEF total sin condensar (cargas del caso + peso propio)
+    const fefT = this._collectFEF(elem, ex, ey, ez, L);
+
+    // En GDL liberados el giro/desplazamiento REAL del elemento difiere del
+    // nodal (fue condensado): recuperarlo para que la deformada muestre el
+    // quiebre de la rótula. No afecta fe (Ke_eff tiene columnas nulas ahí).
+    if (hasRel) ue_local = recoverReleasedDisp(Ke_local, relBool, ue_local, fefT);
 
     const fe = Array(12).fill(0);
     for (let i = 0; i < 12; i++)
       for (let j = 0; j < 12; j++)
         fe[i] += Ke_eff[i][j] * ue_local[j];
 
-    this._addFEF(elem, fe, ey, ez, L, Ke_local, hasRel ? elem.releases.map(r => r !== 0) : null);
+    // FEF condensado (la condensación es lineal: condensar la suma ≡ sumar condensados)
+    const fefC = hasRel ? condenseFEF(Ke_local, relBool, fefT) : fefT;
+    for (let i = 0; i < 12; i++) fe[i] += fefC[i];
 
     // Enforce release conditions: zero released force components
     // (handles any FEF residual that survived for distributed-load cases)
@@ -130,7 +145,7 @@ export class Results {
     }
 
     // Actual distributed load intensities (local y, z) — needed for correct M(x), V(x)
-    const { qy, qz } = this._computeActualLoads(elem, ey, ez);
+    const { qy, qz } = this._computeActualLoads(elem, ex, ey, ez);
 
     return {
       N:    -fe[0],
@@ -148,19 +163,22 @@ export class Results {
       Nabs:  Math.abs(fe[0]),
       qy, qz,   // actual load intensity (local coords) — NOT inferred from end forces
       ex, ey, ez, L,
+      EIz: mat.E * sec.Iz,   // para la burbuja de deflexión por carga distribuida
+      EIy: mat.E * sec.Iy,
       _ue: ue_local,
     };
   }
 
-  _addFEF(elem, fe, ey, ez, L, Ke_local = null, relBool = null) {
+  // FEF total del elemento SIN condensar (cargas distribuidas del caso + peso propio)
+  _collectFEF(elem, ex, ey, ez, L) {
+    const fef = Array(12).fill(0);
     const lc = this.lcId ? this.model.loadCases.get(this.lcId) : null;
     if (lc) {
       for (const load of lc.loads) {
         if (load.type !== 'dist' || load.elemId !== elem.id) continue;
-        for (const { d, w } of _toLocalLoad(load, ey, ez)) {
-          let fef = fixedEndForces(L, { dir: d, w });
-          if (Ke_local && relBool) fef = condenseFEF(Ke_local, relBool, fef);
-          for (let i = 0; i < 12; i++) fe[i] += fef[i];
+        for (const { d, w } of _toLocalLoad(load, ex, ey, ez)) {
+          const f = fixedEndForces(L, { dir: d, w });
+          for (let i = 0; i < 12; i++) fef[i] += f[i];
         }
       }
     }
@@ -169,25 +187,25 @@ export class Results {
       const mat = this.model.materials.get(elem.matId);
       const sec = this.model.sections.get(elem.secId);
       if (mat && sec && mat.rho > 0) {
-        const w_sw = -(mat.rho * sec.A);
-        for (const { d, w } of _toLocalLoad({ w: w_sw, dir: 'globalZ' }, ey, ez)) {
-          let fef = fixedEndForces(L, { dir: d, w });
-          if (Ke_local && relBool) fef = condenseFEF(Ke_local, relBool, fef);
-          for (let i = 0; i < 12; i++) fe[i] += fef[i];
+        const w_sw = +(mat.rho * sec.A);
+        for (const { d, w } of _toLocalLoad({ w: w_sw, dir: 'gravity' }, ex, ey, ez)) {
+          const f = fixedEndForces(L, { dir: d, w });
+          for (let i = 0; i < 12; i++) fef[i] += f[i];
         }
       }
     }
+    return fef;
   }
 
   // Returns actual distributed load {qy, qz} on element in local coords.
   // This is the source-of-truth for M(x)/V(x) — never infer q from end forces.
-  _computeActualLoads(elem, ey, ez) {
+  _computeActualLoads(elem, ex, ey, ez) {
     let qy = 0, qz = 0;
     const lc = this.lcId ? this.model.loadCases.get(this.lcId) : null;
     if (lc) {
       for (const load of lc.loads) {
         if (load.type !== 'dist' || load.elemId !== elem.id) continue;
-        for (const { d, w } of _toLocalLoad(load, ey, ez)) {
+        for (const { d, w } of _toLocalLoad(load, ex, ey, ez)) {
           if (d === 'y') qy += w;
           else if (d === 'z') qz += w;
         }
@@ -197,8 +215,8 @@ export class Results {
       const mat = this.model.materials.get(elem.matId);
       const sec = this.model.sections.get(elem.secId);
       if (mat && sec && mat.rho > 0) {
-        const w_sw = -(mat.rho * sec.A);
-        for (const { d, w } of _toLocalLoad({ w: w_sw, dir: 'globalZ' }, ey, ez)) {
+        const w_sw = +(mat.rho * sec.A);
+        for (const { d, w } of _toLocalLoad({ w: w_sw, dir: 'gravity' }, ex, ey, ez)) {
           if (d === 'y') qy += w;
           else if (d === 'z') qz += w;
         }
@@ -393,8 +411,19 @@ export class Results {
 
       // Local displacements
       const ux_l = ue[0]*(1-t) + ue[6]*t;
-      const uy_l = H1*ue[1] + H2*L*ue[5] + H3*ue[7] + H4*L*ue[11];
-      const uz_l = H1*ue[2] - H2*L*ue[4] + H3*ue[8] - H4*L*ue[10];
+      let uy_l = H1*ue[1] + H2*L*ue[5] + H3*ue[7] + H4*L*ue[11];
+      let uz_l = H1*ue[2] - H2*L*ue[4] + H3*ue[8] - H4*L*ue[10];
+
+      // Solución particular por carga distribuida (UDL): burbuja exacta
+      //   w_p(ξ) = q·L⁴/(24EI) · ξ²(1−ξ)²
+      // El Hermite cúbico solo interpola la solución homogénea; sin esto la
+      // deformada entre nodos subestima la flecha (cuártica) del tramo cargado.
+      const bub = t * t * (1 - t) * (1 - t);
+      if (bub > 0) {
+        const EIz = f.EIz, EIy = f.EIy;
+        if (qy && EIz > 0) uy_l += (qy * L * L * L * L / (24 * EIz)) * bub;
+        if (qz && EIy > 0) uz_l += (qz * L * L * L * L / (24 * EIy)) * bub;
+      }
 
       // Transform back to global: u_global = T^T · u_local (only translational part)
       const ex = f.ex, ey = f.ey, ez = f.ez;
@@ -409,7 +438,7 @@ export class Results {
 
   // ── CSV export ───────────────────────────────────────────────────────────────
   toCSV() {
-    const lines = ['# StructWeb3D — Resultados del Análisis Estático'];
+    const lines = ['# PÓRTICO — Resultados del Análisis Estático'];
     const u = this.model.units;
 
     lines.push('#');
@@ -425,7 +454,8 @@ export class Results {
     lines.push('# NodeID, Rx, Ry, Rz, Rmx, Rmy, Rmz');
     for (const node of this.model.nodes.values()) {
       const r = node.restraints;
-      if (!Object.values(r).some(v=>v)) continue;
+      const hasSpring = node.springs && Object.values(node.springs).some(k => k > 0);
+      if (!Object.values(r).some(v=>v) && !hasSpring) continue;
       const rx = this.getReaction(node.id);
       lines.push(`${node.id}, ${rx.map(v=>v.toExponential(6)).join(', ')}`);
     }

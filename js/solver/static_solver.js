@@ -2,8 +2,8 @@
 // StaticSolver — direct stiffness method for linear static analysis
 // Solver:  K_ff · u_f = F_f  (Gaussian elimination via numeric.js)
 // ──────────────────────────────────────────────────────────────────────────────
-import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './assembler.js?v=16';
-import { Results } from './postprocess.js?v=16';
+import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './assembler.js?v=29';
+import { Results } from './postprocess.js?v=29';
 
 export class StaticSolver {
   /**
@@ -21,10 +21,22 @@ export class StaticSolver {
     const freeDOF  = [];
     const fixedDOF = [];
 
+    // Modelo 2D (pórtico plano X–Z): los GDL fuera del plano (uy, rx, rz) se
+    // restringen automáticamente en todos los nodos — el usuario solo maneja
+    // los GDL del plano: ux, uz y el giro ry.
+    const is2D = model.mode === '2D';
+
     for (const node of model.nodes.values()) {
       const d    = getNodeDOFs(nodeIndex, node.id);
       const r    = node.restraints;
-      const rArr = [r.ux, r.uy, r.uz, r.rx, r.ry, r.rz];
+      const rArr = [
+        r.ux,
+        is2D ? 1 : r.uy,
+        r.uz,
+        is2D ? 1 : r.rx,
+        r.ry,
+        is2D ? 1 : r.rz,
+      ];
       d.forEach((gi, li) => {
         if (rArr[li]) fixedDOF.push(gi);
         else          freeDOF.push(gi);
@@ -53,6 +65,16 @@ export class StaticSolver {
       throw new Error(`Solver falló: ${e.message}. Verifique que el modelo es estable.`);
     }
 
+    // numeric.solve devuelve NaN/Infinity silenciosamente si K_ff es singular
+    // (mecanismo por liberaciones excesivas o apoyos insuficientes)
+    if (!uf || uf.some(v => !Number.isFinite(v))) {
+      throw new Error(
+        'Estructura INESTABLE (matriz singular): existe un mecanismo. ' +
+        'Revise apoyos y liberaciones — p.ej. liberar el mismo giro en ambos ' +
+        'extremos de elementos contiguos permite rotación libre.'
+      );
+    }
+
     // ── Assemble full displacement vector ──────────────────────────────────
     const u = new Float64Array(nDOF);
     freeDOF.forEach((d, i) => { u[d] = uf[i]; });
@@ -65,6 +87,19 @@ export class StaticSolver {
       reactions[i] = Ku_i - F[i];
     }
 
+    // Reacciones de apoyos elásticos: en un GDL con resorte (libre) el balance
+    // Ku−F vale 0; la reacción que el resorte ejerce sobre la estructura es −k·u.
+    for (const node of model.nodes.values()) {
+      const sp = node.springs;
+      if (!sp) continue;
+      const ks = [sp.kux, sp.kuy, sp.kuz, sp.krx, sp.kry, sp.krz];
+      if (!ks.some(k => k > 0)) continue;
+      const d = getNodeDOFs(nodeIndex, node.id);
+      for (let i = 0; i < 6; i++) {
+        if (ks[i] > 0) reactions[d[i]] = -ks[i] * u[d[i]];
+      }
+    }
+
     return new Results(model, nodeIndex, u, reactions, F, lcId, selfWeight);
   }
 }
@@ -72,7 +107,8 @@ export class StaticSolver {
 
 // ── Default load case manager helper ─────────────────────────────────────────
 export function ensureDefaultLC(model) {
-  if (model.loadCases.size === 0) model.addLoadCase('CM');
+  // CM (carga muerta) incluye el peso propio por defecto
+  if (model.loadCases.size === 0) model.addLoadCase('CM', true);
   return model.loadCases.keys().next().value;
 }
 

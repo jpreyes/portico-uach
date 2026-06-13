@@ -1,7 +1,8 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // PropertiesPanel — right-side panel: node/element properties + mat/sec tabs
 // ──────────────────────────────────────────────────────────────────────────────
-import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js';
+import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=29';
+import { localAxes } from '../solver/timoshenko.js?v=29';
 
 export class PropertiesPanel {
   constructor(panelEl, app) {
@@ -503,14 +504,19 @@ export class PropertiesPanel {
   _nodeHTML(node) {
     const r  = node.restraints;
     const nm = node.nodeMass || { mx: 0, my: 0, mz: 0 };
+    const sp = node.springs  || { kux: 0, kuy: 0, kuz: 0, krx: 0, kry: 0, krz: 0 };
+    const hasSp = Object.values(sp).some(k => k > 0);
+    const is2D = this.app.model.mode === '2D';
+    const outOfPlane = new Set(['uy', 'rx', 'rz']);   // restringidos auto en 2D
     const dof = ['ux','uy','uz','rx','ry','rz'];
     const labels = ['UX','UY','UZ','RX','RY','RZ'];
-    const checks = dof.map((d, i) =>
-      `<div class="restraint-cell">
-        <input type="checkbox" data-dof="${d}" ${r[d] ? 'checked' : ''}>
+    const checks = dof.map((d, i) => {
+      const dis = is2D && outOfPlane.has(d);
+      return `<div class="restraint-cell" ${dis ? 'style="opacity:0.4" title="Modelo 2D: este GDL fuera del plano se restringe automáticamente"' : ''}>
+        <input type="checkbox" data-dof="${d}" ${(r[d] || dis) ? 'checked' : ''} ${dis ? 'disabled' : ''}>
         <span>${labels[i]}</span>
-      </div>`
-    ).join('');
+      </div>`;
+    }).join('');
 
     const hasNM = nm.mx > 0 || nm.my > 0 || nm.mz > 0;
 
@@ -521,7 +527,7 @@ export class PropertiesPanel {
         <div class="prop-title">Coordenadas</div>
         <div class="prop-row cols3">
           <div class="prop-field"><label>X</label><input type="number" id="n-x" value="${+node.x.toFixed(6)}" step="0.01"></div>
-          <div class="prop-field"><label>Y</label><input type="number" id="n-y" value="${+node.y.toFixed(6)}" step="0.01"></div>
+          <div class="prop-field"><label>Y</label><input type="number" id="n-y" value="${is2D ? 0 : +node.y.toFixed(6)}" step="0.01" ${is2D ? 'disabled title="Modelo 2D: todos los nodos están en el plano Y=0"' : ''}></div>
           <div class="prop-field"><label>Z</label><input type="number" id="n-z" value="${+node.z.toFixed(6)}" step="0.01"></div>
         </div>
       </div>
@@ -533,6 +539,39 @@ export class PropertiesPanel {
           <button class="btn-secondary" id="btn-fix-all" style="flex:1;font-size:11px;">Fijar Todo</button>
           <button class="btn-secondary" id="btn-free-all" style="flex:1;font-size:11px;">Liberar Todo</button>
           <button class="btn-secondary" id="btn-pin" style="flex:1;font-size:11px;">Pin</button>
+        </div>
+      </div>
+
+      <div class="prop-section">
+        <div class="prop-title" style="${hasSp ? 'color:var(--teal)' : ''}">
+          Apoyo Elástico — Resortes${hasSp ? ' ●' : ''}
+        </div>
+        <div class="prop-row cols3">
+          <div class="prop-field"><label>kUX (kN/m)</label>
+            <input type="number" id="ns-kux" value="${sp.kux ?? 0}" step="100" min="0">
+          </div>
+          <div class="prop-field"><label>kUY (kN/m)</label>
+            <input type="number" id="ns-kuy" value="${sp.kuy ?? 0}" step="100" min="0">
+          </div>
+          <div class="prop-field"><label>kUZ (kN/m)</label>
+            <input type="number" id="ns-kuz" value="${sp.kuz ?? 0}" step="100" min="0">
+          </div>
+        </div>
+        <div class="prop-row cols3">
+          <div class="prop-field"><label>kRX (kN·m/rad)</label>
+            <input type="number" id="ns-krx" value="${sp.krx ?? 0}" step="100" min="0">
+          </div>
+          <div class="prop-field"><label>kRY (kN·m/rad)</label>
+            <input type="number" id="ns-kry" value="${sp.kry ?? 0}" step="100" min="0">
+          </div>
+          <div class="prop-field"><label>kRZ (kN·m/rad)</label>
+            <input type="number" id="ns-krz" value="${sp.krz ?? 0}" step="100" min="0">
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:4px">
+          Apoyo parcial: resorte en GDL global <b>libre</b> (no marque la
+          restricción rígida de ese GDL). k = 0 → sin resorte. La reacción
+          del resorte aparece al mostrar Reacciones.
         </div>
       </div>
 
@@ -584,7 +623,11 @@ export class PropertiesPanel {
         my: numVal('#nm-my'),
         mz: numVal('#nm-mz'),
       };
-      this.app.model.updateNode(node.id, { x, y, z, restraints, nodeMass });
+      const springs = {
+        kux: numVal('#ns-kux'), kuy: numVal('#ns-kuy'), kuz: numVal('#ns-kuz'),
+        krx: numVal('#ns-krx'), kry: numVal('#ns-kry'), krz: numVal('#ns-krz'),
+      };
+      this.app.model.updateNode(node.id, { x, y, z, restraints, nodeMass, springs });
       this.app.viewport.refreshNode(this.app.model.nodes.get(node.id));
       this.app.markDirty();
     };
@@ -636,16 +679,50 @@ export class PropertiesPanel {
       `<option value="${s.id}" ${s.id === elem.secId ? 'selected' : ''}>${s.name}</option>`
     ).join('');
 
-    const dofLabels = ['UX','UY','UZ','RX','RY','RZ'];
+    // Liberaciones etiquetadas por ESFUERZO (coinciden con los diagramas de
+    // resultados): liberar Mz ⇒ el momento Mz vale 0 en ese extremo, etc.
+    const relDefs = [
+      { i: 0, lbl: 'N',  tip: 'fuerza axial' },
+      { i: 1, lbl: 'Vy', tip: 'corte local y' },
+      { i: 2, lbl: 'Vz', tip: 'corte local z' },
+      { i: 3, lbl: 'T',  tip: 'torsión' },
+      { i: 4, lbl: 'My', tip: 'flexión en plano local x–z' },
+      { i: 5, lbl: 'Mz', tip: 'flexión en plano local x–y' },
+    ];
+
+    // Pista de orientación: a qué dirección GLOBAL corresponde cada flexión
+    // (depende de la orientación del elemento — local ≠ global)
+    let orientHint = '';
+    {
+      const n1 = model.nodes.get(elem.n1);
+      const n2 = model.nodes.get(elem.n2);
+      if (n1 && n2) {
+        try {
+          const { ey, ez } = localAxes(n1, n2);
+          const gname = v => {
+            const ax = ['X', 'Y', 'Z']; let b = 0;
+            for (let k = 1; k < 3; k++) if (Math.abs(v[k]) > Math.abs(v[b])) b = k;
+            return ax[b] + (b === 2 ? ' (gravedad)' : '');
+          };
+          orientHint = `<b>Mz</b> = flexión por cargas según <b>${gname(ey)}</b> global &nbsp;·&nbsp; <b>My</b> = por cargas según <b>${gname(ez)}</b> global`;
+        } catch { /* elemento degenerado */ }
+      }
+    }
+
     const relHalf = (label, offset) => {
-      const boxes = dofLabels.map((d, i) =>
-        `<div class="releases-cell">
-          <input type="checkbox" data-rel="${offset+i}" ${elem.releases[offset+i] ? 'checked':''}>
-          <span>${d}</span>
+      const boxes = relDefs.map(d =>
+        `<div class="releases-cell" title="Liberar ${d.lbl} (${d.tip}): el esfuerzo ${d.lbl} vale 0 en este extremo">
+          <input type="checkbox" data-rel="${offset + d.i}" ${elem.releases[offset + d.i] ? 'checked' : ''}>
+          <span>${d.lbl}</span>
         </div>`
       ).join('');
       return `<div class="releases-half">
-        <div class="releases-half-title">${label}</div>
+        <div class="releases-half-title">${label}
+          <span class="rel-presets">
+            <button type="button" class="rel-btn" data-rel-pin="${offset}" title="Rótula clásica: libera My y Mz en este extremo">Rótula</button>
+            <button type="button" class="rel-btn" data-rel-clear="${offset}" title="Quitar todas las liberaciones de este extremo">Limpiar</button>
+          </span>
+        </div>
         <div class="releases-grid">${boxes}</div>
       </div>`;
     };
@@ -681,8 +758,43 @@ export class PropertiesPanel {
 
       <div class="prop-section">
         <div class="prop-title">Liberaciones (rótulas)</div>
-        ${relHalf('Nodo 1 (inicio)', 0)}
-        ${relHalf('Nodo 2 (fin)', 6)}
+        ${orientHint ? `<p class="rel-hint">${orientHint}</p>` : ''}
+        ${relHalf(`Extremo 1 — nodo ${elem.n1}`, 0)}
+        ${relHalf(`Extremo 2 — nodo ${elem.n2}`, 6)}
+        <p class="rel-warn">⚠ Liberar en exceso crea mecanismos (estructura inestable): el análisis lo detectará y avisará.</p>
+      </div>
+
+      <div class="prop-section">
+        <div class="prop-title">Herramientas Didácticas</div>
+        <button class="btn-add" id="btn-elem-matrices" style="width:100%"
+          title="Ver Ke local, T, Ke global y Me de este elemento — para comparar con el cálculo manual del curso">
+          Σ Ver Matrices (Ke · T · Me)
+        </button>
+        <button class="btn-add" id="btn-elem-dcl" style="width:100%;margin-top:4px"
+          title="Diagrama de cuerpo libre: fuerzas de extremo que actúan sobre el elemento + verificación ΣF=0 ΣM=0 (requiere análisis F5)">
+          ⊟ Ver DCL del elemento
+        </button>
+      </div>
+
+      <div class="prop-section">
+        <div class="prop-title">Discretizar</div>
+        <div class="prop-row">
+          <div class="prop-field"><label>Nº de partes</label>
+            <input type="number" id="disc-n" value="4" min="2" step="1">
+          </div>
+          <div class="prop-field" style="justify-content:flex-end">
+            <button class="btn-add" id="btn-disc-n" style="width:100%" title="Divide este elemento en N tramos iguales">Dividir en N</button>
+          </div>
+        </div>
+        <div class="prop-row">
+          <div class="prop-field"><label>Tramo (m)</label>
+            <input type="number" id="disc-len" value="0.5" min="0.01" step="0.25">
+          </div>
+          <div class="prop-field" style="justify-content:flex-end">
+            <button class="btn-add" id="btn-disc-len" style="width:100%" title="Divide este elemento en tramos de ≈ esta longitud">Dividir c/L</button>
+          </div>
+        </div>
+        <p class="rel-warn" style="color:var(--text-muted)">Para volver a unir: seleccione los tramos con Ctrl+clic y use Editar → Unir Elementos Seleccionados (o Ctrl+Z).</p>
       </div>
 
       <div class="delete-btn-row">
@@ -709,11 +821,54 @@ export class PropertiesPanel {
       this.app.markDirty();
     };
 
-    sel.querySelectorAll('input[type=number], select').forEach(inp =>
+    sel.querySelectorAll('input[type=number]:not(#disc-n):not(#disc-len), select').forEach(inp =>
       inp.addEventListener('change', save)
     );
     sel.querySelectorAll('[data-rel]').forEach(cb =>
       cb.addEventListener('change', save)
+    );
+
+    // Visor de matrices del elemento
+    sel.querySelector('#btn-elem-matrices')?.addEventListener('click', () => {
+      this.app.showElementMatrices(elem.id);
+    });
+    // DCL del elemento (requiere resultados)
+    sel.querySelector('#btn-elem-dcl')?.addEventListener('click', () => {
+      this.app.showElementDCL(elem.id);
+    });
+
+    // Discretización del elemento
+    sel.querySelector('#btn-disc-n')?.addEventListener('click', () => {
+      const n = parseInt(sel.querySelector('#disc-n')?.value) || 0;
+      if (n >= 2) this.app.discretizeElement(elem.id, { parts: n });
+      else this.app.toast('Ingrese 2 o más partes', 'warn');
+    });
+    sel.querySelector('#btn-disc-len')?.addEventListener('click', () => {
+      const l = parseFloat(sel.querySelector('#disc-len')?.value) || 0;
+      if (l > 0) this.app.discretizeElement(elem.id, { length: l });
+      else this.app.toast('Ingrese una longitud válida', 'warn');
+    });
+
+    // Presets de liberaciones por extremo
+    sel.querySelectorAll('[data-rel-pin]').forEach(btn =>
+      btn.addEventListener('click', () => {
+        const off = +btn.dataset.relPin;
+        [4, 5].forEach(i => {           // rótula clásica: My + Mz
+          const cb = sel.querySelector(`[data-rel="${off + i}"]`);
+          if (cb) cb.checked = true;
+        });
+        save();
+      })
+    );
+    sel.querySelectorAll('[data-rel-clear]').forEach(btn =>
+      btn.addEventListener('click', () => {
+        const off = +btn.dataset.relClear;
+        for (let i = 0; i < 6; i++) {
+          const cb = sel.querySelector(`[data-rel="${off + i}"]`);
+          if (cb) cb.checked = false;
+        }
+        save();
+      })
     );
 
     sel.querySelector('#btn-del-elem')?.addEventListener('click', () => {
@@ -722,14 +877,35 @@ export class PropertiesPanel {
   }
 
   // ── Load input for nodes ───────────────────────────────────────────────────
+  // Selector de caso de carga embebido — evita ir al overlay del viewport
+  _lcSelectHTML(domId) {
+    const opts = [...this.app.model.loadCases.values()].map(l => {
+      const label = l.type === 'spectrum'
+        ? `〜 ${l.name} [esp]`
+        : l.name + (l.selfWeight ? ' ⊕PP' : '');
+      return `<option value="${l.id}" ${l.id === this.app._activeLcId ? 'selected' : ''}>${label}</option>`;
+    }).join('');
+    return `<select id="${domId}" class="lc-inline-select" title="Caso de carga al que se asigna esta carga (⊕PP = incluye peso propio; 〜 = espectral, no admite cargas)">${opts}</select>`;
+  }
+
+  // Nota mostrada cuando el caso activo es espectral (no admite cargas)
+  _spectralLoadNote(domId) {
+    return `<div class="load-section">
+      <div class="prop-title load-title-row">Cargas ${this._lcSelectHTML(domId)}</div>
+      <p class="rel-hint" style="margin-top:6px">〜 Caso <b>espectral</b>: no admite cargas
+        asignadas. Su resultado (envolvente sísmica) se calcula con Análisis Modal (F6)
+        + Espectro de Respuesta (F7). Cambie a un caso estático para asignar cargas.</p>
+    </div>`;
+  }
+
   _nodeLoadsHTML(node) {
     const lcId = this.app._activeLcId;
     const lc   = this.app.model.loadCases.get(lcId);
+    if (lc?.type === 'spectrum') return this._spectralLoadNote('loads-lc-node');
     const ex   = lc ? lc.loads.find(l => l.type === 'nodal' && l.nodeId === node.id) : null;
     const F    = ex ? ex.F : [0,0,0,0,0,0];
-    const lcName = lc ? lc.name : '(sin caso)';
     return `<div class="load-section">
-      <div class="prop-title">Cargas Nodales — <span style="color:var(--accent)">${lcName}</span></div>
+      <div class="prop-title load-title-row">Cargas Nodales ${this._lcSelectHTML('loads-lc-node')}</div>
       <div class="prop-row cols3">
         <div class="prop-field"><label>Fx</label><input type="number" data-lf="0" value="${F[0]}" step="1"></div>
         <div class="prop-field"><label>Fy</label><input type="number" data-lf="1" value="${F[1]}" step="1"></div>
@@ -749,6 +925,12 @@ export class PropertiesPanel {
 
   _bindNodeLoadsEvents(node) {
     const sel = this._tabContents.sel;
+    sel.querySelector('#loads-lc-node')?.addEventListener('change', e => {
+      this.app._activeLcId = +e.target.value;
+      this.app._renderLcSelector();
+      this.app.refreshLoads();
+      this.showNode(node);   // re-renderiza con las cargas del caso elegido
+    });
     sel.querySelector('#btn-apply-load')?.addEventListener('click', () => {
       this.app.snapshot();
       const lc = this.app.model.loadCases.get(this.app._activeLcId);
@@ -776,15 +958,16 @@ export class PropertiesPanel {
   _elemLoadsHTML(elem) {
     const lcId = this.app._activeLcId;
     const lc   = this.app.model.loadCases.get(lcId);
+    if (lc?.type === 'spectrum') return this._spectralLoadNote('loads-lc-elem');
     const ex   = lc ? lc.loads.find(l => l.type === 'dist' && l.elemId === elem.id) : null;
     return `<div class="load-section">
-      <div class="prop-title">Carga Distribuida — <span style="color:var(--accent)">${lc?.name || '—'}</span></div>
+      <div class="prop-title load-title-row">Carga Distribuida ${this._lcSelectHTML('loads-lc-elem')}</div>
       <div class="prop-row">
         <div class="prop-field"><label>Dirección</label>
           <select id="dist-dir">
-            <option value="globalZ" ${ex?.dir==='globalZ'?'selected':''}>Global Z (gravedad)</option>
-            <option value="globalX" ${ex?.dir==='globalX'?'selected':''}>Global X</option>
-            <option value="globalY" ${ex?.dir==='globalY'?'selected':''}>Global Y</option>
+            <option value="gravity" ${(ex?.dir==='gravity'||ex?.dir==='globalZ'||!ex?.dir)?'selected':''}>Gravedad ↓ (w&gt;0 = abajo)</option>
+            <option value="globalX" ${ex?.dir==='globalX'?'selected':''}>Global +X</option>
+            <option value="globalY" ${ex?.dir==='globalY'?'selected':''}>Global +Y</option>
             <option value="localY"  ${ex?.dir==='localY' ?'selected':''}>Local y</option>
             <option value="localZ"  ${ex?.dir==='localZ' ?'selected':''}>Local z</option>
           </select>
@@ -802,6 +985,12 @@ export class PropertiesPanel {
 
   _bindElemLoadsEvents(elem) {
     const sel = this._tabContents.sel;
+    sel.querySelector('#loads-lc-elem')?.addEventListener('change', e => {
+      this.app._activeLcId = +e.target.value;
+      this.app._renderLcSelector();
+      this.app.refreshLoads();
+      this.showElement(elem);   // re-renderiza con las cargas del caso elegido
+    });
     sel.querySelector('#btn-apply-dist')?.addEventListener('click', () => {
       this.app.snapshot();
       const lc = this.app.model.loadCases.get(this.app._activeLcId);
@@ -992,20 +1181,18 @@ export class PropertiesPanel {
           const row = document.createElement('div');
           row.className = 'combo-factor-row';
           const staticOpts = lcs.map(lc =>
-            `<option value="${lc.id}" ${String(lc.id) === String(fac.lcId) ? 'selected' : ''}>${lc.name}</option>`
+            `<option value="${lc.id}" ${String(lc.id) === String(fac.lcId) ? 'selected' : ''}>${lc.name}${lc.selfWeight ? ' ⊕PP' : ''}</option>`
           ).join('');
           const specOpts = specEntries.length
             ? `<optgroup label="── Espectral ──">${specEntries.map(s =>
                 `<option value="${s.id}" ${s.id === fac.lcId ? 'selected' : ''}>${s.name}</option>`
               ).join('')}</optgroup>`
             : '';
-          const swChecked = fac.selfWeight ? 'checked' : '';
+          // El peso propio ya no se marca por factor: es propiedad del caso
+          // de carga (editable con ✎ junto al selector de casos).
           row.innerHTML = `
             <select class="fac-lc">${staticOpts}${specOpts}</select>
             <input type="number" class="fac-val" value="${fac.factor}" step="0.1" placeholder="factor">
-            <label title="Incluir peso propio en este caso" style="font-size:10px;white-space:nowrap;gap:2px;display:flex;align-items:center;">
-              <input type="checkbox" class="fac-sw" ${swChecked}> PP
-            </label>
             <button class="combo-del-factor" title="Eliminar">×</button>`;
           row.querySelector('.fac-lc').addEventListener('change', e => {
             const v = e.target.value;
@@ -1014,10 +1201,6 @@ export class PropertiesPanel {
           });
           row.querySelector('.fac-val').addEventListener('change', e => {
             combo.factors[idx].factor = parseFloat(e.target.value) || 0;
-            this.app.markDirty();
-          });
-          row.querySelector('.fac-sw').addEventListener('change', e => {
-            combo.factors[idx].selfWeight = e.target.checked;
             this.app.markDirty();
           });
           row.querySelector('.combo-del-factor').addEventListener('click', () => {

@@ -112,10 +112,13 @@ export class Viewport {
     this._renderer.setClearColor(COL.BG, 1);
     this.container.appendChild(this._renderer.domElement);
 
-    // Camera
-    this._camera = new THREE.PerspectiveCamera(45, 1, 0.01, 100000);
-    this._camera.position.set(12, 10, 12);
-    this._camera.lookAt(0, 0, 0);
+    // Cameras: perspectiva (3D libre) y ortográfica (2D real / elevaciones)
+    this._cameraPersp = new THREE.PerspectiveCamera(45, 1, 0.01, 100000);
+    this._cameraPersp.position.set(12, 10, 12);
+    this._cameraPersp.lookAt(0, 0, 0);
+    this._cameraOrtho = new THREE.OrthographicCamera(-10, 10, 10, -10, -1e5, 1e5);
+    this._camera = this._cameraPersp;
+    this._elevation = null;   // elevación 2D activa {axis, coord, name} | null
 
     // Scene
     this._scene = new THREE.Scene();
@@ -277,8 +280,14 @@ export class Viewport {
     const w = this.container.clientWidth  || 800;
     const h = this.container.clientHeight || 600;
     this._renderer.setSize(w, h, false);
-    this._camera.aspect = w / h;
-    this._camera.updateProjectionMatrix();
+    this._cameraPersp.aspect = w / h;
+    this._cameraPersp.updateProjectionMatrix();
+    if (this._cameraOrtho) {
+      const halfH = (this._cameraOrtho.top - this._cameraOrtho.bottom) / 2;
+      this._cameraOrtho.left  = -halfH * (w / h);
+      this._cameraOrtho.right =  halfH * (w / h);
+      this._cameraOrtho.updateProjectionMatrix();
+    }
   }
 
   // ── Model rendering ────────────────────────────────────────────────────────
@@ -287,6 +296,15 @@ export class Viewport {
     for (const m of this._nodeMeshes.values()) this._scene.remove(m);
     for (const l of this._elemLines.values())  this._scene.remove(l);
     for (const g of this._suppGroups.values())  this._scene.remove(g);
+    if (this._hingeSprites) {
+      for (const g of this._hingeSprites.values()) this._scene.remove(g);
+      this._hingeSprites.clear();
+    }
+    if (this._springSymbols) {
+      for (const g of this._springSymbols.values()) this._scene.remove(g);
+      this._springSymbols.clear();
+    }
+    this.clearReactions();
     this._nodeMeshes.clear();
     this._elemLines.clear();
     this._suppGroups.clear();
@@ -299,6 +317,9 @@ export class Viewport {
     for (const n of model.nodes.values())    this.addNodeMesh(n);
     for (const e of model.elements.values()) this.addElemLine(e);
     this.refreshDiaphragms();
+    this.refreshGridAxes();
+    this.refreshElevationOptions();
+    if (this._elevation) this._applyElevationFilter();
     // Refresh ID sprites if they were visible
     if (this._showIds) { this._showIds = false; this.toggleIds(); }
   }
@@ -321,6 +342,8 @@ export class Viewport {
       const g = this._suppGroups.get(node.id);
       if (g) { this._scene.remove(g); this._suppGroups.delete(node.id); }
     }
+    // Spring (elastic support) symbol
+    this._buildSpringSymbol(node);
   }
 
   removeNodeMesh(nodeId) {
@@ -328,11 +351,14 @@ export class Viewport {
     if (m) { this._scene.remove(m); this._nodeMeshes.delete(nodeId); }
     const g = this._suppGroups.get(nodeId);
     if (g) { this._scene.remove(g); this._suppGroups.delete(nodeId); }
+    const sg = this._springSymbols?.get(nodeId);
+    if (sg) { this._scene.remove(sg); this._springSymbols.delete(nodeId); }
     // Also remove element lines connected to this node
     for (const [eid, line] of this._elemLines) {
       if (line.userData.n1 === nodeId || line.userData.n2 === nodeId) {
         this._scene.remove(line);
         this._elemLines.delete(eid);
+        this._removeHingeMarkers(eid);
       }
     }
     this._selected.delete(`node:${nodeId}`);
@@ -352,12 +378,205 @@ export class Viewport {
     line.userData = { type: 'elem', id: elem.id, n1: elem.n1, n2: elem.n2 };
     this._scene.add(line);
     this._elemLines.set(elem.id, line);
+    this._buildHingeMarkers(elem);
   }
 
   removeElemLine(elemId) {
     const l = this._elemLines.get(elemId);
     if (l) { this._scene.remove(l); this._elemLines.delete(elemId); }
+    this._removeHingeMarkers(elemId);
     this._selected.delete(`elem:${elemId}`);
+  }
+
+  // ── Marcadores de liberaciones (rótulas) ───────────────────────────────────
+  // Círculo verde  = giro liberado (rótula de momento: T/My/Mz)
+  // Cuadrado ámbar = desplazamiento liberado (N/Vy/Vz)
+  // Se dibujan cerca del extremo correspondiente del elemento.
+  _hingeTexture(kind) {
+    if (!this._hingeTexCache) this._hingeTexCache = {};
+    if (this._hingeTexCache[kind]) return this._hingeTexCache[kind];
+    const c = document.createElement('canvas');
+    c.width = c.height = 64;
+    const g = c.getContext('2d');
+    g.lineWidth = 7;
+    if (kind === 'rot') {
+      g.strokeStyle = '#4ade80';
+      g.fillStyle = 'rgba(7,10,15,0.92)';
+      g.beginPath(); g.arc(32, 32, 23, 0, Math.PI * 2); g.fill(); g.stroke();
+    } else {
+      g.strokeStyle = '#fbbf24';
+      g.fillStyle = 'rgba(7,10,15,0.92)';
+      g.fillRect(12, 12, 40, 40); g.strokeRect(12, 12, 40, 40);
+    }
+    const tex = new THREE.CanvasTexture(c);
+    this._hingeTexCache[kind] = tex;
+    return tex;
+  }
+
+  _removeHingeMarkers(elemId) {
+    const g = this._hingeSprites?.get(elemId);
+    if (g) { this._scene.remove(g); this._hingeSprites.delete(elemId); }
+  }
+
+  _buildHingeMarkers(elem) {
+    if (!this._hingeSprites) this._hingeSprites = new Map();
+    this._removeHingeMarkers(elem.id);
+    const rel = elem.releases;
+    if (!rel || !rel.some(r => r)) return;
+    const n1 = this.app.model.nodes.get(elem.n1);
+    const n2 = this.app.model.nodes.get(elem.n2);
+    if (!n1 || !n2) return;
+
+    const p1 = this.m2t(n1.x, n1.y, n1.z);
+    const p2 = this.m2t(n2.x, n2.y, n2.z);
+    const group = new THREE.Group();
+    const L3 = p1.distanceTo(p2);
+    const s  = Math.min(Math.max(L3 * 0.08, 0.14), 0.5);
+
+    const addMark = (t, kind, lift) => {
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: this._hingeTexture(kind), depthTest: false, transparent: true
+      }));
+      sp.position.copy(p1.clone().lerp(p2, t));
+      if (lift) sp.position.y += s * 1.05;   // separa símbolos si coinciden
+      sp.scale.set(s, s, 1);
+      sp.renderOrder = 5;
+      group.add(sp);
+    };
+
+    const endRot   = off => rel.slice(off + 3, off + 6).some(r => r);
+    const endTrans = off => rel.slice(off,     off + 3).some(r => r);
+    if (endRot(0))   addMark(0.12, 'rot',   false);
+    if (endTrans(0)) addMark(0.12, 'trans', endRot(0));
+    if (endRot(6))   addMark(0.88, 'rot',   false);
+    if (endTrans(6)) addMark(0.88, 'trans', endRot(6));
+
+    this._scene.add(group);
+    this._hingeSprites.set(elem.id, group);
+  }
+
+  // ── Reacciones en apoyos (flechas + valores) ───────────────────────────────
+  clearReactions() {
+    for (const o of this._reactionObjects || []) this._scene.remove(o);
+    this._reactionObjects = [];
+  }
+
+  showReactions(results) {
+    this.clearReactions();
+    if (!results) return;
+    const model = this.app.model;
+
+    // nodos con apoyo rígido o resorte
+    const suppNodes = [...model.nodes.values()].filter(n =>
+      Object.values(n.restraints || {}).some(v => v) ||
+      (n.springs && Object.values(n.springs).some(k => k > 0)));
+    if (!suppNodes.length) return;
+
+    // magnitudes máximas para escalar flechas
+    const data = suppNodes.map(n => ({ n, r: results.getReaction(n.id) }));
+    let maxF = 0, maxM = 0;
+    for (const { r } of data) {
+      for (let i = 0; i < 3; i++) maxF = Math.max(maxF, Math.abs(r[i]));
+      for (let i = 3; i < 6; i++) maxM = Math.max(maxM, Math.abs(r[i]));
+    }
+    if (maxF < 1e-9 && maxM < 1e-9) return;
+
+    const b = model.getBounds();
+    const span = Math.max(b.max.x - b.min.x, b.max.y - b.min.y, b.max.z - b.min.z, 1);
+    const baseLen = span * 0.18;
+    const TOL_F = Math.max(maxF * 1e-4, 1e-6);
+    const TOL_M = Math.max(maxM * 1e-4, 1e-6);
+
+    // ejes del modelo → Three.js (x→x, y→z, z→y)
+    const AXES3 = [
+      new THREE.Vector3(1, 0, 0),   // X modelo
+      new THREE.Vector3(0, 0, 1),   // Y modelo
+      new THREE.Vector3(0, 1, 0),   // Z modelo
+    ];
+    const F_LBL = ['Rx', 'Ry', 'Rz'], M_LBL = ['Mx', 'My', 'Mz'];
+    const fmt = v => Math.abs(v) >= 1000 ? v.toFixed(0) : +v.toPrecision(4);
+
+    for (const { n, r } of data) {
+      const origin = this.m2t(n.x, n.y, n.z);
+
+      // Fuerzas (naranja) — flecha apuntando hacia el nodo (como reacción)
+      for (let i = 0; i < 3; i++) {
+        if (Math.abs(r[i]) < TOL_F) continue;
+        const dir = AXES3[i].clone().multiplyScalar(Math.sign(r[i]));
+        const len = Math.max(0.25, baseLen * Math.abs(r[i]) / (maxF || 1));
+        const tail = origin.clone().addScaledVector(dir, -len);
+        const arrow = new THREE.ArrowHelper(dir, tail, len, 0xffa726, len * 0.3, len * 0.14);
+        this._scene.add(arrow);
+        this._reactionObjects.push(arrow);
+        const lbl = this._makeValSprite(`${F_LBL[i]}=${fmt(r[i])}`, '#ffa726');
+        lbl.position.copy(tail).addScaledVector(dir, -0.12).add(new THREE.Vector3(0, 0.16, 0));
+        this._scene.add(lbl);
+        this._reactionObjects.push(lbl);
+      }
+
+      // Momentos (violeta) — flecha de doble cabeza según eje del momento
+      for (let i = 3; i < 6; i++) {
+        if (Math.abs(r[i]) < TOL_M) continue;
+        const ax = i - 3;
+        const dir = AXES3[ax].clone().multiplyScalar(Math.sign(r[i]));
+        const len = Math.max(0.22, baseLen * 0.8 * Math.abs(r[i]) / (maxM || 1));
+        const tail = origin.clone().addScaledVector(dir, -len);
+        const a1 = new THREE.ArrowHelper(dir, tail, len, 0xce93d8, len * 0.26, len * 0.12);
+        const a2 = new THREE.ArrowHelper(dir, tail, len * 0.82, 0xce93d8, len * 0.26, len * 0.12);
+        this._scene.add(a1); this._scene.add(a2);
+        this._reactionObjects.push(a1, a2);
+        const lbl = this._makeValSprite(`${M_LBL[ax]}=${fmt(r[i])}`, '#ce93d8');
+        lbl.position.copy(tail).addScaledVector(dir, -0.12).add(new THREE.Vector3(0, -0.16, 0));
+        this._scene.add(lbl);
+        this._reactionObjects.push(lbl);
+      }
+    }
+  }
+
+  // Sprite de texto para valores numéricos (más ancho que el de IDs)
+  _makeValSprite(text, color) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 160; canvas.height = 36;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'rgba(7,10,15,0.85)';
+    ctx.fillRect(0, 0, 160, 36);
+    ctx.font = 'bold 17px monospace';
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center';
+    ctx.fillText(text, 80, 25);
+    const tex = new THREE.CanvasTexture(canvas);
+    const mat = new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true });
+    const sprite = new THREE.Sprite(mat);
+    sprite.scale.set(1.5, 0.34, 1);
+    sprite.renderOrder = 6;
+    return sprite;
+  }
+
+  // ── Símbolo de apoyo elástico (resorte zigzag bajo el nodo) ────────────────
+  _buildSpringSymbol(node) {
+    if (!this._springSymbols) this._springSymbols = new Map();
+    const prev = this._springSymbols.get(node.id);
+    if (prev) { this._scene.remove(prev); this._springSymbols.delete(node.id); }
+
+    const sp = node.springs;
+    if (!sp || !Object.values(sp).some(k => k > 0)) return;
+
+    const s = 0.45;   // tamaño del símbolo
+    const pts = [
+      [0, 0], [0, -0.18], [0.5, -0.30], [-0.5, -0.46], [0.5, -0.62],
+      [-0.5, -0.78], [0, -0.90], [0, -1.05]
+    ].map(([x, y]) => new THREE.Vector3(x * s * 0.5, y * s, 0));
+    const geo = new THREE.BufferGeometry().setFromPoints(pts);
+    const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x2dd4bf }));
+    // base del resorte
+    const basePts = [new THREE.Vector3(-s * 0.4, -1.05 * s, 0), new THREE.Vector3(s * 0.4, -1.05 * s, 0)];
+    const base = new THREE.Line(new THREE.BufferGeometry().setFromPoints(basePts),
+                                new THREE.LineBasicMaterial({ color: 0x2dd4bf }));
+    const group = new THREE.Group();
+    group.add(line); group.add(base);
+    group.position.copy(this.m2t(node.x, node.y, node.z));
+    this._scene.add(group);
+    this._springSymbols.set(node.id, group);
   }
 
   refreshNode(node) {
@@ -492,16 +711,247 @@ export class Viewport {
     );
   }
 
+  // Snap de una coordenada de modelo: primero a un eje de grilla cercano
+  // (si hay ejes definidos), si no, redondeo a la grilla de snap normal.
+  _snapCoord(v, gridCoords) {
+    if (gridCoords && gridCoords.length) {
+      let best = null, bd = Infinity;
+      for (const g of gridCoords) {
+        const d = Math.abs(v - g);
+        if (d < bd) { bd = d; best = g; }
+      }
+      if (best !== null && bd <= Math.max(this._snapSize, 0.3)) return best;
+    }
+    return this._snapSize > 0 ? Math.round(v / this._snapSize) * this._snapSize : v;
+  }
+
   _floorPoint() {
-    const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -this._floorZ);
+    const grids = this.app.model.grids || { x: [], y: [], z: [] };
     const pt = new THREE.Vector3();
+    const is2D = this.app.model.mode === '2D';
+    const elev = this._elevation;
+
+    if (is2D || (elev && elev.axis === 'y')) {
+      // Plano X–Z del modelo en y = coord (proyecto 2D: y=0; elevación eje N)
+      const yPlane = is2D ? 0 : elev.coord;
+      const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -yPlane);  // z three = y modelo
+      this._raycaster.ray.intersectPlane(plane, pt);
+      if (!pt || isNaN(pt.x)) return null;
+      pt.x = this._snapCoord(pt.x, grids.x);   // X modelo
+      pt.y = this._snapCoord(pt.y, grids.z);   // Y three = Z modelo → niveles
+      pt.z = yPlane;                            // Z three = Y modelo (fijo al plano)
+      return pt;
+    }
+
+    if (elev && elev.axis === 'x') {
+      // Plano Y–Z del modelo en x = coord (elevación eje A/B/C)
+      const plane = new THREE.Plane(new THREE.Vector3(1, 0, 0), -elev.coord);
+      this._raycaster.ray.intersectPlane(plane, pt);
+      if (!pt || isNaN(pt.x)) return null;
+      pt.x = elev.coord;                        // X modelo fijo al plano
+      pt.y = this._snapCoord(pt.y, grids.z);    // Z modelo → niveles
+      pt.z = this._snapCoord(pt.z, grids.y);    // Y modelo
+      return pt;
+    }
+
+    const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -this._floorZ);
     this._raycaster.ray.intersectPlane(plane, pt);
     if (!pt || isNaN(pt.x)) return null;
-    if (this._snapSize > 0) {
-      pt.x = Math.round(pt.x / this._snapSize) * this._snapSize;
-      pt.z = Math.round(pt.z / this._snapSize) * this._snapSize;
-    }
+    pt.x = this._snapCoord(pt.x, grids.x);     // X modelo
+    pt.z = this._snapCoord(pt.z, grids.y);     // Z three = Y modelo
     return pt;
+  }
+
+  // ── Proyección ortográfica / perspectiva ─────────────────────────────────────
+  // La vista 2D REAL usa cámara ortográfica: sin perspectiva ni profundidad.
+  _setProjection(kind) {
+    if (kind === 'ortho') {
+      if (!this._cameraOrtho) {
+        this._cameraOrtho = new THREE.OrthographicCamera(-10, 10, 10, -10, -1e5, 1e5);
+      }
+      this._camera = this._cameraOrtho;
+    } else {
+      this._camera = this._cameraPersp;
+    }
+    this._controls.object = this._camera;
+    this._onResize();
+    this._controls.update();
+  }
+
+  // Encuadra la cámara ortográfica mirando el plano indicado.
+  // axis: 'y' → mira a lo largo de −Y modelo (elevación X–Z, la vista de un
+  //       pórtico plano);  'x' → mira a lo largo de −X modelo (elevación Y–Z).
+  _fitOrtho(axis, coord = 0) {
+    const b = this.app.model.getBounds();
+    const span = Math.max(b.max.x - b.min.x, b.max.y - b.min.y, b.max.z - b.min.z, 8);
+    const c = this.m2t(b.center.x, b.center.y, b.center.z);
+    const cam = this._cameraOrtho;
+    const half = span * 0.75;
+    const aspect = (this.container.clientWidth || 800) / (this.container.clientHeight || 600);
+    cam.left = -half * aspect; cam.right = half * aspect;
+    cam.top  =  half;          cam.bottom = -half;
+    cam.zoom = 1;
+    const d = span * 4;
+    if (axis === 'x') {
+      // mirar el plano Y–Z desde +X
+      cam.position.set(c.x + d, c.y, c.z);
+      cam.up.set(0, 1, 0);
+    } else {
+      // mirar el plano X–Z desde −Y modelo (= −Z three): vista frontal clásica
+      cam.position.set(c.x, c.y, c.z - d);
+      cam.up.set(0, 1, 0);
+    }
+    cam.lookAt(c);
+    cam.updateProjectionMatrix();
+    this._controls.target.copy(c);
+    this._controls.update();
+  }
+
+  // ── Modo del proyecto (definido al crear el modelo) ──────────────────────────
+  // 2D: cámara ortográfica frontal fija (2D real), nodos en el plano X–Z.
+  // 3D: cámara en perspectiva libre (salvo que haya una elevación activa).
+  applyProjectMode() {
+    const is2D = this.app.model.mode === '2D';
+    const badge = document.getElementById('mode-badge');
+    if (badge) {
+      badge.textContent = is2D ? '2D' : '3D';
+      badge.title = is2D
+        ? 'Modelo 2D: pórtico plano X–Z (cámara ortográfica fija; uy/rx/rz restringidos automáticamente). El modo se elige en Archivo → Nuevo.'
+        : 'Modelo 3D: estructura tridimensional. El modo se elige en Archivo → Nuevo.';
+      badge.classList.toggle('badge-2d', is2D);
+    }
+    if (is2D) {
+      this._elevation = null;
+      this._setProjection('ortho');
+      this._fitOrtho('y', 0);
+      this._controls.enableRotate = false;
+    } else if (!this._elevation) {
+      this._setProjection('persp');
+      this._controls.enableRotate = true;
+    }
+    this.refreshElevationOptions();
+  }
+
+  // ── Elevaciones por eje estructural (vista 2D real de un eje, en modelos 3D) ─
+  // spec = { axis:'y'|'x', coord, name } | null (volver a 3D libre).
+  // axis 'y': plano y=coord (ejes 1,2,3…) visto de frente (X–Z).
+  // axis 'x': plano x=coord (ejes A,B,C…) visto de lado (Y–Z).
+  setElevation(spec) {
+    if (this.app.model.mode === '2D') return;   // en 2D no aplica
+    this._elevation = spec || null;
+    if (this._elevation) {
+      this._setProjection('ortho');
+      this._fitOrtho(this._elevation.axis === 'x' ? 'x' : 'y', this._elevation.coord);
+      this._controls.enableRotate = false;
+      this.app.toast(
+        `Elevación ${this._elevation.name}: solo se muestra ese plano; los nodos nuevos caen en él. Seleccione "Vista 3D" para volver.`, 'ok');
+    } else {
+      this._setProjection('persp');
+      this._controls.enableRotate = true;
+      this.setView('iso');
+    }
+    this._applyElevationFilter();
+  }
+
+  // Oculta todo lo que no pertenece al plano de la elevación activa.
+  _applyElevationFilter() {
+    const e = this._elevation;
+    const TOL = 0.051;
+    const onPlane = (n) => !e ||
+      (e.axis === 'y' ? Math.abs(n.y - e.coord) <= TOL : Math.abs(n.x - e.coord) <= TOL);
+
+    for (const [id, mesh] of this._nodeMeshes) {
+      const n = this.app.model.nodes.get(id);
+      const vis = !!n && onPlane(n);
+      mesh.visible = vis;
+      const sg = this._suppGroups.get(id);    if (sg) sg.visible = vis;
+      const sp = this._springSymbols?.get(id); if (sp) sp.visible = vis;
+    }
+    for (const [eid, line] of this._elemLines) {
+      const el = this.app.model.elements.get(eid);
+      const n1 = el && this.app.model.nodes.get(el.n1);
+      const n2 = el && this.app.model.nodes.get(el.n2);
+      const vis = !!(n1 && n2 && onPlane(n1) && onPlane(n2));
+      line.visible = vis;
+      const hg = this._hingeSprites?.get(eid); if (hg) hg.visible = vis;
+    }
+  }
+
+  // Rellena el selector de elevaciones con los ejes de grilla definidos.
+  refreshElevationOptions() {
+    const sel = document.getElementById('elev-select');
+    if (!sel) return;
+    const is2D = this.app.model.mode === '2D';
+    sel.style.display = is2D ? 'none' : '';
+    document.getElementById('elev-label')?.style.setProperty('display', is2D ? 'none' : '');
+    if (is2D) return;
+    const g = this.app.model.grids || { x: [], y: [] };
+    const cur = this._elevation;
+    const letter = i => String.fromCharCode(65 + (i % 26));
+    let html = `<option value="">Vista 3D</option>`;
+    (g.y || []).forEach((c, i) =>
+      html += `<option value="y:${c}" ${cur && cur.axis==='y' && cur.coord===c ? 'selected':''}>Eje ${i + 1} (Y=${c})</option>`);
+    (g.x || []).forEach((c, i) =>
+      html += `<option value="x:${c}" ${cur && cur.axis==='x' && cur.coord===c ? 'selected':''}>Eje ${letter(i)} (X=${c})</option>`);
+    sel.innerHTML = html;
+  }
+
+  // ── Ejes de grilla (estilo SAP/ETABS) ───────────────────────────────────────
+  refreshGridAxes() {
+    if (this._gridAxesGroup) { this._scene.remove(this._gridAxesGroup); this._gridAxesGroup = null; }
+    const grids = this.app.model.grids;
+    if (!grids) return;
+    const xs = grids.x || [], ys = grids.y || [], zs = grids.z || [];
+    if (!xs.length && !ys.length && !zs.length) return;
+
+    const g = new THREE.Group();
+    const b = this.app.model.getBounds();
+    const xLo = Math.min(...(xs.length ? xs : [b.min.x]), b.min.x);
+    const xHi = Math.max(...(xs.length ? xs : [b.max.x]), b.max.x);
+    const yLo = Math.min(...(ys.length ? ys : [b.min.y]), b.min.y);
+    const yHi = Math.max(...(ys.length ? ys : [b.max.y]), b.max.y);
+    const zLo = zs.length ? Math.min(...zs) : 0;
+    const zHi = Math.max(...(zs.length ? zs : [b.max.z]), b.max.z);
+    const mX = Math.max((xHi - xLo) * 0.08, 0.8);
+    const mY = Math.max((yHi - yLo) * 0.08, 0.8);
+
+    const lineMat = new THREE.LineDashedMaterial({ color: 0x44506a, dashSize: 0.35, gapSize: 0.22 });
+    const addLine = (p1, p2) => {
+      const geo = new THREE.BufferGeometry().setFromPoints([p1, p2]);
+      const ln = new THREE.Line(geo, lineMat);
+      ln.computeLineDistances();
+      g.add(ln);
+    };
+    const addLbl = (text, pos) => {
+      const sp = this._makeIdSprite(text, '#9ab2d4');
+      sp.position.copy(pos);
+      sp.scale.set(0.95, 0.42, 1);
+      g.add(sp);
+    };
+    const letter = i => {
+      let s = ''; i += 1;
+      while (i > 0) { s = String.fromCharCode(64 + ((i - 1) % 26) + 1) + s; i = Math.floor((i - 1) / 26); }
+      return s;
+    };
+
+    // Ejes X (A, B, C…): líneas paralelas a Y global en planta (z = zLo)
+    xs.forEach((x, i) => {
+      addLine(this.m2t(x, yLo - mY, zLo), this.m2t(x, yHi + mY, zLo));
+      addLbl(letter(i), this.m2t(x, yLo - mY - 0.5, zLo));
+    });
+    // Ejes Y (1, 2, 3…): líneas paralelas a X global en planta
+    ys.forEach((y, i) => {
+      addLine(this.m2t(xLo - mX, y, zLo), this.m2t(xHi + mX, y, zLo));
+      addLbl(String(i + 1), this.m2t(xLo - mX - 0.5, y, zLo));
+    });
+    // Niveles Z: líneas horizontales en el plano X–Z (y = yLo) + etiqueta de cota
+    zs.forEach(z => {
+      addLine(this.m2t(xLo - mX, yLo, z), this.m2t(xHi + mX, yLo, z));
+      addLbl(`+${+z.toFixed(2)}`, this.m2t(xLo - mX - 0.6, yLo, z));
+    });
+
+    this._scene.add(g);
+    this._gridAxesGroup = g;
   }
 
   // Find nearest node within SNAP_PX screen pixels; returns {id} or null
@@ -513,6 +963,7 @@ export class Viewport {
     let best = null, bestDist = SNAP_PX;
 
     for (const [id, mesh] of this._nodeMeshes) {
+      if (!mesh.visible) continue;   // ocultos por elevación: no se pueden enganchar
       const p = mesh.position.clone().project(this._camera);
       const sx = (p.x + 1) / 2 * W;
       const sy = (1 - (p.y + 1) / 2) * H;
@@ -659,7 +1110,7 @@ export class Viewport {
   _hoverUpdate() {
     const prev = this._hovered;
     const nodeHits = this._raycaster.intersectObjects([...this._nodeMeshes.values()]);
-    const elemHits = this._raycaster.intersectObjects([...this._elemLines.values()]);
+    const elemHits = this._raycaster.intersectObjects([...this._elemLines.values()].filter(l => l.visible));
     const diaPlanes = [...this._diaGroups.values()]
       .map(g => g.children.find(c => c.userData.type === 'diaphragm')).filter(Boolean);
     const cmSpheres = [...this._diaGroups.values()]
@@ -689,7 +1140,7 @@ export class Viewport {
 
   _clickSelect(ctrlHeld = false) {
     const nodeHits = this._raycaster.intersectObjects([...this._nodeMeshes.values()]);
-    const elemHits = this._raycaster.intersectObjects([...this._elemLines.values()]);
+    const elemHits = this._raycaster.intersectObjects([...this._elemLines.values()].filter(l => l.visible));
     const diaPlanes = [...this._diaGroups.values()]
       .map(g => g.children.find(c => c.userData.type === 'diaphragm')).filter(Boolean);
     const cmSpheres = [...this._diaGroups.values()]
@@ -838,16 +1289,22 @@ export class Viewport {
       'box-shadow:0 4px 20px rgba(0,0,0,0.6)', 'pointer-events:all',
     ].join(';');
 
-    const inp = (id, val) =>
-      `<input type="number" id="${id}" value="${val.toFixed(3)}" step="0.1"
+    const inp = (id, val, locked = false) =>
+      `<input type="number" id="${id}" value="${val.toFixed(3)}" step="0.1" ${locked ? 'disabled' : ''}
          style="width:60px;font-size:11px;background:var(--bg4,#30363d);
                 border:1px solid var(--border2,#484f58);color:var(--text,#c9d1d9);
-                padding:3px 5px;border-radius:3px;font-family:monospace">`;
+                padding:3px 5px;border-radius:3px;font-family:monospace${locked ? ';opacity:0.45' : ''}">`;
+
+    // Coordenada fija al plano activo (proyecto 2D o elevación)
+    const is2D  = this.app.model.mode === '2D';
+    const elev  = this._elevation;
+    const lockY = is2D || (elev && elev.axis === 'y');
+    const lockX = !!(elev && elev.axis === 'x');
 
     popup.innerHTML = `
       <span style="color:var(--text-muted);font-size:11px;white-space:nowrap">Nuevo nodo:</span>
-      <label style="font-size:11px;color:var(--text-muted)">X</label>${inp('np-x', mc.x)}
-      <label style="font-size:11px;color:var(--text-muted)">Y</label>${inp('np-y', mc.y)}
+      <label style="font-size:11px;color:var(--text-muted)">X</label>${inp('np-x', mc.x, lockX)}
+      <label style="font-size:11px;color:var(--text-muted)">Y</label>${inp('np-y', mc.y, lockY)}
       <label style="font-size:11px;color:var(--text-muted)">Z</label>${inp('np-z', mc.z)}
       <button id="np-ok"
         style="background:var(--accent,#388bfd);color:#fff;border:none;
@@ -1000,6 +1457,10 @@ export class Viewport {
   }
 
   setView(view) {
+    // En proyecto 2D o con elevación activa la vista es fija (2D real):
+    // re-encuadrar en lugar de rotar.
+    if (this.app.model.mode === '2D') { this._fitOrtho('y', 0); return; }
+    if (this._elevation) { this._fitOrtho(this._elevation.axis === 'x' ? 'x' : 'y', this._elevation.coord); return; }
     const b = this.app.model.getBounds();
     // Centre in Three.js coords (m2t of model center)
     const tc = this.m2t(b.center.x, b.center.y, b.center.z);
@@ -1389,7 +1850,7 @@ export class Viewport {
   // �?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?
 
   _clickResults(e) {
-    const elemHits = this._raycaster.intersectObjects([...this._elemLines.values()]);
+    const elemHits = this._raycaster.intersectObjects([...this._elemLines.values()].filter(l => l.visible));
     const nodeHits = this._raycaster.intersectObjects([...this._nodeMeshes.values()]);
 
     if (elemHits.length) {
@@ -1954,9 +2415,10 @@ export class Viewport {
 
     // Model-direction → Three.js direction (m2t for vectors: x→x, y→z, z→y)
     const dirMap = {
+      gravity: new THREE.Vector3( 0, -1, 0),  // downward (structural -Z = Three.js -Y)
+      globalZ: new THREE.Vector3( 0, -1, 0),  // legacy alias for gravity — same direction
       globalX: new THREE.Vector3( 1, 0, 0),
       globalY: new THREE.Vector3( 0, 0, 1),
-      globalZ: new THREE.Vector3( 0, 1, 0),
     };
 
     for (const ld of lc.loads) {
@@ -1984,7 +2446,7 @@ export class Viewport {
         const p1 = this.m2t(n1.x, n1.y, n1.z);
         const p2 = this.m2t(n2.x, n2.y, n2.z);
 
-        let dir3 = (dirMap[ld.dir] || new THREE.Vector3(0, -1, 0)).clone();
+        let dir3 = (dirMap[ld.dir] || dirMap.gravity).clone();
         dir3.multiplyScalar(Math.sign(ld.w || -1));
         const frac = Math.abs(ld.w) / maxF * 0.75;
 

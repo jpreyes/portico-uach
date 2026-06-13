@@ -5,8 +5,8 @@ import {
   localAxes, stiffnessMatrix, massMatrix,
   transformMatrix, globalStiffness,
   applyReleases, fixedEndForces, condenseFEF
-} from './timoshenko.js?v=16';
-import { applyDiaphragmConstraints, applyDiaphragmMass } from './diaphragm.js';
+} from './timoshenko.js?v=29';
+import { applyDiaphragmConstraints, applyDiaphragmMass } from './diaphragm.js?v=29';
 
 // ── Node index (contiguous 0-based numbering) ─────────────────────────────
 export function buildNodeIndex(model) {
@@ -63,6 +63,18 @@ export function assembleK(model, nodeIndex) {
         K[ed[i]*nDOF + ed[j]] += KG[i][j];
         M[ed[i]*nDOF + ed[j]] += MG[i][j];
       }
+    }
+  }
+
+  // Apoyos elásticos: rigidez de resorte en la diagonal de los GDL globales
+  for (const node of model.nodes.values()) {
+    const sp = node.springs;
+    if (!sp) continue;
+    const ks = [sp.kux, sp.kuy, sp.kuz, sp.krx, sp.kry, sp.krz];
+    if (!ks.some(k => k > 0)) continue;
+    const b = nodeIndex.get(node.id) * 6;
+    for (let i = 0; i < 6; i++) {
+      if (ks[i] > 0) K[(b + i) * nDOF + (b + i)] += ks[i];
     }
   }
 
@@ -149,7 +161,7 @@ export function assembleF(model, nodeIndex, lcId, selfWeight = false) {
       const hasRel_sw  = elem.releases?.some(r => r !== 0);
       const relBool_sw = hasRel_sw ? elem.releases.map(r => r !== 0) : null;
       const Ke_loc_sw  = hasRel_sw ? stiffnessMatrix(L, mat, sec) : null;
-      const swLoad = { w: -(mat.rho * sec.A), dir: 'globalZ' };
+      const swLoad = { w: +(mat.rho * sec.A), dir: 'gravity' };
       for (const ll of _toLocalDistLoad(swLoad, ex, ey, ez)) {
         let f_local = fixedEndForces(L, ll);
         if (Ke_loc_sw) f_local = condenseFEF(Ke_loc_sw, relBool_sw, f_local);
@@ -166,10 +178,12 @@ export function assembleF(model, nodeIndex, lcId, selfWeight = false) {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────
-// Returns array of {dir, w} components in local coordinates (both y and z as needed).
+// Returns array of {dir, w} components in local coordinates (x, y and z).
+// 'gravity' and legacy 'globalZ' both map to Global -Z (positive w = downward).
+// Includes axial projection so gravity on vertical columns gets correct axial FEF.
 function _toLocalDistLoad(load, ex, ey, ez) {
   const w   = load.w;
-  const dir = load.dir || 'globalZ';
+  const dir = load.dir || 'gravity';
 
   if (dir === 'localY') return [{ dir: 'y', w }];
   if (dir === 'localZ') return [{ dir: 'z', w }];
@@ -177,11 +191,13 @@ function _toLocalDistLoad(load, ex, ey, ez) {
 
   const g = dir === 'globalX' ? [1,0,0]
           : dir === 'globalY' ? [0,1,0]
-          : [0,0,1];
+          : [0,0,-1];   // 'gravity' and legacy 'globalZ' both mean downward (positive w = ↓)
 
+  const wx = w * (g[0]*ex[0] + g[1]*ex[1] + g[2]*ex[2]);
   const wy = w * (g[0]*ey[0] + g[1]*ey[1] + g[2]*ey[2]);
   const wz = w * (g[0]*ez[0] + g[1]*ez[1] + g[2]*ez[2]);
   const res = [];
+  if (Math.abs(wx) > 1e-14) res.push({ dir: 'x', w: wx });
   if (Math.abs(wy) > 1e-14) res.push({ dir: 'y', w: wy });
   if (Math.abs(wz) > 1e-14) res.push({ dir: 'z', w: wz });
   return res;

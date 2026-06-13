@@ -1,31 +1,38 @@
 /* ══════════════════════════════════════════════════════════════
-   StructWeb3D — Dark Engineering Theme
-   Inspired by SAP2000 / ETABS visual language
+   PÓRTICO — Laboratorio Virtual de Análisis Estructural 3D
+   Instituto de Obras Civiles · Universidad Austral de Chile
+   Tema: "Aula Nocturna" — ingeniería precisa, calidez académica
    ══════════════════════════════════════════════════════════════ */
 
 :root {
-  --bg:          #0d1117;
-  --bg2:         #161b22;
-  --bg3:         #21262d;
-  --bg4:         #30363d;
-  --border:      #30363d;
-  --border2:     #484f58;
-  --text:        #c9d1d9;
-  --text-muted:  #8b949e;
-  --accent:      #388bfd;
-  --accent-dim:  #1f6feb;
-  --success:     #3fb950;
-  --warn:        #d29922;
-  --danger:      #f85149;
+  --bg:          #070a0f;
+  --bg2:         #0c1117;
+  --bg3:         #121925;
+  --bg4:         #1b2433;
+  --border:      #1d2735;
+  --border2:     #2d3a4d;
+  --text:        #dbe4ee;
+  --text-muted:  #7e8da0;
+  --accent:      #38bdf8;
+  --accent-dim:  #0284c7;
+  --accent-soft: rgba(56, 189, 248, 0.14);
+  --teal:        #2dd4bf;
+  --success:     #4ade80;
+  --warn:        #fbbf24;
+  --danger:      #f87171;
   --node-col:    #4fc3f7;
   --sel-col:     #ffc107;
-  --radius:      5px;
+  --radius:      8px;
+  --radius-sm:   5px;
   --toolbar-w:   68px;
   --panel-w:     300px;
-  --menu-h:      36px;
-  --status-h:    24px;
-  --font:        'Segoe UI', system-ui, sans-serif;
-  --font-mono:   'Cascadia Code', 'Consolas', monospace;
+  --menu-h:      40px;
+  --status-h:    26px;
+  --font:        'Inter', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+  --font-display:'Inter', 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif;
+  --font-mono:   'Cascadia Code', 'JetBrains Mono', 'Consolas', monospace;
+  --shadow-lg:   0 18px 50px rgba(0, 0, 0, 0.55);
+  --shadow-sm:   0 2px 10px rgba(0, 0, 0, 0.35);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

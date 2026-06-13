@@ -1,7 +1,7 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // Serializer — JSON (.s3d) and CSV import/export
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model } from './model.js';
+import { Model } from './model.js?v=29';
 
 export class Serializer {
 
@@ -11,6 +11,7 @@ export class Serializer {
     const obj = {
       version: '1.0',
       units: model.units,
+      mode: model.mode || '3D',
       nodes:      [...model.nodes.values()],
       elements:   [...model.elements.values()],
       materials:  [...model.materials.values()],
@@ -18,6 +19,7 @@ export class Serializer {
       diaphragms:   [...model.diaphragms.values()],
       loadCases:    [...model.loadCases.values()],
       combinations: [...model.combinations.values()],
+      grids:        model.grids || { x: [], y: [], z: [] },
       _counters:   { ...model._cnt }
     };
     return JSON.stringify(obj, null, 2);
@@ -34,17 +36,26 @@ export class Serializer {
     m._cnt = { nodes:0, elements:0, materials:0, sections:0, diaphragms:0, loadCases:0, combinations:0 };
 
     m.units = obj.units || 'kN-m';
+    m.mode  = obj.mode === '2D' ? '2D' : '3D';
 
     for (const d of (obj.materials || []))  { m.materials.set(d.id, d); }
     for (const d of (obj.sections  || []))  { m.sections.set(d.id, d); }
-    for (const d of (obj.nodes     || []))  { m.nodes.set(d.id, d); }
+    for (const d of (obj.nodes     || []))  {
+      if (!d.nodeMass) d.nodeMass = { mx: 0, my: 0, mz: 0 };
+      if (!d.springs)  d.springs  = { kux: 0, kuy: 0, kuz: 0, krx: 0, kry: 0, krz: 0 };
+      m.nodes.set(d.id, d);
+    }
     for (const d of (obj.elements  || []))  {
       if (!d.releases) d.releases = Array(12).fill(0);
       m.elements.set(d.id, d);
     }
     for (const d of (obj.diaphragms|| []))  { m.diaphragms.set(d.id, d); }
-    for (const d of (obj.loadCases    || [])) { m.loadCases.set(d.id, d); }
+    for (const d of (obj.loadCases    || [])) {
+      if (d.type !== 'spectrum') { d.type = 'static'; d.specDir = null; }
+      m.loadCases.set(d.id, d);
+    }
     for (const d of (obj.combinations || [])) { m.combinations.set(d.id, d); }
+    m.grids = obj.grids || { x: [], y: [], z: [] };
 
     if (obj._counters) {
       m._cnt = { ...m._cnt, ...obj._counters };
@@ -80,7 +91,7 @@ export class Serializer {
       return String(v);
     };
 
-    lines.push('# StructWeb3D CSV Export');
+    lines.push('# PÓRTICO CSV Export');
     lines.push(`# Unidades: ${model.units}`);
     lines.push('#');
 
@@ -118,6 +129,57 @@ export class Serializer {
         const nodes = d.nodes.join(';');
         lines.push(`DIAPHRAGM, ${d.id}, ${fmt(d.z)}, ${nodes}, ${fmt(d.cm.x)}, ${fmt(d.cm.y)}, ${fmt(d.mass.m)}, ${fmt(d.mass.Icm)}, ${fmt(d.eccentricity.ex)}, ${fmt(d.eccentricity.ey)}`);
       }
+      lines.push('#');
+    }
+
+    if (model.loadCases.size > 0) {
+      lines.push('# TYPE, ID, nombre, peso_propio(1/0), tipo(static/spectrum), dir_espectral(X/Y)');
+      for (const lc of model.loadCases.values()) {
+        lines.push(`LOAD_CASE, ${lc.id}, ${lc.name}, ${lc.selfWeight ? 1 : 0}, ${lc.type || 'static'}, ${lc.specDir || '-'}`);
+      }
+      lines.push('#');
+      lines.push('# TYPE, lc_id, node_id, Fx, Fy, Fz, Mx, My, Mz');
+      lines.push('# TYPE, lc_id, elem_id, dir, w');
+      for (const lc of model.loadCases.values()) {
+        for (const load of lc.loads) {
+          if (load.type === 'nodal') {
+            lines.push(`LOAD_NODAL, ${lc.id}, ${load.nodeId}, ${load.F.map(fmt).join(', ')}`);
+          } else if (load.type === 'dist') {
+            lines.push(`LOAD_DIST, ${lc.id}, ${load.elemId}, ${load.dir || 'gravity'}, ${fmt(load.w)}`);
+          }
+        }
+      }
+      lines.push('#');
+    }
+
+    const hasNodeMass = [...model.nodes.values()].some(n => n.nodeMass && (n.nodeMass.mx || n.nodeMass.my || n.nodeMass.mz));
+    if (hasNodeMass) {
+      lines.push('# TYPE, node_id, mx(ton), my(ton), mz(ton)');
+      for (const n of model.nodes.values()) {
+        const nm = n.nodeMass;
+        if (!nm || (!nm.mx && !nm.my && !nm.mz)) continue;
+        lines.push(`NODE_MASS, ${n.id}, ${fmt(nm.mx || 0)}, ${fmt(nm.my || 0)}, ${fmt(nm.mz || 0)}`);
+      }
+      lines.push('#');
+    }
+
+    const hasSprings = [...model.nodes.values()].some(n => n.springs && Object.values(n.springs).some(k => k > 0));
+    if (hasSprings) {
+      lines.push('# TYPE, node_id, kux(kN/m), kuy, kuz, krx(kN·m/rad), kry, krz');
+      for (const n of model.nodes.values()) {
+        const sp = n.springs;
+        if (!sp || !Object.values(sp).some(k => k > 0)) continue;
+        lines.push(`NODE_SPRING, ${n.id}, ${fmt(sp.kux || 0)}, ${fmt(sp.kuy || 0)}, ${fmt(sp.kuz || 0)}, ${fmt(sp.krx || 0)}, ${fmt(sp.kry || 0)}, ${fmt(sp.krz || 0)}`);
+      }
+      lines.push('#');
+    }
+
+    if (model.combinations.size > 0) {
+      lines.push('# TYPE, ID, nombre, lc_id1, factor1[, lc_id2, factor2, ...]');
+      for (const combo of model.combinations.values()) {
+        const factorsStr = combo.factors.map(f => `${f.lcId}, ${fmt(f.factor)}`).join(', ');
+        lines.push(`COMBINATION, ${combo.id}, ${combo.name}, ${factorsStr}`);
+      }
     }
 
     return lines.join('\r\n');
@@ -134,7 +196,10 @@ export class Serializer {
       .filter(l => l && !l.startsWith('#'));
 
     // Parse all rows, group by type
-    const parsed = { MATERIAL:[], SECTION:[], NODE:[], ELEMENT:[], DIAPHRAGM:[], LOAD_NODAL:[], LOAD_DIST:[] };
+    const parsed = {
+      MATERIAL:[], SECTION:[], NODE:[], ELEMENT:[], DIAPHRAGM:[],
+      LOAD_CASE:[], LOAD_NODAL:[], LOAD_DIST:[], NODE_MASS:[], NODE_SPRING:[], COMBINATION:[]
+    };
 
     rows.forEach((line, lineIdx) => {
       const cols = line.split(',').map(c => c.trim());
@@ -214,6 +279,79 @@ export class Serializer {
       if (obj.id > model._cnt.diaphragms) model._cnt.diaphragms = obj.id;
     }
 
+    // ── Load Cases ────────────────────────────────────────────────────────────
+    for (const { cols, line } of parsed.LOAD_CASE) {
+      // LOAD_CASE, id, name[, self_weight 1/0][, tipo static/spectrum][, dir X/Y]
+      if (cols.length < 3) { errors.push(`Línea ${line}: LOAD_CASE necesita 3 columnas`); continue; }
+      const [, id, name, sw, tipo, dir] = cols;
+      if (isNaN(+id)) { errors.push(`Línea ${line}: ID inválido en LOAD_CASE`); continue; }
+      const isSpec = (tipo || '').trim().toLowerCase() === 'spectrum';
+      const lc = {
+        id: +id, name: name || `LC${id}`, loads: [],
+        selfWeight: +sw === 1 && !isSpec,
+        type: isSpec ? 'spectrum' : 'static',
+        specDir: isSpec ? ((dir || 'X').trim().toUpperCase() === 'Y' ? 'Y' : 'X') : null,
+      };
+      model.loadCases.set(lc.id, lc);
+      if (lc.id > model._cnt.loadCases) model._cnt.loadCases = lc.id;
+    }
+
+    // ── Nodal Loads ───────────────────────────────────────────────────────────
+    for (const { cols, line } of parsed.LOAD_NODAL) {
+      // LOAD_NODAL, lc_id, node_id, Fx, Fy, Fz, Mx, My, Mz
+      if (cols.length < 9) { errors.push(`Línea ${line}: LOAD_NODAL necesita 9 columnas`); continue; }
+      const [, lcId, nodeId, Fx, Fy, Fz, Mx, My, Mz] = cols;
+      const lc = model.loadCases.get(+lcId);
+      if (!lc) { errors.push(`Línea ${line}: caso de carga ${lcId} no existe`); continue; }
+      if (!model.nodes.has(+nodeId)) { errors.push(`Línea ${line}: nodo ${nodeId} no existe`); continue; }
+      lc.loads.push({ type: 'nodal', nodeId: +nodeId, F: [+Fx, +Fy, +Fz, +Mx, +My, +Mz] });
+    }
+
+    // ── Distributed Loads ─────────────────────────────────────────────────────
+    for (const { cols, line } of parsed.LOAD_DIST) {
+      // LOAD_DIST, lc_id, elem_id, dir, w
+      if (cols.length < 5) { errors.push(`Línea ${line}: LOAD_DIST necesita 5 columnas`); continue; }
+      const [, lcId, elemId, dir, w] = cols;
+      const lc = model.loadCases.get(+lcId);
+      if (!lc) { errors.push(`Línea ${line}: caso de carga ${lcId} no existe`); continue; }
+      if (!model.elements.has(+elemId)) { errors.push(`Línea ${line}: elemento ${elemId} no existe`); continue; }
+      lc.loads.push({ type: 'dist', elemId: +elemId, dir: dir || 'gravity', w: +w });
+    }
+
+    // ── Node Masses ───────────────────────────────────────────────────────────
+    for (const { cols, line } of parsed.NODE_MASS) {
+      // NODE_MASS, node_id, mx, my, mz
+      if (cols.length < 5) { errors.push(`Línea ${line}: NODE_MASS necesita 5 columnas`); continue; }
+      const [, nodeId, mx, my, mz] = cols;
+      const node = model.nodes.get(+nodeId);
+      if (!node) { errors.push(`Línea ${line}: nodo ${nodeId} no existe`); continue; }
+      node.nodeMass = { mx: +mx, my: +my, mz: +mz };
+    }
+
+    // ── Node Springs (apoyos elásticos) ───────────────────────────────────────
+    for (const { cols, line } of parsed.NODE_SPRING) {
+      // NODE_SPRING, node_id, kux, kuy, kuz, krx, kry, krz
+      if (cols.length < 8) { errors.push(`Línea ${line}: NODE_SPRING necesita 8 columnas`); continue; }
+      const [, nodeId, kux, kuy, kuz, krx, kry, krz] = cols;
+      const node = model.nodes.get(+nodeId);
+      if (!node) { errors.push(`Línea ${line}: nodo ${nodeId} no existe`); continue; }
+      node.springs = { kux: +kux, kuy: +kuy, kuz: +kuz, krx: +krx, kry: +kry, krz: +krz };
+    }
+
+    // ── Combinations ──────────────────────────────────────────────────────────
+    for (const { cols, line } of parsed.COMBINATION) {
+      // COMBINATION, id, name, lc_id1, factor1[, lc_id2, factor2, ...]
+      if (cols.length < 5) { errors.push(`Línea ${line}: COMBINATION necesita al menos 5 columnas`); continue; }
+      const [, id, name, ...rest] = cols;
+      const factors = [];
+      for (let i = 0; i + 1 < rest.length; i += 2) {
+        factors.push({ lcId: +rest[i], factor: +rest[i + 1] });
+      }
+      const combo = { id: +id, name: name || `Combo ${id}`, factors };
+      model.combinations.set(combo.id, combo);
+      if (combo.id > model._cnt.combinations) model._cnt.combinations = combo.id;
+    }
+
     return { model, errors };
   }
 
@@ -221,14 +359,14 @@ export class Serializer {
 
   getTemplate() {
     return `# ══════════════════════════════════════════════════════════════
-# StructWeb3D — Plantilla CSV v1.0
+# PÓRTICO — Plantilla CSV v2.0
 # Instrucciones:
 #   1. Llene las filas de datos en Excel / Google Sheets
 #   2. Exporte como CSV (separado por comas)
-#   3. Use Archivo → Importar CSV en StructWeb3D
+#   3. Use Archivo → Importar CSV en PÓRTICO
 #   4. Las líneas que comienzan con # son ignoradas
-#   5. El orden de las filas es libre (materiales, secciones,
-#      nodos y elementos se resuelven automáticamente)
+#   5. El orden correcto: MATERIAL → SECTION → NODE → ELEMENT
+#      → DIAPHRAGM → LOAD_CASE → LOAD_NODAL/LOAD_DIST → NODE_MASS → COMBINATION
 # ══════════════════════════════════════════════════════════════
 
 # ── MATERIALES ─────────────────────────────────────────────────
@@ -274,6 +412,45 @@ ELEMENT,  10,  8,  9,  1,      2
 # TYPE,       ID, Z(m), nodos(sep;), cm_x, cm_y, masa(ton), Icm(ton·m²), ex(m), ey(m)
 # DIAPHRAGM,  1,  3.0,  4;5;6,       5.0,  0.0,  50.0,       120.0,       0.05,  0.05
 # DIAPHRAGM,  2,  6.0,  7;8;9,       5.0,  0.0,  50.0,       120.0,       0.05,  0.05
+
+# ── CASOS DE CARGA ─────────────────────────────────────────────
+# TYPE,       ID,  nombre,        peso_propio (1 = incluye peso propio de los elementos)
+LOAD_CASE,    1,   Carga Muerta,  1
+LOAD_CASE,    2,   Carga Viva,    0
+LOAD_CASE,    3,   Sismo X,       0
+
+# ── CARGAS NODALES ─────────────────────────────────────────────
+# TYPE,        lc_id, node_id, Fx(kN),  Fy(kN),  Fz(kN),  Mx(kN·m), My(kN·m), Mz(kN·m)
+# Fuerza horizontal en nodo 7 (sismo X en LC3):
+LOAD_NODAL,    3,     7,       100.0,   0.0,     0.0,     0.0,      0.0,      0.0
+
+# ── CARGAS DISTRIBUIDAS ────────────────────────────────────────
+# TYPE,       lc_id, elem_id, dir,     w(kN/m)
+# dir opciones: gravity (↓, w>0=abajo), globalZ (+Z), globalX (+X), globalY (+Y), localY, localZ
+# Carga muerta en vigas del nivel 1 (LC1):
+LOAD_DIST,    1,     7,       gravity, 25.0
+LOAD_DIST,    1,     8,       gravity, 25.0
+# Carga viva en vigas del nivel 2 (LC2):
+LOAD_DIST,    2,     9,       gravity, 15.0
+LOAD_DIST,    2,     10,      gravity, 15.0
+
+# ── MASAS NODALES (para análisis modal sin diafragma) ──────────
+# TYPE,      node_id, mx(ton), my(ton), mz(ton)
+# NODE_MASS, 4,       5.0,     5.0,     0.0
+# NODE_MASS, 5,       5.0,     5.0,     0.0
+# NODE_MASS, 6,       5.0,     5.0,     0.0
+
+# ── APOYOS ELÁSTICOS / RESORTES (opcional) ─────────────────────
+# Rigidez de resorte en cada GDL global del nodo (0 = sin resorte).
+# Útil para apoyos parciales: no marque la restricción rígida de ese GDL.
+# TYPE,        node_id, kux(kN/m), kuy,   kuz,    krx(kN·m/rad), kry,  krz
+# NODE_SPRING, 2,       0,         0,     50000,  0,             0,    0
+# NODE_SPRING, 3,       0,         0,     0,      0,             8000, 0
+
+# ── COMBINACIONES DE CARGA ─────────────────────────────────────
+# TYPE,          ID, nombre,          lc_id1, factor1[, lc_id2, factor2, ...]
+COMBINATION,     1,  1.2CM+1.6CV,     1,      1.2,      2,      1.6
+COMBINATION,     2,  1.2CM+CV+Ex,     1,      1.2,      2,      1.0,      3,  1.0
 `;
   }
 }

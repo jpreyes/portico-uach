@@ -1,19 +1,21 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js';
-import { Serializer }      from './model/serializer.js';
-import { Viewport }        from './ui/viewport.js?v=13';
-import { PropertiesPanel } from './ui/properties.js';
-import { MenuBar }         from './ui/menu.js';
-import { UndoStack }       from './utils/undo.js';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=16';
-import { Results }                         from './solver/postprocess.js?v=16';
-import { ModalSolver }                     from './solver/modal_solver.js';
-import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=16';
-import { ModalResults }                    from './solver/modal_results.js';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js';
-import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js';
+import { Model }           from './model/model.js?v=29';
+import { Serializer }      from './model/serializer.js?v=29';
+import { Viewport }        from './ui/viewport.js?v=29';
+import { PropertiesPanel } from './ui/properties.js?v=29';
+import { MenuBar }         from './ui/menu.js?v=29';
+import { UndoStack }       from './utils/undo.js?v=29';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=29';
+import { Results }                         from './solver/postprocess.js?v=29';
+import { ModalSolver }                     from './solver/modal_solver.js?v=29';
+import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=29';
+import { ModalResults }                    from './solver/modal_results.js?v=29';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=29';
+import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=29';
+import { splitElement, splitByLength, discretizeAll, joinElements } from './model/discretize.js?v=29';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=29';
 
 class App {
   constructor() {
@@ -83,23 +85,46 @@ class App {
     });
 
     // Toolbar extras
+    // Selector de elevaciones (vista 2D real de un eje estructural, solo en 3D)
+    document.getElementById('elev-select')?.addEventListener('change', e => {
+      const v = e.target.value;
+      if (!v) { this.viewport.setElevation(null); return; }
+      const [axis, coordS] = v.split(':');
+      const coord = parseFloat(coordS);
+      const opt = e.target.selectedOptions[0];
+      this.viewport.setElevation({ axis, coord, name: opt ? opt.textContent : v });
+    });
     document.getElementById('btn-toggle-ids')?.addEventListener('click', () => this.viewport.toggleIds());
     document.getElementById('btn-toggle-extrude')?.addEventListener('click', () => this.viewport.toggleExtruded());
     document.getElementById('btn-export-img')?.addEventListener('click', () => this.exportViewportPNG());
 
-    // F5 / F6 / F7 shortcuts
+    // Reacciones en apoyos (toggle)
+    document.getElementById('btn-show-reactions')?.addEventListener('click', () => {
+      this._showReactions = !this._showReactions;
+      document.getElementById('btn-show-reactions')?.classList.toggle('active', this._showReactions);
+      if (this._showReactions && this._results) this.viewport.showReactions(this._results);
+      else this.viewport.clearReactions();
+    });
+
+    this._initHelp();
+
+    // F1 / F5 / F6 / F7 / F8 shortcuts
     document.addEventListener('keydown', e => {
+      if (e.key === 'F1') { e.preventDefault(); this.openHelp('guia');       }
       if (e.key === 'F5') { e.preventDefault(); this.runAnalysis();          }
       if (e.key === 'F6') { e.preventDefault(); this.runModal();             }
       if (e.key === 'F7') { e.preventDefault(); this.runSpectrum();          }
-      if (e.key === 'F8') { e.preventDefault(); this.runCombinationDialog(); }
+      if (e.key === 'F8') { e.preventDefault(); this.openCombosTab(); }
       const resKeys = { '1':'deformed','2':'N','3':'Vy','4':'Vz','5':'T','6':'My','7':'Mz' };
       const inInput = ['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName);
       if (resKeys[e.key] && !inInput) this.setResultType(resKeys[e.key]);
     });
 
-    // Load example on first launch
-    this._loadExample();
+    // Autoguardado al cerrar/recargar la página
+    window.addEventListener('beforeunload', () => this._autosaveNow());
+
+    // Recuperar autoguardado o cargar ejemplo
+    this._restoreOrLoadExample();
   }
 
   // ── Model mutations (all go through here for undo tracking) ───────────────
@@ -110,6 +135,7 @@ class App {
 
   addNode(x, y, z) {
     this.snapshot();
+    if (this.model.mode === '2D') y = 0;   // pórtico plano X–Z
     const node = this.model.addNode(x, y, z);
     this.viewport.addNodeMesh(node);
     this.panel.showNode(node);
@@ -182,6 +208,445 @@ class App {
     this.panel.showNothing();
     this.markDirty();
     this._updateStats();
+  }
+
+  // ── Discretización de elementos ─────────────────────────────────────────────
+  discretizeElement(elemId, opts) {
+    this.snapshot();
+    const ids = (opts.length > 0)
+      ? splitByLength(this.model, elemId, opts.length)
+      : splitElement(this.model, elemId, opts.parts || 2);
+    if (!ids || ids.length < 2) {
+      this.toast('No se pudo discretizar (¿el tramo objetivo es mayor que el elemento?)', 'warn');
+      return;
+    }
+    this.viewport.renderModel(this.model);
+    this.refreshLoads();
+    this.panel.showNothing();
+    this.markDirty();
+    this._updateStats();
+    this.toast(`Elemento #${elemId} dividido en ${ids.length} tramos`, 'ok');
+  }
+
+  joinSelectedElements() {
+    const sel = this.viewport.getSelected().filter(s => s.type === 'elem').map(s => s.id);
+    if (sel.length < 2) {
+      this.toast('Seleccione 2 o más elementos colineales (Ctrl+clic) para unir', 'warn');
+      return;
+    }
+    this.snapshot();
+    const r = joinElements(this.model, sel);
+    if (!r.ok) { this.toast(`No se pudo unir: ${r.reason}`, 'warn'); return; }
+    this.viewport.renderModel(this.model);
+    this.refreshLoads();
+    this.panel.showNothing();
+    this.markDirty();
+    this._updateStats();
+    this.toast(`${sel.length} elementos unidos → Elemento #${r.elemId}`, 'ok');
+  }
+
+  async discretizeAllDialog() {
+    if (this.model.elements.size === 0) { this.toast('No hay elementos', 'warn'); return; }
+    const overlay = document.getElementById('modal-overlay');
+    document.getElementById('modal-title').textContent = 'Discretizar Todos los Elementos';
+    document.getElementById('modal-body').innerHTML = `
+      <div class="prop-row">
+        <div class="prop-field"><label>Modo</label>
+          <select id="disc-mode">
+            <option value="parts">Nº de partes por elemento</option>
+            <option value="length">Longitud de tramo (m)</option>
+          </select>
+        </div>
+        <div class="prop-field"><label>Valor</label>
+          <input type="number" id="disc-val" value="4" min="0.01" step="1" style="width:90px">
+        </div>
+      </div>
+      <p style="color:var(--text-muted);font-size:11px;margin-top:8px">
+        Ej.: modo longitud con 0.25 divide cada elemento en tramos de ≈25 cm.<br>
+        Para revertir use Deshacer (Ctrl+Z) o seleccione tramos y Editar → Unir.
+      </p>`;
+    document.getElementById('modal-cancel').style.display = '';
+    overlay.classList.remove('hidden');
+    const ok = await new Promise(res => {
+      overlay._resolve = res;
+      overlay._reject  = () => res(false);
+    });
+    if (!ok) return;
+    const mode = document.getElementById('disc-mode')?.value;
+    const val  = parseFloat(document.getElementById('disc-val')?.value);
+    if (!(val > 0)) return;
+    this.snapshot();
+    const before = this.model.elements.size;
+    discretizeAll(this.model, mode === 'length'
+      ? { length: val }
+      : { parts: Math.max(2, Math.round(val)) });
+    this.viewport.renderModel(this.model);
+    this.refreshLoads();
+    this.panel.showNothing();
+    this.markDirty();
+    this._updateStats();
+    this.toast(`Discretizado: ${before} → ${this.model.elements.size} elementos`, 'ok');
+  }
+
+  // ── Visor de matrices (didáctico) ────────────────────────────────────────────
+  _fmtMtx(v) {
+    if (v === 0) return '0';
+    const a = Math.abs(v);
+    return (a >= 1e5 || a < 1e-3) ? v.toExponential(2) : String(+v.toPrecision(5));
+  }
+
+  _matrixHTML(M, labels, title, highlightZeros = true) {
+    const n = M.length;
+    let h = `<div class="mtx-title">${title}</div><div class="mtx-wrap"><table class="mtx"><tr><th></th>`;
+    for (let j = 0; j < n; j++) h += `<th>${labels[j]}</th>`;
+    h += '</tr>';
+    for (let i = 0; i < n; i++) {
+      h += `<tr><th>${labels[i]}</th>`;
+      for (let j = 0; j < n; j++) {
+        const v = M[i][j];
+        const cls = (highlightZeros && Math.abs(v) < 1e-12) ? ' class="mz"' : '';
+        h += `<td${cls}>${this._fmtMtx(v)}</td>`;
+      }
+      h += '</tr>';
+    }
+    return h + '</table></div>';
+  }
+
+  _matrixCSV(M, labels, title) {
+    const lines = [`# ${title}`, ',' + labels.join(',')];
+    M.forEach((row, i) => lines.push(labels[i] + ',' + row.map(v => v.toExponential(6)).join(',')));
+    return lines.join('\r\n');
+  }
+
+  showElementMatrices(elemId) {
+    const elem = this.model.elements.get(elemId);
+    if (!elem) return;
+    const n1 = this.model.nodes.get(elem.n1), n2 = this.model.nodes.get(elem.n2);
+    const mat = this.model.materials.get(elem.matId), sec = this.model.sections.get(elem.secId);
+    if (!n1 || !n2 || !mat || !sec) { this.toast('Elemento incompleto', 'warn'); return; }
+
+    const { ex, ey, ez, L } = localAxes(n1, n2);
+    const Ke = stiffnessMatrix(L, mat, sec);
+    const Me = massMatrix(L, mat, sec);
+    const T  = transformMatrix(ex, ey, ez);
+    const hasRel = elem.releases?.some(r => r);
+    const KeC = hasRel ? applyReleases(Ke, elem.releases.map(r => r !== 0)) : null;
+    const KG  = globalStiffness(KeC ?? Ke, T);
+
+    const L12 = ['u₁','v₁','w₁','θx₁','θy₁','θz₁','u₂','v₂','w₂','θx₂','θy₂','θz₂'];
+    const fx = v => +v.toFixed(4);
+    let html = `
+      <p style="font-size:11px;color:var(--text-muted);margin-bottom:8px">
+        Elemento #${elem.id} (nodos ${elem.n1}→${elem.n2}) · L = ${+L.toFixed(4)} m ·
+        ejes locales: x=[${ex.map(fx)}], y=[${ey.map(fx)}], z=[${ez.map(fx)}]<br>
+        Orden de GDL locales: [u, v, w, θx, θy, θz] por nodo. Unidades: kN, m, ton.
+      </p>`;
+    html += this._matrixHTML(Ke, L12, 'Ke — rigidez LOCAL (12×12)');
+    if (KeC) html += this._matrixHTML(KeC, L12, 'Ke* — rigidez local CONDENSADA por liberaciones (filas/columnas liberadas = 0)');
+    html += this._matrixHTML(T, L12, 'T — matriz de transformación local ← global');
+    html += this._matrixHTML(KG, L12, 'K = Tᵀ·Ke·T — rigidez en coordenadas GLOBALES');
+    html += this._matrixHTML(Me, L12, 'Me — masa consistente LOCAL (12×12)');
+    html += `<button class="btn-secondary" id="mtx-csv" style="width:100%;margin-top:8px">⬇ Exportar matrices a CSV</button>`;
+
+    const overlay = document.getElementById('modal-overlay');
+    document.getElementById('modal-box').classList.add('modal-wide');
+    document.getElementById('modal-title').textContent = `Matrices del Elemento #${elem.id}`;
+    document.getElementById('modal-body').innerHTML = html;
+    document.getElementById('modal-cancel').style.display = 'none';
+    overlay.classList.remove('hidden');
+    overlay._resolve = () => {};
+    overlay._reject  = () => {};
+
+    document.getElementById('mtx-csv')?.addEventListener('click', () => {
+      const csv = [
+        this._matrixCSV(Ke, L12, `Ke local — Elemento ${elem.id}`),
+        KeC ? this._matrixCSV(KeC, L12, 'Ke condensada (liberaciones)') : '',
+        this._matrixCSV(T, L12, 'T transformación'),
+        this._matrixCSV(KG, L12, 'K global del elemento'),
+        this._matrixCSV(Me, L12, 'Me masa local'),
+      ].filter(Boolean).join('\r\n#\r\n');
+      this._downloadText(csv, `matrices_elemento_${elem.id}.csv`, 'text/csv;charset=utf-8');
+    });
+  }
+
+  showGlobalMatrices() {
+    if (this.model.nodes.size === 0) { this.toast('Modelo vacío', 'warn'); return; }
+    const nodeIndex = buildNodeIndex(this.model);
+    const { K, M, nDOF } = assembleK(this.model, nodeIndex);
+    const ids = [...this.model.nodes.keys()];
+    const sub = ['ux','uy','uz','rx','ry','rz'];
+    const labels = [];
+    for (const id of ids) for (const s of sub) labels.push(`N${id}.${s}`);
+
+    const toRows = (flat) => Array.from({ length: nDOF }, (_, i) =>
+      Array.from({ length: nDOF }, (_, j) => flat[i * nDOF + j]));
+
+    const MAX_SHOW = 120;   // hasta 20 nodos en pantalla; siempre exportable a CSV
+    let html = `<p style="font-size:11px;color:var(--text-muted);margin-bottom:8px">
+      ${this.model.nodes.size} nodos × 6 GDL = <b>${nDOF} GDL</b> (orden: por nodo, [ux uy uz rx ry rz] globales).
+      Incluye liberaciones condensadas, resortes y restricciones de diafragma (penalty).</p>`;
+    if (nDOF <= MAX_SHOW) {
+      html += this._matrixHTML(toRows(K), labels, `K — rigidez GLOBAL (${nDOF}×${nDOF})`);
+      html += this._matrixHTML(toRows(M), labels, `M — masa GLOBAL (${nDOF}×${nDOF})`);
+    } else {
+      html += `<p style="color:var(--warn);font-size:12px">Matriz demasiado grande para mostrar
+        (límite ${MAX_SHOW} GDL) — use la exportación CSV.</p>`;
+    }
+    html += `<button class="btn-secondary" id="gmtx-csv" style="width:100%;margin-top:8px">⬇ Exportar K y M globales a CSV</button>`;
+
+    const overlay = document.getElementById('modal-overlay');
+    document.getElementById('modal-box').classList.add('modal-wide');
+    document.getElementById('modal-title').textContent = 'Matrices Globales K y M';
+    document.getElementById('modal-body').innerHTML = html;
+    document.getElementById('modal-cancel').style.display = 'none';
+    overlay.classList.remove('hidden');
+    overlay._resolve = () => {};
+    overlay._reject  = () => {};
+
+    document.getElementById('gmtx-csv')?.addEventListener('click', () => {
+      const csv = this._matrixCSV(toRows(K), labels, `K global (${nDOF} GDL)`) +
+        '\r\n#\r\n' + this._matrixCSV(toRows(M), labels, `M global (${nDOF} GDL)`);
+      this._downloadText(csv, 'matrices_globales.csv', 'text/csv;charset=utf-8');
+    });
+  }
+
+  // ── Ayuda (F1) ───────────────────────────────────────────────────────────────
+  _initHelp() {
+    const overlay = document.getElementById('help-overlay');
+    if (!overlay) return;
+    document.getElementById('help-close')?.addEventListener('click', () => this.closeHelp());
+    overlay.addEventListener('click', e => { if (e.target === overlay) this.closeHelp(); });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && !overlay.classList.contains('hidden')) this.closeHelp();
+    });
+    overlay.querySelectorAll('.help-tab').forEach(btn =>
+      btn.addEventListener('click', () => this._switchHelpSec(btn.dataset.hsec)));
+  }
+
+  _switchHelpSec(sec) {
+    document.querySelectorAll('.help-tab').forEach(b =>
+      b.classList.toggle('active', b.dataset.hsec === sec));
+    document.querySelectorAll('.help-sec').forEach(s =>
+      s.classList.toggle('active', s.id === 'hsec-' + sec));
+  }
+
+  openHelp(sec = 'guia') {
+    document.getElementById('help-overlay')?.classList.remove('hidden');
+    this._switchHelpSec(sec);
+    this._renderHelpExamples();
+  }
+
+  closeHelp() {
+    document.getElementById('help-overlay')?.classList.add('hidden');
+  }
+
+  // Lista de ejemplos guiados: lee examples/index.json (el docente la mantiene)
+  async _renderHelpExamples() {
+    const box = document.getElementById('help-examples-list');
+    if (!box) return;
+    try {
+      const r = await fetch('examples/index.json', { cache: 'no-store' });
+      if (!r.ok) throw new Error('sin index');
+      const list = await r.json();
+      if (!Array.isArray(list) || !list.length) throw new Error('vacío');
+      box.innerHTML = '';
+      for (const ex of list) {
+        const card = document.createElement('div');
+        card.className = 'help-excard';
+        card.innerHTML = `
+          <div class="help-extitle">${ex.titulo || ex.archivo}</div>
+          <div class="help-exdesc">${ex.descripcion || ''}</div>
+          ${ex.observar ? `<div class="help-exobs">👁 ${ex.observar}</div>` : ''}
+          <button class="btn-add help-exopen">Abrir ejemplo</button>`;
+        card.querySelector('.help-exopen').addEventListener('click', async () => {
+          if (this._dirty) {
+            const ok = await this._confirm('¿Descartar los cambios no guardados y abrir el ejemplo?');
+            if (!ok) return;
+          }
+          try {
+            const fr = await fetch('examples/' + ex.archivo, { cache: 'no-store' });
+            if (!fr.ok) throw new Error('archivo no encontrado');
+            this._loadJSON(await fr.text(), ex.archivo);
+            this.closeHelp();
+            this.toast(`Ejemplo "${ex.titulo || ex.archivo}" cargado`, 'ok');
+          } catch (e) {
+            this.toast(`No se pudo abrir: ${e.message}`, 'error');
+          }
+        });
+        box.appendChild(card);
+      }
+    } catch {
+      box.innerHTML = `<p class="help-note">Aún no hay ejemplos publicados.
+        El docente puede agregarlos siguiendo las instrucciones de más abajo —
+        aparecerán aquí automáticamente.</p>`;
+    }
+  }
+
+  // ── DCL: diagrama de cuerpo libre del elemento (didáctico) ──────────────────
+  // Dibuja las fuerzas de extremo que actúan SOBRE el elemento (coords locales)
+  // en cada plano de flexión, más la verificación de equilibrio ΣF=0, ΣM=0.
+  _dclPlaneSVG({ titulo, V1, V2, M1, M2, q, L, lblV, lblM, lblQ }) {
+    const W = 640, H = 210, x1 = 120, x2 = 520, yb = 105;
+    const fmt = v => Math.abs(v) >= 1000 ? v.toFixed(0) : String(+v.toPrecision(4));
+    const CV = '#38bdf8', CM = '#ce93d8', CQ = '#fbbf24';
+    let s = `<svg viewBox="0 0 ${W} ${H}" class="dcl-svg">`;
+    s += `<text x="12" y="20" class="dcl-title">${titulo}</text>`;
+    // viga + nodos
+    s += `<rect x="${x1}" y="${yb - 6}" width="${x2 - x1}" height="12" rx="3" class="dcl-beam"/>`;
+    s += `<circle cx="${x1}" cy="${yb}" r="7" class="dcl-node"/><circle cx="${x2}" cy="${yb}" r="7" class="dcl-node"/>`;
+    s += `<text x="${x1}" y="${yb + 30}" class="dcl-end">1</text><text x="${x2}" y="${yb + 30}" class="dcl-end">2</text>`;
+    s += `<text x="${(x1 + x2) / 2}" y="${yb + 32}" class="dcl-len">L = ${fmt(L)} m</text>`;
+
+    // flecha vertical de corte: positivo = +y local = hacia ARRIBA en pantalla
+    const vArrow = (x, val, name) => {
+      if (Math.abs(val) < 1e-9) return '';
+      const up = val > 0, len = 42;
+      const yTip  = up ? yb - 12 : yb + 12;
+      const yTail = up ? yTip + len : yTip - len;
+      const hd = up ? -8 : 8;
+      return `<line x1="${x}" y1="${yTail}" x2="${x}" y2="${yTip + hd}" stroke="${CV}" stroke-width="2.4"/>` +
+             `<polygon points="${x - 5},${yTip + hd} ${x + 5},${yTip + hd} ${x},${yTip}" fill="${CV}"/>` +
+             `<text x="${x}" y="${up ? yTail + 16 : yTail - 8}" class="dcl-val" fill="${CV}">${name}=${fmt(val)}</text>`;
+    };
+    // arco de momento: positivo = antihorario (regla de la mano derecha)
+    const mArc = (x, val, name) => {
+      if (Math.abs(val) < 1e-9) return '';
+      const r = 19, ccw = val > 0;
+      const sweep = ccw ? 0 : 1;
+      const p = a => [x + r * Math.cos(a * Math.PI / 180), yb - r * Math.sin(a * Math.PI / 180)];
+      const [sx, sy] = p(ccw ? -50 : 230), [tx2, ty2] = p(ccw ? 230 : -50);
+      return `<path d="M ${sx} ${sy} A ${r} ${r} 0 1 ${sweep} ${tx2} ${ty2}" fill="none" stroke="${CM}" stroke-width="2.2"/>` +
+             `<circle cx="${tx2}" cy="${ty2}" r="3.4" fill="${CM}"/>` +
+             `<text x="${x}" y="${yb - r - 12}" class="dcl-val" fill="${CM}">${name}=${fmt(val)}</text>`;
+    };
+    // carga distribuida (positivo = +y local = ↑)
+    let qs = '';
+    if (Math.abs(q) > 1e-9) {
+      const up = q > 0, n = 9, yA = up ? yb + 50 : yb - 50, yB = up ? yb + 12 : yb - 12;
+      const hd = up ? 6 : -6;
+      for (let i = 1; i < n; i++) {
+        const x = x1 + 30 + (x2 - x1 - 60) * i / n;
+        qs += `<line x1="${x}" y1="${yA}" x2="${x}" y2="${yB + hd}" stroke="${CQ}" stroke-width="1.6"/>` +
+              `<polygon points="${x - 4},${yB + hd} ${x + 4},${yB + hd} ${x},${yB}" fill="${CQ}"/>`;
+      }
+      qs += `<line x1="${x1 + 30}" y1="${yA}" x2="${x2 - 30}" y2="${yA}" stroke="${CQ}" stroke-width="1.6"/>`;
+      qs += `<text x="${(x1 + x2) / 2}" y="${up ? yA + 16 : yA - 8}" class="dcl-val" fill="${CQ}">${lblQ}=${fmt(q)} kN/m</text>`;
+    }
+    // V₂/M₂ con convención de resultados: ef.Vy2 = corte interno en 2; la fuerza
+    // SOBRE el elemento en el extremo 2 es −Vy2 (idem momento). Se pasa ya con signo.
+    s += qs + vArrow(x1 - 30, V1, name1(lblV)) + vArrow(x2 + 30, V2, name2(lblV));
+    s += mArc(x1, M1, name1(lblM)) + mArc(x2, M2, name2(lblM));
+    return s + '</svg>';
+    function name1(b) { return b + '₁'; }
+    function name2(b) { return b + '₂'; }
+  }
+
+  showElementDCL(elemId) {
+    if (!this._results) { this.toast('Ejecute el análisis primero (F5) para ver el DCL', 'warn'); return; }
+    const ef = this._results.getElemForces(elemId);
+    if (!ef) { this.toast('Sin resultados para este elemento', 'warn'); return; }
+    const elem = this.model.elements.get(elemId);
+    const { L, qy, qz } = ef;
+    const fmt = v => Math.abs(v) >= 1000 ? v.toFixed(0) : String(+v.toPrecision(4));
+
+    // Vector fe = fuerzas SOBRE el elemento (locales), reconstruido de los resultados
+    const fe1 = ef.Vy1, fe7 = -ef.Vy2, fe5 = ef.Mz1, fe11 = -ef.Mz2;
+    const fe2 = ef.Vz1, fe8 = -ef.Vz2, fe4 = ef.My1, fe10 = -ef.My2;
+    const eq = [
+      ['ΣFy (plano x–y)',  fe1 + fe7 + (qy || 0) * L],
+      ['ΣMz respecto a 1', fe5 + fe11 + fe7 * L + (qy || 0) * L * L / 2],
+      ['ΣFz (plano x–z)',  fe2 + fe8 + (qz || 0) * L],
+      ['ΣMy respecto a 1', fe4 + fe10 - fe8 * L - (qz || 0) * L * L / 2],
+    ];
+    const scale = Math.max(1, ...[fe1, fe5, fe2, fe4].map(Math.abs));
+    const eqHTML = eq.map(([n, v]) => {
+      const ok = Math.abs(v) < 1e-6 * scale + 1e-9;
+      return `<tr><td>${n}</td><td style="text-align:right;font-family:var(--font-mono)">${v.toExponential(2)}</td>
+        <td style="color:${ok ? 'var(--success)' : 'var(--danger)'};font-weight:700">${ok ? '✓ ≈ 0' : '✗ ≠ 0'}</td></tr>`;
+    }).join('');
+
+    const axial = ef.N > 1e-9 ? `tracción, +${fmt(ef.N)} kN` :
+                  ef.N < -1e-9 ? `compresión, ${fmt(ef.N)} kN` : '≈ 0';
+
+    let html = `
+      <p style="font-size:11px;color:var(--text-muted);margin-bottom:6px">
+        Fuerzas que actúan <b>sobre el elemento</b>, en coordenadas <b>locales</b>.
+        Corte positivo = +y/+z local (↑ en el dibujo) · momento positivo = antihorario ⟲.<br>
+        <b style="color:var(--success)">N = ${fmt(ef.N)} kN (${axial})</b> &nbsp;·&nbsp;
+        <b>T = ${fmt(ef.T)} kN·m (torsión)</b></p>`;
+    html += this._dclPlaneSVG({ titulo: 'Plano local x–y · corte Vy y momento Mz',
+      V1: ef.Vy1, V2: -ef.Vy2, M1: ef.Mz1, M2: -ef.Mz2, q: qy || 0, L, lblV: 'Vy', lblM: 'Mz', lblQ: 'qy' });
+    html += this._dclPlaneSVG({ titulo: 'Plano local x–z · corte Vz y momento My',
+      V1: ef.Vz1, V2: -ef.Vz2, M1: ef.My1, M2: -ef.My2, q: qz || 0, L, lblV: 'Vz', lblM: 'My', lblQ: 'qz' });
+    html += `<div class="mtx-title">Verificación de equilibrio (ΣF = 0 · ΣM = 0)</div>
+      <table class="dcl-eq"><tr><th>Ecuación</th><th>Residuo</th><th>Estado</th></tr>${eqHTML}</table>`;
+
+    const overlay = document.getElementById('modal-overlay');
+    document.getElementById('modal-box').classList.add('modal-wide');
+    document.getElementById('modal-title').textContent =
+      `DCL — Elemento #${elemId} (nodos ${elem?.n1 ?? '?'}→${elem?.n2 ?? '?'})`;
+    document.getElementById('modal-body').innerHTML = html;
+    document.getElementById('modal-cancel').style.display = 'none';
+    overlay.classList.remove('hidden');
+    overlay._resolve = () => {};
+    overlay._reject  = () => {};
+  }
+
+  // ── Ejes de grilla (estilo SAP/ETABS) ────────────────────────────────────────
+  // Sintaxis: lista separada por comas; cada término es una coordenada o "n@d"
+  // (n tramos de largo d desde la última coordenada). Ej: "0, 3@5" → 0,5,10,15
+  _parseGridSpec(str) {
+    const coords = [];
+    let cur = null;
+    for (const tok of String(str || '').split(',').map(s => s.trim()).filter(Boolean)) {
+      const m = tok.match(/^(\d+)\s*@\s*([\d.]+)$/);
+      if (m) {
+        const n = +m[1], d = +m[2];
+        if (cur === null) { cur = 0; coords.push(0); }
+        for (let i = 0; i < n; i++) { cur += d; coords.push(+cur.toFixed(6)); }
+      } else {
+        const v = parseFloat(tok);
+        if (!isNaN(v)) { coords.push(v); cur = v; }
+      }
+    }
+    return [...new Set(coords)].sort((a, b) => a - b);
+  }
+
+  async defineGridsDialog() {
+    const g = this.model.grids || { x: [], y: [], z: [] };
+    const join = arr => (arr || []).join(', ');
+    const overlay = document.getElementById('modal-overlay');
+    document.getElementById('modal-title').textContent = 'Definir Ejes de Grilla';
+    document.getElementById('modal-body').innerHTML = `
+      <p style="font-size:11px;color:var(--text-muted);margin-bottom:8px">
+        Coordenadas separadas por coma, o <b>n@d</b> = n tramos de d metros.<br>
+        Ej.: <code>0, 3@5</code> → ejes en 0, 5, 10, 15. Vacío = sin ejes en esa dirección.<br>
+        Al insertar nodos, el cursor se ajusta a los ejes cercanos.
+      </p>
+      <div class="prop-field"><label>Ejes X (A, B, C…) — dirección X global</label>
+        <input type="text" id="gr-x" value="${join(g.x)}" placeholder="0, 3@5" style="width:100%"></div>
+      <div class="prop-field" style="margin-top:6px"><label>Ejes Y (1, 2, 3…) — dirección Y global</label>
+        <input type="text" id="gr-y" value="${join(g.y)}" placeholder="0, 2@6" style="width:100%"></div>
+      <div class="prop-field" style="margin-top:6px"><label>Niveles Z (pisos)</label>
+        <input type="text" id="gr-z" value="${join(g.z)}" placeholder="0, 4@3" style="width:100%"></div>`;
+    document.getElementById('modal-cancel').style.display = '';
+    overlay.classList.remove('hidden');
+    const ok = await new Promise(res => {
+      overlay._resolve = res;
+      overlay._reject  = () => res(false);
+    });
+    if (!ok) return;
+    this.snapshot();
+    this.model.grids = {
+      x: this._parseGridSpec(document.getElementById('gr-x')?.value),
+      y: this._parseGridSpec(document.getElementById('gr-y')?.value),
+      z: this._parseGridSpec(document.getElementById('gr-z')?.value),
+    };
+    this.markDirty();
+    this.viewport.refreshGridAxes();
+    this.viewport.refreshElevationOptions();   // ejes nuevos → elevaciones disponibles
+    const n = this.model.grids.x.length + this.model.grids.y.length + this.model.grids.z.length;
+    this.toast(n ? `Ejes definidos: ${this.model.grids.x.length}×X, ${this.model.grids.y.length}×Y, ${this.model.grids.z.length} niveles` : 'Ejes eliminados', 'ok');
   }
 
   // ── Undo / Redo ────────────────────────────────────────────────────────────
@@ -257,7 +722,11 @@ class App {
   }
 
   // ── Analysis ──────────────────────────────────────────────────────────────
-  runAnalysis(withSelfWeight = false) {
+  // Resuelve TODOS los casos de carga (cada uno con su propio flag de peso
+  // propio) y todas las combinaciones por superposición. El resultado mostrado
+  // es el del caso/combo seleccionado en el desplegable.
+  // force=true ignora la caché y resuelve de nuevo (menú "Recalcular").
+  runAnalysis(force = false) {
     if (this.model.nodes.size === 0 || this.model.elements.size === 0) {
       this.toast('El modelo debe tener nodos y elementos', 'warn'); return;
     }
@@ -274,15 +743,83 @@ class App {
     // Slight delay so browser can repaint before heavy computation
     setTimeout(() => {
       try {
-        const solver = new StaticSolver();
-        const lcId   = this._activeLcId;
-        this._results = solver.solve(this.model, lcId, withSelfWeight);
+        // ── Auto-discretización (×10) para el análisis ──
+        // El modelo original se guarda y se restaura al limpiar resultados.
+        const autoDisc = document.getElementById('auto-disc')?.checked;
+        if (autoDisc) {
+          if (!this._predisc) this._predisc = this.serializer.toJSON(this.model);
+          else this.model = this.serializer.fromJSON(this._predisc);  // re-análisis: partir del original
+          discretizeAll(this.model, { parts: 10 });
+          this.viewport.renderModel(this.model);
+        } else if (this._predisc) {
+          // estaba auto-discretizado y la casilla se desactivó: restaurar
+          this.model = this.serializer.fromJSON(this._predisc);
+          this._predisc = null;
+          this.viewport.renderModel(this.model);
+        }
+
+        // Firma del modelo original (+ auto-disc): identifica unívocamente los
+        // resultados. Si coincide con la caché, se reutiliza sin volver a resolver.
+        const sig = this._modelSig(autoDisc);
+        let reused = false;
+        if (!force && this._resultsCache && this._resultsCache.sig === sig) {
+          reused = this._reconstructResultsFromCache();
+        }
+
+        if (!reused) {
+          // Resolver todos los casos ESTÁTICOS (los espectrales se calculan con
+          // F6+F7 y conservan su resultado en _resultsByCase si ya corrieron).
+          const solver = new StaticSolver();
+          const prevSpec = new Map();
+          if (this._resultsByCase) {
+            for (const lc of this.model.loadCases.values()) {
+              if (lc.type === 'spectrum' && this._resultsByCase.has(lc.id))
+                prevSpec.set(lc.id, this._resultsByCase.get(lc.id));
+            }
+          }
+          this._resultsByCase = new Map(prevSpec);
+          const cases = [];
+          for (const lc of this.model.loadCases.values()) {
+            if (lc.type === 'spectrum') continue;
+            const res = solver.solve(this.model, lc.id, !!lc.selfWeight);
+            this._resultsByCase.set(lc.id, res);
+            cases.push({
+              key: lc.id, lcId: lc.id, selfWeight: !!lc.selfWeight,
+              u: Array.from(res.u), reactions: Array.from(res.reactions),
+            });
+          }
+          if (!cases.length) { this.toast('No hay casos de carga estáticos que analizar', 'warn'); }
+          // Combinaciones por superposición de lo ya resuelto
+          for (const combo of this.model.combinations.values()) {
+            const res = this._combineFromCache(combo);
+            if (res) this._resultsByCase.set('C' + combo.id, res);
+          }
+          this._resultsCache = { sig, autoDisc: !!autoDisc, cases };
+          this._persistResults();
+        }
+
+        // Mostrar el resultado seleccionado
+        const key = this._activeResultKey ?? this._activeLcId;
+        this._results = this._resultsByCase.get(key)
+                     || this._resultsByCase.get(this._activeLcId)
+                     || this._resultsByCase.values().next().value;
+        if (!this._results) {
+          this.toast('Sin resultados: cree un caso de carga estático o ejecute F6+F7 para los espectrales', 'warn');
+          return;
+        }
 
         const sum = this._results.getSummary();
-        this.toast(`Análisis completado | δmax=${sum.maxU.toExponential(3)} | Nmax=${sum.maxN.toExponential(3)}`, 'ok');
+        const nLC = [...this.model.loadCases.values()].filter(l => l.type !== 'spectrum').length;
+        const nCB = this.model.combinations.size;
+        this.toast(
+          (reused ? 'Resultados recuperados (sin recalcular)' : 'Análisis OK') +
+          `: ${nLC} caso(s)` +
+          (nCB ? ` + ${nCB} combo(s)` : '') +
+          ` | δmax=${sum.maxU.toExponential(2)}`, 'ok');
 
         document.getElementById('result-type').value = 'deformed';
         this._refreshResultView(true);
+        this.refreshLoads();
         this.panel._switchVTab('resultados');
         this.panel._switchRTab('estatico');
         this.panel.renderStaticResults();
@@ -299,9 +836,81 @@ class App {
     }, 20);
   }
 
+  // Combina resultados ya resueltos (this._resultsByCase) según los factores
+  // del combo. Devuelve un Results o null si ningún factor es resoluble.
+  _combineFromCache(combo) {
+    let nodeIndex = null, nDOF = 0, cU = null, cR = null;
+    const combinedEF = new Map();
+    let any = false;
+
+    for (const { lcId, factor } of combo.factors) {
+      const f = parseFloat(factor) || 0;
+      const isSpectral = typeof lcId === 'string' && lcId.startsWith('esp');
+
+      if (isSpectral) {
+        const sr = this._spectrumResults.get(lcId);
+        if (!sr) { this.toast(`Combo "${combo.name}": ejecute el espectro "${lcId}" primero`, 'warn'); continue; }
+        if (cU && sr.result.U.length !== nDOF) { this.toast(`Combo "${combo.name}": espectro incompatible con el modelo actual`, 'warn'); continue; }
+        if (!cU) {
+          nodeIndex = sr.result.nodeIndex;
+          nDOF = sr.result.U.length;
+          cU = new Float64Array(nDOF); cR = new Float64Array(nDOF);
+        }
+        for (let i = 0; i < nDOF; i++) cU[i] += f * sr.result.U[i];
+        any = true;
+      } else {
+        const numId = typeof lcId === 'number' ? lcId : parseInt(lcId);
+        const res = this._resultsByCase?.get(numId);
+        if (!res) {
+          const lc = this.model.loadCases.get(numId);
+          if (lc?.type === 'spectrum')
+            this.toast(`Combo "${combo.name}": ejecute F6+F7 para el caso espectral "${lc.name}"`, 'warn');
+          continue;
+        }
+
+        if (res.U && !res.u) {
+          // Caso ESPECTRAL (SpectrumResults): envolvente — se superpone solo
+          // el desplazamiento (las fuerzas envolventes no tienen signo único).
+          if (cU && res.U.length !== nDOF) { this.toast(`Combo "${combo.name}": espectro incompatible con el modelo actual`, 'warn'); continue; }
+          if (!cU) {
+            nodeIndex = res.nodeIndex;
+            nDOF = res.U.length;
+            cU = new Float64Array(nDOF); cR = new Float64Array(nDOF);
+          }
+          for (let i = 0; i < nDOF; i++) cU[i] += f * res.U[i];
+          any = true;
+          continue;
+        }
+
+        if (!cU) {
+          nodeIndex = res.nodeIndex;
+          nDOF = res.u.length;
+          cU = new Float64Array(nDOF); cR = new Float64Array(nDOF);
+        }
+        for (let i = 0; i < nDOF; i++) {
+          cU[i] += f * res.u[i];
+          cR[i] += f * res.reactions[i];
+        }
+        for (const [eid, ef] of res._elemForces) {
+          if (!ef) continue;
+          const cur = combinedEF.get(eid);
+          if (!cur) combinedEF.set(eid, _scaleEF(ef, f));
+          else      _addScaledEF(cur, ef, f);
+        }
+        any = true;
+      }
+    }
+
+    if (!any) return null;
+    return new Results(this.model, nodeIndex, cU, cR, new Float64Array(nDOF),
+                       null, false, combinedEF.size ? combinedEF : null);
+  }
+
   // Pre-computes diagram data for all elements in background chunks so the UI
   // stays responsive and the progress bar advances visibly.
   _precomputeDiagramsAsync(results) {
+    // SpectrumResults (envolvente) no tiene pre-cómputo por sub-elementos
+    if (!results || typeof results.precomputeChunk !== 'function') return;
     const TYPES    = ['N', 'Vy', 'Vz', 'T', 'My', 'Mz'];
     const NPTS     = 20;
     const CHUNK    = 12;   // elements per setTimeout slice
@@ -343,14 +952,30 @@ class App {
     } else {
       this.viewport.showForceDiagram(this._results, type, scale);
     }
+    // Reacciones: re-dibujar con los valores del resultado mostrado
+    if (this._showReactions) this.viewport.showReactions(this._results);
   }
 
   clearResults() {
-    this._results      = null;
+    this._results       = null;
+    this._resultsByCase = null;
+    this._activeResultKey = this._activeLcId;
     this._modalResults = null;
     this._modalPlaying = false;
     this._spectrumResults.clear();
     this.viewport.clearResults();
+    // Apagar la visualización de reacciones
+    this._showReactions = false;
+    this.viewport.clearReactions();
+    document.getElementById('btn-show-reactions')?.classList.remove('active');
+    // Restaurar el modelo original si el análisis lo auto-discretizó
+    if (this._predisc) {
+      this.model = this.serializer.fromJSON(this._predisc);
+      this._predisc = null;
+      this.viewport.renderModel(this.model);
+      this._updateStats();
+    }
+    this._renderLcSelector();
     this.refreshLoads();
     document.getElementById('sb-mode').textContent = 'Modo: Seleccionar';
     document.getElementById('modal-analysis-overlay')?.classList.add('hidden');
@@ -383,7 +1008,8 @@ class App {
       this.toast('El modelo debe tener nodos y elementos', 'warn'); return;
     }
     const hasSupport = [...this.model.nodes.values()]
-      .some(n => Object.values(n.restraints).some(v => v));
+      .some(n => Object.values(n.restraints).some(v => v) ||
+                 (n.springs && Object.values(n.springs).some(k => k > 0)));
     if (!hasSupport) {
       this.toast('El modelo no tiene apoyos', 'warn'); return;
     }
@@ -401,12 +1027,13 @@ class App {
       const nodeIndex = buildNodeIndex(this.model);
       const { K, M, nDOF } = assembleK(this.model, nodeIndex);
 
-      // Extract free DOFs
+      // Extract free DOFs (en modelos 2D, uy/rx/rz quedan restringidos)
+      const is2D = this.model.mode === '2D';
       const freeDOF = [];
       for (const node of this.model.nodes.values()) {
         const d = getNodeDOFs(nodeIndex, node.id);
         const r = node.restraints;
-        [r.ux, r.uy, r.uz, r.rx, r.ry, r.rz].forEach((fixed, li) => {
+        [r.ux, is2D ? 1 : r.uy, r.uz, is2D ? 1 : r.rx, r.ry, is2D ? 1 : r.rz].forEach((fixed, li) => {
           if (!fixed) freeDOF.push(d[li]);
         });
       }
@@ -698,13 +1325,31 @@ class App {
         const solver  = new SpectrumSolver();
         this._results = solver.solve(this._modalResults, params);
 
-        // Store by direction so combos can reference it
+        // Store by direction so combos can reference it (legado [ESP])
         this._spectrumResults.set('esp' + params.direction, { result: this._results, params });
+
+        // ── Asignar el resultado a su CASO DE CARGA espectral ──
+        // Si no existe un caso espectral para esta dirección, se crea: así el
+        // espectro queda en el sistema de casos (selector, combos, archivo).
+        let specLc = [...this.model.loadCases.values()]
+          .find(l => l.type === 'spectrum' && l.specDir === params.direction);
+        if (!specLc) {
+          specLc = this.model.addLoadCase(`Sismo ${params.direction} (esp)`, false, 'spectrum', params.direction);
+          this.markDirty();
+        }
+        specLc.spec = {   // parámetros usados (se guardan en el .s3d)
+          method: params.method, zeta: params.zeta,
+          saFactor: params.saFactor, rawText: params.rawText,
+        };
+        this._resultsByCase ??= new Map();
+        this._resultsByCase.set(specLc.id, this._results);
+        this._activeResultKey = specLc.id;
+        this._renderLcSelector();
 
         const sum = this._results.getSummary();
         const { direction, method } = params;
         this.toast(
-          `Espectro ${direction} ${method} | δmax=${sum.maxU.toExponential(3)} | Nmax=${sum.maxN.toExponential(3)}`,
+          `Espectro ${direction} ${method} → caso "${specLc.name}" | δmax=${sum.maxU.toExponential(3)}`,
           'ok'
         );
 
@@ -730,6 +1375,10 @@ class App {
   }
 
   _spectrumDialog(defaultText) {
+    const is2D = this.model.mode === '2D';
+    // Preseleccionar la dirección del caso espectral activo (si lo hay)
+    const activeLc = this.model.loadCases.get(this._activeLcId);
+    const prefDir = activeLc?.type === 'spectrum' ? activeLc.specDir : 'X';
     return new Promise(resolve => {
       const overlay = document.getElementById('modal-overlay');
       document.getElementById('modal-title').textContent = 'Espectro de Respuesta';
@@ -740,8 +1389,8 @@ class App {
   <div class="prop-field">
     <label>Dirección sísmica</label>
     <select id="sp-dir">
-      <option value="X">X  (E–O)</option>
-      <option value="Y">Y  (N–S)</option>
+      <option value="X" ${prefDir !== 'Y' ? 'selected' : ''}>X  (E–O)</option>
+      ${is2D ? '' : `<option value="Y" ${prefDir === 'Y' ? 'selected' : ''}>Y  (N–S)</option>`}
     </select>
   </div>
   <div class="prop-field">
@@ -843,7 +1492,8 @@ class App {
 
     // No supports
     const hasSupport = [...model.nodes.values()]
-      .some(n => Object.values(n.restraints).some(v => v));
+      .some(n => Object.values(n.restraints).some(v => v) ||
+                 (n.springs && Object.values(n.springs).some(k => k > 0)));
     if (!hasSupport) warnings.push('⛔ No hay apoyos — el modelo es inestable');
 
     return warnings;
@@ -852,48 +1502,197 @@ class App {
   // ── Load case management ───────────────────────────────────────────────────
   _initLoadCaseUI() {
     this._activeLcId = ensureDefaultLC(this.model);
+    this._activeResultKey = this._activeLcId;
     this._renderLcSelector();
 
     document.getElementById('lc-select')?.addEventListener('change', e => {
       const v = e.target.value;
       if (v.startsWith('C')) {
-        // Combo selected: run it immediately
+        // Combinación: mostrarla (del caché si existe; si no, analiza todo)
         this.runCombination(parseInt(v.slice(1)));
-        // Restore LC selector to current active LC
-        setTimeout(() => this._renderLcSelector(), 50);
       } else {
         this._activeLcId = +v;
-        if (this._results) {
-          // Results already shown — re-run with the same selfWeight flag
-          this.runAnalysis(this._results.selfWeight);
+        this._activeResultKey = +v;
+        if (this._resultsByCase?.has(+v)) {
+          // Ya resuelto en el análisis completo — cambio instantáneo
+          this._results = this._resultsByCase.get(+v);
+          this._refreshResultView(true);
+          this.refreshLoads();
+          this.panel.renderStaticResults();
+          this._precomputeDiagramsAsync(this._results);
+        } else if (this._results) {
+          this.runAnalysis();
         } else {
           this.refreshLoads();
         }
       }
     });
-    document.getElementById('btn-add-lc')?.addEventListener('click', async () => {
-      const name = await this._promptModal(
-        'Nuevo Caso de Carga', 'Nombre:',
-        `LC${this.model.loadCases.size + 1}`
-      );
-      if (!name) return;
-      this.snapshot();
-      const lc = this.model.addLoadCase(name);
-      this._activeLcId = lc.id;
+
+    document.getElementById('btn-add-lc')?.addEventListener('click', () => this.newCaseDialog());
+    document.getElementById('btn-edit-lc')?.addEventListener('click', () => this.editCaseDialog());
+  }
+
+  // Diálogo "+": crear caso de carga (con opción de peso propio) o combinación
+  async newCaseDialog() {
+    const overlay = document.getElementById('modal-overlay');
+    const is2D = this.model.mode === '2D';
+    document.getElementById('modal-title').textContent = 'Nuevo Caso / Combinación';
+    document.getElementById('modal-body').innerHTML = `
+      <div class="prop-row">
+        <div class="prop-field"><label>Tipo</label>
+          <select id="nc-type">
+            <option value="case">Caso de carga estático</option>
+            <option value="spectrum">Caso sísmico — espectro de respuesta</option>
+            <option value="combo">Combinación</option>
+          </select>
+        </div>
+        <div class="prop-field"><label>Nombre</label>
+          <input type="text" id="nc-name" value="LC${this.model.loadCases.size + 1}">
+        </div>
+      </div>
+      <label id="nc-sw-row" style="display:flex;align-items:center;gap:7px;margin-top:10px;cursor:pointer;font-size:12px;color:var(--text)">
+        <input type="checkbox" id="nc-sw" style="accent-color:var(--accent)">
+        Incluir peso propio de los elementos en este caso (típico de CM / carga muerta)
+      </label>
+      <div id="nc-dir-row" style="display:none;margin-top:10px">
+        <div class="prop-field"><label>Dirección sísmica</label>
+          <select id="nc-dir">
+            <option value="X">X (E–O)</option>
+            ${is2D ? '' : '<option value="Y">Y (N–S)</option>'}
+          </select>
+        </div>
+        <p style="font-size:11px;color:var(--text-muted);margin-top:6px">
+          Un caso espectral no admite cargas: se calcula con Análisis Modal (F6)
+          + Espectro de Respuesta (F7), y su resultado (envolvente) queda
+          asignado a este caso para verlo y combinarlo.</p>
+      </div>`;
+    document.getElementById('modal-cancel').style.display = '';
+    overlay.classList.remove('hidden');
+    // Peso propio solo para casos estáticos; dirección solo para espectrales
+    const typeSel = document.getElementById('nc-type');
+    typeSel.addEventListener('change', () => {
+      const t = typeSel.value;
+      document.getElementById('nc-sw-row').style.display  = t === 'case' ? 'flex' : 'none';
+      document.getElementById('nc-dir-row').style.display = t === 'spectrum' ? 'block' : 'none';
+      const nameInp = document.getElementById('nc-name');
+      nameInp.value = t === 'combo'    ? `Combo ${this.model.combinations.size + 1}`
+                    : t === 'spectrum' ? `Sismo ${document.getElementById('nc-dir')?.value || 'X'} (esp)`
+                    : `LC${this.model.loadCases.size + 1}`;
+    });
+    document.getElementById('nc-dir')?.addEventListener('change', e => {
+      if (typeSel.value === 'spectrum')
+        document.getElementById('nc-name').value = `Sismo ${e.target.value} (esp)`;
+    });
+    setTimeout(() => { const el = document.getElementById('nc-name'); el?.focus(); el?.select(); }, 50);
+
+    const ok = await new Promise(res => {
+      overlay._resolve = res;
+      overlay._reject  = () => res(false);
+    });
+    if (!ok) return;
+
+    const type = document.getElementById('nc-type')?.value;
+    const name = document.getElementById('nc-name')?.value?.trim();
+    if (!name) return;
+    this.snapshot();
+    if (type === 'combo') {
+      const combo = this.model.addCombination({ name, factors: [] });
       this.markDirty();
       this._renderLcSelector();
+      this.openCombosTab();   // llevar al usuario a definir los factores
+      this.toast(`Combinación "${combo.name}" creada — agregue factores`, 'ok');
+    } else if (type === 'spectrum') {
+      const dir = document.getElementById('nc-dir')?.value === 'Y' ? 'Y' : 'X';
+      const lc = this.model.addLoadCase(name, false, 'spectrum', dir);
+      this._activeLcId = lc.id;
+      this._activeResultKey = lc.id;
+      this.markDirty();
+      this._renderLcSelector();
+      this.refreshLoads();
+      this.toast(`Caso espectral "${lc.name}" (dir ${dir}) creado — ejecute F6 (modal) y F7 (espectro)`, 'ok');
+    } else {
+      const sw = document.getElementById('nc-sw')?.checked || false;
+      const lc = this.model.addLoadCase(name, sw);
+      this._activeLcId = lc.id;
+      this._activeResultKey = lc.id;
+      this.markDirty();
+      this._renderLcSelector();
+      this.refreshLoads();
+    }
+  }
+
+  // Diálogo ✎: editar el caso de carga activo (nombre, peso propio, eliminar)
+  async editCaseDialog() {
+    const lc = this.model.loadCases.get(this._activeLcId);
+    if (!lc) { this.toast('No hay caso de carga activo', 'warn'); return; }
+    const overlay = document.getElementById('modal-overlay');
+    const isSpec = lc.type === 'spectrum';
+    document.getElementById('modal-title').textContent = `Editar Caso "${lc.name}"`;
+    document.getElementById('modal-body').innerHTML = `
+      <div class="prop-field"><label>Nombre</label>
+        <input type="text" id="ec-name" value="${lc.name}" style="width:100%">
+      </div>
+      ${isSpec ? `
+      <p style="font-size:11.5px;color:var(--teal);margin-top:10px">
+        〜 Caso espectral — dirección sísmica <b>${lc.specDir}</b>.
+        Se calcula con Análisis Modal (F6) + Espectro (F7); no admite cargas ni peso propio.
+      </p>` : `
+      <label style="display:flex;align-items:center;gap:7px;margin-top:10px;cursor:pointer;font-size:12px;color:var(--text)">
+        <input type="checkbox" id="ec-sw" ${lc.selfWeight ? 'checked' : ''} style="accent-color:var(--accent)">
+        Incluir peso propio de los elementos en este caso
+      </label>`}
+      ${this.model.loadCases.size > 1 ? `
+      <button id="ec-del" class="btn-danger" style="width:100%;margin-top:14px">
+        Eliminar este caso${isSpec ? '' : ` (y sus ${lc.loads.length} carga(s))`}
+      </button>` : ''}`;
+    document.getElementById('modal-cancel').style.display = '';
+    overlay.classList.remove('hidden');
+
+    // Eliminar caso: acción inmediata con confirmación
+    document.getElementById('ec-del')?.addEventListener('click', async () => {
+      overlay.classList.add('hidden');
+      const sure = await this._confirm(`¿Eliminar el caso "${lc.name}" y todas sus cargas?`);
+      if (!sure) return;
+      this.snapshot();
+      this.model.loadCases.delete(lc.id);
+      // limpiar factores de combos que lo referencien
+      for (const combo of this.model.combinations.values()) {
+        combo.factors = combo.factors.filter(f => f.lcId !== lc.id);
+      }
+      this._activeLcId = this.model.loadCases.keys().next().value;
+      this._activeResultKey = this._activeLcId;
+      this.markDirty();
+      this._renderLcSelector();
+      this.refreshLoads();
+      this.toast(`Caso "${lc.name}" eliminado`, 'ok');
     });
+
+    const ok = await new Promise(res => {
+      overlay._resolve = res;
+      overlay._reject  = () => res(false);
+    });
+    if (!ok) return;
+    if (!this.model.loadCases.has(lc.id)) return;   // fue eliminado
+    this.snapshot();
+    lc.name = document.getElementById('ec-name')?.value?.trim() || lc.name;
+    lc.selfWeight = document.getElementById('ec-sw')?.checked || false;
+    this.markDirty();
+    this._renderLcSelector();
+    this.toast(`Caso "${lc.name}" actualizado`, 'ok');
   }
 
   _renderLcSelector() {
     const sel = document.getElementById('lc-select');
     if (!sel) return;
     sel.innerHTML = '';
+    const activeKey = this._activeResultKey ?? this._activeLcId;
     for (const lc of this.model.loadCases.values()) {
       const opt = document.createElement('option');
       opt.value = lc.id;
-      opt.textContent = lc.name;
-      opt.selected = lc.id === this._activeLcId;
+      opt.textContent = lc.type === 'spectrum'
+        ? `〜 ${lc.name} [esp ${lc.specDir}]`
+        : lc.name + (lc.selfWeight ? ' ⊕PP' : '');
+      opt.selected = lc.id === activeKey;
       sel.appendChild(opt);
     }
     if (this.model.combinations.size > 0) {
@@ -902,7 +1701,8 @@ class App {
       for (const c of this.model.combinations.values()) {
         const opt = document.createElement('option');
         opt.value = 'C' + c.id;
-        opt.textContent = '▶ ' + c.name;
+        opt.textContent = 'Σ ' + c.name;
+        opt.selected = ('C' + c.id) === activeKey;
         grp.appendChild(opt);
       }
       sel.appendChild(grp);
@@ -939,94 +1739,34 @@ class App {
   }
 
   // ── Load combinations ──────────────────────────────────────────────────────
+  // Ver una combinación: si el análisis completo ya corrió, muestra el resultado
+  // cacheado; si no, ejecuta el análisis completo (que resuelve todo).
   runCombination(comboId) {
     const combo = this.model.combinations.get(comboId);
     if (!combo || combo.factors.length === 0) {
       this.toast('Combinación vacía — agregue al menos un factor', 'warn'); return;
     }
-    const btn = document.getElementById('btn-run');
-    if (btn) btn.classList.add('running');
-    document.getElementById('sb-mode').textContent = `Combinación "${combo.name}"…`;
+    this._activeResultKey = 'C' + comboId;
+    const cached = this._resultsByCase?.get('C' + comboId);
+    if (cached) {
+      this._results = cached;
+      this.toast(`"${combo.name}" | δmax=${cached.getMaxDisp().toExponential(2)}`, 'ok');
+      document.getElementById('result-type').value = 'deformed';
+      this._refreshResultView(true);
+      this.panel._switchVTab('resultados');
+      this.panel._switchRTab('estatico');
+      this.panel.renderStaticResults();
+      this._renderLcSelector();
+    } else {
+      this.runAnalysis();   // resuelve todos los casos y combos, y muestra éste
+    }
+  }
 
-    setTimeout(() => {
-      try {
-        const solver = new StaticSolver();
-        let nodeIndex = null, nDOF = 0;
-        let cU = null, cR = null;
-        const combinedEF = new Map();   // elemId → combined element forces
-        const totalFactors = combo.factors.length;
-
-        for (let fi = 0; fi < totalFactors; fi++) {
-          const { lcId, factor, selfWeight: sw = false } = combo.factors[fi];
-          const f = parseFloat(factor) || 0;
-          const isSpectral = typeof lcId === 'string' && lcId.startsWith('esp');
-
-          // Progress update
-          const sbEl = document.getElementById('sb-mode');
-          if (sbEl) sbEl.textContent = `Combinación "${combo.name}" … (${fi+1}/${totalFactors})`;
-
-          if (isSpectral) {
-            const sr = this._spectrumResults.get(lcId);
-            if (!sr) {
-              this.toast(`Caso espectral "${lcId}" no disponible — ejecute el espectro primero`, 'warn');
-              continue;
-            }
-            if (!cU) {
-              nodeIndex = sr.result.nodeIndex;
-              nDOF = sr.result.U.length;
-              cU = new Float64Array(nDOF);
-              cR = new Float64Array(nDOF);
-            }
-            for (let i = 0; i < nDOF; i++) cU[i] += f * sr.result.U[i];
-          } else {
-            const numId = typeof lcId === 'number' ? lcId : parseInt(lcId);
-            if (!this.model.loadCases.has(numId)) continue;
-            // Solve this LC (with per-factor self-weight flag)
-            const res = solver.solve(this.model, numId, !!sw);
-            if (!cU) {
-              nodeIndex = res.nodeIndex;
-              nDOF = res.u.length;
-              cU = new Float64Array(nDOF);
-              cR = new Float64Array(nDOF);
-            }
-            // Superpose displacements and reactions
-            for (let i = 0; i < nDOF; i++) {
-              cU[i] += f * res.u[i];
-              cR[i] += f * res.reactions[i];
-            }
-            // Superpose element forces directly (they already include FEF — correct)
-            for (const [eid, ef] of res._elemForces) {
-              if (!ef) continue;
-              const cur = combinedEF.get(eid);
-              if (!cur) {
-                // Clone first occurrence scaled by factor
-                combinedEF.set(eid, _scaleEF(ef, f));
-              } else {
-                // Accumulate
-                _addScaledEF(cur, ef, f);
-              }
-            }
-          }
-        }
-        if (!cU) { this.toast('Sin casos de carga válidos en la combinación', 'warn'); return; }
-
-        this._results = new Results(this.model, nodeIndex, cU, cR, new Float64Array(nDOF),
-                                    null, false, combinedEF.size ? combinedEF : null);
-        const d = this._results.getMaxDisp();
-        this.toast(`"${combo.name}" OK | δmax=${d.toExponential(2)}`, 'ok');
-        document.getElementById('result-type').value = 'deformed';
-        this._refreshResultView(true);
-        this.panel._switchVTab('resultados');
-        this.panel._switchRTab('estatico');
-        this.panel.renderStaticResults();
-      } catch(err) {
-        this.toast(`Error combinación: ${err.message}`, 'error');
-        console.error(err);
-      } finally {
-        if (btn) btn.classList.remove('running');
-        document.getElementById('sb-mode').textContent = 'Modo: Resultados';
-      }
-    }, 20);
+  // Abre la pestaña de combinaciones (accesible desde menú Análisis / F8)
+  openCombosTab() {
+    this.panel._switchVTab('resultados');
+    this.panel._switchRTab('combos');
+    this.panel.renderCombinations();
   }
 
   async runCombinationDialog() {
@@ -1058,16 +1798,50 @@ class App {
       const ok = await this._confirm('¿Descartar cambios no guardados y crear un nuevo modelo?');
       if (!ok) return;
     }
+    // El modo 2D/3D se elige AL CREAR el modelo y no se cambia después:
+    // define cómo se modela (plano vs espacio) y qué GDL participan.
+    const overlay = document.getElementById('modal-overlay');
+    document.getElementById('modal-title').textContent = 'Nuevo Modelo';
+    document.getElementById('modal-body').innerHTML = `
+      <div class="prop-field"><label>Tipo de modelo</label>
+        <select id="nm-mode" style="width:100%">
+          <option value="3D">Estructura 3D (espacial)</option>
+          <option value="2D">Pórtico 2D — plano X–Z (vista ortográfica real)</option>
+        </select>
+      </div>
+      <p style="font-size:11px;color:var(--text-muted);margin-top:8px">
+        <b>2D:</b> se modela en un plano sin profundidad (cámara ortográfica fija);
+        los GDL fuera del plano (uy, rx, rz) se restringen automáticamente y el
+        análisis es plano. <b>El modo no puede cambiarse después.</b></p>`;
+    document.getElementById('modal-cancel').style.display = '';
+    overlay.classList.remove('hidden');
+    const ok2 = await new Promise(res => {
+      overlay._resolve = res;
+      overlay._reject  = () => res(false);
+    });
+    if (!ok2) return;
+    const mode = document.getElementById('nm-mode')?.value === '2D' ? '2D' : '3D';
+
     this.model = new Model();
+    this.model.mode = mode;
+    this.viewport._elevation = null;
     this.undoStack.clear();
     this._fileHandle = null;
     this._filePath   = null;
     this._dirty = false;
+    this._results = null;
+    this._resultsByCase = null;
+    this._discardResultsCache();   // modelo nuevo → resultados previos no aplican
+    this._activeLcId = ensureDefaultLC(this.model);
+    this._activeResultKey = this._activeLcId;
+    this._renderLcSelector();
+    this.refreshLoads();
     this.viewport.renderModel(this.model);
+    this.viewport.applyProjectMode();
     this.panel.showNothing();
     this._updateStats();
     this._updateTitle();
-    this.toast('Nuevo modelo creado', 'ok');
+    this.toast(`Nuevo modelo ${mode} creado`, 'ok');
   }
 
   async openFile() {
@@ -1084,7 +1858,7 @@ class App {
         this._loadJSON(result.content, result.filePath.split(/[\\/]/).pop());
       } else if ('showOpenFilePicker' in window) {
         const [handle] = await window.showOpenFilePicker({
-          types: [{ description: 'StructWeb3D (.s3d)', accept: { 'application/json': ['.s3d', '.json'] } }]
+          types: [{ description: 'PÓRTICO (.s3d)', accept: { 'application/json': ['.s3d', '.json'] } }]
         });
         const text = await (await handle.getFile()).text();
         this._fileHandle = handle;
@@ -1108,9 +1882,12 @@ class App {
     inp.click();
   }
 
-  _loadJSON(text, filename) {
+  _loadJSON(text, filename, keepResults = false) {
     try {
+      let parsed = null;
+      try { parsed = JSON.parse(text); } catch {}
       this.model = this.serializer.fromJSON(text);
+      this.viewport._elevation = null;          // la elevación es por sesión
       this._refreshDiaphragmCRs();   // P1-2: fix stale CR/masterId from saved files
       this.undoStack.clear();
       this._dirty = false;
@@ -1118,13 +1895,24 @@ class App {
       this.panel.showNothing();
       this.panel.refresh(this.model);
       this._results = null;
+      this._resultsByCase = null;
       this._activeLcId = ensureDefaultLC(this.model);
+      this._activeResultKey = this._activeLcId;
+      // Resultados embebidos en el archivo → adoptarlos (queda "ya corrido").
+      // Si no hay, descartar la caché salvo en recuperación de sesión / ejemplo,
+      // donde la firma decidirá después si los resultados guardados sirven.
+      if (parsed && parsed.results) {
+        this._adoptEmbeddedResults(parsed.results);
+      } else if (!keepResults) {
+        this._discardResultsCache();
+      }
       this._renderLcSelector();
       this.refreshLoads();
       this._updateStats();
       this._updateTitle(filename);
-      this.viewport.zoomExtents();
-      this.toast(`Modelo cargado: ${filename}`, 'ok');
+      this.viewport.applyProjectMode();   // cámara/insumos según modo 2D/3D
+      if (this.model.mode !== '2D') this.viewport.zoomExtents();
+      this.toast(`Modelo cargado: ${filename}${this.model.mode === '2D' ? ' (2D)' : ''}`, 'ok');
       // Sync unit selector
       document.getElementById('unit-select').value = this.model.units || 'kN-m';
       document.getElementById('sb-units').textContent = (this.model.units || 'kN-m').replace('-', ' — ');
@@ -1136,21 +1924,21 @@ class App {
   async saveFile() {
     if (window.electronAPI && this._filePath) {
       try {
-        await window.electronAPI.writeFile(this._filePath, this.serializer.toJSON(this.model));
+        await window.electronAPI.writeFile(this._filePath, this._fullSaveJSON());
         this._dirty = false;
         this._updateTitle();
-        this.toast('Guardado', 'ok');
+        this.toast(this._saveToastMsg(), 'ok');
       } catch (err) {
         this.toast(`Error al guardar: ${err.message}`, 'error');
       }
     } else if (this._fileHandle) {
       try {
         const writable = await this._fileHandle.createWritable();
-        await writable.write(this.serializer.toJSON(this.model));
+        await writable.write(this._fullSaveJSON());
         await writable.close();
         this._dirty = false;
         this._updateTitle();
-        this.toast('Guardado', 'ok');
+        this.toast(this._saveToastMsg(), 'ok');
       } catch (err) {
         this.toast(`Error al guardar: ${err.message}`, 'error');
       }
@@ -1164,29 +1952,30 @@ class App {
       if (window.electronAPI) {
         const filePath = await window.electronAPI.saveFileAs('modelo.s3d');
         if (!filePath) return;
-        await window.electronAPI.writeFile(filePath, this.serializer.toJSON(this.model));
+        await window.electronAPI.writeFile(filePath, this._fullSaveJSON());
         this._filePath   = filePath;
         this._fileHandle = null;
         this._dirty = false;
         this._updateTitle(filePath.split(/[\\/]/).pop());
-        this.toast('Guardado', 'ok');
+        this.toast(this._saveToastMsg(), 'ok');
       } else if ('showSaveFilePicker' in window) {
         const handle = await window.showSaveFilePicker({
           suggestedName: 'modelo.s3d',
-          types: [{ description: 'StructWeb3D', accept: { 'application/json': ['.s3d'] } }]
+          types: [{ description: 'PÓRTICO', accept: { 'application/json': ['.s3d'] } }]
         });
         const writable = await handle.createWritable();
-        await writable.write(this.serializer.toJSON(this.model));
+        await writable.write(this._fullSaveJSON());
         await writable.close();
         this._fileHandle = handle;
         this._filePath   = null;
         this._dirty = false;
         this._updateTitle(handle.name);
-        this.toast('Guardado', 'ok');
+        this.toast(this._saveToastMsg(), 'ok');
       } else {
-        this._downloadText(this.serializer.toJSON(this.model), 'modelo.s3d', 'application/json');
+        this._downloadText(this._fullSaveJSON(), 'modelo.s3d', 'application/json');
         this._dirty = false;
         this._updateTitle();
+        this.toast(this._saveToastMsg(), 'ok');
       }
     } catch (err) {
       if (err.name !== 'AbortError') this.toast(`Error al guardar: ${err.message}`, 'error');
@@ -1229,9 +2018,151 @@ class App {
   }
 
   exportCSV() {
-    const csv = this.serializer.toCSV(this.model);
+    // Si el análisis auto-discretizó el modelo, exportar el ORIGINAL del usuario
+    const m = this._predisc ? this.serializer.fromJSON(this._predisc) : this.model;
+    const csv = this.serializer.toCSV(m);
     this._downloadText(csv, 'modelo.csv', 'text/csv;charset=utf-8');
     this.toast('CSV exportado', 'ok');
+  }
+
+  // JSON a guardar en disco: si el análisis auto-discretizó el modelo,
+  // se guarda el modelo ORIGINAL del usuario, no el subdividido temporal.
+  _modelJSONForSave() {
+    return this._predisc ?? this.serializer.toJSON(this.model);
+  }
+
+  // ¿Hay resultados consistentes con el modelo actual, aptos para guardar?
+  _hasSavableResults() {
+    const c = this._resultsCache;
+    return !!(c && c.cases && c.cases.length && c.sig === this._modelSig(!!c.autoDisc));
+  }
+
+  // JSON para guardar en el archivo .s3d: modelo + (si existen y corresponden)
+  // los resultados del análisis embebidos, para reabrir el archivo "ya corrido".
+  _fullSaveJSON() {
+    const modelJSON = this._modelJSONForSave();
+    if (!this._hasSavableResults()) return modelJSON;
+    try {
+      const obj = JSON.parse(modelJSON);
+      obj.results = {
+        sig:          this._resultsCache.sig,
+        autoDisc:     !!this._resultsCache.autoDisc,
+        activeKey:    this._activeResultKey ?? this._activeLcId,
+        showReactions:!!this._showReactions,
+        savedAt:      new Date().toISOString(),
+        cases:        this._resultsCache.cases,
+      };
+      return JSON.stringify(obj, null, 2);
+    } catch { return modelJSON; }
+  }
+
+  _saveToastMsg() {
+    return this._hasSavableResults() ? 'Guardado (con resultados)' : 'Guardado';
+  }
+
+  // Adopta los resultados embebidos en un archivo .s3d recién cargado.
+  _adoptEmbeddedResults(e) {
+    if (!e || !Array.isArray(e.cases) || !e.cases.length) return false;
+    const cb = document.getElementById('auto-disc');
+    if (cb) cb.checked = !!e.autoDisc;   // alinear con el usado al generar los resultados
+    const sig = this._modelSig(!!e.autoDisc);
+    if (e.sig && e.sig !== sig) {
+      // El modelo del archivo fue editado tras guardar los resultados → ignorarlos
+      this._discardResultsCache();
+      this.toast('El archivo trae resultados que no calzan con el modelo (se ignoran)', 'warn');
+      return false;
+    }
+    this._resultsCache = { sig, autoDisc: !!e.autoDisc, cases: e.cases };
+    if (e.activeKey != null) this._activeResultKey = e.activeKey;
+    this._showReactions = !!e.showReactions;
+    this._persistResults();
+    this._autoShowResults();   // abrir mostrando los resultados, sin pulsar nada
+    return true;
+  }
+
+  // Muestra los resultados cacheados automáticamente (sin que el usuario pulse
+  // Análisis). Reutiliza la caché → no recalcula. Se usa al abrir un .s3d "ya
+  // corrido" o al recuperar la sesión anterior.
+  _autoShowResults() {
+    if (!this._resultsCache || !this.model.elements.size) return;
+    setTimeout(() => this.runAnalysis(), 250);
+  }
+
+  // ── Persistencia de resultados (no recalcular en cada sesión) ────────────────
+  // Hash djb2 del JSON del modelo original (+ auto-disc): detecta cambios. Si el
+  // modelo no cambió, los resultados guardados siguen siendo válidos.
+  _hashStr(s) {
+    let h = 5381;
+    for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+    return (h >>> 0).toString(36);
+  }
+
+  _modelSig(autoDisc) {
+    return this._hashStr(this._modelJSONForSave() + '|ad:' + (autoDisc ? 1 : 0));
+  }
+
+  // Reconstruye _resultsByCase desde los vectores crudos cacheados, sobre el
+  // modelo actual (ya subdividido si corresponde). No resuelve el sistema.
+  _reconstructResultsFromCache() {
+    const cache = this._resultsCache;
+    if (!cache || !cache.cases) return false;
+    const m = this.model;
+    const nodeIndex = buildNodeIndex(m);
+    const nDOF = nodeIndex.size * 6;
+    const byCase = new Map();
+    for (const c of cache.cases) {
+      if (!c.u || c.u.length !== nDOF) return false;  // el modelo no calza → recalcular
+      const u = Float64Array.from(c.u);
+      const r = Float64Array.from(c.reactions);
+      byCase.set(c.key, new Results(m, nodeIndex, u, r, new Float64Array(nDOF), c.lcId, c.selfWeight));
+    }
+    // Combos por superposición de los casos reconstruidos
+    this._resultsByCase = byCase;
+    for (const combo of m.combinations.values()) {
+      const res = this._combineFromCache(combo);
+      if (res) this._resultsByCase.set('C' + combo.id, res);
+    }
+    return true;
+  }
+
+  _persistResults() {
+    try {
+      localStorage.setItem('portico_results', JSON.stringify({
+        sig: this._resultsCache.sig,
+        autoDisc: !!this._resultsCache.autoDisc,
+        cases: this._resultsCache.cases,
+        activeKey: this._activeResultKey ?? this._activeLcId,
+        showReactions: !!this._showReactions,
+        ts: Date.now(),
+      }));
+    } catch { /* cuota llena → los resultados siguen en memoria esta sesión */ }
+  }
+
+  // Al arrancar: si hay resultados guardados de ESTE mismo modelo, prepararlos
+  // para reutilizarlos (un clic en Análisis los muestra sin recalcular).
+  _offerCachedResults() {
+    // Si el modelo ya trae resultados embebidos (de un .s3d), tienen prioridad
+    if (this._hasSavableResults()) return;
+    try {
+      const raw = localStorage.getItem('portico_results');
+      if (!raw) return;
+      const p = JSON.parse(raw);
+      const cb = document.getElementById('auto-disc');
+      if (cb && p.autoDisc != null) cb.checked = !!p.autoDisc;
+      if (p.sig !== this._modelSig(!!p.autoDisc)) { this._discardResultsCache(); return; }
+      // El modelo coincide → conservar la caché y el estado de vista guardado
+      this._resultsCache = { sig: p.sig, autoDisc: !!p.autoDisc, cases: p.cases };
+      if (p.activeKey != null) this._activeResultKey = p.activeKey;
+      this._showReactions = !!p.showReactions;
+      this._autoShowResults();   // mostrar los resultados de inmediato
+    } catch { this._discardResultsCache(); }
+  }
+
+  _discardResultsCache() {
+    this._resultsCache = null;
+    this._activeResultKey = this._activeLcId;
+    this._showReactions = false;
+    try { localStorage.removeItem('portico_results'); } catch {}
   }
 
   downloadTemplate() {
@@ -1244,13 +2175,48 @@ class App {
   markDirty() {
     this._dirty = true;
     this._updateTitle();
+    // Autoguardado: 1.5 s después del último cambio (evita perder trabajo en aula)
+    clearTimeout(this._autosaveT);
+    this._autosaveT = setTimeout(() => this._autosaveNow(), 1500);
+  }
+
+  _autosaveNow() {
+    try {
+      localStorage.setItem('portico_autosave',
+        JSON.stringify({ ts: Date.now(), json: this._modelJSONForSave() }));
+    } catch { /* cuota de localStorage llena — ignorar */ }
+  }
+
+  // Al arrancar: ofrecer recuperar la sesión autoguardada; si no, cargar ejemplo.
+  // Tras tener el modelo, ofrecer los resultados guardados si coinciden.
+  async _restoreOrLoadExample() {
+    let restored = false;
+    try {
+      const raw = localStorage.getItem('portico_autosave');
+      if (raw) {
+        const { ts, json } = JSON.parse(raw);
+        const when = new Date(ts).toLocaleString('es-CL');
+        const ok = await this._confirm(
+          `Hay un modelo autoguardado de la sesión anterior (${when}).<br>¿Desea recuperarlo?`);
+        if (ok) {
+          this._loadJSON(json, 'autoguardado', true);   // keepResults: conservar caché de resultados
+          this.toast('Sesión anterior recuperada', 'ok');
+          restored = true;
+        } else {
+          localStorage.removeItem('portico_autosave');
+        }
+      }
+    } catch (e) { console.warn('Autosave: no se pudo recuperar', e); }
+    if (!restored) await this._loadExample();
+    this.viewport.applyProjectMode();   // badge + cámara según modo del modelo
+    this._offerCachedResults();
   }
 
   _updateTitle(filename) {
     const name = filename
       ? filename.replace(/\.[^.]+$/, '')
       : (this._fileHandle ? 'modelo' : 'Sin título');
-    document.title = (this._dirty ? '● ' : '') + `${name} — StructWeb3D`;
+    document.title = (this._dirty ? '● ' : '') + `${name} — PÓRTICO`;
   }
 
   _updateStats() {
@@ -1294,11 +2260,15 @@ class App {
     document.getElementById('modal-cancel')?.addEventListener('click', () => {
       const overlay = document.getElementById('modal-overlay');
       overlay.classList.add('hidden');
+      document.getElementById('modal-box')?.classList.remove('modal-wide');
+      document.getElementById('modal-cancel').style.display = '';
       if (overlay._reject) overlay._reject(new Error('cancelled'));
     });
     document.getElementById('modal-ok')?.addEventListener('click', () => {
       const overlay = document.getElementById('modal-overlay');
       overlay.classList.add('hidden');
+      document.getElementById('modal-box')?.classList.remove('modal-wide');
+      document.getElementById('modal-cancel').style.display = '';
       if (overlay._resolve) overlay._resolve(true);
     });
   }
@@ -1381,7 +2351,7 @@ class App {
       const resp = await fetch('examples/portico_simple.s3d');
       if (!resp.ok) return;
       const text = await resp.text();
-      this._loadJSON(text, 'portico_simple.s3d');
+      this._loadJSON(text, 'portico_simple.s3d', true);   // keepResults: la firma decide
       this._dirty = false;
       this._updateTitle('portico_simple');
     } catch {
