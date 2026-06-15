@@ -8,17 +8,18 @@
       "Combinaciones: NCh3171"
     ]
   },
-
   "bibliotecas": {
     "perfiles_csv": "perfiles.csv",
     "materiales_csv": "materiales.csv",
     "_nota_perfiles": "90 perfiles I (IPE, HEA, HEB, HEM). Columnas en mm (h,b,tw,tf,r) y unidades de tabla (A_cm2, I_cm4, Iw_cm6, Av_cm2, W_cm3, i_cm). Iy=eje fuerte (mayor); Iz=eje débil (menor), convención Eurocode. Ampliable agregando filas. Pendiente: tubos CHS/RHS/SHS y perfiles IPN/UPN/L.",
     "_conversion_a_PORTICO": "A: cm2 ×1e-4 → m2. I, It: cm4 ×1e-8 → m4. El generador mapea Iy(mayor)→plano fuerte y asigna Avy/Avz/kappa desde Av_y/Av_z del CSV."
   },
-
   "reglas_modelado": {
     "apoyo_base": "empotrado",
-    "_apoyo_base_opciones": ["empotrado", "rotulado"],
+    "_apoyo_base_opciones": [
+      "empotrado",
+      "rotulado"
+    ],
     "columnas": "una en cada intersección de ejes de grilla",
     "vigas": "una por cada tramo entre ejes contiguos, en cada nivel",
     "separacion_maxima_vano_m": 6.0,
@@ -29,47 +30,101 @@
     "viga_por_defecto": "IPE300",
     "pilar_por_defecto": "HEB200"
   },
-
   "cargas": {
     "_modelo": "Las cargas de ÁREA (kN/m²) se reparten a las vigas según ancho tributario: w[kN/m] = q[kN/m²] × ancho_tributario[m]. El reparto por defecto es en una dirección (medio paño a cada lado); opción por paños (triangular/trapezoidal). Las cargas gravitacionales de área también definen la MASA SÍSMICA (CM + fracción de CV) en los diafragmas, que alimenta el caso espectral.",
-
-    "masa_sismica": { "fraccion_CV": 0.25, "_fuente": "NCh433 (verificar fracción según uso)" },
-
+    "masa_sismica": {
+      "fraccion_CV": 0.25,
+      "_fuente": "NCh433 (verificar fracción según uso)"
+    },
     "sobrecarga_uso_NCh1537": {
-      "_fuente": "NCh1537 (verificar valores)", "_unidad": "kN/m2",
-      "colegio_aula": 3.0, "colegio_pasillo_escalera": 4.0,
-      "oficina": 2.5, "habitacional": 2.0, "techo_no_accesible": 1.0,
+      "_fuente": "NCh1537 (verificar valores)",
+      "_unidad": "kN/m2",
+      "colegio_aula": 3.0,
+      "colegio_pasillo_escalera": 4.0,
+      "oficina": 2.5,
+      "habitacional": 2.0,
+      "techo_no_accesible": 1.0,
       "_verificar": true
     },
-
     "nieve_NCh431": {
       "_fuente": "NCh431 — pendiente: PROFESOR aún no tiene este cálculo; se arma con la norma y se valida.",
       "_unidad": "kN/m2",
-      "ciudades": { "Valdivia": { "sobrecarga_nieve_kN_m2": null, "_verificar": true } }
+      "ciudades": {
+        "Valdivia": {
+          "sobrecarga_nieve_kN_m2": null,
+          "_verificar": true
+        }
+      }
     },
-
     "viento_NCh432": {
       "_fuente": "NCh432 — SE CODIFICARÁ desde el Excel del profesor (fuente de verdad).",
       "_estado": "pendiente_excel",
-      "ciudades": { "Valdivia": { "_desde_excel": true } }
+      "ciudades": {
+        "Valdivia": {
+          "_desde_excel": true
+        }
+      }
     },
-
     "sismica_NCh433": {
       "_fuente": "NCh433 Of.2009 + DS61/2011 — codificado desde el Excel del profesor ('Espectro NCh433 of.2009 DS61.xls'). Verificado: R* y Sa(0) reproducen las celdas del Excel. Genera el espectro y lo asigna a casos ESPECTRALES (dir X e Y).",
-
       "tabla_suelos": {
         "_columnas": "S, To(s), Tp(s)=T', n, p",
-        "A": { "S": 0.90, "To": 0.15, "Tp": 0.20, "n": 1.00, "p": 2.00 },
-        "B": { "S": 1.00, "To": 0.30, "Tp": 0.35, "n": 1.33, "p": 1.50 },
-        "C": { "S": 1.05, "To": 0.40, "Tp": 0.45, "n": 1.40, "p": 1.60 },
-        "D": { "S": 1.20, "To": 0.75, "Tp": 0.85, "n": 1.80, "p": 1.00 },
-        "E": { "S": 1.30, "To": 1.20, "Tp": 1.35, "n": 1.80, "p": 1.00 },
+        "A": {
+          "S": 0.9,
+          "To": 0.15,
+          "Tp": 0.2,
+          "n": 1.0,
+          "p": 2.0
+        },
+        "B": {
+          "S": 1.0,
+          "To": 0.3,
+          "Tp": 0.35,
+          "n": 1.33,
+          "p": 1.5
+        },
+        "C": {
+          "S": 1.05,
+          "To": 0.4,
+          "Tp": 0.45,
+          "n": 1.4,
+          "p": 1.6
+        },
+        "D": {
+          "S": 1.2,
+          "To": 0.75,
+          "Tp": 0.85,
+          "n": 1.8,
+          "p": 1.0
+        },
+        "E": {
+          "S": 1.3,
+          "To": 1.2,
+          "Tp": 1.35,
+          "n": 1.8,
+          "p": 1.0
+        },
         "F": "estudio especial (sin tabla)"
       },
-      "tabla_zona_Ao_g": { "1": 0.20, "2": 0.30, "3": 0.40 },
-      "tabla_categoria_I": { "I": 0.60, "II": 1.00, "III": 1.20, "IV": 1.20 },
-      "tabla_R_Cmax": { "2.0": 0.90, "3.0": 0.60, "4.0": 0.55, "5.5": 0.40, "6.0": 0.35, "7.0": 0.35 },
-
+      "tabla_zona_Ao_g": {
+        "1": 0.2,
+        "2": 0.3,
+        "3": 0.4
+      },
+      "tabla_categoria_I": {
+        "I": 0.6,
+        "II": 1.0,
+        "III": 1.2,
+        "IV": 1.2
+      },
+      "tabla_R_Cmax": {
+        "2.0": 0.9,
+        "3.0": 0.6,
+        "4.0": 0.55,
+        "5.5": 0.4,
+        "6.0": 0.35,
+        "7.0": 0.35
+      },
       "formula": {
         "_nota": "Espectro de diseño NCh433/DS61, por dirección (X, Y). T* = período fundamental de esa dirección (sale del análisis MODAL).",
         "alpha_de_T": "(1 + 4.5*(T/To)^p) / (1 + (T/To)^3)",
@@ -77,34 +132,284 @@
         "Sa_de_T_en_g": "S*Ao*I*alpha(T) / R_estrella",
         "tope_corte_basal": "el coeficiente de corte basal se limita a Cmax*I*S*Ao (y mínimo según norma); se aplica al ESCALAR el cortante, no al espectro mismo. Verificar."
       },
-
       "flujo_generador": "1) construir modelo y diafragmas; 2) análisis MODAL → T*x, T*y; 3) calcular R*x, R*y; 4) construir Sa(T) por dirección con la fórmula; 5) cargar como espectro en los casos espectrales SismoX/SismoY; 6) (opcional) escalar por Cmin/Cmax.",
-
-      "parametros_defecto": { "amortiguamiento_zeta": 0.05, "Ro": 11.0, "R": 7.0 },
-
+      "parametros_defecto": {
+        "amortiguamiento_zeta": 0.05,
+        "Ro": 11.0,
+        "R": 7.0
+      },
       "ciudades": {
-        "Valdivia": { "zona_sismica": null, "_nota": "Definir según comuna (Anexo NCh433). El Excel no trae el mapa comuna→zona; el profesor lo confirma.", "_verificar": true }
+        "Valdivia": {
+          "zona_sismica": null,
+          "_nota": "Definir según comuna (Anexo NCh433). El Excel no trae el mapa comuna→zona; el profesor lo confirma.",
+          "_verificar": true
+        }
       }
     }
   },
-
   "combinaciones_NCh3171": {
-    "_nota": "Plantillas que un botón de la app materializa como combinaciones reales sobre los casos existentes (CM, CV, SismoX, SismoY, Viento, Nieve). El asistente las invoca al pedir 'cargas eventuales'.",
-    "gravitacional": [
-      { "nombre": "1.2CM + 1.6CV", "factores": { "CM": 1.2, "CV": 1.6 } },
-      { "nombre": "1.4CM", "factores": { "CM": 1.4 } }
-    ],
-    "sismica": [
-      { "nombre": "1.2CM + CV + Sx", "factores": { "CM": 1.2, "CV": 1.0, "SismoX": 1.0 } },
-      { "nombre": "1.2CM + CV + Sy", "factores": { "CM": 1.2, "CV": 1.0, "SismoY": 1.0 } },
-      { "nombre": "0.9CM + Sx", "factores": { "CM": 0.9, "SismoX": 1.0 } },
-      { "nombre": "0.9CM + Sy", "factores": { "CM": 0.9, "SismoY": 1.0 } }
-    ],
-    "eventuales": [
-      { "nombre": "1.2CM + 1.6CV + 0.5Nieve", "factores": { "CM": 1.2, "CV": 1.6, "Nieve": 0.5 } },
-      { "nombre": "1.2CM + 1.6Nieve + CV", "factores": { "CM": 1.2, "Nieve": 1.6, "CV": 1.0 } },
-      { "nombre": "1.2CM + Viento + CV", "factores": { "CM": 1.2, "Viento": 1.0, "CV": 1.0 } },
-      { "nombre": "0.9CM + Viento", "factores": { "CM": 0.9, "Viento": 1.0 } }
+    "_fuente": "NCh3171 / LRFD (ASCE 7) — 32 combinaciones del Excel 'Combinaciones de carga.xlsx' (factores parseados del nombre).",
+    "_mapa_cargas_a_casos": {
+      "D": "CM (muerta, incl. peso propio)",
+      "L": "CV (sobrecarga de uso)",
+      "Lr": "CV de techo",
+      "W": "Viento",
+      "S": "Nieve",
+      "E": "Sismo (espectral; Ex/Ey por direccion)",
+      "R": "Lluvia"
+    },
+    "_uso": "El boton/generador crea solo las combinaciones cuyos casos existen en el modelo. El asistente las invoca al pedir 'cargas eventuales'.",
+    "lista": [
+      {
+        "nombre": "1.4D",
+        "factores": {
+          "D": 1.4
+        }
+      },
+      {
+        "nombre": "1.2D+1.6L+0.5Lr",
+        "factores": {
+          "D": 1.2,
+          "L": 1.6,
+          "Lr": 0.5
+        }
+      },
+      {
+        "nombre": "1.2D+1.6L+0.5S",
+        "factores": {
+          "D": 1.2,
+          "L": 1.6,
+          "S": 0.5
+        }
+      },
+      {
+        "nombre": "1.2D+1.6L+0.5R",
+        "factores": {
+          "D": 1.2,
+          "L": 1.6,
+          "R": 0.5
+        }
+      },
+      {
+        "nombre": "1.2D+1.6Lr+L",
+        "factores": {
+          "D": 1.2,
+          "Lr": 1.6,
+          "L": 1.0
+        }
+      },
+      {
+        "nombre": "1.2D+1.6S+L",
+        "factores": {
+          "D": 1.2,
+          "S": 1.6,
+          "L": 1.0
+        }
+      },
+      {
+        "nombre": "1.2D+1.6R+L",
+        "factores": {
+          "D": 1.2,
+          "R": 1.6,
+          "L": 1.0
+        }
+      },
+      {
+        "nombre": "1.2D+1.6Lr+0.8W",
+        "factores": {
+          "D": 1.2,
+          "Lr": 1.6,
+          "W": 0.8
+        }
+      },
+      {
+        "nombre": "1.2D+1.6S+0.8W",
+        "factores": {
+          "D": 1.2,
+          "S": 1.6,
+          "W": 0.8
+        }
+      },
+      {
+        "nombre": "1.2D+1.6R+0.8W",
+        "factores": {
+          "D": 1.2,
+          "R": 1.6,
+          "W": 0.8
+        }
+      },
+      {
+        "nombre": "1.2D+1.6W+L+0.5Lr",
+        "factores": {
+          "D": 1.2,
+          "W": 1.6,
+          "L": 1.0,
+          "Lr": 0.5
+        }
+      },
+      {
+        "nombre": "1.2D+1.6W+L+0.5S",
+        "factores": {
+          "D": 1.2,
+          "W": 1.6,
+          "L": 1.0,
+          "S": 0.5
+        }
+      },
+      {
+        "nombre": "1.2D+1.6W+L+0.5R",
+        "factores": {
+          "D": 1.2,
+          "W": 1.6,
+          "L": 1.0,
+          "R": 0.5
+        }
+      },
+      {
+        "nombre": "1.2D+1.4E+L+0.2S",
+        "factores": {
+          "D": 1.2,
+          "E": 1.4,
+          "L": 1.0,
+          "S": 0.2
+        }
+      },
+      {
+        "nombre": "0.8D+1.6W",
+        "factores": {
+          "D": 0.8,
+          "W": 1.6
+        }
+      },
+      {
+        "nombre": "0.9D+1.4E",
+        "factores": {
+          "D": 0.9,
+          "E": 1.4
+        }
+      },
+      {
+        "nombre": "D",
+        "factores": {
+          "D": 1.0
+        }
+      },
+      {
+        "nombre": "D+L",
+        "factores": {
+          "D": 1.0,
+          "L": 1.0
+        }
+      },
+      {
+        "nombre": "D+Lr",
+        "factores": {
+          "D": 1.0,
+          "Lr": 1.0
+        }
+      },
+      {
+        "nombre": "D+S",
+        "factores": {
+          "D": 1.0,
+          "S": 1.0
+        }
+      },
+      {
+        "nombre": "D+R",
+        "factores": {
+          "D": 1.0,
+          "R": 1.0
+        }
+      },
+      {
+        "nombre": "D+0.75L+0.75Lr",
+        "factores": {
+          "D": 1.0,
+          "L": 0.75,
+          "Lr": 0.75
+        }
+      },
+      {
+        "nombre": "D+0.75L+0.75S",
+        "factores": {
+          "D": 1.0,
+          "L": 0.75,
+          "S": 0.75
+        }
+      },
+      {
+        "nombre": "D+0.75L+0.75R",
+        "factores": {
+          "D": 1.0,
+          "L": 0.75,
+          "R": 0.75
+        }
+      },
+      {
+        "nombre": "D+W",
+        "factores": {
+          "D": 1.0,
+          "W": 1.0
+        }
+      },
+      {
+        "nombre": "D+E",
+        "factores": {
+          "D": 1.0,
+          "E": 1.0
+        }
+      },
+      {
+        "nombre": "D+0.75W+0.75L+0.75Lr",
+        "factores": {
+          "D": 1.0,
+          "W": 0.75,
+          "L": 0.75,
+          "Lr": 0.75
+        }
+      },
+      {
+        "nombre": "D+0.75W+0.75L+0.75S",
+        "factores": {
+          "D": 1.0,
+          "W": 0.75,
+          "L": 0.75,
+          "S": 0.75
+        }
+      },
+      {
+        "nombre": "D+0.75W+0.75L+0.75R",
+        "factores": {
+          "D": 1.0,
+          "W": 0.75,
+          "L": 0.75,
+          "R": 0.75
+        }
+      },
+      {
+        "nombre": "D+0.75E+0.75L+0.75S",
+        "factores": {
+          "D": 1.0,
+          "E": 0.75,
+          "L": 0.75,
+          "S": 0.75
+        }
+      },
+      {
+        "nombre": "0.6D+W",
+        "factores": {
+          "D": 0.6,
+          "W": 1.0
+        }
+      },
+      {
+        "nombre": "0.6D+E",
+        "factores": {
+          "D": 0.6,
+          "E": 1.0
+        }
+      }
     ],
     "_verificar": true
   }
