@@ -55,10 +55,36 @@
     },
 
     "sismica_NCh433": {
-      "_fuente": "NCh433 — SE CODIFICARÁ desde el Excel del profesor. Genera el espectro y lo asigna a casos ESPECTRALES (dir X e Y).",
-      "_estado": "pendiente_excel",
-      "ciudades": { "Valdivia": { "_desde_excel": true } },
-      "parametros_espectro": { "amortiguamiento_zeta": 0.05, "_resto": "desde Excel" }
+      "_fuente": "NCh433 Of.2009 + DS61/2011 — codificado desde el Excel del profesor ('Espectro NCh433 of.2009 DS61.xls'). Verificado: R* y Sa(0) reproducen las celdas del Excel. Genera el espectro y lo asigna a casos ESPECTRALES (dir X e Y).",
+
+      "tabla_suelos": {
+        "_columnas": "S, To(s), Tp(s)=T', n, p",
+        "A": { "S": 0.90, "To": 0.15, "Tp": 0.20, "n": 1.00, "p": 2.00 },
+        "B": { "S": 1.00, "To": 0.30, "Tp": 0.35, "n": 1.33, "p": 1.50 },
+        "C": { "S": 1.05, "To": 0.40, "Tp": 0.45, "n": 1.40, "p": 1.60 },
+        "D": { "S": 1.20, "To": 0.75, "Tp": 0.85, "n": 1.80, "p": 1.00 },
+        "E": { "S": 1.30, "To": 1.20, "Tp": 1.35, "n": 1.80, "p": 1.00 },
+        "F": "estudio especial (sin tabla)"
+      },
+      "tabla_zona_Ao_g": { "1": 0.20, "2": 0.30, "3": 0.40 },
+      "tabla_categoria_I": { "I": 0.60, "II": 1.00, "III": 1.20, "IV": 1.20 },
+      "tabla_R_Cmax": { "2.0": 0.90, "3.0": 0.60, "4.0": 0.55, "5.5": 0.40, "6.0": 0.35, "7.0": 0.35 },
+
+      "formula": {
+        "_nota": "Espectro de diseño NCh433/DS61, por dirección (X, Y). T* = período fundamental de esa dirección (sale del análisis MODAL).",
+        "alpha_de_T": "(1 + 4.5*(T/To)^p) / (1 + (T/To)^3)",
+        "R_estrella": "1 + T*/(0.10*To + T*/Ro)",
+        "Sa_de_T_en_g": "S*Ao*I*alpha(T) / R_estrella",
+        "tope_corte_basal": "el coeficiente de corte basal se limita a Cmax*I*S*Ao (y mínimo según norma); se aplica al ESCALAR el cortante, no al espectro mismo. Verificar."
+      },
+
+      "flujo_generador": "1) construir modelo y diafragmas; 2) análisis MODAL → T*x, T*y; 3) calcular R*x, R*y; 4) construir Sa(T) por dirección con la fórmula; 5) cargar como espectro en los casos espectrales SismoX/SismoY; 6) (opcional) escalar por Cmin/Cmax.",
+
+      "parametros_defecto": { "amortiguamiento_zeta": 0.05, "Ro": 11.0, "R": 7.0 },
+
+      "ciudades": {
+        "Valdivia": { "zona_sismica": null, "_nota": "Definir según comuna (Anexo NCh433). El Excel no trae el mapa comuna→zona; el profesor lo confirma.", "_verificar": true }
+      }
     }
   },
 
