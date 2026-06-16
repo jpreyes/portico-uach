@@ -10,7 +10,15 @@
 // ──────────────────────────────────────────────────────────────────────────────
 import { generarModelo } from '../asistente/generador.js';
 
-const MODEL_DEFAULT = 'meta-llama/llama-3.3-70b-instruct:free';
+// Modelos gratis de OpenRouter en cascada: si uno está rate-limited (429) o
+// caído (5xx), se prueba el siguiente. env.OPENROUTER_MODEL fuerza uno solo.
+const MODELS_FREE = [
+  'deepseek/deepseek-chat-v3-0324:free',
+  'meta-llama/llama-3.3-70b-instruct:free',
+  'google/gemini-2.0-flash-exp:free',
+  'qwen/qwen-2.5-72b-instruct:free',
+  'meta-llama/llama-3.1-8b-instruct:free',
+];
 
 const SYSTEM = `Eres un asistente que convierte la descripcion de una estructura en una FICHA JSON para PORTICO. Responde SOLO con el JSON de la ficha, sin texto ni markdown. Campos: proyecto, modo (2D|3D), ubicacion{ciudad,latitud_sur_deg,altitud_msnm,exposicion(B|C|D)}, geometria{niveles:[{altura_m,uso_NCh1537?,sobrecarga_uso_kN_m2?}],vanos_x?,vanos_y?,planta_inferior?{Lx_m,Ly_m},planta_superior?,pendiente_techo_deg?}, secciones{material,vigas,pilares}, apoyo_base(empotrado|rotulado), diafragma_rigido, cargas{muerta_adicional_kN_m2,uso_NCh1537,cierre_viento,nieve,viento,sismo}, sismo{zona(1|2|3),suelo(A..E),categoria(I..IV),R}. vanos_x/vanos_y: lista de luces [3,3,3,4] o uniforme {cantidad,luz_m} (ej. "4 vanos de 3 m en X" -> vanos_x:{cantidad:4,luz_m:3}). Cada nivel puede tener distinta altura y distinto uso (ej. nivel 1 Salas de Clases, nivel 3 Bodegas livianas) -> ponlo en niveles[k].uso_NCh1537. Omite lo no mencionado; no inventes valores de ingenieria. Materiales tipicos: S275, A630-420H; perfiles IPE300, HEB200.`;
 
@@ -37,8 +45,7 @@ async function cargarBibliotecas(env, base) {
   return { reglas, perfiles: parseCSV(pTxt), materiales: parseCSV(mTxt), sobrecargas: parseCSV(sTxt) };
 }
 
-async function fichaDesdeLLM(mensaje, env) {
-  if (!env.OPENROUTER_API_KEY) throw new Error('Falta el secreto OPENROUTER_API_KEY en el Worker.');
+async function llamarModelo(modelo, mensaje, env) {
   const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -47,19 +54,37 @@ async function fichaDesdeLLM(mensaje, env) {
       'X-Title': 'PORTICO Asistente',
     },
     body: JSON.stringify({
-      model: env.OPENROUTER_MODEL || MODEL_DEFAULT,
+      model: modelo,
       temperature: 0,
       response_format: { type: 'json_object' },
       messages: [{ role: 'system', content: SYSTEM }, { role: 'user', content: mensaje }],
     }),
   });
-  if (!r.ok) throw new Error(`OpenRouter HTTP ${r.status}: ${(await r.text()).slice(0, 300)}`);
-  const data = await r.json();
-  let raw = String(data.choices?.[0]?.message?.content ?? '').trim()
-    .replace(/^```(json)?/i, '').replace(/```$/, '').trim();
-  const i = raw.indexOf('{'), j = raw.lastIndexOf('}');
-  if (i < 0 || j < 0) throw new Error('El LLM no devolvió JSON: ' + raw.slice(0, 200));
-  return JSON.parse(raw.slice(i, j + 1));
+  return r;
+}
+
+async function fichaDesdeLLM(mensaje, env) {
+  if (!env.OPENROUTER_API_KEY) throw new Error('Falta el secreto OPENROUTER_API_KEY en el Worker.');
+  const modelos = env.OPENROUTER_MODEL ? [env.OPENROUTER_MODEL] : MODELS_FREE;
+  let ultimoError = 'sin respuesta';
+  for (const modelo of modelos) {
+    const r = await llamarModelo(modelo, mensaje, env);
+    if (r.ok) {
+      const data = await r.json();
+      // Algunos proveedores devuelven 200 con un error embebido.
+      if (data.error) { ultimoError = `${modelo}: ${data.error.message || JSON.stringify(data.error)}`; continue; }
+      let raw = String(data.choices?.[0]?.message?.content ?? '').trim()
+        .replace(/^```(json)?/i, '').replace(/```$/, '').trim();
+      const i = raw.indexOf('{'), j = raw.lastIndexOf('}');
+      if (i < 0 || j < 0) { ultimoError = `${modelo}: no devolvió JSON`; continue; }
+      return JSON.parse(raw.slice(i, j + 1));
+    }
+    ultimoError = `${modelo}: HTTP ${r.status} ${(await r.text()).slice(0, 200)}`;
+    // 401/403 son de credencial/política: no sirve probar otros modelos.
+    if (r.status === 401 || r.status === 403) break;
+    // 429 (rate limit) o 5xx: probar el siguiente modelo de la cascada.
+  }
+  throw new Error(`OpenRouter sin modelo disponible. Último: ${ultimoError}`);
 }
 
 export default {
