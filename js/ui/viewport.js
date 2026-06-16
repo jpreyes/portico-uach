@@ -1103,7 +1103,7 @@ export class Viewport {
       case 'select':     this._clickSelect(e.ctrlKey || e.metaKey); break;
       case 'addnode':    this._clickAddNode();     break;
       case 'addelem':    this._clickAddElem();     break;
-      case 'addsupport': this._clickAddSupport();  break;
+      case 'addsupport': this._clickAddSupport(e);  break;
     }
   }
 
@@ -1378,14 +1378,107 @@ export class Viewport {
   }
 
   // ── Add Support mode ───────────────────────────────────────────────────────
-  _clickAddSupport() {
+  _clickAddSupport(e) {
     const hits = this._raycaster.intersectObjects([...this._nodeMeshes.values()]);
-    if (!hits.length) return;
+    if (!hits.length) { this._hideSupportPopup(); return; }
     const id = hits[0].object.userData.id;
     this._selectSingle('node', id);
-    this.app.panel.showNode(this.app.model.nodes.get(id), true);
-    // Switch to panel tab sel
-    document.querySelector('.ptab[data-tab="sel"]').click();
+    this._showSupportPopup(id, e);
+  }
+
+  /** Ventana flotante con presets de apoyo (Empotrado/Rótula/Libre) y GDL. */
+  _showSupportPopup(nodeId, e) {
+    this._hideSupportPopup();
+    const node = this.app.model.nodes.get(nodeId);
+    if (!node) return;
+    const is2D = this.app.model.mode === '2D';
+    const outOfPlane = new Set(['uy', 'rx', 'rz']);   // restringidos auto en 2D
+
+    const pop = document.createElement('div');
+    pop.className = 'support-popup';
+    pop.style.cssText =
+      `position:fixed;z-index:9999;background:var(--bg-elev,#1b2230);color:var(--text,#e6edf3);` +
+      `border:1px solid var(--border,#334);border-radius:8px;padding:10px;` +
+      `box-shadow:0 6px 24px rgba(0,0,0,.45);font-size:12px;min-width:208px;user-select:none`;
+    const px = e ? e.clientX : window.innerWidth / 2;
+    const py = e ? e.clientY : window.innerHeight / 2;
+    pop.style.left = Math.min(px + 8, window.innerWidth - 230) + 'px';
+    pop.style.top = Math.min(py + 8, window.innerHeight - 230) + 'px';
+
+    const apply = (r) => {
+      this.app.snapshot();
+      this.app.model.updateNode(nodeId, { restraints: r });
+      this.refreshNode(this.app.model.nodes.get(nodeId));
+      this.app.markDirty();
+      render();
+      // refrescar panel lateral si está mostrando este nodo
+      if (this.app.panel?._currentTab === 'sel') this.app.panel.showNode(this.app.model.nodes.get(nodeId));
+    };
+    const preset = (obj) => () => apply({ ux: 0, uy: 0, uz: 0, rx: 0, ry: 0, rz: 0, ...obj });
+
+    const dofs = [['ux', 'UX'], ['uy', 'UY'], ['uz', 'UZ'], ['rx', 'RX'], ['ry', 'RY'], ['rz', 'RZ']];
+
+    const render = () => {
+      const r = this.app.model.nodes.get(nodeId).restraints;
+      const chip = (dof, lbl) => {
+        const dis = is2D && outOfPlane.has(dof);
+        const fijo = !!r[dof];
+        return `<button data-dof="${dof}" ${dis ? 'disabled' : ''}
+          title="${fijo ? 'Fijo (clic = liberar)' : 'Libre (clic = fijar)'}"
+          style="flex:1;min-width:42px;padding:5px 0;border-radius:5px;cursor:${dis ? 'not-allowed' : 'pointer'};
+          border:1px solid ${fijo ? 'var(--accent,#4ea1ff)' : 'var(--border,#334)'};
+          background:${fijo ? 'var(--accent,#4ea1ff)' : 'transparent'};
+          color:${fijo ? '#08111f' : 'var(--text-muted,#9aa)'};opacity:${dis ? 0.35 : 1};font-weight:600">${lbl}</button>`;
+      };
+      pop.innerHTML =
+        `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+           <b>Apoyo nodo #${nodeId}</b>
+           <span data-close style="cursor:pointer;color:var(--text-muted,#9aa);font-size:15px;line-height:1">×</span>
+         </div>
+         <div style="display:flex;gap:5px;margin-bottom:6px">
+           <button data-preset="emp" style="flex:1;padding:6px 0;border-radius:5px;cursor:pointer;border:1px solid var(--border,#334);background:transparent;color:var(--text,#e6edf3);font-weight:600">Empotrado</button>
+           <button data-preset="pin" style="flex:1;padding:6px 0;border-radius:5px;cursor:pointer;border:1px solid var(--border,#334);background:transparent;color:var(--text,#e6edf3);font-weight:600">Rótula (Pin)</button>
+         </div>
+         <div style="display:flex;gap:5px;margin-bottom:8px">
+           <button data-preset="rollz" style="flex:1;padding:6px 0;border-radius:5px;cursor:pointer;border:1px solid var(--border,#334);background:transparent;color:var(--text,#e6edf3);font-weight:600">Rodillo (libre X,Y)</button>
+           <button data-preset="lib" style="flex:1;padding:6px 0;border-radius:5px;cursor:pointer;border:1px solid var(--border,#334);background:transparent;color:var(--text-muted,#9aa)">Libre</button>
+         </div>
+         <div style="color:var(--text-muted,#9aa);margin-bottom:4px">Traslaciones · clic = fijar/liberar</div>
+         <div style="display:flex;gap:5px;margin-bottom:6px">${chip('ux','UX')}${chip('uy','UY')}${chip('uz','UZ')}</div>
+         <div style="color:var(--text-muted,#9aa);margin-bottom:4px">Giros</div>
+         <div style="display:flex;gap:5px">${chip('rx','RX')}${chip('ry','RY')}${chip('rz','RZ')}</div>`;
+
+      pop.querySelector('[data-close]').onclick = () => this._hideSupportPopup();
+      pop.querySelector('[data-preset="emp"]').onclick = preset({ ux: 1, uy: 1, uz: 1, rx: 1, ry: 1, rz: 1 });
+      pop.querySelector('[data-preset="pin"]').onclick = preset({ ux: 1, uy: 1, uz: 1 });
+      pop.querySelector('[data-preset="rollz"]').onclick = preset({ uz: 1 });
+      pop.querySelector('[data-preset="lib"]').onclick = preset({});
+      pop.querySelectorAll('[data-dof]').forEach((b) => {
+        if (b.disabled) return;
+        b.onclick = () => {
+          const r2 = { ...this.app.model.nodes.get(nodeId).restraints };
+          const d = b.dataset.dof; r2[d] = r2[d] ? 0 : 1;
+          apply(r2);
+        };
+      });
+    };
+
+    render();
+    document.body.appendChild(pop);
+    this._supportPopup = pop;
+    // cerrar al hacer clic fuera (en el siguiente tick para no captar este clic)
+    setTimeout(() => {
+      this._supportPopupOutside = (ev) => { if (!pop.contains(ev.target)) this._hideSupportPopup(); };
+      document.addEventListener('pointerdown', this._supportPopupOutside, true);
+    }, 0);
+  }
+
+  _hideSupportPopup() {
+    if (this._supportPopupOutside) {
+      document.removeEventListener('pointerdown', this._supportPopupOutside, true);
+      this._supportPopupOutside = null;
+    }
+    if (this._supportPopup) { this._supportPopup.remove(); this._supportPopup = null; }
   }
 
   // ── Color helpers ──────────────────────────────────────────────────────────
