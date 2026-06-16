@@ -84,13 +84,37 @@ rígidos, sismo + sobrecarga de colegio + viento en Valdivia"*) en un modelo
 - Masa sísmica en diafragmas (CM + fracción CV); casos espectrales Sismo X/Y.
 - Combinaciones NCh3171 (LRFD) sobre los casos generados.
 
+## En la app (PÓRTICO)
+
+- **Menú Asistente → "Generar modelo desde ficha…"**: pega una ficha JSON (hay
+  plantilla) y el generador construye el modelo en el navegador (carga
+  `generador.js` + bibliotecas y reemplaza el modelo). Incluye un panel opcional
+  de **lenguaje natural** que llama al webhook de n8n (URL guardada en
+  localStorage) para traer la ficha; la credencial del LLM vive en n8n.
+- **Espectro (F7)**: constructor NCh433 con gráfico (ver app).
+
+## Flujo n8n (chat → LLM → ficha → modelo)
+
+Archivos: `n8n_flujo.json` (workflow importable), `prompt_llm.md` (prompt de
+extracción), `generar_cli.mjs` (CLI: ficha por stdin → `.s3d` por stdout).
+
+Cadena: **Webhook** (`POST /webhook/portico`, body `{mensaje}`) → **LLM**
+(Gemini Flash; clave en `$env.GEMINI_API_KEY`) → **Extraer ficha** (Code) →
+**Generar modelo** (Code que ejecuta `generar_cli.mjs`) → **Responder**
+(`{ficha, resumen, modelo}`).
+
+Requisitos en n8n self-hosted:
+- Variable de entorno `PORTICO_DIR` = ruta absoluta del repo.
+- `NODE_FUNCTION_ALLOW_BUILTIN=child_process,path` (para que el Code node ejecute el CLI).
+- `GEMINI_API_KEY` (o adaptar el nodo HTTP a Groq/otro LLM).
+
+Probar el CLI directo: `node asistente/generar_cli.mjs asistente/ejemplo_ficha.json`.
+
 ## Pendiente
 
-1. Botones en la app: importar biblioteca CSV, aplicar carga de área, generar
-   combinaciones, y cargar el espectro NCh433 (reutilizar `generador.js` /
-   `cargas.js` desde la UI).
-2. Flujo n8n (chat → LLM → ficha → `generador.js`).
-3. Viento: hoy aplica la presión neta de muro como lateral en X; falta el caso
-   en Y, las presiones de techo (zonas 2/3) como cargas normales, y franjas de
-   borde (zonas E). Sismo: persistir/auto-cargar la curva en el `.s3d`.
-4. Completar bibliotecas: tubos CHS/RHS/SHS, IPN/UPN/L.
+1. Aplicar carga de área e importar biblioteca CSV como botones sueltos (hoy van
+   dentro del generador completo).
+2. Viento: hoy aplica la presión neta de muro como lateral en X; falta el caso
+   en Y, las presiones de techo (zonas 2/3) y franjas de borde (zonas E).
+   Sismo: persistir/auto-cargar la curva en el `.s3d`.
+3. Completar bibliotecas: tubos CHS/RHS/SHS, IPN/UPN/L.

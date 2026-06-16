@@ -5,3 +5,11 @@ Thumbs.db
 *.log
 npm-debug.log*
 .claude/
+
+# Archivos del profesor (fuente local, NO se publican): Excel de normas y PDFs
+excel/
+# Artefacto de prueba con resultados embebidos (no se trackea)
+examples/portico_simple_v3.s3d
+# Temporales del asistente
+asistente/_gen_tmp/
+asistente/_sp001/

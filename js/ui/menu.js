@@ -87,6 +87,7 @@ export class MenuBar {
       case 'run-modal':      a.runModal();                   break;
       case 'run-spectrum':   a.runSpectrum();                break;
       case 'combos':         a.openCombosTab();              break;
+      case 'asistente':      a.asistenteDialog();            break;
       case 'res-deformed':   a.setResultType('deformed');    break;
       case 'res-N':          a.setResultType('N');           break;
       case 'res-Vy':         a.setResultType('Vy');          break;

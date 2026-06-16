@@ -1,21 +1,21 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=36';
-import { Serializer }      from './model/serializer.js?v=36';
-import { Viewport }        from './ui/viewport.js?v=36';
-import { PropertiesPanel } from './ui/properties.js?v=36';
-import { MenuBar }         from './ui/menu.js?v=36';
-import { UndoStack }       from './utils/undo.js?v=36';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=36';
-import { Results }                         from './solver/postprocess.js?v=36';
-import { ModalSolver }                     from './solver/modal_solver.js?v=36';
-import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=36';
-import { ModalResults }                    from './solver/modal_results.js?v=36';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=36';
-import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=36';
-import { splitElement, splitByLength, discretizeAll, joinElements } from './model/discretize.js?v=36';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=36';
+import { Model }           from './model/model.js?v=37';
+import { Serializer }      from './model/serializer.js?v=37';
+import { Viewport }        from './ui/viewport.js?v=37';
+import { PropertiesPanel } from './ui/properties.js?v=37';
+import { MenuBar }         from './ui/menu.js?v=37';
+import { UndoStack }       from './utils/undo.js?v=37';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=37';
+import { Results }                         from './solver/postprocess.js?v=37';
+import { ModalSolver }                     from './solver/modal_solver.js?v=37';
+import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=37';
+import { ModalResults }                    from './solver/modal_results.js?v=37';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=37';
+import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=37';
+import { splitElement, splitByLength, discretizeAll, joinElements } from './model/discretize.js?v=37';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=37';
 
 class App {
   constructor() {
@@ -1984,6 +1984,106 @@ class App {
     } catch (err) {
       this.toast(`Error al cargar archivo: ${err.message}`, 'error');
     }
+  }
+
+  // ── Asistente IA: ficha → generador determinista → modelo ──────────────────
+  asistenteDialog() {
+    const overlay = document.getElementById('modal-overlay');
+    document.getElementById('modal-title').textContent = 'Asistente IA — generar modelo desde ficha';
+    document.getElementById('modal-box')?.classList.add('modal-wide');
+    document.getElementById('modal-cancel').style.display = '';
+    const okBtn = document.getElementById('modal-ok');
+    okBtn.textContent = 'Generar modelo';
+
+    const ep = localStorage.getItem('portico_n8n_endpoint') || '';
+    const plantilla = JSON.stringify({
+      proyecto: 'Edificio ejemplo', modo: '3D',
+      ubicacion: { ciudad: 'Valdivia', latitud_sur_deg: 39.8, altitud_msnm: 10, exposicion: 'C' },
+      geometria: { niveles: [{ altura_m: 3 }, { altura_m: 3 }], planta_inferior: { Lx_m: 10, Ly_m: 8 } },
+      secciones: { material: 'S275', vigas: 'IPE300', pilares: 'HEB200' },
+      apoyo_base: 'empotrado', diafragma_rigido: true,
+      cargas: { muerta_adicional_kN_m2: 1.5, uso_NCh1537: 'Escuelas/Salas de Clases', sismo: true }
+    }, null, 2);
+
+    document.getElementById('modal-body').innerHTML = `
+<details style="margin-bottom:10px">
+  <summary style="cursor:pointer;color:var(--accent)">Lenguaje natural (vía asistente n8n) — opcional</summary>
+  <div class="prop-field" style="margin-top:8px">
+    <label>Descripción</label>
+    <textarea id="asis-nl" rows="3" class="sp-textarea" placeholder="Ej.: edificio de 2 niveles de 3 m, planta 10×8, vigas IPE300, pilares HEB200, colegio en Valdivia, con sismo"></textarea>
+  </div>
+  <div class="prop-row" style="margin-top:6px;align-items:end">
+    <div class="prop-field" style="flex:1"><label>Endpoint n8n (webhook URL)</label>
+      <input type="text" id="asis-endpoint" value="${ep}" placeholder="https://tu-n8n/webhook/portico"></div>
+    <button type="button" id="btn-asis-llm" class="btn" style="margin-left:8px">Pedir ficha</button>
+  </div>
+  <small style="color:var(--text-muted)">La credencial del LLM vive en n8n (servidor), nunca en el navegador.</small>
+</details>
+<div class="prop-field">
+  <label>Ficha (JSON) — conforme a asistente/ficha.schema.json</label>
+  <textarea id="asis-ficha" rows="14" class="sp-textarea" style="font-family:monospace;font-size:12px">${plantilla}</textarea>
+  <small style="color:var(--text-muted);display:block;margin-top:4px">El generador determinista construye el modelo (geometría, secciones, cargas NCh, combinaciones). Reemplaza el modelo actual.</small>
+</div>`;
+
+    document.getElementById('btn-asis-llm')?.addEventListener('click', async () => {
+      const url = document.getElementById('asis-endpoint').value.trim();
+      const msg = document.getElementById('asis-nl').value.trim();
+      if (!url) { this.toast('Configure el endpoint n8n', 'warn'); return; }
+      if (!msg) { this.toast('Escriba una descripción', 'warn'); return; }
+      localStorage.setItem('portico_n8n_endpoint', url);
+      this.toast('Consultando al asistente…', 'info');
+      try {
+        const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mensaje: msg }) });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const data = await r.json();
+        const ficha = data.ficha ?? data;
+        document.getElementById('asis-ficha').value = JSON.stringify(ficha, null, 2);
+        this.toast('Ficha recibida — revísela y genere', 'ok');
+      } catch (e) { this.toast('Error n8n: ' + e.message, 'error'); }
+    });
+
+    const restore = () => { okBtn.textContent = 'Aceptar'; };
+    overlay.classList.remove('hidden');
+    overlay._resolve = () => { restore(); this._generarDesdeFicha(document.getElementById('asis-ficha').value); };
+    overlay._reject = restore;
+  }
+
+  async _generarDesdeFicha(fichaText) {
+    let ficha;
+    try { ficha = JSON.parse(fichaText); }
+    catch (e) { this.toast('Ficha JSON inválida: ' + e.message, 'error'); return; }
+    try {
+      const libs = await this._cargarBibliotecasAsistente();
+      const { generarModelo } = await import('../asistente/generador.js?v=37');
+      const modelo = generarModelo(ficha, libs);
+      this._loadJSON(JSON.stringify(modelo), (ficha.proyecto || 'asistente') + '.s3d');
+      this.markDirty();
+      this.toast(`Modelo generado — ${modelo._generado?.resumen || ''}`, 'ok');
+    } catch (e) {
+      this.toast('Error al generar: ' + e.message, 'error');
+      console.error(e);
+    }
+  }
+
+  async _cargarBibliotecasAsistente() {
+    if (this._asisLibs) return this._asisLibs;
+    const parseCSV = (txt) => {
+      const lines = txt.split(/\r?\n/).filter(l => l.trim() && !l.startsWith('#'));
+      const head = lines[0].split(',').map(s => s.trim());
+      return lines.slice(1).map(l => {
+        const c = l.split(',').map(s => s.trim());
+        return Object.fromEntries(head.map((h, i) => [h, c[i]]));
+      });
+    };
+    const base = 'asistente/';
+    const [reglas, pTxt, mTxt, sTxt] = await Promise.all([
+      fetch(base + 'reglas.json').then(r => r.json()),
+      fetch(base + 'perfiles.csv').then(r => r.text()),
+      fetch(base + 'materiales.csv').then(r => r.text()),
+      fetch(base + 'sobrecargas_NCh1537.csv').then(r => r.text()),
+    ]);
+    this._asisLibs = { reglas, perfiles: parseCSV(pTxt), materiales: parseCSV(mTxt), sobrecargas: parseCSV(sTxt) };
+    return this._asisLibs;
   }
 
   async saveFile() {
