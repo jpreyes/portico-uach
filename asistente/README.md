@@ -95,20 +95,37 @@ rígidos, sismo + sobrecarga de colegio + viento en Valdivia"*) en un modelo
 
 ## Flujo n8n (chat → LLM → ficha → modelo)
 
-Archivos: `n8n_flujo.json` (workflow importable), `prompt_llm.md` (prompt de
-extracción), `generar_cli.mjs` (CLI: ficha por stdin → `.s3d` por stdout).
+LLM vía **OpenRouter** (API compatible con OpenAI; una key, muchos modelos, varios
+gratis). Archivos: `n8n_flujo.json` (workflow importable), `prompt_llm.md` (prompt
+de extracción), `generar_cli.mjs` (CLI: ficha por stdin → `.s3d` por stdout),
+`probar_pipeline.mjs` (prueba TODO sin n8n).
 
 Cadena: **Webhook** (`POST /webhook/portico`, body `{mensaje}`) → **LLM**
-(Gemini Flash; clave en `$env.GEMINI_API_KEY`) → **Extraer ficha** (Code) →
-**Generar modelo** (Code que ejecuta `generar_cli.mjs`) → **Responder**
-(`{ficha, resumen, modelo}`).
+(OpenRouter, `$env.OPENROUTER_API_KEY`, modelo `meta-llama/llama-3.3-70b-instruct:free`)
+→ **Extraer ficha** (Code) → **Generar modelo** (Code que ejecuta `generar_cli.mjs`)
+→ **Responder** (`{ficha, resumen, modelo}`).
 
-Requisitos en n8n self-hosted:
-- Variable de entorno `PORTICO_DIR` = ruta absoluta del repo.
-- `NODE_FUNCTION_ALLOW_BUILTIN=child_process,path` (para que el Code node ejecute el CLI).
-- `GEMINI_API_KEY` (o adaptar el nodo HTTP a Groq/otro LLM).
+### Probar primero SIN n8n (recomendado)
+```
+$env:OPENROUTER_API_KEY="sk-or-..."
+node asistente/probar_pipeline.mjs "edificio de 2 niveles de 3 m, planta 10x8, colegio en Valdivia con sismo" > salida.s3d
+```
+Imprime la ficha y el resumen (stderr) y el `.s3d` (stdout). Así validas
+LLM→ficha→modelo antes de tocar n8n. (Solo el CLI: `node asistente/generar_cli.mjs asistente/ejemplo_ficha.json`.)
 
-Probar el CLI directo: `node asistente/generar_cli.mjs asistente/ejemplo_ficha.json`.
+### n8n local (npx n8n)
+1. `npx n8n` (abre http://localhost:5678).
+2. Importar `n8n_flujo.json` (Workflows → ⋯ → Import from File).
+3. Variables de entorno antes de lanzar n8n:
+   - `OPENROUTER_API_KEY` = tu key de openrouter.ai
+   - `PORTICO_DIR` = ruta absoluta del repo (el flujo trae el default de este repo)
+   - `NODE_FUNCTION_ALLOW_BUILTIN=child_process,path` (para que el Code node ejecute el CLI)
+4. Activar el workflow → copiar la URL del webhook → pegarla en PÓRTICO
+   (menú Asistente → campo "Endpoint n8n").
+
+> Si más adelante n8n corre en la nube (no puede ver el CLI local), se despliega
+> el generador como **Cloudflare Worker** y el Code node se reemplaza por una
+> llamada HTTP a ese Worker.
 
 ## Pendiente
 

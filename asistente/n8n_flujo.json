@@ -1,5 +1,5 @@
 {
-  "name": "PÓRTICO — chat → LLM → ficha → modelo .s3d",
+  "name": "PÓRTICO — chat → LLM (OpenRouter) → ficha → modelo .s3d",
   "nodes": [
     {
       "parameters": {
@@ -18,21 +18,29 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={{ $env.GEMINI_API_KEY }}",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.OPENROUTER_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "X-Title", "value": "PORTICO Asistente" }
+          ]
+        },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"system_instruction\": { \"parts\": [{ \"text\": $json.systemPrompt || \"Eres un asistente que convierte la descripción de una estructura en una FICHA JSON para PÓRTICO. Responde SOLO con el JSON de la ficha, sin texto ni markdown. Campos: proyecto, modo (2D|3D), ubicacion{ciudad,latitud_sur_deg,altitud_msnm,exposicion}, geometria{niveles:[{altura_m}],planta_inferior{Lx_m,Ly_m},planta_superior?,pendiente_techo_deg?}, secciones{material,vigas,pilares}, apoyo_base, diafragma_rigido, cargas{muerta_adicional_kN_m2,uso_NCh1537,nieve,viento,sismo}, sismo{zona,suelo,categoria,R}. Omite lo no mencionado; no inventes valores de ingeniería.\" }] },\n  \"contents\": [{ \"role\": \"user\", \"parts\": [{ \"text\": $('Webhook (mensaje)').item.json.body.mensaje }] }],\n  \"generationConfig\": { \"temperature\": 0, \"responseMimeType\": \"application/json\" }\n}",
+        "jsonBody": "={\n  \"model\": \"meta-llama/llama-3.3-70b-instruct:free\",\n  \"temperature\": 0,\n  \"response_format\": { \"type\": \"json_object\" },\n  \"messages\": [\n    { \"role\": \"system\", \"content\": \"Eres un asistente que convierte la descripcion de una estructura en una FICHA JSON para PORTICO. Responde SOLO con el JSON de la ficha, sin texto ni markdown. Campos: proyecto, modo (2D|3D), ubicacion{ciudad,latitud_sur_deg,altitud_msnm,exposicion(B|C|D)}, geometria{niveles:[{altura_m}],planta_inferior{Lx_m,Ly_m},planta_superior?,pendiente_techo_deg?,ancho_tributario_m?(solo 2D)}, secciones{material,vigas,pilares}, apoyo_base(empotrado|rotulado), diafragma_rigido, cargas{muerta_adicional_kN_m2,uso_NCh1537,sobrecarga_uso_kN_m2,cierre_viento,nieve,viento,sismo}, sismo{zona(1|2|3),suelo(A..E),categoria(I..IV),R}. Omite lo no mencionado; no inventes valores de ingenieria. Materiales tipicos: S275, A630-420H; perfiles IPE300, HEB200.\" },\n    { \"role\": \"user\", \"content\": $('Webhook (mensaje)').item.json.body.mensaje }\n  ]\n}",
         "options": {}
       },
       "id": "22222222-2222-2222-2222-222222222222",
-      "name": "LLM (Gemini Flash)",
+      "name": "LLM (OpenRouter)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [520, 300]
     },
     {
       "parameters": {
-        "jsCode": "// Extrae la ficha del texto del LLM (quita posibles ``` y texto extra).\nlet raw = $json.candidates?.[0]?.content?.parts?.[0]?.text ?? $json.text ?? '';\nraw = String(raw).trim().replace(/^```(json)?/i, '').replace(/```$/,'').trim();\nconst i = raw.indexOf('{'), j = raw.lastIndexOf('}');\nif (i < 0 || j < 0) throw new Error('El LLM no devolvió JSON: ' + raw.slice(0,200));\nconst ficha = JSON.parse(raw.slice(i, j + 1));\nreturn [{ json: { ficha } }];"
+        "jsCode": "// Extrae la ficha del texto del LLM (formato OpenAI/OpenRouter).\nlet raw = $json.choices?.[0]?.message?.content ?? $json.choices?.[0]?.text ?? '';\nraw = String(raw).trim().replace(/^```(json)?/i, '').replace(/```$/, '').trim();\nconst i = raw.indexOf('{'), j = raw.lastIndexOf('}');\nif (i < 0 || j < 0) throw new Error('El LLM no devolvio JSON: ' + raw.slice(0, 200));\nconst ficha = JSON.parse(raw.slice(i, j + 1));\nreturn [{ json: { ficha } }];"
       },
       "id": "33333333-3333-3333-3333-333333333333",
       "name": "Extraer ficha",
@@ -42,7 +50,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Genera el modelo .s3d invocando el CLI determinista (ya probado).\n// REQUISITOS en n8n self-hosted:\n//   - variable de entorno PORTICO_DIR = ruta absoluta del repo structweb3d\n//   - NODE_FUNCTION_ALLOW_BUILTIN=child_process,path  (o '*')\nconst { execFileSync } = require('child_process');\nconst path = require('path');\nconst dir = process.env.PORTICO_DIR || '/ruta/a/structweb3d';\nconst cli = path.join(dir, 'asistente', 'generar_cli.mjs');\nconst ficha = $json.ficha;\nlet out;\ntry {\n  out = execFileSync('node', [cli], { input: JSON.stringify(ficha), encoding: 'utf8', maxBuffer: 50 * 1024 * 1024 });\n} catch (e) {\n  throw new Error('generador: ' + (e.stderr || e.message));\n}\nconst modelo = JSON.parse(out);\nreturn [{ json: { ficha, resumen: modelo._generado?.resumen, modelo } }];"
+        "jsCode": "// Genera el modelo .s3d invocando el CLI determinista (ya probado).\n// REQUISITOS en n8n self-hosted (local):\n//   - variable de entorno PORTICO_DIR = ruta absoluta del repo structweb3d\n//   - NODE_FUNCTION_ALLOW_BUILTIN=child_process,path  (o '*')\nconst { execFileSync } = require('child_process');\nconst path = require('path');\nconst dir = process.env.PORTICO_DIR || 'C:/Workspace/analisis_estructural_dinamico';\nconst cli = path.join(dir, 'asistente', 'generar_cli.mjs');\nconst ficha = $json.ficha;\nlet out;\ntry {\n  out = execFileSync('node', [cli], { input: JSON.stringify(ficha), encoding: 'utf8', maxBuffer: 50 * 1024 * 1024 });\n} catch (e) {\n  throw new Error('generador: ' + (e.stderr || e.message));\n}\nconst modelo = JSON.parse(out);\nreturn [{ json: { ficha, resumen: modelo._generado?.resumen, modelo } }];"
       },
       "id": "44444444-4444-4444-4444-444444444444",
       "name": "Generar modelo (.s3d)",
@@ -64,8 +72,8 @@
     }
   ],
   "connections": {
-    "Webhook (mensaje)": { "main": [[{ "node": "LLM (Gemini Flash)", "type": "main", "index": 0 }]] },
-    "LLM (Gemini Flash)": { "main": [[{ "node": "Extraer ficha", "type": "main", "index": 0 }]] },
+    "Webhook (mensaje)": { "main": [[{ "node": "LLM (OpenRouter)", "type": "main", "index": 0 }]] },
+    "LLM (OpenRouter)": { "main": [[{ "node": "Extraer ficha", "type": "main", "index": 0 }]] },
     "Extraer ficha": { "main": [[{ "node": "Generar modelo (.s3d)", "type": "main", "index": 0 }]] },
     "Generar modelo (.s3d)": { "main": [[{ "node": "Responder", "type": "main", "index": 0 }]] }
   },
