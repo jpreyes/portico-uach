@@ -34,7 +34,7 @@ rígidos, sismo + sobrecarga de colegio + viento en Valdivia"*) en un modelo
   `w = q × ancho_tributario`. También definen la **masa sísmica** (CM + % CV)
   en los diafragmas → alimenta el caso espectral.
 - **Viento (NCh432)** y **sísmica (NCh433)** — dependen de la ubicación. Se
-  codificarán **desde los Excel del profesor** (fuente de verdad), no inventados.
+  codifican **desde las normas oficiales** (fuente de verdad), no se inventan.
   Sísmica → casos espectrales (dir X e Y), que PÓRTICO ya soporta.
 - **Nieve (NCh431)** — se arma con la norma y se valida.
 
