@@ -1,21 +1,21 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=37';
-import { Serializer }      from './model/serializer.js?v=37';
-import { Viewport }        from './ui/viewport.js?v=37';
-import { PropertiesPanel } from './ui/properties.js?v=37';
-import { MenuBar }         from './ui/menu.js?v=37';
-import { UndoStack }       from './utils/undo.js?v=37';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=37';
-import { Results }                         from './solver/postprocess.js?v=37';
-import { ModalSolver }                     from './solver/modal_solver.js?v=37';
-import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=37';
-import { ModalResults }                    from './solver/modal_results.js?v=37';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=37';
-import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=37';
-import { splitElement, splitByLength, discretizeAll, joinElements } from './model/discretize.js?v=37';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=37';
+import { Model }           from './model/model.js?v=38';
+import { Serializer }      from './model/serializer.js?v=38';
+import { Viewport }        from './ui/viewport.js?v=38';
+import { PropertiesPanel } from './ui/properties.js?v=38';
+import { MenuBar }         from './ui/menu.js?v=38';
+import { UndoStack }       from './utils/undo.js?v=38';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=38';
+import { Results }                         from './solver/postprocess.js?v=38';
+import { ModalSolver }                     from './solver/modal_solver.js?v=38';
+import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=38';
+import { ModalResults }                    from './solver/modal_results.js?v=38';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=38';
+import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=38';
+import { splitElement, splitByLength, discretizeAll, joinElements } from './model/discretize.js?v=38';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=38';
 
 class App {
   constructor() {
@@ -1995,29 +1995,36 @@ class App {
     const okBtn = document.getElementById('modal-ok');
     okBtn.textContent = 'Generar modelo';
 
-    const ep = localStorage.getItem('portico_n8n_endpoint') || '';
+    const ep = localStorage.getItem('portico_n8n_endpoint') || '/api/asistente';
     const plantilla = JSON.stringify({
       proyecto: 'Edificio ejemplo', modo: '3D',
       ubicacion: { ciudad: 'Valdivia', latitud_sur_deg: 39.8, altitud_msnm: 10, exposicion: 'C' },
-      geometria: { niveles: [{ altura_m: 3 }, { altura_m: 3 }], planta_inferior: { Lx_m: 10, Ly_m: 8 } },
+      geometria: {
+        niveles: [
+          { altura_m: 3, uso_NCh1537: 'Salas de Clases' },
+          { altura_m: 5, uso_NCh1537: 'bodegas livianas' }
+        ],
+        vanos_x: { cantidad: 4, luz_m: 3 },
+        vanos_y: [5, 5]
+      },
       secciones: { material: 'S275', vigas: 'IPE300', pilares: 'HEB200' },
       apoyo_base: 'empotrado', diafragma_rigido: true,
-      cargas: { muerta_adicional_kN_m2: 1.5, uso_NCh1537: 'Escuelas/Salas de Clases', sismo: true }
+      cargas: { muerta_adicional_kN_m2: 1.5, sismo: true }
     }, null, 2);
 
     document.getElementById('modal-body').innerHTML = `
 <details style="margin-bottom:10px">
-  <summary style="cursor:pointer;color:var(--accent)">Lenguaje natural (vía asistente n8n) — opcional</summary>
+  <summary style="cursor:pointer;color:var(--accent)">Lenguaje natural (vía asistente en la nube) — opcional</summary>
   <div class="prop-field" style="margin-top:8px">
     <label>Descripción</label>
     <textarea id="asis-nl" rows="3" class="sp-textarea" placeholder="Ej.: edificio de 2 niveles de 3 m, planta 10×8, vigas IPE300, pilares HEB200, colegio en Valdivia, con sismo"></textarea>
   </div>
   <div class="prop-row" style="margin-top:6px;align-items:end">
-    <div class="prop-field" style="flex:1"><label>Endpoint n8n (webhook URL)</label>
-      <input type="text" id="asis-endpoint" value="${ep}" placeholder="https://tu-n8n/webhook/portico"></div>
+    <div class="prop-field" style="flex:1"><label>Endpoint del asistente (Cloudflare Worker /api/asistente, o webhook n8n)</label>
+      <input type="text" id="asis-endpoint" value="${ep}" placeholder="/api/asistente"></div>
     <button type="button" id="btn-asis-llm" class="btn" style="margin-left:8px">Pedir ficha</button>
   </div>
-  <small style="color:var(--text-muted)">La credencial del LLM vive en n8n (servidor), nunca en el navegador.</small>
+  <small style="color:var(--text-muted)">La credencial del LLM vive como secreto del servidor (Cloudflare Worker), nunca en el navegador.</small>
 </details>
 <div class="prop-field">
   <label>Ficha (JSON) — conforme a asistente/ficha.schema.json</label>
@@ -2054,7 +2061,7 @@ class App {
     catch (e) { this.toast('Ficha JSON inválida: ' + e.message, 'error'); return; }
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=37');
+      const { generarModelo } = await import('../asistente/generador.js?v=38');
       const modelo = generarModelo(ficha, libs);
       this._loadJSON(JSON.stringify(modelo), (ficha.proyecto || 'asistente') + '.s3d');
       this.markDirty();

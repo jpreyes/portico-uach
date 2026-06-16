@@ -48,11 +48,29 @@ export function filaAMaterial(m) {
 
 // ── Helpers de geometría ──────────────────────────────────────────────────────
 
-/** Ejes de grilla: explícitos si se dan; si no, subdivide L en vanos ≤ sepMax. */
-function resolverEjes(L, ejesExplicit, sepMax) {
+/** Coordenadas de ejes a partir de una especificación de vanos:
+ *  - lista de luces:  [3, 3, 3, 4]
+ *  - uniforme:        { cantidad: 4, luz_m: 3 }
+ *  Devuelve null si no hay spec válida. */
+function ejesDesdeVanos(vanos) {
+  let luces = null;
+  if (Array.isArray(vanos) && vanos.length) luces = vanos.map(Number);
+  else if (vanos && vanos.cantidad >= 1 && vanos.luz_m > 0)
+    luces = Array(Math.round(vanos.cantidad)).fill(Number(vanos.luz_m));
+  if (!luces || luces.some((l) => !(l > 0))) return null;
+  const ejes = [0];
+  for (const l of luces) ejes.push(+(ejes[ejes.length - 1] + l).toFixed(6));
+  return ejes;
+}
+
+/** Ejes de grilla, por prioridad: ejes explícitos → vanos → subdividir L por sepMax. */
+function resolverEjes(L, ejesExplicit, vanos, sepMax) {
   if (Array.isArray(ejesExplicit) && ejesExplicit.length >= 2) {
     return [...ejesExplicit].sort((a, b) => a - b);
   }
+  const v = ejesDesdeVanos(vanos);
+  if (v) return v;
+  if (!(L > 0)) return [0];
   const nVanos = Math.max(1, Math.ceil(L / sepMax));
   const arr = [];
   for (let i = 0; i <= nVanos; i++) arr.push(+(L * i / nVanos).toFixed(6));
@@ -109,14 +127,19 @@ export function generarModelo(ficha, libs) {
 
   // ── Geometría: ejes y niveles ─────────────────────────────────────────────
   const geo = ficha.geometria;
-  const Lx_inf = geo.planta_inferior.Lx_m;
-  const Ly_inf = is2D ? 0 : geo.planta_inferior.Ly_m;
+  const pinf = geo.planta_inferior || {};
+  // Ejes por dirección: ejes explícitos → vanos (lista o {cantidad,luz_m}) → planta.
+  const ejesX = resolverEjes(pinf.Lx_m, geo.ejes_x_m, geo.vanos_x, sepMax);
+  const ejesY = is2D ? [0] : resolverEjes(pinf.Ly_m, geo.ejes_y_m, geo.vanos_y, sepMax);
+  if (ejesX.length < 2) throw new Error('Defina la geometría en X: vanos_x, ejes_x_m o planta_inferior.Lx_m.');
+  if (!is2D && ejesY.length < 2) throw new Error('Defina la geometría en Y: vanos_y, ejes_y_m o planta_inferior.Ly_m.');
+
+  // Luz total por los ejes resueltos (vale para planta, vanos o ejes explícitos).
+  const Lx_inf = ejesX[ejesX.length - 1];
+  const Ly_inf = is2D ? 0 : ejesY[ejesY.length - 1];
   const sup = geo.planta_superior || {};
   const Lx_sup = sup.Lx_m ?? Lx_inf;
   const Ly_sup = is2D ? 0 : (sup.Ly_m ?? Ly_inf);
-
-  const ejesX = resolverEjes(Lx_inf, geo.ejes_x_m, sepMax);
-  const ejesY = is2D ? [0] : resolverEjes(Ly_inf, geo.ejes_y_m, sepMax);
 
   const nNiv = geo.niveles.length;
   const zNivel = [0];
@@ -193,41 +216,70 @@ export function generarModelo(ficha, libs) {
     return (Lx_inf * sx) * (is2D ? 1 : (Ly_inf * sy));
   };
 
-  // ── Cargas de área → líneas, casos CM / CV ────────────────────────────────
+  // ── Cargas de área → líneas, casos CM / CV (POR NIVEL) ─────────────────────
   const cargas = ficha.cargas || {};
   const anchoTrib2D = geo.ancho_tributario_m || sepMax; // 2D: separación entre pórticos
 
-  // sobrecarga de uso (NCh1537): override explícito o lookup por descripción
-  let qUso = cargas.sobrecarga_uso_kN_m2;
-  if (qUso == null && cargas.uso_NCh1537 != null) {
-    const buscado = String(cargas.uso_NCh1537).trim().toLowerCase();
-    const fila = (libs.sobrecargas || []).find((s) => {
-      const desc = String(s.descripcion).trim().toLowerCase();
-      const comb = `${String(s.tipo_edificio).trim()}/${String(s.descripcion).trim()}`.toLowerCase();
-      return desc === buscado || comb === buscado;
-    });
-    if (fila) qUso = parseFloat(fila.Lo_kNm2);
-  }
-  const qCM = cargas.muerta_adicional_kN_m2 || 0;
-  const qCV = qUso || 0;
+  // Lookup sobrecarga de uso (NCh1537), tolerante: match exacto y, si no, el
+  // mejor por solape de tokens (sin acentos, con prefijos). Así "bodegas
+  // livianas" → "Bodegas/Áreas de mercadería liviana", "salas de clase" →
+  // "Escuelas/Salas de Clases", etc.
+  // normalize('NFD') separa los acentos como marcas combinantes; [^a-z0-9 ] las
+  // elimina junto con la puntuación → comparación sin acentos ni símbolos.
+  const norm = (s) => String(s).toLowerCase().normalize('NFD')
+    .replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+  const STOP = new Set(['de', 'del', 'la', 'el', 'los', 'las', 'y', 'o', 'en', 'con', 'area', 'areas', 'para', 'tipo', 'uso']);
+  const toks = (s) => norm(s).split(' ').filter((t) => t && !STOP.has(t));
+  const pref = (a, b) => (a.length >= 4 && b.startsWith(a)) || (b.length >= 4 && a.startsWith(b)) || a === b;
+  const usoALo = (uso) => {
+    if (uso == null) return null;
+    const filas = libs.sobrecargas || [];
+    const b = norm(uso);
+    // 1) exacto (descripción o "tipo/descripción")
+    const exacto = filas.find((s) => norm(s.descripcion) === b ||
+      norm(`${s.tipo_edificio} ${s.descripcion}`) === b || norm(`${s.tipo_edificio}/${s.descripcion}`) === b);
+    if (exacto) return parseFloat(exacto.Lo_kNm2);
+    // 2) mejor solape de tokens
+    const qt = toks(uso);
+    if (!qt.length) return null;
+    let best = null, bestScore = 0, bestLen = Infinity;
+    for (const s of filas) {
+      const rt = toks(`${s.tipo_edificio} ${s.descripcion}`);
+      const score = qt.filter((q) => rt.some((r) => pref(q, r))).length;
+      if (score > bestScore || (score === bestScore && score > 0 && rt.length < bestLen)) {
+        best = s; bestScore = score; bestLen = rt.length;
+      }
+    }
+    // exigir que matchee al menos la mitad de los tokens de la consulta
+    return best && bestScore >= Math.ceil(qt.length / 2) ? parseFloat(best.Lo_kNm2) : null;
+  };
 
-  // reparte una carga de área q (kN/m²) a las vigas en X por ancho tributario.
-  // En 3D el ancho tributario escala con la planta variable del nivel (factor sy).
-  const cargasDistDe = (q) => {
+  // Cargas POR NIVEL (k = 1..nNiv): cada nivel puede declarar su uso/cargas; si no,
+  // hereda los globales de ficha.cargas. Permite ej. nivel 1 "Salas de Clases" y
+  // nivel 3 "Bodegas livianas" con sobrecargas distintas.
+  const nivel = (k) => geo.niveles[k - 1] || {};
+  const qCMk = (k) => nivel(k).muerta_adicional_kN_m2 ?? cargas.muerta_adicional_kN_m2 ?? 0;
+  const qCVk = (k) => nivel(k).sobrecarga_uso_kN_m2 ?? usoALo(nivel(k).uso_NCh1537)
+                    ?? cargas.sobrecarga_uso_kN_m2 ?? usoALo(cargas.uso_NCh1537) ?? 0;
+
+  // reparte una carga de área q(k) [kN/m²] a las vigas en X por ancho tributario;
+  // en 3D el ancho tributario escala con la planta variable del nivel (factor sy).
+  const cargasDistFn = (qFn) => {
     const out = [];
-    if (q <= 0) return out;
     for (const v of vigasX) {
+      const q = qFn(v.k);
+      if (!(q > 0)) continue;
       const w = is2D ? q * anchoTrib2D : q * tributario(ejesY, v.j) * factorPlanta(v.k).sy;
       if (w > 0) out.push({ type: 'dist', elemId: v.elemId, dir: 'gravity', w: +w.toFixed(6) });
     }
     return out;
   };
 
-  // CM: peso propio + carga muerta de área
-  const lcCM = { id: ++cnt.loadCases, name: 'CM', loads: cargasDistDe(qCM), selfWeight: true, type: 'static', specDir: null };
+  // CM: peso propio + carga muerta de área (por nivel)
+  const lcCM = { id: ++cnt.loadCases, name: 'CM', loads: cargasDistFn(qCMk), selfWeight: true, type: 'static', specDir: null };
   loadCases.push(lcCM);
-  // CV: sobrecarga de uso
-  const lcCV = { id: ++cnt.loadCases, name: 'CV', loads: cargasDistDe(qCV), selfWeight: false, type: 'static', specDir: null };
+  // CV: sobrecarga de uso (por nivel)
+  const lcCV = { id: ++cnt.loadCases, name: 'CV', loads: cargasDistFn(qCVk), selfWeight: false, type: 'static', specDir: null };
   loadCases.push(lcCV);
 
   // casos laterales opcionales (placeholders de geometría; magnitudes se afinan aparte)
@@ -280,7 +332,7 @@ export function generarModelo(ficha, libs) {
           const nd = nodes[id - 1]; sx += nd.x; sy += nd.y;
         }
       const cm = { x: +(sx / nodosNivel.length).toFixed(6), y: +(sy / nodosNivel.length).toFixed(6) };
-      const W = (qCM + fracCV * qCV) * A;           // kN (sin peso propio acero, menor)
+      const W = (qCMk(k) + fracCV * qCVk(k)) * A;   // kN (sin peso propio acero, menor)
       const m = +(W / G_GRAV).toFixed(6);            // ton
       const { sx: fx, sy: fy } = factorPlanta(k);
       const Lx = Lx_inf * fx, Ly = is2D ? 0 : Ly_inf * fy;

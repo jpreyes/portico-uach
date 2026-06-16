@@ -13,3 +13,6 @@ examples/portico_simple_v3.s3d
 # Temporales del asistente
 asistente/_gen_tmp/
 asistente/_sp001/
+# Cloudflare Worker: secretos locales y caché de build
+.dev.vars
+.wrangler/

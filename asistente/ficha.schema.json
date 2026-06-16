@@ -30,18 +30,37 @@
         "niveles": {
           "type": "array",
           "minItems": 1,
-          "description": "Un objeto por piso, de abajo hacia arriba.",
+          "description": "Un objeto por piso, de abajo hacia arriba. Cada nivel puede tener distinta altura y distinto uso/cargas (ej. nivel 1 salas de clases, nivel 3 bodegas livianas).",
           "items": {
             "type": "object",
             "required": ["altura_m"],
             "additionalProperties": false,
-            "properties": { "altura_m": { "type": "number", "exclusiveMinimum": 0 } }
+            "properties": {
+              "altura_m": { "type": "number", "exclusiveMinimum": 0 },
+              "uso_NCh1537": { "type": "string", "description": "Uso de ESTE nivel (override de cargas.uso_NCh1537). Ej. 'Escuelas/Salas de Clases', 'Bodegas/Livianas'." },
+              "sobrecarga_uso_kN_m2": { "type": "number", "minimum": 0, "description": "Override explícito de sobrecarga de uso de este nivel." },
+              "muerta_adicional_kN_m2": { "type": "number", "minimum": 0, "description": "Carga muerta de área de este nivel (override)." }
+            }
           }
+        },
+        "vanos_x": {
+          "description": "Vanos en X: lista de luces [3,3,3,4] o uniforme {cantidad, luz_m}. Alternativa a planta_inferior.Lx_m / ejes_x_m.",
+          "oneOf": [
+            { "type": "array", "items": { "type": "number", "exclusiveMinimum": 0 }, "minItems": 1 },
+            { "type": "object", "additionalProperties": false, "required": ["cantidad", "luz_m"], "properties": { "cantidad": { "type": "integer", "minimum": 1 }, "luz_m": { "type": "number", "exclusiveMinimum": 0 } } }
+          ]
+        },
+        "vanos_y": {
+          "description": "Vanos en Y (3D): lista de luces o uniforme {cantidad, luz_m}.",
+          "oneOf": [
+            { "type": "array", "items": { "type": "number", "exclusiveMinimum": 0 }, "minItems": 1 },
+            { "type": "object", "additionalProperties": false, "required": ["cantidad", "luz_m"], "properties": { "cantidad": { "type": "integer", "minimum": 1 }, "luz_m": { "type": "number", "exclusiveMinimum": 0 } } }
+          ]
         },
         "planta_inferior": {
           "type": "object",
-          "required": ["Lx_m"],
           "additionalProperties": false,
+          "description": "Dimensiones de planta (alternativa a vanos_x/vanos_y o ejes). Define al menos una vía de geometría por dirección.",
           "properties": {
             "Lx_m": { "type": "number", "exclusiveMinimum": 0 },
             "Ly_m": { "type": "number", "exclusiveMinimum": 0, "description": "Requerido en 3D." }

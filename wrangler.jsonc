@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "portico",
+  "main": "worker/asistente.js",
+  "compatibility_date": "2026-06-16",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  // Sirve la PWA como assets estáticos; el Worker los lee vía env.ASSETS y
+  // maneja /api/asistente. .assetsignore excluye lo que no debe publicarse.
+  "assets": { "directory": ".", "binding": "ASSETS" }
+}

@@ -1,0 +1,20 @@
+# Archivos que NO se publican como assets del sitio (Cloudflare).
+.git/
+.github/
+.claude/
+node_modules/
+.wrangler/
+excel/
+worker/
+examples/
+*.md
+*.log
+.dev.vars
+.gitignore
+.assetsignore
+wrangler.jsonc
+package*.json
+# Herramientas del asistente que no deben servirse (sí se sirven reglas.json y los .csv)
+asistente/*.mjs
+asistente/ficha.schema.json
+asistente/n8n_flujo.json
