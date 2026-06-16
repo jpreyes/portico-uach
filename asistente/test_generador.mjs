@@ -6,6 +6,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { generarModelo } from './generador.js';
+import { cargaNieveNCh431, cargaVientoNCh432, espectroNCh433, Rstar } from './cargas.js';
 
 const dir = path.dirname(fileURLToPath(import.meta.url));
 const raiz = path.resolve(dir, '..');
@@ -66,6 +67,39 @@ for (let k = 1; k <= 3; k++) {
   areaTot += 10 * Ly;
 }
 ok(Math.abs(WcvTot - qCV * areaTot) / (qCV * areaTot) < 1e-6, `ΣCV = qCV·área (${WcvTot.toFixed(2)} vs ${(qCV*areaTot).toFixed(2)} kN)`);
+
+console.log('── Magnitudes de cargas normativas ──');
+const nv = cargaNieveNCh431(ficha, reglas);
+// Valdivia 39.8°S, 10 m, Exp C parc.expuesto, cat III (I=1.1), techo plano:
+// pg=0.25 → pf=0.7·1.0·1.0·1.1·0.25 = 0.1925 ; Cs(0°)=1 → ps=0.1925
+ok(nv.pg === 0.25, `nieve pg = 0.25 (es ${nv.pg})`);
+ok(Math.abs(nv.pf - 0.1925) < 1e-4, `nieve pf = 0.1925 (es ${nv.pf})`);
+ok(nv.Cs === 1.0 && Math.abs(nv.ps - nv.pf) < 1e-9, 'nieve Cs=1 (techo plano), ps=pf');
+
+const vi = cargaVientoNCh432(ficha, reglas, 9.0); // h=3×3=9 m
+// V por latitud 39.8° → banda 35-42 → 40 m/s; Exp C; cat III → I=1.15; Kd=0.85
+const Kz_man = 2.01 * Math.pow(9 / 274.32, 2 / 9.5);
+const q_man = 0.613 * Kz_man * 1 * 0.85 * 40 * 40 * 1.15;
+ok(vi.V === 40, `viento V = 40 m/s (es ${vi.V})`);
+ok(Math.abs(vi.q_Nm2 - q_man) < 0.5, `viento q = ${q_man.toFixed(1)} N/m² (es ${vi.q_Nm2})`);
+ok(Object.keys(vi.presiones).length === 10, 'viento: 10 zonas de presión');
+
+const esp = espectroNCh433(ficha, reglas);
+// zona 2 → Ao=0.3 ; suelo D → S=1.2 ; cat III → I=1.2 ; α(0)=1 → Sa(0)=1.2·0.3·1.2=0.432 g
+ok(Math.abs(esp.curva[0].Sa - 0.432) < 1e-3, `espectro Sa(0) = 0.432 g (es ${esp.curva[0].Sa})`);
+ok(esp.curva.length > 100 && esp.texto.includes('\t'), 'espectro: curva tabulada (T\\tSa)');
+const Rs = Rstar(0.5, 0.75, 11);
+ok(Math.abs(Rs - (1 + 0.5 / (0.10 * 0.75 + 0.5 / 11))) < 1e-9, `R*(T*=0.5) = ${Rs.toFixed(4)}`);
+
+console.log('── Magnitudes aplicadas en el modelo generado ──');
+const lcNvM = modelo.loadCases.find((l) => l.name === 'Nieve');
+let WnvTot = 0; for (const ld of lcNvM.loads) WnvTot += ld.w * elemL.get(ld.elemId);
+const Atecho = 10 * (10 + (2 / 2) * (8 - 10)); // nivel 3: t=1 → Ly=8 → 80 m²
+ok(Math.abs(WnvTot - nv.ps * Atecho) / (nv.ps * Atecho) < 1e-4, `ΣNieve = ps·área_techo (${WnvTot.toFixed(2)} vs ${(nv.ps*Atecho).toFixed(2)} kN)`);
+const lcWM = modelo.loadCases.find((l) => l.name === 'Viento X');
+ok(lcWM.loads.length > 0 && lcWM.loads.every((l) => l.dir === 'globalX'), 'Viento X: cargas globalX en pilares barlovento');
+const lcSxM = modelo.loadCases.find((l) => l.name === 'Sismo X');
+ok(lcSxM._espectro_NCh433 && lcSxM._espectro_NCh433.curva.length > 100, 'Sismo X: curva de espectro adjunta');
 
 console.log('── Solver estático real: equilibrio (combo 1.2CM+1.6CV) ──');
 // Cargar numeric.js y los módulos del solver con shim (igual que tests previos).

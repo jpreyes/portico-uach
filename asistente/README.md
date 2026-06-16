@@ -59,6 +59,8 @@ rígidos, sismo + sobrecarga de colegio + viento en Valdivia"*) en un modelo
 - **`ficha.schema.json`** — JSON Schema (draft-07) de la ficha que rellena el LLM.
 - **`generador.js`** — generador determinista (ES module puro, Node + navegador):
   `generarModelo(ficha, { reglas, perfiles, materiales, sobrecargas }) → .s3d`.
+- **`cargas.js`** — magnitudes normativas (puras): `cargaNieveNCh431`,
+  `cargaVientoNCh432`, `espectroNCh433` (+ `Rstar`).
 - **`ejemplo_ficha.json`** / **`ejemplo_salida.s3d`** — ejemplo (colegio 3 niveles,
   planta variable 10×10→10×8, Valdivia).
 - **`test_generador.mjs`** — test Node: conteos, mapeo de secciones y EQUILIBRIO
@@ -73,15 +75,22 @@ rígidos, sismo + sobrecarga de colegio + viento en Valdivia"*) en un modelo
   (`Iz←Iy_EN` fuerte, `Avy←Avz_EN` alma) verificado contra `timoshenko.js`.
 - Cargas de área (CM + sobrecarga NCh1537) → líneas en vigas por **ancho
   tributario** (escalado con la planta variable); conserva la resultante.
+- **Nieve (NCh431)** → `ps` real sobre el techo (pg por lat/altitud + Ce·Ct·I·Cs).
+- **Viento (NCh432)** → `q` y presiones por zona; presión neta de muro
+  (zona 1 − zona 4) como carga horizontal `globalX` en pilares de barlovento.
+  El desglose completo queda en `loadCase._viento`.
+- **Sismo (NCh433)** → curva elástica `Sa(T)` en `loadCase._espectro_NCh433`
+  (pegar en F7; `saFactor = g/R*`, con `R*` tras el modal vía `Rstar(T*,To,Ro)`).
 - Masa sísmica en diafragmas (CM + fracción CV); casos espectrales Sismo X/Y.
 - Combinaciones NCh3171 (LRFD) sobre los casos generados.
 
 ## Pendiente
 
-1. Magnitudes de viento/nieve/sismo: los casos quedan creados como geometría;
-   falta poblar presiones de viento (NCh432) y el espectro (NCh433) con los
-   parámetros de la ficha (`sismo`, `ubicacion`).
-2. Botones en la app: importar biblioteca CSV, aplicar carga de área, generar
-   combinaciones (reutilizar `generador.js` desde la UI).
-3. Flujo n8n (chat → LLM → ficha → `generador.js`).
+1. Botones en la app: importar biblioteca CSV, aplicar carga de área, generar
+   combinaciones, y cargar el espectro NCh433 (reutilizar `generador.js` /
+   `cargas.js` desde la UI).
+2. Flujo n8n (chat → LLM → ficha → `generador.js`).
+3. Viento: hoy aplica la presión neta de muro como lateral en X; falta el caso
+   en Y, las presiones de techo (zonas 2/3) como cargas normales, y franjas de
+   borde (zonas E). Sismo: persistir/auto-cargar la curva en el `.s3d`.
 4. Completar bibliotecas: tubos CHS/RHS/SHS, IPN/UPN/L.

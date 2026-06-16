@@ -8,6 +8,8 @@
 // Convención de ejes: Z-up (X este, Y norte, Z vertical).
 // ──────────────────────────────────────────────────────────────────────────────
 
+import { cargaNieveNCh431, cargaVientoNCh432, espectroNCh433 } from './cargas.js';
+
 const G_GRAV = 9.80665;          // kN por tonelada-fuerza (peso→masa)
 const CM2_M2 = 1e-4;             // cm² → m²
 const CM4_M4 = 1e-8;             // cm⁴ → m⁴
@@ -162,10 +164,11 @@ export function generarModelo(ficha, libs) {
     return id;
   };
   // pilares: conectan nivel k → k+1 en cada (i,j)
+  const elementoPilar = new Map(); // "k,i,j" → elemId (pilar del nivel k→k+1)
   for (let k = 0; k < nNiv; k++)
     for (let i = 0; i < ejesX.length; i++)
       for (let j = 0; j < ejesY.length; j++)
-        addElem(nodeId.get(key(k, i, j)), nodeId.get(key(k + 1, i, j)), secPilar.id);
+        elementoPilar.set(key(k, i, j), addElem(nodeId.get(key(k, i, j)), nodeId.get(key(k + 1, i, j)), secPilar.id));
 
   // vigas en cada nivel de piso (k = 1..nNiv): tramos en X y en Y
   const vigasX = []; // {elemId, k, j, Lx} para reparto de cargas
@@ -229,21 +232,39 @@ export function generarModelo(ficha, libs) {
 
   // casos laterales opcionales (placeholders de geometría; magnitudes se afinan aparte)
   let lcSxId = null, lcSyId = null, lcNvId = null, lcWId = null;
+  const h_techo = zNivel[nNiv];
+
   if (cargas.nieve) {
-    // nieve como carga de área extra sobre el techo (último nivel)
-    const lcNv = { id: ++cnt.loadCases, name: 'Nieve', loads: [], selfWeight: false, type: 'static', specDir: null };
-    for (const v of vigasX) if (v.k === nNiv) {
-      const w = is2D ? anchoTrib2D : tributario(ejesY, v.j) * factorPlanta(v.k).sy;
-      lcNv.loads.push({ type: 'dist', elemId: v.elemId, dir: 'gravity', w: +(w).toFixed(6), _nota: 'multiplicar por pf de nieve (kN/m²) validado' });
+    // Nieve sobre el techo (último nivel): carga de área ps (kN/m²) repartida.
+    const nv = cargaNieveNCh431(ficha, reglas);
+    const ps = nv.ps ?? 0;
+    const lcNv = { id: ++cnt.loadCases, name: 'Nieve', loads: [], selfWeight: false, type: 'static', specDir: null, _nieve: nv };
+    if (ps > 0) for (const v of vigasX) if (v.k === nNiv) {
+      const w = ps * (is2D ? anchoTrib2D : tributario(ejesY, v.j) * factorPlanta(v.k).sy);
+      lcNv.loads.push({ type: 'dist', elemId: v.elemId, dir: 'gravity', w: +w.toFixed(6) });
     }
     loadCases.push(lcNv); lcNvId = lcNv.id;
   }
-  if (cargas.sismo) {
-    loadCases.push({ id: ++cnt.loadCases, name: 'Sismo X', loads: [], selfWeight: false, type: 'spectrum', specDir: 'X' }); lcSxId = cnt.loadCases;
-    if (!is2D) { loadCases.push({ id: ++cnt.loadCases, name: 'Sismo Y', loads: [], selfWeight: false, type: 'spectrum', specDir: 'Y' }); lcSyId = cnt.loadCases; }
-  }
   if (cargas.viento) {
-    loadCases.push({ id: ++cnt.loadCases, name: 'Viento X', loads: [], selfWeight: false, type: 'static', specDir: null }); lcWId = cnt.loadCases;
+    // Viento en +X: presión neta de muro (zona 1 barlovento − zona 4 sotavento)
+    // como carga lineal horizontal (globalX) sobre los pilares de la cara x=mín.
+    const vi = cargaVientoNCh432(ficha, reglas, h_techo);
+    const pNet_kNm2 = ((vi.presiones['1'] || 0) - (vi.presiones['4'] || 0)) / 1000; // N/m²→kN/m²
+    const lcW = { id: ++cnt.loadCases, name: 'Viento X', loads: [], selfWeight: false, type: 'static', specDir: null, _viento: vi, _presion_neta_muro_kNm2: +pNet_kNm2.toFixed(4) };
+    if (pNet_kNm2 !== 0) for (let k = 0; k < nNiv; k++) for (let j = 0; j < ejesY.length; j++) {
+      // pilar de la cara barlovento (i=0) en el nivel k→k+1
+      const eid = elementoPilar.get(`${k},0,${j}`);
+      const w = pNet_kNm2 * (is2D ? anchoTrib2D : tributario(ejesY, j) * factorPlanta(k + 1).sy);
+      if (eid != null && w !== 0) lcW.loads.push({ type: 'dist', elemId: eid, dir: 'globalX', w: +w.toFixed(6) });
+    }
+    loadCases.push(lcW); lcWId = lcW.id;
+  }
+  if (cargas.sismo) {
+    // Espectro elástico NCh433 (curva T,Sa en g). saFactor=g/R* tras el modal.
+    let esp = null;
+    try { esp = espectroNCh433(ficha, reglas); } catch (e) { esp = { _error: e.message }; }
+    loadCases.push({ id: ++cnt.loadCases, name: 'Sismo X', loads: [], selfWeight: false, type: 'spectrum', specDir: 'X', _espectro_NCh433: esp }); lcSxId = cnt.loadCases;
+    if (!is2D) { loadCases.push({ id: ++cnt.loadCases, name: 'Sismo Y', loads: [], selfWeight: false, type: 'spectrum', specDir: 'Y', _espectro_NCh433: esp }); lcSyId = cnt.loadCases; }
   }
 
   // ── Masa sísmica en diafragmas (CM + fracción CV) ─────────────────────────

@@ -58,7 +58,8 @@
         },
         "ejes_x_m": { "type": "array", "items": { "type": "number" }, "description": "Coordenadas de ejes en X (opcional). Si se omite, el generador subdivide Lx por separacion_maxima_vano_m." },
         "ejes_y_m": { "type": "array", "items": { "type": "number" }, "description": "Coordenadas de ejes en Y (opcional, ignorado en 2D)." },
-        "ancho_tributario_m": { "type": "number", "exclusiveMinimum": 0, "description": "Solo en 2D: separación entre pórticos para repartir cargas de área a líneas." }
+        "ancho_tributario_m": { "type": "number", "exclusiveMinimum": 0, "description": "Solo en 2D: separación entre pórticos para repartir cargas de área a líneas." },
+        "pendiente_techo_deg": { "type": "number", "minimum": 0, "maximum": 90, "default": 0, "description": "Pendiente del techo (grados); afecta Cs (nieve) y GCpf (viento)." }
       }
     },
 
@@ -83,6 +84,8 @@
         "muerta_adicional_kN_m2": { "type": "number", "minimum": 0, "description": "Carga muerta de área además del peso propio (losa, terminaciones)." },
         "uso_NCh1537": { "type": "string", "description": "Descripción de uso en sobrecargas_NCh1537.csv (ej. 'Escuelas/Salas de Clases')." },
         "sobrecarga_uso_kN_m2": { "type": "number", "minimum": 0, "description": "Override explícito de sobrecarga de uso (kN/m²); si se da, prevalece sobre uso_NCh1537." },
+        "cierre_viento": { "type": "string", "enum": ["Abierto", "Parcialmente cerrado", "Cerrado"], "default": "Cerrado", "description": "Condición de cierre del edificio (GCpi de viento)." },
+        "proteccion_nieve": { "type": "string", "enum": ["Totalmente expuesto", "Parcialmente expuesto", "Protegido"], "default": "Parcialmente expuesto", "description": "Grado de protección del techo (Ce de nieve)." },
         "nieve": { "type": "boolean", "default": false },
         "viento": { "type": "boolean", "default": false },
         "sismo": { "type": "boolean", "default": false }
