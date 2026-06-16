@@ -3,7 +3,7 @@
 // Exposes the same API as static Results so the viewport can reuse
 // showDeformed / showForceDiagram without modification.
 // ──────────────────────────────────────────────────────────────────────────────
-import { getNodeDOFs } from './assembler.js?v=34';
+import { getNodeDOFs } from './assembler.js?v=35';
 
 export class SpectrumResults {
   /**
@@ -93,6 +93,33 @@ export class SpectrumResults {
       });
     }
     return pts;
+  }
+
+  /**
+   * Estado en una fracción xi∈[0,1] del elemento — misma API que Results
+   * estático, para que el viewport reutilice la deformada y el inspector.
+   * Los resultados espectrales son ENVOLVENTES (valores absolutos combinados):
+   * fuerzas y desplazamientos se interpolan linealmente entre extremos.
+   * @returns {{N,Vy,Vz,T,My,Mz,ux,uy,uz}|null}
+   */
+  getElemAtXi(elemId, xi) {
+    const f = this._ef.get(elemId);
+    if (!f) return null;
+    const elem = this.model.elements.get(elemId);
+    const d1 = this.getNodeDisp(elem.n1);
+    const d2 = this.getNodeDisp(elem.n2);
+    const lerp = (a, b) => a * (1 - xi) + b * xi;
+    return {
+      N:  f.N,
+      Vy: lerp(f.Vy1, f.Vy2),
+      Vz: lerp(f.Vz1, f.Vz2),
+      T:  f.T ?? f.T_ ?? 0,
+      My: lerp(f.My1, f.My2),
+      Mz: lerp(f.Mz1, f.Mz2),
+      ux: lerp(d1[0], d2[0]),
+      uy: lerp(d1[1], d2[1]),
+      uz: lerp(d1[2], d2[2]),
+    };
   }
 
   /** Summary for toast notification */
