@@ -1,21 +1,21 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=35';
-import { Serializer }      from './model/serializer.js?v=35';
-import { Viewport }        from './ui/viewport.js?v=35';
-import { PropertiesPanel } from './ui/properties.js?v=35';
-import { MenuBar }         from './ui/menu.js?v=35';
-import { UndoStack }       from './utils/undo.js?v=35';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=35';
-import { Results }                         from './solver/postprocess.js?v=35';
-import { ModalSolver }                     from './solver/modal_solver.js?v=35';
-import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=35';
-import { ModalResults }                    from './solver/modal_results.js?v=35';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=35';
-import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=35';
-import { splitElement, splitByLength, discretizeAll, joinElements } from './model/discretize.js?v=35';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=35';
+import { Model }           from './model/model.js?v=36';
+import { Serializer }      from './model/serializer.js?v=36';
+import { Viewport }        from './ui/viewport.js?v=36';
+import { PropertiesPanel } from './ui/properties.js?v=36';
+import { MenuBar }         from './ui/menu.js?v=36';
+import { UndoStack }       from './utils/undo.js?v=36';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=36';
+import { Results }                         from './solver/postprocess.js?v=36';
+import { ModalSolver }                     from './solver/modal_solver.js?v=36';
+import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=36';
+import { ModalResults }                    from './solver/modal_results.js?v=36';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=36';
+import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=36';
+import { splitElement, splitByLength, discretizeAll, joinElements } from './model/discretize.js?v=36';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=36';
 
 class App {
   constructor() {
@@ -1300,17 +1300,9 @@ class App {
       this.toast('Ejecute primero el Análisis Modal (F6)', 'warn'); return;
     }
 
-    const defaultText = this._lastSpectrum ||
-`0.00, 0.20
-0.10, 0.45
-0.30, 0.45
-0.50, 0.40
-0.75, 0.35
-1.00, 0.28
-1.50, 0.19
-2.00, 0.14
-3.00, 0.10
-4.00, 0.07`;
+    // Sin curva precargada: el espectro lo genera el usuario (botón NCh433, ya
+    // con T* del modal) o lo escribe. Así nada parece "ya calculado".
+    const defaultText = this._lastSpectrum || '';
 
     const params = await this._spectrumDialog(defaultText);
     if (!params) return;
@@ -1448,10 +1440,10 @@ class App {
 </div>
 <div class="prop-field">
   <label>Espectro — T (s), Sa   (una pareja por línea)</label>
-  <textarea id="sp-spectrum" rows="7" class="sp-textarea">${initialText}</textarea>
+  <textarea id="sp-spectrum" rows="7" class="sp-textarea" placeholder="Aún sin espectro. Use «Generar curva» (NCh433) o pegue sus pares T, Sa.">${initialText}</textarea>
 </div>
 <div class="prop-field" style="margin-top:8px">
-  <label>Curva Sa(T)</label>
+  <label>Curva Sa(T) <span style="color:var(--text-muted);font-weight:400">(se dibuja desde los datos de arriba)</span></label>
   <svg id="sp-graph" viewBox="0 0 420 200" style="width:100%;height:170px;background:var(--bg-elev,#1b1b1b);border:1px solid var(--border);border-radius:6px"></svg>
 </div>`;
 
@@ -1466,7 +1458,7 @@ class App {
         const pts = _parseSpectrum($('sp-spectrum').value); // [{T,Sa},...]
         const svg = $('sp-graph');
         const W = 420, H = 200, ml = 38, mr = 8, mt = 12, mb = 24;
-        if (pts.length < 2) { svg.innerHTML = `<text x="${W/2}" y="${H/2}" fill="#888" font-size="11" text-anchor="middle">curva insuficiente</text>`; return; }
+        if (pts.length < 2) { svg.innerHTML = `<text x="${W/2}" y="${H/2}" fill="#888" font-size="11" text-anchor="middle">Sin curva — genérela o ingrésela arriba</text>`; return; }
         const Tmax = Math.max(...pts.map(p => p.T)) || 1;
         const Samax = Math.max(...pts.map(p => p.Sa)) || 1;
         const sx = (t) => ml + (t / Tmax) * (W - ml - mr);

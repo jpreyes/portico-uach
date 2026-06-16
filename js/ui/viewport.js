@@ -1422,6 +1422,13 @@ export class Viewport {
 
   // ── Public API ─────────────────────────────────────────────────────────────
   setMode(mode) {
+    // Si se elige una herramienta de MODELADO mientras se ven resultados, salir
+    // del modo resultados: si no, _onPointerUp intercepta el clic (_clickResults)
+    // y la herramienta (p.ej. Apoyo) "no hace nada".
+    if (this._inResultsMode && (mode === 'addnode' || mode === 'addelem' || mode === 'addsupport')) {
+      this.clearResults();
+      this.app?.toast?.('Resultados ocultos para editar el modelo', 'info');
+    }
     this.mode = mode;
     if (mode !== 'addelem' && this._addElemFirst !== null) {
       this._refreshColor('node', this._addElemFirst);
