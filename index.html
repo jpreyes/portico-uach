@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,6 +16,8 @@
   <!-- Captura temprana del evento de instalación PWA (puede dispararse antes
        de que el resto de scripts se ejecute). -->
   <script>
+    // Tema: claro por defecto; aplica el guardado antes de pintar (sin flash).
+    try { document.documentElement.dataset.theme = localStorage.getItem('portico_theme') || 'light'; } catch (e) {}
     window.__pwaInstall = null;
     window.addEventListener('beforeinstallprompt', function (e) {
       e.preventDefault();
@@ -27,8 +29,8 @@
       window.dispatchEvent(new Event('pwa-installed'));
     });
   </script>
-  <link rel="stylesheet" href="style.css?v=42">
-  <link rel="stylesheet" href="ui-v2.css?v=42">
+  <link rel="stylesheet" href="style.css?v=43">
+  <link rel="stylesheet" href="ui-v2.css?v=43">
   <script type="importmap">
   {
     "imports": {
@@ -145,6 +147,8 @@
     </nav>
 
     <div class="menubar-right">
+      <button id="btn-theme" type="button" title="Cambiar tema claro/oscuro"
+        style="background:var(--bg4);border:1px solid var(--border2);color:var(--text);border-radius:6px;cursor:pointer;font-size:14px;line-height:1;padding:4px 8px;margin-right:10px">🌙</button>
       <label class="unit-label" for="unit-select">Unidades</label>
       <!-- Sistema fijo kN · m · ton · rad. Las otras opciones están deshabilitadas
            porque la app NO convierte valores (ver Ayuda → Convenciones). -->
@@ -645,7 +649,7 @@
           <div>
             <h2 style="margin:0">PÓRTICO</h2>
             <p style="margin:2px 0 0;color:var(--text-muted)">Laboratorio virtual de análisis estructural 3D
-              · <b id="help-version">versión 42</b> · junio 2026</p>
+              · <b id="help-version">versión 43</b> · junio 2026</p>
           </div>
         </div>
         <p><b>Material docente</b> desarrollado por el <b>Dr. Juan Patricio Reyes C.</b> —
@@ -837,7 +841,7 @@
 
 <!-- numeric.js para solver (Fase 2+) -->
 <script src="lib/numeric.js"></script>
-<script type="module" src="js/app.js?v=42"></script>
+<script type="module" src="js/app.js?v=43"></script>
 
 <!-- PWA: registrar el service worker (offline). Solo en contexto seguro
      (https o localhost); el navegador deja navigator.serviceWorker undefined

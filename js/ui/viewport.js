@@ -183,13 +183,23 @@ export class Viewport {
     this._animate();
   }
 
-  _buildGrid() {
+  _buildGrid(center = COL.GRID_CENTER, minor = COL.GRID_MAIN) {
     this._grid = new THREE.Group();
-    const main = new THREE.GridHelper(200, 200, COL.GRID_CENTER, COL.GRID_MAIN);
+    const main = new THREE.GridHelper(200, 200, center, minor);
     main.material.transparent = true;
     main.material.opacity = 0.7;
     this._grid.add(main);
     this._scene.add(this._grid);
+  }
+
+  /** Tema claro/oscuro: ajusta el fondo del lienzo y la grilla. */
+  setTheme(isLight) {
+    this._renderer?.setClearColor(isLight ? 0xeaeef4 : COL.BG, 1);
+    if (this._grid) {
+      this._scene.remove(this._grid);
+      this._grid.traverse((o) => { o.geometry?.dispose?.(); o.material?.dispose?.(); });
+    }
+    this._buildGrid(isLight ? 0x9aabbf : COL.GRID_CENTER, isLight ? 0xccd5e2 : COL.GRID_MAIN);
   }
 
   _buildAxes() {

@@ -35,6 +35,30 @@
   --shadow-sm:   0 2px 10px rgba(0, 0, 0, 0.35);
 }
 
+/* ── Tema CLARO (por defecto). El oscuro queda en :root y se activa con
+   html[data-theme="dark"], que simplemente NO aplica estos overrides. ── */
+:root[data-theme="light"] {
+  --bg:          #e9edf3;
+  --bg2:         #f3f6fa;
+  --bg3:         #ffffff;
+  --bg4:         #e2e8f1;
+  --border:      #d3dbe7;
+  --border2:     #bcc8d8;
+  --text:        #1b2533;
+  --text-muted:  #5c6a7d;
+  --accent:      #0e7fc0;
+  --accent-dim:  #0a5f93;
+  --accent-soft: rgba(14, 127, 192, 0.12);
+  --teal:        #0d9488;
+  --success:     #15803d;
+  --warn:        #b45309;
+  --danger:      #dc2626;
+  --node-col:    #0277bd;
+  --sel-col:     #d97706;
+  --shadow-lg:   0 18px 50px rgba(20, 30, 50, 0.18);
+  --shadow-sm:   0 2px 10px rgba(20, 30, 50, 0.10);
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 13px; }

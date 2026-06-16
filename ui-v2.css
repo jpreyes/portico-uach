@@ -100,6 +100,14 @@ button:focus-visible, select:focus-visible, input:focus-visible {
   overflow: hidden;
   transition: opacity 0.6s ease, filter 0.6s ease;
 }
+/* La portada es siempre OSCURA (splash), independiente del tema de la app:
+   se redeclaran las variables en oscuro para todo su contenido. */
+#landing {
+  --bg: #070a0f; --bg2: #0c1117; --bg3: #121925; --bg4: #1b2433;
+  --border: #1d2735; --border2: #2d3a4d;
+  --text: #dbe4ee; --text-muted: #7e8da0;
+  --accent: #38bdf8; --teal: #2dd4bf;
+}
 #landing.exit { opacity: 0; filter: blur(6px); pointer-events: none; }
 
 /* trama de plano técnico */

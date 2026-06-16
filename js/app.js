@@ -1,21 +1,21 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=42';
-import { Serializer }      from './model/serializer.js?v=42';
-import { Viewport }        from './ui/viewport.js?v=42';
-import { PropertiesPanel } from './ui/properties.js?v=42';
-import { MenuBar }         from './ui/menu.js?v=42';
-import { UndoStack }       from './utils/undo.js?v=42';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=42';
-import { Results }                         from './solver/postprocess.js?v=42';
-import { ModalSolver }                     from './solver/modal_solver.js?v=42';
-import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=42';
-import { ModalResults }                    from './solver/modal_results.js?v=42';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=42';
-import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=42';
-import { splitElement, splitByLength, discretizeAll, joinElements } from './model/discretize.js?v=42';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=42';
+import { Model }           from './model/model.js?v=43';
+import { Serializer }      from './model/serializer.js?v=43';
+import { Viewport }        from './ui/viewport.js?v=43';
+import { PropertiesPanel } from './ui/properties.js?v=43';
+import { MenuBar }         from './ui/menu.js?v=43';
+import { UndoStack }       from './utils/undo.js?v=43';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=43';
+import { Results }                         from './solver/postprocess.js?v=43';
+import { ModalSolver }                     from './solver/modal_solver.js?v=43';
+import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=43';
+import { ModalResults }                    from './solver/modal_results.js?v=43';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=43';
+import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=43';
+import { splitElement, splitByLength, discretizeAll, joinElements } from './model/discretize.js?v=43';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=43';
 
 class App {
   constructor() {
@@ -107,6 +107,7 @@ class App {
     });
 
     this._initHelp();
+    this._initTheme();
 
     // F1 / F5 / F6 / F7 / F8 shortcuts
     document.addEventListener('keydown', e => {
@@ -2084,7 +2085,7 @@ class App {
     this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=42');
+      const { generarModelo } = await import('../asistente/generador.js?v=43');
       const modelo = generarModelo(ficha, libs);
       this._loadJSON(JSON.stringify(modelo), (ficha.proyecto || 'asistente') + '.s3d');
       this.markDirty();
@@ -2132,6 +2133,25 @@ class App {
   _hideProgress() {
     const el = document.getElementById('portico-progress');
     if (el) el.style.display = 'none';
+  }
+
+  // ── Tema claro / oscuro (claro por defecto) ────────────────────────────────
+  _initTheme() {
+    const t = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+    this.aplicarTema(t);
+    document.getElementById('btn-theme')?.addEventListener('click', () => {
+      const actual = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+      this.aplicarTema(actual === 'dark' ? 'light' : 'dark');
+    });
+  }
+
+  aplicarTema(theme) {
+    document.documentElement.dataset.theme = theme;
+    try { localStorage.setItem('portico_theme', theme); } catch (e) {}
+    const btn = document.getElementById('btn-theme');
+    if (btn) { btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+               btn.title = theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'; }
+    this.viewport?.setTheme?.(theme === 'light');
   }
 
   async _cargarBibliotecasAsistente() {
