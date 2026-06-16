@@ -1,7 +1,7 @@
 {
   "_meta": {
     "proposito": "Reglas de ingeniería para el asistente IA de PÓRTICO. El LLM solo extrae una 'ficha' estructurada desde el texto del usuario; este archivo + las bibliotecas CSV aportan los datos y decisiones que el LLM NO debe inventar. Un generador determinista combina ficha + reglas + bibliotecas para producir el modelo .s3d.",
-    "version": "0.4",
+    "version": "0.5",
     "fuentes": [
       "Perfiles: EN 10365 (dataset pcachim/eurocodepy, verificado contra IPE300/HEB200)",
       "Cargas de uso: NCh1537 | Viento: NCh432 | Sísmica: NCh433 | Nieve: NCh431",
@@ -45,14 +45,213 @@
       "_aplicacion": "Lo (kN/m2) se reparte a vigas por ancho tributario; Qk es carga concentrada de verificacion."
     },
     "nieve_NCh431": {
-      "_fuente": "NCh431 — pendiente: PROFESOR aún no tiene este cálculo; se arma con la norma y se valida.",
-      "_unidad": "kN/m2",
-      "ciudades": {
-        "Valdivia": {
-          "sobrecarga_nieve_kN_m2": null,
-          "_verificar": true
+      "_fuente": "NCh431.Of2010 'Diseño estructural — Sobrecargas de nieve'. El profesor NO tenía este cálculo; se armó desde la norma (método ASCE 7) y DEBE VALIDARSE contra la copia oficial INN.",
+      "_estado": "codificado_pendiente_validacion_profesor",
+      "_unidad": "kN/m²",
+      "formula_techo_plano": "pf = 0.7·Ce·Ct·I·pg   (techos con pendiente ≤ 5°)",
+      "formula_techo_inclinado": "ps = Cs·pf   (Cs = factor de pendiente, Figura 1 NCh431)",
+      "peso_especifico_nieve": "γ = 0.426·pg + 2.2  [kN/m³], pero no mayor que 4.7 kN/m³",
+      "_coef_forma_techo_plano": 0.7,
+      "pg_carga_basica_terreno_Tabla1": {
+        "_nota": "ATENCIÓN: valores obtenidos de una copia web de la norma; varias celdas de la columna 36°-38° (14.5, 16.2, 18.75, 22.7) son anormalmente altas y podrían ser errores de OCR. EL PROFESOR DEBE CONFIRMAR contra la NCh431 oficial. '0'=sin carga; null='sin información en la norma'.",
+        "latitudes_sur": [
+          "17-26",
+          "26-29",
+          "29-32",
+          "32-34",
+          "34-36",
+          "36-38",
+          "38-42",
+          "42-48",
+          "48-55"
+        ],
+        "por_altitud_msnm": {
+          "0-300": [
+            0,
+            0,
+            0,
+            0.25,
+            0.25,
+            0.25,
+            0.25,
+            0.25,
+            0.5
+          ],
+          "300-600": [
+            0.25,
+            0.25,
+            0.25,
+            0.25,
+            0.25,
+            0.25,
+            0.25,
+            0.25,
+            1.25
+          ],
+          "600-800": [
+            0.25,
+            0.25,
+            0.25,
+            0.5,
+            0.75,
+            0.75,
+            0.75,
+            0.5,
+            1.25
+          ],
+          "800-1000": [
+            0.25,
+            0.25,
+            0.25,
+            0.75,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.25
+          ],
+          "1000-1250": [
+            0,
+            0,
+            0,
+            1.0,
+            1.5,
+            1.5,
+            1.5,
+            1.5,
+            null
+          ],
+          "1250-1500": [
+            0,
+            0,
+            0,
+            2.0,
+            3.0,
+            3.0,
+            3.0,
+            2.0,
+            null
+          ],
+          "1500-1750": [
+            0,
+            0.25,
+            1.0,
+            3.0,
+            7.0,
+            14.5,
+            4.5,
+            3.0,
+            null
+          ],
+          "1750-2000": [
+            0,
+            0.25,
+            2.0,
+            4.0,
+            8.6,
+            16.2,
+            6.0,
+            null,
+            null
+          ],
+          "2000-2500": [
+            0,
+            0,
+            2.0,
+            5.9,
+            11.0,
+            18.75,
+            null,
+            null,
+            null
+          ],
+          "2500-3000": [
+            0,
+            0,
+            2.6,
+            8.8,
+            null,
+            22.7,
+            null,
+            null,
+            null
+          ],
+          "3000-3500": [
+            0,
+            3.0,
+            3.6,
+            13.0,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "3500-4000": [
+            0,
+            null,
+            4.8,
+            19.5,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          ">4000": [
+            0,
+            null,
+            6.25,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
         }
-      }
+      },
+      "Ct_factor_termico_Tabla2": {
+        "Todas las estructuras (salvo las siguientes)": 1.0,
+        "Sobre congelación / techos ventilados (R ≥ 4.4 K·m²/W)": 1.1,
+        "Estructuras no calefaccionadas bajo congelación": 1.2,
+        "Invernaderos (R < 0.4 K·m²/W)": 0.85
+      },
+      "I_factor_importancia_Tabla3": {
+        "I": 0.8,
+        "II": 1.0,
+        "III": 1.1,
+        "IV": 1.2
+      },
+      "Ce_factor_exposicion_Tabla4": {
+        "B": {
+          "Totalmente expuesto": 0.9,
+          "Parcialmente expuesto": 1.0,
+          "Protegido": 1.2
+        },
+        "C": {
+          "Totalmente expuesto": 0.9,
+          "Parcialmente expuesto": 1.0,
+          "Protegido": 1.1
+        },
+        "D": {
+          "Totalmente expuesto": 0.8,
+          "Parcialmente expuesto": 0.9,
+          "Protegido": 1.0
+        },
+        "Áreas montañosas": {
+          "Totalmente expuesto": 0.7,
+          "Parcialmente expuesto": 0.8,
+          "Protegido": null
+        }
+      },
+      "Cs_factor_pendiente": {
+        "_nota": "Cs depende de la pendiente del techo y de la condición térmica. Figura 1 de NCh431 es un gráfico; aquí se usa la relación ASCE 7 estándar para cubierta NO resbaladiza. EL PROFESOR DEBE VALIDAR los quiebres contra la Figura 1 oficial.",
+        "formula_techo_caliente_Ct_le_1.0": "Cs=1.0 si pend≤30°; lineal 1.0→0 entre 30° y 70°; Cs=0 si pend>70°",
+        "formula_Ct_1.1": "Cs=1.0 si pend≤37.5°; lineal 1.0→0 entre 37.5° y 70°; Cs=0 si pend>70°",
+        "formula_techo_frio_Ct_1.2": "Cs=1.0 si pend≤45°; lineal 1.0→0 entre 45° y 70°; Cs=0 si pend>70°"
+      },
+      "_ejemplo_Valdivia": "Valdivia (~39.8°S, costa ~5–20 m) → banda latitud 38–42°, altitud 0–300 → pg=0.25 kN/m². Con Ce=1.0, Ct=1.0, I=1.0 (cat II), techo plano: pf=0.7·1·1·1·0.25=0.175 kN/m². VALIDAR."
     },
     "viento_NCh432": {
       "_fuente": "NCh432.Of2010 — codificado desde 'Nch432_2010 Viento v0.2.xlsx' del profesor (fuente de verdad). Método analítico para edificios de baja altura (equivalente a ASCE 7-05 Fig. 6-4, 6-10 y Tabla 6-2), con velocidades básicas V de estaciones y zonas de latitud chilenas.",
