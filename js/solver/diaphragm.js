@@ -161,10 +161,13 @@ export function computeFloorCR(model, floorNodeSet, floorZ, zTol = 0.01) {
     const L  = Math.sqrt((n2.x-n1.x)**2 + (n2.y-n1.y)**2 + dz**2);
     if (L < 1e-12 || Math.abs(dz/L) < 0.9994) continue;  // skip non-vertical
 
-    const topNode = Math.abs(n2.z - floorZ) < zTol && floorNodeSet.has(n2.id) ? n2
-                  : Math.abs(n1.z - floorZ) < zTol && floorNodeSet.has(n1.id) ? n1
-                  : null;
-    if (!topNode) continue;
+    // CR del piso = rigidez del ENTREPISO INFERIOR: cada pilar se cuenta SOLO en
+    // su nodo SUPERIOR (el que llega a este piso). Antes se contaba en cualquiera
+    // de sus dos nodos → los pilares interiores se contaban doble (piso de arriba
+    // y de abajo) y el CR salía desplazado en edificios irregulares/multinivel.
+    const top = n1.z >= n2.z ? n1 : n2;     // nodo superior del pilar
+    if (!(Math.abs(top.z - floorZ) < zTol && floorNodeSet.has(top.id))) continue;
+    const topNode = top;
 
     const mat = model.materials.get(elem.matId);
     const sec = model.sections.get(elem.secId);

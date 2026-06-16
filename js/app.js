@@ -1,21 +1,21 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=41';
-import { Serializer }      from './model/serializer.js?v=41';
-import { Viewport }        from './ui/viewport.js?v=41';
-import { PropertiesPanel } from './ui/properties.js?v=41';
-import { MenuBar }         from './ui/menu.js?v=41';
-import { UndoStack }       from './utils/undo.js?v=41';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=41';
-import { Results }                         from './solver/postprocess.js?v=41';
-import { ModalSolver }                     from './solver/modal_solver.js?v=41';
-import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=41';
-import { ModalResults }                    from './solver/modal_results.js?v=41';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=41';
-import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=41';
-import { splitElement, splitByLength, discretizeAll, joinElements } from './model/discretize.js?v=41';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=41';
+import { Model }           from './model/model.js?v=42';
+import { Serializer }      from './model/serializer.js?v=42';
+import { Viewport }        from './ui/viewport.js?v=42';
+import { PropertiesPanel } from './ui/properties.js?v=42';
+import { MenuBar }         from './ui/menu.js?v=42';
+import { UndoStack }       from './utils/undo.js?v=42';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=42';
+import { Results }                         from './solver/postprocess.js?v=42';
+import { ModalSolver }                     from './solver/modal_solver.js?v=42';
+import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=42';
+import { ModalResults }                    from './solver/modal_results.js?v=42';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=42';
+import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=42';
+import { splitElement, splitByLength, discretizeAll, joinElements } from './model/discretize.js?v=42';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=42';
 
 class App {
   constructor() {
@@ -258,7 +258,7 @@ class App {
           </select>
         </div>
         <div class="prop-field"><label>Valor</label>
-          <input type="number" id="disc-val" value="4" min="0.01" step="1" style="width:90px">
+          <input type="number" id="disc-val" value="5" min="0.01" step="1" style="width:90px">
         </div>
       </div>
       <p style="color:var(--text-muted);font-size:11px;margin-top:8px">
@@ -747,9 +747,10 @@ class App {
         // El modelo original se guarda y se restaura al limpiar resultados.
         const autoDisc = document.getElementById('auto-disc')?.checked;
         if (autoDisc) {
+          const nParts = Math.max(2, Math.round(parseFloat(document.getElementById('auto-disc-n')?.value) || 5));
           if (!this._predisc) this._predisc = this.serializer.toJSON(this.model);
           else this.model = this.serializer.fromJSON(this._predisc);  // re-análisis: partir del original
-          discretizeAll(this.model, { parts: 10 });
+          discretizeAll(this.model, { parts: nParts });
           this.viewport.renderModel(this.model);
         } else if (this._predisc) {
           // estaba auto-discretizado y la casilla se desactivó: restaurar
@@ -2013,24 +2014,24 @@ class App {
     }, null, 2);
 
     document.getElementById('modal-body').innerHTML = `
-<details style="margin-bottom:10px">
-  <summary style="cursor:pointer;color:var(--accent)">Lenguaje natural (vía asistente en la nube) — opcional</summary>
-  <div class="prop-field" style="margin-top:8px">
-    <label>Descripción</label>
-    <textarea id="asis-nl" rows="3" class="sp-textarea" placeholder="Ej.: edificio de 2 niveles de 3 m, planta 10×8, vigas IPE300, pilares HEB200, colegio en Valdivia, con sismo"></textarea>
-  </div>
-  <div class="prop-row" style="margin-top:6px;align-items:end">
-    <div class="prop-field" style="flex:1"><label>Endpoint del asistente (Cloudflare Worker /api/asistente, o webhook n8n)</label>
-      <input type="text" id="asis-endpoint" value="${ep}" placeholder="/api/asistente"></div>
-    <button type="button" id="btn-asis-llm" class="btn" style="margin-left:8px">Pedir ficha</button>
-  </div>
-  <small style="color:var(--text-muted)">La credencial del LLM vive como secreto del servidor (Cloudflare Worker), nunca en el navegador.</small>
-</details>
 <div class="prop-field">
-  <label>Ficha (JSON) — conforme a asistente/ficha.schema.json</label>
-  <textarea id="asis-ficha" rows="14" class="sp-textarea" style="font-family:monospace;font-size:12px">${plantilla}</textarea>
-  <small style="color:var(--text-muted);display:block;margin-top:4px">El generador determinista construye el modelo (geometría, secciones, cargas NCh, combinaciones). Reemplaza el modelo actual.</small>
-</div>`;
+  <label>Describe el modelo en palabras (el asistente arma la ficha)</label>
+  <textarea id="asis-nl" rows="4" class="sp-textarea" placeholder="Ej.: edificio de 4 niveles de 3 m, planta con 3 vanos de 6 m en X y 2 de 5 m en Y, hormigón H30, vigas 25x50, pilares 35x35, salas de clases, en Valdivia, con sismo zona 2 suelo D"></textarea>
+</div>
+<div class="prop-row" style="margin-top:6px;align-items:end">
+  <div class="prop-field" style="flex:1"><label>Endpoint del asistente (Cloudflare Worker /api/asistente)</label>
+    <input type="text" id="asis-endpoint" value="${ep}" placeholder="/api/asistente"></div>
+  <button type="button" id="btn-asis-llm" class="btn-primary" style="margin-left:8px">✦ Pedir ficha al asistente</button>
+</div>
+<small style="color:var(--text-muted);display:block;margin-top:4px">La credencial del LLM vive como secreto del servidor (Cloudflare Worker), nunca en el navegador. Luego pulsa <b>Generar modelo</b>.</small>
+
+<details style="margin-top:12px">
+  <summary style="cursor:pointer;color:var(--accent)">Ver / editar la ficha (JSON) — avanzado</summary>
+  <div class="prop-field" style="margin-top:8px">
+    <textarea id="asis-ficha" rows="14" class="sp-textarea" style="font-family:monospace;font-size:12px">${plantilla}</textarea>
+    <small style="color:var(--text-muted);display:block;margin-top:4px">El generador determinista construye el modelo (geometría, secciones, cargas NCh, combinaciones) y reemplaza el modelo actual. Si falta o no se reconoce algún dato, se sustituye/estima y se informa.</small>
+  </div>
+</details>`;
 
     document.getElementById('btn-asis-llm')?.addEventListener('click', async () => {
       const url = document.getElementById('asis-endpoint').value.trim();
@@ -2038,16 +2039,17 @@ class App {
       if (!url) { this.toast('Configure el endpoint del asistente', 'warn'); return; }
       if (!msg) { this.toast('Escriba una descripción', 'warn'); return; }
       localStorage.setItem('portico_n8n_endpoint', url);
-      this.toast('Consultando al asistente…', 'info');
+      this._showProgress('Consultando al asistente IA…', 'Puede tardar varios segundos');
       try {
         const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mensaje: msg }) });
-        // Leer el cuerpo aunque sea error: el servidor envía { error: "…" }.
-        const data = await r.json().catch(() => ({}));
+        const data = await r.json().catch(() => ({}));   // el servidor envía { error } aun en fallo
         if (!r.ok) throw new Error(data.error || data.message || `HTTP ${r.status}`);
         const ficha = data.ficha ?? data;
-        document.getElementById('asis-ficha').value = JSON.stringify(ficha, null, 2);
-        this.toast('Ficha recibida — revísela y genere', 'ok');
+        const ta = document.getElementById('asis-ficha');
+        if (ta) { ta.value = JSON.stringify(ficha, null, 2); ta.closest('details')?.setAttribute('open', ''); }
+        this.toast('Ficha recibida — pulsa «Generar modelo»', 'ok');
       } catch (e) { this.toast('Error asistente: ' + e.message, 'error'); }
+      finally { this._hideProgress(); }
     });
 
     const restore = () => { okBtn.textContent = 'Aceptar'; };
@@ -2056,21 +2058,80 @@ class App {
     overlay._reject = restore;
   }
 
+  /** Pide la ficha al asistente (endpoint) desde un texto y genera el modelo.
+   *  Usado por el cuadro de la portada y reutilizable desde cualquier lugar. */
+  async asistenteDesdeTexto(mensaje) {
+    const url = localStorage.getItem('portico_n8n_endpoint') || '/api/asistente';
+    this._showProgress('Consultando al asistente IA…', 'Interpretando tu descripción');
+    let ficha = null;
+    try {
+      const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mensaje }) });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.error || data.message || `HTTP ${r.status}`);
+      ficha = data.ficha ?? data;
+    } catch (e) {
+      this._hideProgress();
+      this.toast('Error asistente: ' + e.message, 'error');
+      return;
+    }
+    await this._generarDesdeFicha(JSON.stringify(ficha));
+  }
+
   async _generarDesdeFicha(fichaText) {
     let ficha;
     try { ficha = JSON.parse(fichaText); }
     catch (e) { this.toast('Ficha JSON inválida: ' + e.message, 'error'); return; }
+    this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=41');
+      const { generarModelo } = await import('../asistente/generador.js?v=42');
       const modelo = generarModelo(ficha, libs);
       this._loadJSON(JSON.stringify(modelo), (ficha.proyecto || 'asistente') + '.s3d');
       this.markDirty();
       this.toast(`Modelo generado — ${modelo._generado?.resumen || ''}`, 'ok');
+      this._mostrarAvisos(modelo._avisos || []);
     } catch (e) {
       this.toast('Error al generar: ' + e.message, 'error');
       console.error(e);
+    } finally { this._hideProgress(); }
+  }
+
+  /** Resumen de reemplazos/estimaciones/omisiones del generador. */
+  _mostrarAvisos(avisos) {
+    if (!avisos || !avisos.length) { this.toast('Sin reemplazos: todo se interpretó correctamente', 'ok'); return; }
+    const icono = { reemplazo: '🔁', estimado: '📐', omitido: '⚠️', info: 'ℹ️' };
+    const items = avisos.map(a => `<li style="margin:4px 0"><b>${icono[a.tipo] || '•'} ${a.tipo}</b> — ${a.msg}</li>`).join('');
+    this._alert('Resumen del asistente — ajustes realizados',
+      `<p style="color:var(--text-muted);margin-bottom:6px">El modelo se generó. Estos datos faltaban o no se reconocieron y se sustituyeron/estimaron:</p>
+       <ul style="max-height:340px;overflow:auto;padding-left:18px;font-size:12px">${items}</ul>`);
+  }
+
+  /** Overlay de progreso a pantalla completa que bloquea la interacción. */
+  _showProgress(titulo, sub = '') {
+    let el = document.getElementById('portico-progress');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'portico-progress';
+      el.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(6,10,18,.72);backdrop-filter:blur(2px)';
+      el.innerHTML =
+        `<div style="background:var(--bg-elev,#141b27);border:1px solid var(--border,#334);border-radius:10px;padding:22px 26px;min-width:300px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.5)">
+           <div id="pp-titulo" style="color:var(--text,#e6edf3);font-weight:600;margin-bottom:4px"></div>
+           <div id="pp-sub" style="color:var(--text-muted,#9aa);font-size:12px;margin-bottom:12px"></div>
+           <div style="height:6px;border-radius:3px;background:var(--border,#223);overflow:hidden">
+             <div style="height:100%;width:40%;border-radius:3px;background:var(--accent,#4ea1ff);animation:pp-slide 1.1s ease-in-out infinite"></div>
+           </div>
+         </div>
+         <style>@keyframes pp-slide{0%{margin-left:-40%}100%{margin-left:100%}}</style>`;
+      document.body.appendChild(el);
     }
+    el.querySelector('#pp-titulo').textContent = titulo;
+    el.querySelector('#pp-sub').textContent = sub;
+    el.style.display = 'flex';
+  }
+
+  _hideProgress() {
+    const el = document.getElementById('portico-progress');
+    if (el) el.style.display = 'none';
   }
 
   async _cargarBibliotecasAsistente() {
@@ -2380,7 +2441,10 @@ class App {
         }
       }
     } catch (e) { console.warn('Autosave: no se pudo recuperar', e); }
-    if (!restored) await this._loadExample();
+    if (!restored) {
+      // Iniciar SIEMPRE con un modelo nuevo y vacío (no se carga ningún ejemplo).
+      this._loadJSON(this.serializer.toJSON(this.model), 'nuevo', false);
+    }
     this.viewport.applyProjectMode();   // badge + cámara según modo del modelo
     this._offerCachedResults();
   }
