@@ -221,13 +221,21 @@
       "properties": {
         "largo_m": { "type": "number", "exclusiveMinimum": 0, "default": 30, "description": "Largo total del puente." },
         "ancho_m": { "type": "number", "exclusiveMinimum": 0, "default": 5, "description": "Ancho del tablero." },
-        "altura_pila_m": { "type": "number", "exclusiveMinimum": 0, "default": 5, "description": "Altura de las pilas (nivel del tablero sobre la base)." },
-        "luz_pila_m": { "type": "number", "exclusiveMinimum": 0, "description": "Separación entre pilas (ej. 20 = pilas cada 20 m). Alternativa: n_pilas." },
+        "altura_pila_m": { "type": "number", "exclusiveMinimum": 0, "default": 5, "description": "Altura de las pilas/cepas (nivel del tablero sobre la base)." },
+        "luz_pila_m": { "type": "number", "exclusiveMinimum": 0, "description": "Separación entre pilas/cepas (ej. 20 = cada 20 m). Alternativa: n_pilas." },
         "n_pilas": { "type": "integer", "minimum": 2, "description": "Nº de líneas de pila (alternativa a luz_pila_m)." },
-        "tipo_viga": { "type": "string", "enum": ["viga", "cercha"], "default": "viga", "description": "viga = vigas longitudinales continuas; cercha = vigas de celosía bajo el tablero." },
+        "tipo": { "type": "string", "enum": ["tablero", "viga_central"], "default": "tablero", "description": "tablero = 2 vigas longitudinales laterales + transversales. viga_central = UNA viga longitudinal central con vigas transversales perpendiculares cada separacion_transversal_m, apoyada en cepas centrales." },
+        "tipo_viga": { "type": "string", "enum": ["viga", "cercha"], "default": "viga", "description": "Solo tipo=tablero: viga = longitudinales continuas; cercha = vigas de celosía bajo el tablero." },
         "tipo_celosia": { "type": "string", "enum": ["warren", "pratt", "howe"], "default": "warren", "description": "Patrón de la celosía si tipo_viga='cercha'." },
         "canto_m": { "type": "number", "exclusiveMinimum": 0, "description": "Canto de la viga de celosía (si tipo_viga='cercha')." },
-        "n_paneles_por_vano": { "type": "integer", "minimum": 2, "description": "Paneles de celosía por vano entre pilas." }
+        "n_paneles_por_vano": { "type": "integer", "minimum": 2, "description": "Paneles de celosía por vano entre pilas." },
+        "escuadria_longitudinal": { "$ref": "#/$defs/seccion", "description": "Sección de la viga longitudinal central (viga_central), ej. {b_cm:50,h_cm:200}." },
+        "escuadria_transversal": { "$ref": "#/$defs/seccion", "description": "Sección de las vigas transversales (viga_central), ej. {b_cm:30,h_cm:80}." },
+        "escuadria_pila": { "$ref": "#/$defs/seccion", "description": "Sección de las cepas/pilas, ej. {b_cm:100,h_cm:100}." },
+        "escuadria_viga": { "$ref": "#/$defs/seccion", "description": "Sección de las vigas longitudinales (tipo=tablero)." },
+        "escuadria_diagonal": { "$ref": "#/$defs/seccion", "description": "Sección de diagonales/transversales del tablero." },
+        "separacion_transversal_m": { "type": "number", "exclusiveMinimum": 0, "default": 2, "description": "Separación entre vigas transversales (viga_central)." },
+        "carga_transversal_kN_m": { "type": "number", "minimum": 0, "description": "Carga lineal uniforme (kN/m) aplicada SOLO sobre las vigas transversales (viga_central)." }
       }
     },
 

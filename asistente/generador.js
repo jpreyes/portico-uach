@@ -77,7 +77,12 @@ const ESCUADRIAS_MM = {
  * Devuelve también la escuadría reconocida (mm). null si no se puede interpretar.
  */
 export function escuadriaASeccion(spec, nombre) {
-  if (spec && typeof spec === 'object') return { sec: rectangularASeccion(spec, nombre), etiqueta: nombre, mm: null };
+  if (spec && typeof spec === 'object') {
+    // Solo si trae dimensiones reconocibles; si no (p.ej. objeto anidado del LLM), null.
+    if (spec.b_cm == null && spec.b_mm == null && spec.b_m == null) return null;
+    try { return { sec: rectangularASeccion(spec, nombre), etiqueta: nombre, mm: null }; }
+    catch { return null; }
+  }
   if (spec == null) return null;
   const s = String(spec).toLowerCase().replace(/["”]|pulg\w*|plg|in\b|\s/g, '');
   const key = s.replace(/[x×*]/g, 'x');
@@ -121,8 +126,9 @@ export function resolverMaterialFlexible(n, materiales, aviso) {
   if (/pino|madera|wood|radiata|timber/.test(low)) {
     const w = byName.get('pino radiata'); if (w) { if (low !== 'pino radiata') aviso('info', `Material "${n}" interpretado como "${w.nombre}".`); return filaAMaterial(w); }
   }
-  const fcm = low.match(/\b(\d{2,3})\b/);
-  if (fcm && /(horm|h\s*\d|fc|concret)/.test(low)) {
+  const ctx = /(horm|h\s*\d|fc|concret)/.test(low);
+  const fcm = low.match(/(\d{2,3})/);   // sin \b: captura "H50", "fc=50", "hormigón 50"
+  if (ctx && fcm) {
     const fc = +fcm[1]; const c = byName.get('h' + fc); if (c) return filaAMaterial(c);
     const E = Math.round(4700 * Math.sqrt(fc) * 1000);
     aviso('estimado', `Hormigón fc=${fc} MPa estimado (E≈${(E / 1e6).toFixed(0)} GPa).`);
@@ -1075,10 +1081,6 @@ export function generarPuente(ficha, libs) {
   const tCel = /pratt/i.test(String(p.tipo_celosia || p.tipo_viga || '')) ? 'pratt' : (/howe/i.test(String(p.tipo_celosia || p.tipo_viga || '')) ? 'howe' : 'warren');
   const canto = p.canto_m > 0 ? p.canto_m : Math.max(0.8, +(luzP / 8).toFixed(2));
 
-  const secGirder = pickSeccionGen(p.escuadria_viga ?? (ficha.secciones || {}).vigas, perfiles, esMadera ? { b_cm: 15, h_cm: 35 } : { b_cm: 40, h_cm: 80 }, 'Viga/cordón', aviso); secGirder.id = 1;
-  const secPila = pickSeccionGen(p.escuadria_pila ?? (ficha.secciones || {}).pilares, perfiles, { b_cm: 50, h_cm: 50 }, 'Pila', aviso); secPila.id = 2;
-  const secDiag = pickSeccionGen(p.escuadria_diagonal, perfiles, esMadera ? { b_cm: 10, h_cm: 20 } : { b_cm: 25, h_cm: 25 }, 'Diagonal/transversal', aviso); secDiag.id = 3;
-
   const nodes = [], elements = []; let nid = 0, eid = 0; const nodeAt = new Map(), elemAt = new Set();
   const rk = (v) => Math.round(v * 1e5) / 1e5;
   const getNode = (x, y, z, restr) => {
@@ -1090,6 +1092,52 @@ export function generarPuente(ficha, libs) {
   const addEl = (n1, n2, s) => { if (n1 == null || n2 == null || n1 === n2) return null; const ek = `${Math.min(n1, n2)}-${Math.max(n1, n2)}`; if (elemAt.has(ek)) return null; elemAt.add(ek); const id = ++eid; elements.push({ id, n1, n2, matId: 1, secId: s, releases: Array(12).fill(0) }); return id; };
   const serie = (Lt, seg) => { const a = [0]; let x = seg; while (x < Lt - 1e-6) { a.push(+x.toFixed(4)); x += seg; } a.push(+Lt.toFixed(4)); return a; };
   const empot = { ux: 1, uy: 1, uz: 1, rx: 1, ry: 1, rz: 1 };
+  const sec = ficha.secciones || {};
+
+  // ── Modo VIGA CENTRAL (parrilla): 1 viga longitudinal + transversales sobre cepas ──
+  const esVigaCentral = /central|parrilla|grillage|spine/i.test(String(p.tipo || p.tipo_viga || '')) ||
+    p.escuadria_transversal != null || sec.vigas_transversales != null || sec.transversales != null;
+  if (esVigaCentral) {
+    const secLong = pickSeccionGen(p.escuadria_longitudinal ?? p.escuadria_viga ?? sec.vigas ?? sec.longitudinal, perfiles, { b_cm: 50, h_cm: 100 }, 'Viga longitudinal', aviso); secLong.id = 1;
+    const secTransv = pickSeccionGen(p.escuadria_transversal ?? sec.vigas_transversales ?? sec.transversales, perfiles, { b_cm: 30, h_cm: 60 }, 'Viga transversal', aviso); secTransv.id = 2;
+    const secCepa = pickSeccionGen(p.escuadria_pila ?? sec.pilares ?? sec.cepas, perfiles, { b_cm: 100, h_cm: 100 }, 'Cepa/pila', aviso); secCepa.id = 3;
+    const sepT = p.separacion_transversal_m > 0 ? p.separacion_transversal_m : 2;
+    const Xt = serie(L, sepT), Xpc = serie(L, luzP);
+    const Xg = [...new Set([...Xt, ...Xpc].map((v) => +v.toFixed(4)))].sort((a, b) => a - b);
+    // viga longitudinal central (y=0, z=H)
+    for (let i = 0; i < Xg.length - 1; i++) addEl(getNode(Xg[i], 0, H), getNode(Xg[i + 1], 0, H), secLong.id);
+    // cepas (columna central empotrada) en cada posición de cepa
+    for (const xp of Xpc) addEl(getNode(xp, 0, 0, empot), getNode(xp, 0, H), secCepa.id);
+    // vigas transversales en cada Xt (de −W/2 a W/2, pasando por el nodo central de la viga)
+    const transvEls = [];
+    for (const xt of Xt) { const c = getNode(xt, 0, H); transvEls.push(addEl(getNode(xt, -W / 2, H), c, secTransv.id), addEl(c, getNode(xt, W / 2, H), secTransv.id)); }
+    // carga lineal uniforme SOLO en las vigas transversales
+    const cg = ficha.cargas || {};
+    let qL = p.carga_transversal_kN_m ?? cg.linea_kN_m ?? cg.carga_kN_m;
+    if (qL == null) { qL = 10; aviso('estimado', 'Carga lineal sobre las transversales no indicada: 10 kN/m.'); }
+    const lcCMv = { id: 1, name: 'CM', loads: [], selfWeight: true, type: 'static', specDir: null };
+    const lcCVv = { id: 2, name: 'CV', loads: [], selfWeight: false, type: 'static', specDir: null };
+    for (const e of transvEls) if (e != null) lcCVv.loads.push({ type: 'dist', elemId: e, dir: 'gravity', w: +qL.toFixed(6) });
+    return {
+      version: '1.0', units: 'kN-m', mode: '3D',
+      nodes, elements, materials: [mat], sections: [secLong, secTransv, secCepa], diaphragms: [],
+      loadCases: [lcCMv, lcCVv],
+      combinations: [{ id: 1, name: '1.4CM', factors: [{ lcId: 1, factor: 1.4 }] }, { id: 2, name: '1.2CM+1.6CV', factors: [{ lcId: 1, factor: 1.2 }, { lcId: 2, factor: 1.6 }] }],
+      grids: { x: Xg, y: [-W / 2, 0, W / 2], z: [0, H] },
+      _counters: { nodes: nodes.length, elements: elements.length, materials: 1, sections: 3, diaphragms: 0, loadCases: 2, combinations: 2 },
+      _generado: {
+        por: 'asistente/generador.js (puente viga central)',
+        reglas: (libs.reglas && libs.reglas._meta) ? libs.reglas._meta.version : undefined,
+        resumen: `puente viga central ${L} m × ${W} m, transversales @${sepT} m (${Xt.length}), cepas @${luzP} m (${Xpc.length}): ${nodes.length} nodos, ${elements.length} barras`,
+      },
+      _avisos: avisos,
+    };
+  }
+
+  // ── Modo TABLERO (2 vigas longitudinales laterales) ──
+  const secGirder = pickSeccionGen(p.escuadria_viga ?? sec.vigas, perfiles, esMadera ? { b_cm: 15, h_cm: 35 } : { b_cm: 40, h_cm: 80 }, 'Viga/cordón', aviso); secGirder.id = 1;
+  const secPila = pickSeccionGen(p.escuadria_pila ?? sec.pilares, perfiles, { b_cm: 50, h_cm: 50 }, 'Pila', aviso); secPila.id = 2;
+  const secDiag = pickSeccionGen(p.escuadria_diagonal, perfiles, esMadera ? { b_cm: 10, h_cm: 20 } : { b_cm: 25, h_cm: 25 }, 'Diagonal/transversal', aviso); secDiag.id = 3;
 
   const Xp = serie(L, luzP);             // posiciones de pilas
   const ys = [0, W];                      // dos planos de vigas (bordes del tablero)
