@@ -46,6 +46,32 @@ function parseCSV(txt) {
 const json = (obj, status = 200, extra = {}) =>
   new Response(JSON.stringify(obj), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', ...extra } });
 
+// ── RAG: corpus de ejemplos + recuperación léxica (few-shot dinámico) ──────────
+let _CORPUS = null;   // cache por instancia del Worker
+async function cargarCorpus(env, base) {
+  if (_CORPUS) return _CORPUS;
+  try {
+    const r = await env.ASSETS.fetch(new Request(new URL('/asistente/ejemplos.json', base)));
+    const data = await r.json();
+    _CORPUS = Array.isArray(data.ejemplos) ? data.ejemplos : [];
+  } catch { _CORPUS = []; }
+  return _CORPUS;
+}
+const STOP_RAG = new Set(['de', 'del', 'la', 'el', 'los', 'las', 'y', 'o', 'en', 'con', 'un', 'una', 'para', 'por', 'que', 'es', 'al', 'm', 'cm', 'mm', 'cada', 'tipo']);
+const tokRAG = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter((t) => t.length > 1 && !STOP_RAG.has(t));
+// Recupera los k ejemplos más parecidos (solape de tokens) al mensaje del usuario.
+function recuperarEjemplos(mensaje, corpus, k = 3) {
+  const q = new Set(tokRAG(mensaje));
+  if (!q.size || !corpus.length) return { ejemplos: [], score: 0 };
+  const rank = corpus.map((ej) => {
+    const t = tokRAG(`${ej.desc} ${JSON.stringify(ej.ficha.tipologia || '')}`);
+    let s = 0; for (const w of t) if (q.has(w)) s++;
+    return { ej, score: s / Math.sqrt(t.length || 1) };
+  }).sort((a, b) => b.score - a.score);
+  const top = rank.filter((r) => r.score > 0).slice(0, k);
+  return { ejemplos: top.map((r) => r.ej), score: top.length ? top[0].score : 0 };
+}
+
 async function cargarBibliotecas(env, base) {
   const get = (p) => env.ASSETS.fetch(new Request(new URL(p, base)));
   const [reglas, pTxt, mTxt, sTxt] = await Promise.all([
@@ -79,7 +105,10 @@ function proveedoresLLM(env) {
   return lista;
 }
 
-async function llamarModelo(prov, modelo, mensaje) {
+async function llamarModelo(prov, modelo, mensaje, fewshot = []) {
+  // few-shot dinámico (RAG): pares usuario→ficha de los ejemplos recuperados
+  const ejMsgs = [];
+  for (const ej of fewshot) { ejMsgs.push({ role: 'user', content: ej.desc }, { role: 'assistant', content: JSON.stringify(ej.ficha) }); }
   return fetch(prov.url, {
     method: 'POST',
     headers: { Authorization: `Bearer ${prov.key}`, 'Content-Type': 'application/json', ...prov.extraHeaders },
@@ -87,18 +116,18 @@ async function llamarModelo(prov, modelo, mensaje) {
       model: modelo,
       temperature: 0,
       response_format: { type: 'json_object' },
-      messages: [{ role: 'system', content: SYSTEM }, { role: 'user', content: mensaje }],
+      messages: [{ role: 'system', content: SYSTEM }, ...ejMsgs, { role: 'user', content: mensaje }],
     }),
   });
 }
 
-async function fichaDesdeLLM(mensaje, env) {
+async function fichaDesdeLLM(mensaje, env, fewshot = []) {
   const provs = proveedoresLLM(env);
   if (!provs.length) throw new Error('Falta el secreto OPENAI_API_KEY u OPENROUTER_API_KEY en el Worker.');
   const intentos = [];   // log de cada intento (para diagnóstico)
   for (const prov of provs) {
     for (const modelo of prov.modelos) {
-      const r = await llamarModelo(prov, modelo, mensaje);
+      const r = await llamarModelo(prov, modelo, mensaje, fewshot);
       if (r.ok) {
         const data = await r.json();
         if (data.error) { intentos.push(`${prov.nombre}/${modelo}: ${data.error.message || JSON.stringify(data.error)}`); continue; }
@@ -127,15 +156,25 @@ export default {
       if (request.method !== 'POST') return json({ error: 'Use POST' }, 405);
       try {
         const body = await request.json();
-        let ficha = body.ficha ?? null, llm = null;
-        if (!ficha && body.mensaje) { const res = await fichaDesdeLLM(body.mensaje, env); ficha = res.ficha; llm = res.llm; }
+        let ficha = body.ficha ?? null, llm = null, rag = null;
+        if (!ficha && body.mensaje) {
+          // RAG: recuperar ejemplos parecidos del corpus e inyectarlos como few-shot
+          const corpus = await cargarCorpus(env, request.url);
+          const rec = recuperarEjemplos(body.mensaje, corpus, 3);
+          rag = { usados: rec.ejemplos.map((e) => e.desc.slice(0, 60)), score: +rec.score.toFixed(3), novedoso: rec.score < 0.5 };
+          const res = await fichaDesdeLLM(body.mensaje, env, rec.ejemplos);
+          ficha = res.ficha; llm = res.llm;
+          // Revisión semanal: registra el pedido (sobre todo los novedosos) si hay KV bindeado.
+          if (env.ASIS_LOG) {
+            try { await env.ASIS_LOG.put(`req:${Date.now()}`, JSON.stringify({ mensaje: body.mensaje, tipologia: ficha.tipologia, score: rag.score, novedoso: rag.novedoso, modelo: llm?.modelo }), { expirationTtl: 60 * 60 * 24 * 120 }); } catch { /* no bloquear */ }
+          }
+        }
         if (!ficha) return json({ error: 'Envíe { mensaje } o { ficha }' }, 400);
         const libs = await cargarBibliotecas(env, request.url);
         const modelo = generarModelo(ficha, libs);
-        // _llm informa proveedor y modelo que generó la ficha (null si se envió ficha directa).
-        // También se expone en encabezados HTTP X-Asistente-Proveedor / X-Asistente-Modelo.
+        // _llm: proveedor/modelo usado. _rag: ejemplos recuperados + si el pedido fue 'novedoso'.
         const hdr = llm ? { 'X-Asistente-Proveedor': llm.proveedor, 'X-Asistente-Modelo': String(llm.modelo) } : {};
-        return json({ ficha, resumen: modelo._generado?.resumen, modelo, _llm: llm }, 200, hdr);
+        return json({ ficha, resumen: modelo._generado?.resumen, modelo, _llm: llm, _rag: rag }, 200, hdr);
       } catch (e) {
         return json({ error: String(e.message || e) }, 500);
       }
