@@ -11,9 +11,9 @@
     "modo": { "type": "string", "enum": ["2D", "3D"], "description": "2D = pórtico plano X–Z (sin ejes Y)." },
     "tipologia": {
       "type": "string",
-      "enum": ["marco", "muros_madera"],
+      "enum": ["marco", "muros_madera", "cercha"],
       "default": "marco",
-      "description": "marco = pórtico de pilares y vigas (acero/hormigón). muros_madera = entramado ligero de madera (tabiques con pies derechos + soleras + viguetas de piso). Para edificaciones de madera con tabiques use 'muros_madera' y rellene 'tabiques' y 'entrepisos'."
+      "description": "marco = pórtico de pilares y vigas (acero/hormigón). muros_madera = entramado ligero de madera (tabiques con pies derechos + soleras + viguetas de piso). cercha = cercha/celosía de techo a dos aguas tipo Warren (rellene 'cercha')."
     },
 
     "ubicacion": {
@@ -137,6 +137,8 @@
         "escuadria": { "type": "string", "description": "Escuadría del pie derecho en pulgadas, ej. '2x4', '2x6'. También acepta {b_cm,h_cm} pero lo normal es la escuadría comercial." },
         "separacion_m": { "type": "number", "exclusiveMinimum": 0, "default": 0.4, "description": "Separación entre pies derechos (ej. 0.4 = @40 cm)." },
         "perimetro": { "type": "boolean", "default": true, "description": "Generar los 4 muros perimetrales en cada nivel." },
+        "diagonales": { "type": "boolean", "default": true, "description": "Agregar diagonales de arriostramiento (en zigzag) a los tabiques." },
+        "diagonal_tramos": { "type": "integer", "minimum": 2, "default": 3, "description": "Nº de tramos entre pies derechos que abarca cada diagonal (3 tramos = cruza 2 pies derechos)." },
         "interiores": {
           "type": "array",
           "description": "Tabiques interiores. Cada uno es una línea en planta con aberturas opcionales (puertas/ventanas).",
@@ -176,6 +178,21 @@
         "escuadria": { "type": "string", "description": "Escuadría de la vigueta en pulgadas, ej. '2x8', '2x10'." },
         "separacion_m": { "type": "number", "exclusiveMinimum": 0, "default": 0.6, "description": "Separación entre viguetas (ej. 0.6 = @60 cm)." },
         "dir": { "type": "string", "enum": ["X", "Y"], "default": "X", "description": "Dirección en que corren las viguetas (apoyadas en los muros perpendiculares)." }
+      }
+    },
+
+    "cercha": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Solo tipologia = 'cercha'. Cercha de techo a dos aguas tipo Warren (celosía triangulada, diagonales en zigzag). Se genera UNA cercha plana representativa (plano X–Z), cargada por su ancho tributario (separacion_m).",
+      "properties": {
+        "luz_m": { "type": "number", "exclusiveMinimum": 0, "default": 6, "description": "Luz total entre apoyos (m)." },
+        "pendiente_pct": { "type": "number", "minimum": 0, "default": 10, "description": "Pendiente del techo en % (10 = 10%). Alternativa: altura_cumbrera_m." },
+        "altura_cumbrera_m": { "type": "number", "exclusiveMinimum": 0, "description": "Altura de la cumbrera sobre los apoyos (override de pendiente_pct)." },
+        "n_paneles": { "type": "integer", "minimum": 2, "default": 8, "description": "Nº de paneles del cordón inferior (par, para que coincida la cumbrera)." },
+        "separacion_m": { "type": "number", "exclusiveMinimum": 0, "default": 0.6, "description": "Separación entre cerchas (ancho tributario de carga; ej. 0.6 = @60 cm)." },
+        "escuadria_cordon": { "type": "string", "description": "Escuadría de los cordones (superior e inferior), ej. '2x6'." },
+        "escuadria_diagonal": { "type": "string", "description": "Escuadría de diagonales/montantes, ej. '2x4'." }
       }
     }
   },

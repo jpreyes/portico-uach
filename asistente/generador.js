@@ -149,8 +149,9 @@ function tributario(ejes, j) {
  * @returns {object}        modelo .s3d (listo para JSON.stringify y abrir en PÓRTICO)
  */
 export function generarModelo(ficha, libs) {
-  // Despacho por tipología: entramado de madera tiene geometría propia.
+  // Despacho por tipología: madera y cercha tienen geometría propia.
   const tip = String(ficha.tipologia || 'marco').toLowerCase();
+  if (/cercha|celos|warren|truss/.test(tip)) return generarCercha(ficha, libs);
   if (/madera|tabiqu|entramad|light.?frame/.test(tip)) return generarMurosMadera(ficha, libs);
 
   const { reglas, perfiles, materiales } = libs;
@@ -601,6 +602,8 @@ export function generarMurosMadera(ficha, libs) {
   const sepJoist = ep.separacion_m > 0 ? ep.separacion_m : 0.6;
   const dirJ = (ep.dir === 'Y') ? 'Y' : 'X';   // dirección en que corren las viguetas
   const perim = tb.perimetro !== false;
+  const diagOn = tb.diagonales !== false;       // arriostramiento de tabiques (por defecto sí)
+  const diagTramos = tb.diagonal_tramos >= 2 ? Math.floor(tb.diagonal_tramos) : 3; // tramos que abarca cada diagonal
 
   // ── Registro de nodos/elementos (con fusión por coordenada y deduplicado) ──
   const nodes = [], elements = [];
@@ -667,6 +670,20 @@ export function generarMurosMadera(ficha, libs) {
       addEl(P(ab.b, zb), P(ab.b, zh), secStud.id); addEl(P(ab.b, zh), P(ab.b, zt), secStud.id);
       addEl(P(ab.a, zh), P(ab.b, zh), secStud.id);   // dintel
     }
+    // diagonales de arriostramiento en zigzag (cada diagonal abarca diagTramos
+    // tramos de pies derechos → cruza diagTramos−1 pies derechos). Se saltan los
+    // tramos que caen sobre una abertura.
+    if (diagOn && studs.length > diagTramos) {
+      let sube = true;   // alterna sentido para formar el zigzag
+      for (let j = 0; j + diagTramos < studs.length; j += diagTramos) {
+        const cA = studs[j], cB = studs[j + diagTramos];
+        const cruzaVano = aberturas.some((ab) => !(cB <= ab.a + 1e-6 || cA >= ab.b - 1e-6));
+        if (cruzaVano) { sube = !sube; continue; }
+        if (sube) addEl(P(cA, zb), P(cB, zt), secStud.id);
+        else addEl(P(cA, zt), P(cB, zb), secStud.id);
+        sube = !sube;
+      }
+    }
   };
 
   // Posiciones de pies derechos y de viguetas
@@ -728,7 +745,7 @@ export function generarMurosMadera(ficha, libs) {
   let qCVfloor = cargas.sobrecarga_uso_kN_m2;
   if (qCVfloor == null) { qCVfloor = 2.0; aviso('estimado', 'Sobrecarga de uso no indicada: se usó 2.0 kN/m² (habitacional, NCh1537).'); }
   const qRoof = 1.0;
-  if (nNiv >= 1) aviso('info', `Techo (nivel ${nNiv}) modelado como plataforma plana de viguetas con sobrecarga ${qRoof} kN/m². Las cerchas son una tipología aparte.`);
+  if (nNiv >= 1) aviso('info', `Techo (nivel ${nNiv}) modelado como plataforma plana de viguetas con sobrecarga ${qRoof} kN/m². Para techo de cerchas use la tipología 'cercha' (Warren a dos aguas).`);
   const cvAt = (k) => (k < nNiv ? qCVfloor : qRoof);
 
   const lcCM = { id: 1, name: 'CM', loads: [], selfWeight: true, type: 'static', specDir: null };
@@ -762,6 +779,129 @@ export function generarMurosMadera(ficha, libs) {
       por: 'asistente/generador.js (muros_madera)',
       reglas: (libs.reglas && libs.reglas._meta) ? libs.reglas._meta.version : undefined,
       resumen: `${nodes.length} nodos, ${elements.length} elementos (entramado de madera), ${joists.length} viguetas`,
+    },
+    _avisos: avisos,
+  };
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Tipología CERCHA WARREN a dos aguas (celosía triangulada de techo)
+//   Cercha plana representativa (plano X–Z, modo 2D), cargada por su ancho
+//   tributario (separacion entre cerchas). Cordón inferior horizontal; cordón
+//   superior a dos aguas (cumbrera al centro); web Warren (diagonales en zigzag,
+//   una por panel, alternando) + pendolón en la cumbrera. Resiliente.
+// ──────────────────────────────────────────────────────────────────────────────
+export function generarCercha(ficha, libs) {
+  const materiales = libs.materiales || [];
+  const matPorNombre = new Map(materiales.map((m) => [String(m.nombre).trim(), m]));
+  const avisos = [];
+  const aviso = (tipo, msg) => avisos.push({ tipo, msg });
+
+  const pickMat = (n) => {
+    if (n != null) {
+      const ex = matPorNombre.get(String(n).trim());
+      if (ex) return filaAMaterial(ex);
+      if (/pino|madera|wood|radiata|timber/i.test(String(n))) {
+        const m2 = matPorNombre.get('Pino Radiata');
+        if (m2) { aviso('info', `Material "${n}" interpretado como "${m2.nombre}".`); return filaAMaterial(m2); }
+      }
+    }
+    const def = matPorNombre.get('Pino Radiata');
+    aviso('reemplazo', `Material ${n == null ? '(no indicado)' : `"${n}"`}: se usó Pino Radiata por defecto (cercha de madera).`);
+    return def ? filaAMaterial(def) : { name: 'Pino Radiata', E: 1.0e7, G: 6.25e5, nu: 0.3, rho: 0.45 };
+  };
+  const mat = pickMat((ficha.secciones || {}).material); mat.id = 1;
+
+  const c = ficha.cercha || {};
+  const pickSec = (spec, label, defKey) => {
+    const r = escuadriaASeccion(spec, label);
+    if (r) { if (spec) aviso('info', `${label}: ${r.etiqueta}.`); return r.sec; }
+    aviso('reemplazo', `${label}: escuadría ${spec == null ? '(no indicada)' : `"${spec}"`} no reconocida: se usó ${defKey}" por defecto.`);
+    return escuadriaASeccion(defKey, label).sec;
+  };
+  const secCord = pickSec(c.escuadria_cordon, 'Cordón', '2x6'); secCord.id = 1;
+  const secDiag = pickSec(c.escuadria_diagonal, 'Diagonal', '2x4'); secDiag.id = 2;
+
+  // ── Geometría a dos aguas ──
+  let L = c.luz_m > 0 ? c.luz_m : 6; if (!(c.luz_m > 0)) aviso('reemplazo', 'No se indicó luz: se usó 6 m.');
+  let n = Math.max(2, Math.round(c.n_paneles || 8)); if (n % 2) { n += 1; aviso('info', `n_paneles ajustado a ${n} (par) para que la cumbrera coincida con un nodo.`); }
+  const usaAltura = c.altura_cumbrera_m > 0;
+  const slope = (c.pendiente_pct >= 0 ? c.pendiente_pct : 10) / 100;
+  const hR = usaAltura ? c.altura_cumbrera_m : slope * (L / 2);
+  if (!usaAltura && c.pendiente_pct == null) aviso('reemplazo', 'No se indicó pendiente: se usó 10%.');
+  const sep = c.separacion_m > 0 ? c.separacion_m : 0.6;
+  const Bx = (i) => +(i * L / n).toFixed(5);
+  const roofZ = (x) => +(x <= L / 2 ? (2 * hR / L) * x : (2 * hR / L) * (L - x)).toFixed(5);
+
+  const nodes = [], elements = []; let nid = 0, eid = 0;
+  const nodeAt = new Map(), elemAt = new Set();
+  const rk = (v) => Math.round(v * 1e5) / 1e5;
+  const node = (x, z, restr) => {
+    const k = `${rk(x)}|${rk(z)}`;
+    let id = nodeAt.get(k);
+    if (id == null) {
+      id = ++nid; nodeAt.set(k, id);
+      nodes.push({ id, x: rk(x), y: 0, z: rk(z), restraints: restr || { ux: 0, uy: 0, uz: 0, rx: 0, ry: 0, rz: 0 }, nodeMass: { mx: 0, my: 0, mz: 0 }, springs: { kux: 0, kuy: 0, kuz: 0, krx: 0, kry: 0, krz: 0 } });
+    } else if (restr) Object.assign(nodes[id - 1].restraints, restr);
+    return id;
+  };
+  const addEl = (n1, n2, secId) => {
+    if (n1 == null || n2 == null || n1 === n2) return null;
+    const ek = `${Math.min(n1, n2)}-${Math.max(n1, n2)}`;
+    if (elemAt.has(ek)) return null; elemAt.add(ek);
+    const id = ++eid; elements.push({ id, n1, n2, matId: 1, secId, releases: Array(12).fill(0) }); return id;
+  };
+
+  // apoyos (2D plano X–Z: GDL activos ux, uz, ry). Pin en x=0, rodillo en x=L.
+  const empot = ficha.apoyo_base === 'empotrado';
+  const B = [], T = [];
+  for (let i = 0; i <= n; i++) {
+    const x = Bx(i);
+    let restr = null;
+    if (i === 0) restr = empot ? { ux: 1, uy: 1, uz: 1, rx: 1, ry: 1, rz: 1 } : { ux: 1, uy: 1, uz: 1, rx: 0, ry: 0, rz: 0 };
+    else if (i === n) restr = empot ? { ux: 1, uy: 1, uz: 1, rx: 1, ry: 1, rz: 1 } : { ux: 0, uy: 1, uz: 1, rx: 0, ry: 0, rz: 0 };
+    B[i] = node(x, 0, restr);
+    T[i] = node(x, roofZ(x));   // en i=0 e i=n, roofZ=0 → mismo nodo que B (alero)
+  }
+  for (let i = 0; i < n; i++) addEl(B[i], B[i + 1], secCord.id);     // cordón inferior
+  const topEls = [];
+  for (let i = 0; i < n; i++) topEls[i] = addEl(T[i], T[i + 1], secCord.id);  // cordón superior (dos aguas)
+  for (let i = 0; i < n; i++) {                                       // diagonales Warren (zigzag)
+    if (i % 2 === 0) addEl(B[i], T[i + 1], secDiag.id);
+    else addEl(T[i], B[i + 1], secDiag.id);
+  }
+  addEl(B[n / 2], T[n / 2], secDiag.id);   // pendolón (montante en la cumbrera)
+
+  // ── Cargas de techo sobre el cordón superior (por ancho tributario) ──
+  // w = q·sep·dx / L_inclinado  → conserva la resultante vertical (Σ = q·sep·L).
+  const cargas = ficha.cargas || {};
+  let qCM = cargas.muerta_adicional_kN_m2; if (qCM == null) { qCM = 0.3; aviso('estimado', 'Peso de cubierta no indicado: se usó 0.3 kN/m².'); }
+  let qCV = cargas.sobrecarga_uso_kN_m2; if (qCV == null) { qCV = 1.0; aviso('estimado', 'Sobrecarga/nieve de techo no indicada: se usó 1.0 kN/m².'); }
+  const lcCM = { id: 1, name: 'CM', loads: [], selfWeight: true, type: 'static', specDir: null };
+  const lcCV = { id: 2, name: 'CV', loads: [], selfWeight: false, type: 'static', specDir: null };
+  for (let i = 0; i < n; i++) {
+    const xa = Bx(i), xb = Bx(i + 1), dx = xb - xa;
+    const Lsl = Math.hypot(xb - xa, roofZ(xb) - roofZ(xa)) || dx;
+    if (qCM > 0) lcCM.loads.push({ type: 'dist', elemId: topEls[i], dir: 'gravity', w: +(qCM * sep * dx / Lsl).toFixed(6) });
+    if (qCV > 0) lcCV.loads.push({ type: 'dist', elemId: topEls[i], dir: 'gravity', w: +(qCV * sep * dx / Lsl).toFixed(6) });
+  }
+  const loadCases = [lcCM, lcCV];
+  const combinations = [
+    { id: 1, name: '1.4CM', factors: [{ lcId: 1, factor: 1.4 }] },
+    { id: 2, name: '1.2CM+1.6CV', factors: [{ lcId: 1, factor: 1.2 }, { lcId: 2, factor: 1.6 }] },
+  ];
+
+  return {
+    version: '1.0', units: 'kN-m', mode: '2D',
+    nodes, elements,
+    materials: [mat], sections: [secCord, secDiag], diaphragms: [],
+    loadCases, combinations,
+    grids: { x: B.map((_, i) => Bx(i)), y: [0], z: [0, hR] },
+    _counters: { nodes: nodes.length, elements: elements.length, materials: 1, sections: 2, diaphragms: 0, loadCases: 2, combinations: 2 },
+    _generado: {
+      por: 'asistente/generador.js (cercha Warren)',
+      reglas: (libs.reglas && libs.reglas._meta) ? libs.reglas._meta.version : undefined,
+      resumen: `cercha Warren ${L} m, pendiente ${(slope * 100).toFixed(0)}%, cumbrera ${hR.toFixed(2)} m, ${nodes.length} nodos, ${elements.length} barras`,
     },
     _avisos: avisos,
   };
