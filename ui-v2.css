@@ -116,6 +116,9 @@ button:focus-visible, select:focus-visible, input:focus-visible {
   -webkit-background-clip: text; background-clip: text;
 }
 :root[data-theme="light"] .hero-chips span { background: rgba(255, 255, 255, 0.72); }
+/* Modo claro: la etiqueta del asistente en negro (no gris claro) y placeholder legible. */
+:root[data-theme="light"] .hero-assistant-label { color: var(--text) !important; font-weight: 600; }
+:root[data-theme="light"] #landing-nl::placeholder { color: #74839a; opacity: 1; }
 :root[data-theme="light"] #landing::before {
   background-image:
     linear-gradient(rgba(40, 70, 110, 0.06) 1px, transparent 1px),
@@ -201,8 +204,8 @@ button:focus-visible, select:focus-visible, input:focus-visible {
   stroke: var(--accent);
   stroke-width: 3;
   stroke-linecap: round;
-  stroke-dasharray: 640;
-  stroke-dashoffset: 640;
+  stroke-dasharray: 820;
+  stroke-dashoffset: 820;
   animation: draw-path 2.2s 0.6s cubic-bezier(0.6, 0, 0.2, 1) forwards;
   filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.45));
 }

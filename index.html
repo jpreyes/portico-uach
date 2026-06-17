@@ -29,8 +29,8 @@
       window.dispatchEvent(new Event('pwa-installed'));
     });
   </script>
-  <link rel="stylesheet" href="style.css?v=53">
-  <link rel="stylesheet" href="ui-v2.css?v=53">
+  <link rel="stylesheet" href="style.css?v=54">
+  <link rel="stylesheet" href="ui-v2.css?v=54">
   <script type="importmap">
   {
     "imports": {
@@ -81,6 +81,7 @@
           <li class="sep"></li>
           <li data-action="disc-all">Discretizar Todo…</li>
           <li data-action="join-elems">Unir Elementos Seleccionados</li>
+          <li data-action="inter-elems">Unir en Intersección (crear nodo)…</li>
           <li class="sep"></li>
           <li data-action="grids">Definir Ejes de Grilla…</li>
         </ul>
@@ -649,7 +650,7 @@
           <div>
             <h2 style="margin:0">PÓRTICO</h2>
             <p style="margin:2px 0 0;color:var(--text-muted)">Laboratorio virtual de análisis estructural 3D
-              · <b id="help-version">versión 53</b> · junio 2026</p>
+              · <b id="help-version">versión 54</b> · junio 2026</p>
           </div>
         </div>
         <p><b>Material docente</b> desarrollado por el <b>Dr. Juan Patricio Reyes C.</b> —
@@ -660,8 +661,8 @@
            lo que el software comercial esconde — matrices, transformaciones, equilibrio,
            formas modales — y conectarlo con el cálculo manual del curso.</p>
         <div class="help-logos">
-          <img src="icons/UACh-color-blanco.svg" alt="Universidad Austral de Chile">
-          <img src="icons/Facultad-color-blanco.svg" alt="Facultad de Ciencias de la Ingeniería">
+          <img src="icons/UACh-color-negro.svg" alt="Universidad Austral de Chile">
+          <img src="icons/Facultad-color-negro.svg" alt="Facultad de Ciencias de la Ingeniería">
           <img class="logo-chip" src="icons/IOC-color.svg" alt="Instituto de Obras Civiles">
         </div>
         <h2>Capacidades</h2>
@@ -693,7 +694,7 @@
 <!-- ══ PORTADA — pantalla de bienvenida ══ -->
 <div id="landing">
   <header class="landing-inst">
-    <img class="inst-logo" src="icons/UACh-color-blanco.svg" alt="Universidad Austral de Chile">
+    <img class="inst-logo" src="icons/UACh-color-negro.svg" alt="Universidad Austral de Chile">
     <div class="inst-names">
       <strong>Universidad Austral de Chile</strong>
       <span>Facultad de Ciencias de la Ingeniería · Instituto de Obras Civiles</span>
@@ -704,15 +705,20 @@
     <svg id="hero-frame" viewBox="0 0 360 240" aria-hidden="true">
       <!-- pórtico sin deformar -->
       <path class="frame-line" d="M70 210 V60 H290 V210"/>
-      <!-- deformada lateral animada -->
-      <path class="frame-deformed" d="M70 210 C 72 150, 84 96, 100 62 L 318 62 C 304 96, 292 150, 290 210"/>
-      <!-- apoyos -->
+      <!-- deformada por sismo/viento (sway). Base articulada: curvatura nula en
+           los apoyos; nudos rígidos viga-pilar (90° conservados) → pilares en
+           curvatura simple y viga en doble curvatura antisimétrica. -->
+      <path class="frame-deformed" d="M70 210 C 82 158, 104 110, 104 60 C 165 66, 261 54, 322 60 C 322 110, 300 158, 290 210"/>
+      <!-- apoyos ARTICULADOS (rótula): triángulo sobre suelo achurado, sin rodillo -->
       <path class="frame-support" d="M56 226 L84 226 L70 210 Z"/>
+      <path class="frame-support" d="M54 226 H86"/>
+      <path class="frame-support" d="M58 226 L52 233 M66 226 L60 233 M74 226 L68 233 M82 226 L76 233"/>
       <path class="frame-support" d="M276 226 L304 226 L290 210 Z"/>
-      <path class="frame-support" d="M50 232 H90 M270 232 H310"/>
-      <!-- nudos -->
-      <circle class="frame-node" cx="70"  cy="60" r="6"/>
-      <circle class="frame-node" cx="290" cy="60" r="6"/>
+      <path class="frame-support" d="M274 226 H306"/>
+      <path class="frame-support" d="M278 226 L272 233 M286 226 L280 233 M294 226 L288 233 M302 226 L296 233"/>
+      <!-- nudos rígidos (esquinas) ubicados sobre el pórtico DEFORMADO -->
+      <circle class="frame-node" cx="104" cy="60" r="6"/>
+      <circle class="frame-node" cx="322" cy="60" r="6"/>
     </svg>
 
     <h1 class="hero-title">PÓRTICO</h1>
@@ -727,10 +733,10 @@
       <span>Espectro de respuesta</span><span>Combinaciones</span><span>Diafragmas rígidos</span>
     </div>
     <div class="hero-assistant" style="max-width:620px;margin:6px auto 14px;text-align:left">
-      <label style="display:block;font-size:12px;color:var(--text-muted,#9aa);margin-bottom:4px">✦ Empieza con el asistente: describe tu estructura y se modela sola</label>
+      <label class="hero-assistant-label" style="display:block;font-size:12px;color:var(--text-muted,#9aa);margin-bottom:4px">✦ Empieza con el asistente: describe tu estructura y se modela sola</label>
       <textarea id="landing-nl" rows="5"
         placeholder="Ej.: edificio de 4 niveles de 3 m, 3 vanos de 6 m en X y 2 de 5 m en Y, hormigón H30, vigas 25x50, pilares 35x35, salas de clases, en Valdivia, con sismo zona 2 suelo D"
-        style="width:100%;box-sizing:border-box;resize:vertical;min-height:120px;border-radius:8px;border:1px solid var(--border,#334);background:rgba(255,255,255,.06);color:#fff;padding:11px 13px;font-size:14px;line-height:1.45;font-family:inherit"></textarea>
+        style="width:100%;box-sizing:border-box;resize:vertical;min-height:120px;border-radius:8px;border:1px solid var(--border,#334);background:var(--bg-elev,#141b27);color:var(--text,#e6edf3);padding:11px 13px;font-size:14px;line-height:1.45;font-family:inherit"></textarea>
       <button id="btn-landing-gen" type="button" style="margin-top:7px;width:100%">✦ Generar modelo con el asistente</button>
     </div>
     <div class="hero-actions">
@@ -744,7 +750,7 @@
 
   <footer class="landing-credit">
     <div class="landing-logos">
-      <img src="icons/Facultad-color-blanco.svg" alt="Facultad de Ciencias de la Ingeniería">
+      <img src="icons/Facultad-color-negro.svg" alt="Facultad de Ciencias de la Ingeniería">
       <img class="logo-chip" src="icons/IOC-color.svg" alt="Instituto de Obras Civiles">
     </div>
     Material docente desarrollado por <strong>Dr. Juan Patricio Reyes C.</strong> —
@@ -841,7 +847,7 @@
 
 <!-- numeric.js para solver (Fase 2+) -->
 <script src="lib/numeric.js"></script>
-<script type="module" src="js/app.js?v=53"></script>
+<script type="module" src="js/app.js?v=54"></script>
 
 <!-- PWA: registrar el service worker (offline). Solo en contexto seguro
      (https o localhost); el navegador deja navigator.serviceWorker undefined

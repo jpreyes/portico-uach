@@ -70,6 +70,7 @@ export class MenuBar {
       case 'delete':      a.deleteSelected(); break;
       case 'disc-all':    a.discretizeAllDialog();    break;
       case 'join-elems':  a.joinSelectedElements();   break;
+      case 'inter-elems': a.unirInterseccion();       break;
       case 'grids':       a.defineGridsDialog();      break;
       case 'global-matrices': a.showGlobalMatrices(); break;
       case 'help-guia':     a.openHelp('guia');     break;

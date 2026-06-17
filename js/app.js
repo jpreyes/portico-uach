@@ -1,21 +1,21 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=53';
-import { Serializer }      from './model/serializer.js?v=53';
-import { Viewport }        from './ui/viewport.js?v=53';
-import { PropertiesPanel } from './ui/properties.js?v=53';
-import { MenuBar }         from './ui/menu.js?v=53';
-import { UndoStack }       from './utils/undo.js?v=53';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=53';
-import { Results }                         from './solver/postprocess.js?v=53';
-import { ModalSolver }                     from './solver/modal_solver.js?v=53';
-import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=53';
-import { ModalResults }                    from './solver/modal_results.js?v=53';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=53';
-import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=53';
-import { splitElement, splitByLength, discretizeAll, joinElements } from './model/discretize.js?v=53';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=53';
+import { Model }           from './model/model.js?v=54';
+import { Serializer }      from './model/serializer.js?v=54';
+import { Viewport }        from './ui/viewport.js?v=54';
+import { PropertiesPanel } from './ui/properties.js?v=54';
+import { MenuBar }         from './ui/menu.js?v=54';
+import { UndoStack }       from './utils/undo.js?v=54';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=54';
+import { Results }                         from './solver/postprocess.js?v=54';
+import { ModalSolver }                     from './solver/modal_solver.js?v=54';
+import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=54';
+import { ModalResults }                    from './solver/modal_results.js?v=54';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=54';
+import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=54';
+import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=54';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=54';
 
 class App {
   constructor() {
@@ -244,6 +244,24 @@ class App {
     this.markDirty();
     this._updateStats();
     this.toast(`${sel.length} elementos unidos → Elemento #${r.elemId}`, 'ok');
+  }
+
+  /** Crea un nodo común en la intersección de 2 elementos que se cruzan. */
+  unirInterseccion() {
+    const sel = this.viewport.getSelected().filter(s => s.type === 'elem').map(s => s.id);
+    if (sel.length !== 2) {
+      this.toast('Seleccione exactamente 2 elementos que se intersecten (Ctrl+clic) para unirlos', 'warn');
+      return;
+    }
+    this.snapshot();
+    const r = intersectarElementos(this.model, sel[0], sel[1]);
+    if (!r.ok) { this.toast(`No se pudo unir: ${r.reason}`, 'warn'); return; }
+    this.viewport.renderModel(this.model);
+    this.refreshLoads();
+    this.panel.showNothing();
+    this.markDirty();
+    this._updateStats();
+    this.toast(`Nodo de intersección creado (#${r.nodeId}); ${r.nuevos} tramos`, 'ok');
   }
 
   async discretizeAllDialog() {
@@ -2090,7 +2108,7 @@ class App {
     this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=53');
+      const { generarModelo } = await import('../asistente/generador.js?v=54');
       const modelo = generarModelo(ficha, libs);
       this._loadJSON(JSON.stringify(modelo), (ficha.proyecto || 'asistente') + '.s3d');
       this.markDirty();
@@ -2152,11 +2170,22 @@ class App {
 
   aplicarTema(theme) {
     document.documentElement.dataset.theme = theme;
-    try { localStorage.setItem('portico_theme', theme); } catch (e) {}
+    try { localStorage.setItem('portico_theme', theme); } catch (e) {}   // se recuerda por máquina
     const btn = document.getElementById('btn-theme');
     if (btn) { btn.textContent = theme === 'dark' ? '☀️' : '🌙';
                btn.title = theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'; }
+    this._swapLogos(theme);
     this.viewport?.setTheme?.(theme === 'light');
+  }
+
+  /** Logos institucionales: versión NEGRA en modo claro, BLANCA en oscuro. */
+  _swapLogos(theme) {
+    const suf = theme === 'light' ? 'negro' : 'blanco';
+    for (const img of document.querySelectorAll('img')) {
+      const s = img.getAttribute('src') || '';
+      if (/(UACh-color-|Facultad-color-|SomosIngenieria[\w-]*?)(blanco|negro)/.test(s))
+        img.setAttribute('src', s.replace(/(blanco|negro)(?=[^/]*\.svg$)/, suf));
+    }
   }
 
   async _cargarBibliotecasAsistente() {

@@ -70,6 +70,72 @@ export function splitElement(model, elemId, nParts) {
   return newIds;
 }
 
+/** Divide un elemento en DOS en un nodo existente que cae sobre el segmento. */
+function splitElementEnNodo(model, elemId, nodeId) {
+  const elem = model.elements.get(elemId);
+  if (!elem || elem.n1 === nodeId || elem.n2 === nodeId) return null;
+  const e1 = model.addElement(elem.n1, nodeId, elem.matId, elem.secId);
+  const e2 = model.addElement(nodeId, elem.n2, elem.matId, elem.secId);
+  const newIds = [e1, e2].filter(Boolean).map(e => e.id);
+  if (elem.releases && e1 && e2) {
+    for (let i = 0; i < 6; i++) { e1.releases[i] = elem.releases[i] || 0; e2.releases[6 + i] = elem.releases[6 + i] || 0; }
+  }
+  for (const lc of model.loadCases.values()) {
+    const dl = lc.loads.filter(l => l.type === 'dist' && l.elemId === elemId);
+    if (!dl.length) continue;
+    lc.loads = lc.loads.filter(l => !(l.type === 'dist' && l.elemId === elemId));
+    for (const d of dl) for (const id of newIds) lc.loads.push({ ...d, elemId: id });
+  }
+  model.elements.delete(elemId);
+  return newIds;
+}
+
+/**
+ * Une dos elementos que SE INTERSECTAN creando un nodo común en el punto de
+ * cruce (y partiendo cada elemento en ese nodo). Maneja cruces en X (interior a
+ * ambos) y en T (extremo de uno sobre el interior del otro). Devuelve
+ * {ok, nodeId, nuevos} o {ok:false, reason}.
+ */
+export function intersectarElementos(model, idA, idB, tol = 1e-3) {
+  const A = model.elements.get(idA), B = model.elements.get(idB);
+  if (!A || !B) return { ok: false, reason: 'Elementos no encontrados.' };
+  if (idA === idB) return { ok: false, reason: 'Seleccione dos elementos distintos.' };
+  const P1 = model.nodes.get(A.n1), P2 = model.nodes.get(A.n2);
+  const Q1 = model.nodes.get(B.n1), Q2 = model.nodes.get(B.n2);
+  if (!P1 || !P2 || !Q1 || !Q2) return { ok: false, reason: 'Nodos no encontrados.' };
+
+  const dot = (u, v) => u[0] * v[0] + u[1] * v[1] + u[2] * v[2];
+  const d1 = [P2.x - P1.x, P2.y - P1.y, P2.z - P1.z];
+  const d2 = [Q2.x - Q1.x, Q2.y - Q1.y, Q2.z - Q1.z];
+  const r = [P1.x - Q1.x, P1.y - Q1.y, P1.z - Q1.z];
+  const a = dot(d1, d1), e = dot(d2, d2), b = dot(d1, d2), c = dot(d1, r), f = dot(d2, r);
+  const den = a * e - b * b;
+  if (Math.abs(den) < 1e-12) return { ok: false, reason: 'Los elementos son paralelos: no se cruzan en un punto.' };
+  const s = (b * f - c * e) / den;   // parámetro sobre A
+  const t = (a * f - b * c) / den;   // parámetro sobre B
+  const PA = [P1.x + s * d1[0], P1.y + s * d1[1], P1.z + s * d1[2]];
+  const PB = [Q1.x + t * d2[0], Q1.y + t * d2[1], Q1.z + t * d2[2]];
+  const dist = Math.hypot(PA[0] - PB[0], PA[1] - PB[1], PA[2] - PB[2]);
+  if (dist > tol) return { ok: false, reason: `Los elementos no se cruzan (separados ${dist.toFixed(3)} m; ¿están en planos distintos?).` };
+  const eps = 1e-6;
+  if (s < -eps || s > 1 + eps || t < -eps || t > 1 + eps)
+    return { ok: false, reason: 'La intersección queda fuera de los elementos (en su prolongación).' };
+
+  const P = [(PA[0] + PB[0]) / 2, (PA[1] + PB[1]) / 2, (PA[2] + PB[2]) / 2];
+  // Reusar un extremo existente si la intersección coincide con él (cruce en T/L).
+  let nodeId = null;
+  for (const nd of [P1, P2, Q1, Q2]) {
+    if (Math.hypot(nd.x - P[0], nd.y - P[1], nd.z - P[2]) <= tol * 2) { nodeId = nd.id; break; }
+  }
+  if (nodeId == null) { nodeId = model.addNode(+P[0].toFixed(6), +P[1].toFixed(6), +P[2].toFixed(6)).id; }
+
+  let nuevos = 0;
+  if (A.n1 !== nodeId && A.n2 !== nodeId) { const x = splitElementEnNodo(model, idA, nodeId); if (x) nuevos += x.length; }
+  if (B.n1 !== nodeId && B.n2 !== nodeId) { const x = splitElementEnNodo(model, idB, nodeId); if (x) nuevos += x.length; }
+  if (nuevos === 0) return { ok: false, reason: 'Los elementos ya comparten ese nodo.' };
+  return { ok: true, nodeId, nuevos };
+}
+
 /** Divide un elemento en tramos de ≈targetLen metros. */
 export function splitByLength(model, elemId, targetLen) {
   const elem = model.elements.get(elemId);
