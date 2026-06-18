@@ -152,6 +152,26 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    // ── Lectura del registro de consultas (revisión semanal) ──
+    // GET /api/asistente/log?token=TOKEN[&solo_novedosos=1][&limite=50]
+    // Devuelve los pedidos guardados y un 'corpus_sugerido' [{desc, ficha}] listo
+    // para revisar y pegar en asistente/ejemplos.json.
+    if (url.pathname === '/api/asistente/log') {
+      if (!env.ASIS_LOG) return json({ error: 'KV ASIS_LOG no está configurado en el Worker.' }, 400);
+      const token = url.searchParams.get('token') || request.headers.get('x-asis-token');
+      if (!env.ASIS_LOG_TOKEN || token !== env.ASIS_LOG_TOKEN) return json({ error: 'Token inválido (defina el secreto ASIS_LOG_TOKEN y páselo en ?token=).' }, 401);
+      const soloNov = url.searchParams.get('solo_novedosos') === '1';
+      const limite = Math.min(500, Math.max(1, parseInt(url.searchParams.get('limite') || '100', 10)));
+      const lista = await env.ASIS_LOG.list({ prefix: 'q:', limit: 1000 });
+      let keys = lista.keys.sort((a, b) => b.name.localeCompare(a.name));   // más recientes primero
+      if (soloNov) keys = keys.filter((k) => k.metadata && k.metadata.novedoso);
+      keys = keys.slice(0, limite);
+      const items = await Promise.all(keys.map(async (k) => { try { return JSON.parse(await env.ASIS_LOG.get(k.name)); } catch { return null; } }));
+      const reg = items.filter(Boolean);
+      const corpus_sugerido = reg.filter((r) => r.novedoso).map((r) => ({ desc: r.mensaje, ficha: r.ficha }));
+      return json({ total: reg.length, novedosos: reg.filter((r) => r.novedoso).length, registros: reg, corpus_sugerido });
+    }
+
     if (url.pathname === '/api/asistente') {
       if (request.method !== 'POST') return json({ error: 'Use POST' }, 405);
       try {
@@ -164,9 +184,12 @@ export default {
           rag = { usados: rec.ejemplos.map((e) => e.desc.slice(0, 60)), score: +rec.score.toFixed(3), novedoso: rec.score < 0.5 };
           const res = await fichaDesdeLLM(body.mensaje, env, rec.ejemplos);
           ficha = res.ficha; llm = res.llm;
-          // Revisión semanal: registra el pedido (sobre todo los novedosos) si hay KV bindeado.
+          // Revisión semanal: registra el pedido + la FICHA generada (candidato a
+          // corpus) en KV. metadata permite listar los novedosos sin leer todo.
           if (env.ASIS_LOG) {
-            try { await env.ASIS_LOG.put(`req:${Date.now()}`, JSON.stringify({ mensaje: body.mensaje, tipologia: ficha.tipologia, score: rag.score, novedoso: rag.novedoso, modelo: llm?.modelo }), { expirationTtl: 60 * 60 * 24 * 120 }); } catch { /* no bloquear */ }
+            const ts = Date.now();
+            const registro = { ts, fecha: new Date(ts).toISOString(), mensaje: body.mensaje, ficha, tipologia: ficha.tipologia || null, score: rag.score, novedoso: rag.novedoso, modelo: llm?.modelo || null };
+            try { await env.ASIS_LOG.put(`q:${ts}`, JSON.stringify(registro), { expirationTtl: 60 * 60 * 24 * 180, metadata: { novedoso: rag.novedoso, tipologia: registro.tipologia, score: rag.score } }); } catch { /* no bloquear la respuesta */ }
           }
         }
         if (!ficha) return json({ error: 'Envíe { mensaje } o { ficha }' }, 400);

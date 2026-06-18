@@ -8,4 +8,13 @@
   // Sirve la PWA como assets estáticos; el Worker los lee vía env.ASSETS y
   // maneja /api/asistente. .assetsignore excluye lo que no debe publicarse.
   "assets": { "directory": ".", "binding": "ASSETS" }
+
+  // ── Registro de consultas del asistente (para alimentar el corpus) ──
+  // Guarda cada pedido (sobre todo los NOVEDOSOS) en Cloudflare KV. Pasos:
+  //   1) crear el namespace:  npx wrangler kv namespace create ASIS_LOG
+  //      (o en el dashboard: Workers & Pages → KV → Create namespace)
+  //   2) pegar el id que entrega y DESCOMENTAR el bloque siguiente:
+  //   3) secreto para leer el registro:  npx wrangler secret put ASIS_LOG_TOKEN
+  //   4) leer lo guardado:  GET /api/asistente/log?token=TU_TOKEN[&solo_novedosos=1]
+  // , "kv_namespaces": [ { "binding": "ASIS_LOG", "id": "PEGAR_AQUI_EL_ID_DEL_NAMESPACE" } ]
 }
