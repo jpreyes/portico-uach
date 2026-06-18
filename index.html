@@ -29,8 +29,8 @@
       window.dispatchEvent(new Event('pwa-installed'));
     });
   </script>
-  <link rel="stylesheet" href="style.css?v=58">
-  <link rel="stylesheet" href="ui-v2.css?v=58">
+  <link rel="stylesheet" href="style.css?v=59">
+  <link rel="stylesheet" href="ui-v2.css?v=59">
   <script type="importmap">
   {
     "imports": {
@@ -97,6 +97,9 @@
           <li class="sep"></li>
           <li data-action="toggle-grid">Grilla <kbd>G</kbd></li>
           <li data-action="zoom-extents">Zoom Extensión <kbd>Home</kbd></li>
+          <li class="sep"></li>
+          <li data-action="hide-sel">Ocultar selección <kbd>H</kbd></li>
+          <li data-action="show-all">Mostrar todo <kbd>Shift+H</kbd></li>
           <li class="sep"></li>
           <li data-action="res-deformed">Resultado: Deformada <kbd>1</kbd></li>
           <li data-action="res-N">Resultado: Axial N <kbd>2</kbd></li>
@@ -650,7 +653,7 @@
           <div>
             <h2 style="margin:0">PÓRTICO</h2>
             <p style="margin:2px 0 0;color:var(--text-muted)">Laboratorio virtual de análisis estructural 3D
-              · <b id="help-version">versión 58</b> · junio 2026</p>
+              · <b id="help-version">versión 59</b> · junio 2026</p>
           </div>
         </div>
         <p><b>Material docente</b> desarrollado por el <b>Dr. Juan Patricio Reyes C.</b> —
@@ -847,7 +850,7 @@
 
 <!-- numeric.js para solver (Fase 2+) -->
 <script src="lib/numeric.js"></script>
-<script type="module" src="js/app.js?v=58"></script>
+<script type="module" src="js/app.js?v=59"></script>
 
 <!-- PWA: registrar el service worker (offline). Solo en contexto seguro
      (https o localhost); el navegador deja navigator.serviceWorker undefined

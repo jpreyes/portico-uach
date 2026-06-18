@@ -1,8 +1,8 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // PropertiesPanel — right-side panel: node/element properties + mat/sec tabs
 // ──────────────────────────────────────────────────────────────────────────────
-import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=58';
-import { localAxes } from '../solver/timoshenko.js?v=58';
+import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=59';
+import { localAxes } from '../solver/timoshenko.js?v=59';
 
 export class PropertiesPanel {
   constructor(panelEl, app) {
@@ -216,12 +216,98 @@ export class PropertiesPanel {
       }
     }
 
+    // ── Acciones masivas sobre los elementos seleccionados ───────────────────
+    if (elems.length > 0) html += this._accionesSelHTML(elems);
+    // ── Grupos guardados ──────────────────────────────────────────────────────
+    html += this._gruposHTML();
+
     this._tabContents.sel.innerHTML = html;
+    if (elems.length > 0) this._bindAccionesSel(elems.map(e => e.id));
+    this._bindGrupos();
+  }
+
+  // HTML de acciones masivas para N elementos seleccionados.
+  _accionesSelHTML(elems) {
+    const mats = [...this.app.model.materials.values()].map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+    const secs = [...this.app.model.sections.values()].map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    const n = elems.length;
+    return `
+      <div class="prop-section" style="border:1px solid var(--accent);border-radius:6px;padding:8px;margin-top:8px">
+        <div class="prop-title" style="color:var(--accent);margin-top:0">Acciones · ${n} elemento(s)</div>
+        <div class="prop-row" style="align-items:flex-end;gap:6px;margin-bottom:6px">
+          <div class="prop-field" style="flex:1"><label>Material a todos</label>
+            <select id="sel-mat"><option value="">—</option>${mats}</select></div>
+          <button class="btn-secondary" id="sel-mat-go" style="font-size:11px">Aplicar</button>
+        </div>
+        <div class="prop-row" style="align-items:flex-end;gap:6px;margin-bottom:6px">
+          <div class="prop-field" style="flex:1"><label>Sección a todos</label>
+            <select id="sel-sec"><option value="">—</option>${secs}</select></div>
+          <button class="btn-secondary" id="sel-sec-go" style="font-size:11px">Aplicar</button>
+        </div>
+        <div class="prop-row" style="align-items:flex-end;gap:6px;margin-bottom:8px">
+          <div class="prop-field" style="flex:1"><label>Discretizar (nº tramos c/u)</label>
+            <input type="number" id="sel-disc" value="4" min="2" step="1"></div>
+          <button class="btn-secondary" id="sel-disc-go" style="font-size:11px">Dividir</button>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+          <button class="btn-secondary" id="sel-join" style="flex:1;font-size:11px" title="Une tramos colineales en una sola barra">Unir colineales</button>
+          ${n === 2 ? `<button class="btn-secondary" id="sel-inter" style="flex:1;font-size:11px" title="Crea un nodo común en el cruce de los 2 elementos">Cortar en intersección</button>` : ''}
+          <button class="btn-secondary" id="sel-hide" style="flex:1;font-size:11px" title="Oculta los elementos (Vista → Mostrar todo para revertir)">Ocultar</button>
+        </div>
+        <div class="prop-row" style="align-items:flex-end;gap:6px">
+          <div class="prop-field" style="flex:1"><label>Crear grupo (nombre)</label>
+            <input type="text" id="sel-grp" placeholder="ej. Cordón superior"></div>
+          <button class="btn-secondary" id="sel-grp-go" style="font-size:11px">Agrupar</button>
+        </div>
+      </div>`;
+  }
+
+  _bindAccionesSel(ids) {
+    const $ = (i) => this._tabContents.sel.querySelector(i);
+    $('#sel-mat-go')?.addEventListener('click', () => { const v = $('#sel-mat').value; if (v) this.app.setMaterialSelected(v); });
+    $('#sel-sec-go')?.addEventListener('click', () => { const v = $('#sel-sec').value; if (v) this.app.setSectionSelected(v); });
+    $('#sel-disc-go')?.addEventListener('click', () => this.app.discretizeSelected(parseInt($('#sel-disc').value, 10)));
+    $('#sel-join')?.addEventListener('click', () => this.app.joinSelectedElements());
+    $('#sel-inter')?.addEventListener('click', () => this.app.unirInterseccion());
+    $('#sel-hide')?.addEventListener('click', () => this.app.hideSelected());
+    $('#sel-grp-go')?.addEventListener('click', () => this.app.crearGrupo($('#sel-grp').value));
+  }
+
+  // Lista de grupos guardados (seleccionar / ocultar / mostrar / eliminar).
+  _gruposHTML() {
+    const g = this.app.grupos?.() ;
+    if (!g || !g.size) return '';
+    let rows = '';
+    for (const [nombre, set] of g) {
+      rows += `<div class="prop-row" style="align-items:center;gap:4px;margin-bottom:4px">
+        <span style="flex:1;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${nombre}">${nombre} <span style="color:var(--text-muted)">(${set.size})</span></span>
+        <button class="btn-secondary grp-sel" data-g="${nombre}" style="font-size:10px;padding:3px 6px" title="Seleccionar">◉</button>
+        <button class="btn-secondary grp-hide" data-g="${nombre}" style="font-size:10px;padding:3px 6px" title="Ocultar">🚫</button>
+        <button class="btn-secondary grp-show" data-g="${nombre}" style="font-size:10px;padding:3px 6px" title="Mostrar">👁</button>
+        <button class="btn-secondary grp-del" data-g="${nombre}" style="font-size:10px;padding:3px 6px" title="Eliminar grupo">✕</button>
+      </div>`;
+    }
+    return `<div class="prop-section" style="border:1px solid var(--border2);border-radius:6px;padding:8px;margin-top:8px">
+      <div class="prop-title" style="margin-top:0">Grupos</div>${rows}</div>`;
+  }
+
+  _bindGrupos() {
+    const root = this._tabContents.sel;
+    root.querySelectorAll('.grp-sel').forEach(b => b.addEventListener('click', () => this.app.seleccionarGrupo(b.dataset.g)));
+    root.querySelectorAll('.grp-hide').forEach(b => b.addEventListener('click', () => this.app.ocultarGrupo(b.dataset.g)));
+    root.querySelectorAll('.grp-show').forEach(b => b.addEventListener('click', () => this.app.mostrarGrupo(b.dataset.g)));
+    root.querySelectorAll('.grp-del').forEach(b => b.addEventListener('click', () => this.app.eliminarGrupo(b.dataset.g)));
   }
 
   showNothing() {
     const sel = this._tabContents.sel;
-    if (sel) sel.innerHTML = '<p class="panel-hint">Haga clic en un nodo o elemento para editar sus propiedades.</p>';
+    if (sel) {
+      const ocultos = this.app.viewport?.hiddenCount?.() || 0;
+      sel.innerHTML = '<p class="panel-hint">Haga clic en un nodo o elemento para editar sus propiedades. Ctrl+clic para seleccionar varios.</p>'
+        + (ocultos ? `<p class="panel-hint" style="color:var(--warn)">${ocultos} elemento(s) oculto(s) · Vista → Mostrar todo</p>` : '')
+        + this._gruposHTML();
+      this._bindGrupos();
+    }
     this._switchVTab('modelo');
     this._switchTab('sel');
   }

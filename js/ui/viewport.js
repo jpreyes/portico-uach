@@ -46,6 +46,7 @@ export class Viewport {
     this._diaGroups   = new Map();  // diaphragmId → THREE.Group
 
     this._selected = new Set();     // 'node:id' | 'elem:id'
+    this._hiddenElems = new Set();  // elemId(s) ocultos (estado de vista)
     this._hovered  = null;          // {type, id} | null
 
     this._addElemFirst = null;      // nodeId of first endpoint
@@ -393,6 +394,7 @@ export class Viewport {
     const mat  = new THREE.LineBasicMaterial({ color: COL.ELEM });
     const line = new THREE.Line(geo, mat);
     line.userData = { type: 'elem', id: elem.id, n1: elem.n1, n2: elem.n2 };
+    if (this._hiddenElems.has(elem.id)) line.visible = false;   // respeta ocultos al re-renderizar
     this._scene.add(line);
     this._elemLines.set(elem.id, line);
     this._buildHingeMarkers(elem);
@@ -1296,6 +1298,36 @@ export class Viewport {
       this._selected.add(`elem:${id}`);
       this._elemLines.get(id).material.color.set(COL.ELEM_SEL);
     }
+  }
+
+  // ── Visibilidad de elementos (estado de vista, no del modelo) ───────────────
+  hideElements(ids) {
+    for (const id of ids) {
+      this._hiddenElems.add(id);
+      const l = this._elemLines.get(id); if (l) l.visible = false;
+      this._selected.delete(`elem:${id}`);
+    }
+  }
+  showElements(ids) {
+    for (const id of ids) { this._hiddenElems.delete(id); const l = this._elemLines.get(id); if (l) l.visible = true; }
+  }
+  showAllElements() {
+    this._hiddenElems.clear();
+    for (const l of this._elemLines.values()) l.visible = true;
+  }
+  clearHidden() { this._hiddenElems.clear(); }
+  hiddenCount() { return this._hiddenElems.size; }
+
+  /** Selecciona exactamente este conjunto de elementos (p.ej. un grupo). */
+  selectElements(ids) {
+    this.clearSelection();
+    for (const id of ids) {
+      if (!this._elemLines.has(id)) continue;
+      this._selected.add(`elem:${id}`);
+      this._elemLines.get(id).material.color.set(COL.ELEM_SEL);
+    }
+    const n = this._selected.size;
+    document.getElementById('sb-sel').textContent = n ? `${n} seleccionado(s)` : 'Sin selección';
   }
 
   // ── Add Node mode ──────────────────────────────────────────────────────────

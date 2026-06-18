@@ -1,21 +1,21 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=58';
-import { Serializer }      from './model/serializer.js?v=58';
-import { Viewport }        from './ui/viewport.js?v=58';
-import { PropertiesPanel } from './ui/properties.js?v=58';
-import { MenuBar }         from './ui/menu.js?v=58';
-import { UndoStack }       from './utils/undo.js?v=58';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=58';
-import { Results }                         from './solver/postprocess.js?v=58';
-import { ModalSolver }                     from './solver/modal_solver.js?v=58';
-import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=58';
-import { ModalResults }                    from './solver/modal_results.js?v=58';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=58';
-import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=58';
-import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=58';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=58';
+import { Model }           from './model/model.js?v=59';
+import { Serializer }      from './model/serializer.js?v=59';
+import { Viewport }        from './ui/viewport.js?v=59';
+import { PropertiesPanel } from './ui/properties.js?v=59';
+import { MenuBar }         from './ui/menu.js?v=59';
+import { UndoStack }       from './utils/undo.js?v=59';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=59';
+import { Results }                         from './solver/postprocess.js?v=59';
+import { ModalSolver }                     from './solver/modal_solver.js?v=59';
+import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=59';
+import { ModalResults }                    from './solver/modal_results.js?v=59';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=59';
+import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=59';
+import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=59';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=59';
 
 class App {
   constructor() {
@@ -263,6 +263,59 @@ class App {
     this._updateStats();
     this.toast(`Nodo de intersección creado (#${r.nodeId}); ${r.nuevos} tramos`, 'ok');
   }
+
+  // ── Acciones masivas sobre la selección de elementos ───────────────────────
+  _selElems() { return this.viewport.getSelected().filter(s => s.type === 'elem').map(s => s.id); }
+  _reselect(ids) { this.viewport.selectElements(ids); this.panel.showSelection(this.viewport.getSelected()); }
+
+  setMaterialSelected(matId) {
+    const ids = this._selElems(); if (!ids.length || matId == null) return;
+    this.snapshot();
+    for (const id of ids) this.model.updateElement(id, { matId: +matId });
+    this.viewport.renderModel(this.model); this.markDirty(); this._updateStats();
+    this.toast(`Material aplicado a ${ids.length} elemento(s)`, 'ok');
+    this._reselect(ids);
+  }
+  setSectionSelected(secId) {
+    const ids = this._selElems(); if (!ids.length || secId == null) return;
+    this.snapshot();
+    for (const id of ids) this.model.updateElement(id, { secId: +secId });
+    this.viewport.renderModel(this.model); this.markDirty(); this._updateStats();
+    this.toast(`Sección aplicada a ${ids.length} elemento(s)`, 'ok');
+    this._reselect(ids);
+  }
+  discretizeSelected(parts) {
+    const ids = this._selElems(); if (!ids.length) return;
+    parts = Math.max(2, Math.round(parts || 2));
+    this.snapshot();
+    let tramos = 0; for (const id of ids) { const r = splitElement(this.model, id, parts); tramos += (r && r.length) ? r.length : 1; }
+    this.viewport.renderModel(this.model); this.refreshLoads(); this.panel.showNothing(); this.markDirty(); this._updateStats();
+    this.toast(`${ids.length} elemento(s) divididos en ${parts} (${tramos} tramos)`, 'ok');
+  }
+  hideSelected() {
+    const ids = this._selElems(); if (!ids.length) { this.toast('Seleccione elementos para ocultar', 'warn'); return; }
+    this.viewport.hideElements(ids); this.viewport.clearSelection(); this.panel.showNothing();
+    this.toast(`${ids.length} elemento(s) oculto(s) · Vista → Mostrar todo para revertir`, 'ok');
+  }
+  showAllElements() {
+    const n = this.viewport.hiddenCount(); this.viewport.showAllElements();
+    this.toast(n ? `${n} elemento(s) mostrado(s)` : 'No había elementos ocultos', 'ok');
+  }
+
+  // ── Grupos de elementos (estado de sesión) ──────────────────────────────────
+  grupos() { return (this._grupos ||= new Map()); }
+  crearGrupo(nombre) {
+    const ids = this._selElems(); if (!ids.length) { this.toast('Seleccione elementos para agrupar', 'warn'); return; }
+    this.grupos();
+    nombre = String(nombre || '').trim() || `Grupo ${this._grupos.size + 1}`;
+    this._grupos.set(nombre, new Set(ids));
+    this.toast(`Grupo "${nombre}" creado (${ids.length} elementos)`, 'ok');
+    this.panel.showSelection(this.viewport.getSelected());
+  }
+  seleccionarGrupo(nombre) { const g = this.grupos().get(nombre); if (!g) return; this.viewport.selectElements([...g]); this.panel.showSelection(this.viewport.getSelected()); }
+  ocultarGrupo(nombre) { const g = this.grupos().get(nombre); if (!g) return; this.viewport.hideElements([...g]); this.toast(`Grupo "${nombre}" oculto`, 'ok'); }
+  mostrarGrupo(nombre) { const g = this.grupos().get(nombre); if (!g) return; this.viewport.showElements([...g]); this.toast(`Grupo "${nombre}" mostrado`, 'ok'); }
+  eliminarGrupo(nombre) { this.grupos().delete(nombre); this.toast(`Grupo "${nombre}" eliminado`, 'ok'); this.panel.showSelection(this.viewport.getSelected()); }
 
   async discretizeAllDialog() {
     if (this.model.elements.size === 0) { this.toast('No hay elementos', 'warn'); return; }
@@ -2112,7 +2165,7 @@ class App {
     this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=58');
+      const { generarModelo } = await import('../asistente/generador.js?v=59');
       const modelo = generarModelo(ficha, libs);
       this._loadJSON(JSON.stringify(modelo), (ficha.proyecto || 'asistente') + '.s3d');
       this.markDirty();
@@ -2636,6 +2689,7 @@ class App {
         case 'f':      this.viewport.setView('front');      break;
         case 'l':      this.viewport.setView('side');       break;
         case 'g':      this.viewport.toggleGrid();          break;
+        case 'h':      if (e.shiftKey) this.showAllElements(); else this.hideSelected(); break;
       }
     });
   }

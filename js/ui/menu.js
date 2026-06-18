@@ -83,6 +83,8 @@ export class MenuBar {
       case 'view-side':   a.viewport.setView('side');  break;
       case 'toggle-grid':    a.viewport.toggleGrid();        break;
       case 'zoom-extents':   a.viewport.zoomExtents();       break;
+      case 'hide-sel':       a.hideSelected();               break;
+      case 'show-all':       a.showAllElements();            break;
       case 'run':            a.runAnalysis();                break;
       case 'run-force':      a.runAnalysis(true);            break;
       case 'run-modal':      a.runModal();                   break;
