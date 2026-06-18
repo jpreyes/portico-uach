@@ -1,21 +1,21 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=63';
-import { Serializer }      from './model/serializer.js?v=63';
-import { Viewport }        from './ui/viewport.js?v=63';
-import { PropertiesPanel } from './ui/properties.js?v=63';
-import { MenuBar }         from './ui/menu.js?v=63';
-import { UndoStack }       from './utils/undo.js?v=63';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=63';
-import { Results }                         from './solver/postprocess.js?v=63';
-import { ModalSolver }                     from './solver/modal_solver.js?v=63';
-import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=63';
-import { ModalResults }                    from './solver/modal_results.js?v=63';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=63';
-import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=63';
-import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=63';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=63';
+import { Model }           from './model/model.js?v=64';
+import { Serializer }      from './model/serializer.js?v=64';
+import { Viewport }        from './ui/viewport.js?v=64';
+import { PropertiesPanel } from './ui/properties.js?v=64';
+import { MenuBar }         from './ui/menu.js?v=64';
+import { UndoStack }       from './utils/undo.js?v=64';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=64';
+import { Results }                         from './solver/postprocess.js?v=64';
+import { ModalSolver }                     from './solver/modal_solver.js?v=64';
+import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=64';
+import { ModalResults }                    from './solver/modal_results.js?v=64';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=64';
+import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=64';
+import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=64';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=64';
 
 class App {
   constructor() {
@@ -2316,19 +2316,171 @@ class App {
     let ficha;
     try { ficha = JSON.parse(fichaText); }
     catch (e) { this.toast('Ficha JSON inválida: ' + e.message, 'error'); return; }
+
+    // Si ya hay un modelo, preguntar qué hacer: sobreponer / nueva / cancelar.
+    let modo = 'nueva';
+    if (this.model.nodes.size > 0) {
+      modo = await this._dialogoModeloExistente();
+      if (modo === 'cancelar') return;
+    }
+
     this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=63');
+      const { generarModelo } = await import('../asistente/generador.js?v=64');
       const modelo = generarModelo(ficha, libs);
-      this._loadJSON(JSON.stringify(modelo), (ficha.proyecto || 'asistente') + '.s3d');
-      this.markDirty();
-      this.toast(`Modelo generado — ${modelo._generado?.resumen || ''}`, 'ok');
+
+      if (modo === 'sobreponer') {
+        const src = this.serializer.fromJSON(JSON.stringify(modelo));
+        const modoMix = src.mode !== this.model.mode;
+        const { welded } = this._mergeGeneratedInto(src);
+        this.viewport.clearResults();
+        this._results = null; this._resultsByCase = null;
+        this._discardResultsCache?.();
+        this.viewport.renderModel(this.model);
+        this.panel.showNothing();
+        this.panel.refresh(this.model);
+        this._renderLcSelector();
+        this.refreshLoads();
+        this._updateStats();
+        this.markDirty();
+        if (this.model.mode !== '2D') this.viewport.zoomExtents();
+        this.toast(`Estructura sobrepuesta — ${welded} nodo(s) coincidente(s) fundido(s)`, 'ok');
+        if (modoMix) this.toast(`Aviso: el modelo generado era ${src.mode} y el actual es ${this.model.mode}; se conservó ${this.model.mode}`, 'warn');
+      } else {
+        this._loadJSON(JSON.stringify(modelo), (ficha.proyecto || 'asistente') + '.s3d');
+        this.markDirty();
+        this.toast(`Modelo generado — ${modelo._generado?.resumen || ''}`, 'ok');
+      }
       this._mostrarAvisos(modelo._avisos || []);
     } catch (e) {
       this.toast('Error al generar: ' + e.message, 'error');
       console.error(e);
     } finally { this._hideProgress(); }
+  }
+
+  /** Diálogo de 3 opciones cuando ya existe un modelo al generar desde el asistente. */
+  _dialogoModeloExistente() {
+    return new Promise(resolve => {
+      document.getElementById('portico-choice')?.remove();
+      const s = this.model.getStats();
+      const el = document.createElement('div');
+      el.id = 'portico-choice';
+      el.style.cssText = 'position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;background:rgba(6,10,18,.72);backdrop-filter:blur(2px)';
+      el.innerHTML = `
+        <div style="background:var(--bg-elev,#141b27);border:1px solid var(--border,#334);border-radius:10px;padding:22px 24px;max-width:460px;box-shadow:0 10px 40px rgba(0,0,0,.5)">
+          <div style="color:var(--text,#e6edf3);font-weight:600;font-size:15px;margin-bottom:6px">⚠️ Ya existe un modelo</div>
+          <div style="color:var(--text-muted,#9aa);font-size:13px;line-height:1.5;margin-bottom:16px">
+            El modelo actual tiene <b>${s.nodes}</b> nodos y <b>${s.elements}</b> elementos.
+            ¿Qué hago con la estructura que generará el asistente?</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <button data-choice="sobreponer" style="width:100%;text-align:left;padding:10px 12px;border-radius:6px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer;font-size:13px">➕ Sobreponer — agregar al modelo actual (funde nodos coincidentes)</button>
+            <button data-choice="nueva" style="width:100%;text-align:left;padding:10px 12px;border-radius:6px;border:1px solid var(--border2,#445);background:transparent;color:var(--text,#e6edf3);cursor:pointer;font-size:13px">🗑 Nueva — reemplazar el modelo actual por el generado</button>
+            <button data-choice="cancelar" style="width:100%;text-align:left;padding:10px 12px;border-radius:6px;border:1px solid var(--border2,#445);background:transparent;color:var(--text-muted,#9aa);cursor:pointer;font-size:13px">✕ Cancelar</button>
+          </div>
+        </div>`;
+      document.body.appendChild(el);
+      const done = v => { el.remove(); resolve(v); };
+      el.querySelectorAll('[data-choice]').forEach(b => b.addEventListener('click', () => done(b.dataset.choice)));
+      el.addEventListener('mousedown', e => { if (e.target === el) done('cancelar'); });
+    });
+  }
+
+  /** Funde un modelo generado dentro de this.model (sobreponer): remapea ids,
+   *  funde nodos coincidentes por coordenada y deduplica barras/material/sección. */
+  _mergeGeneratedInto(src) {
+    const dst = this.model;
+    const rk = v => Math.round(v * 1e4) / 1e4;
+    const ckey = (x, y, z) => `${rk(x)},${rk(y)},${rk(z)}`;
+    const strip = o => { const { id, ...r } = o; return r; };
+
+    // Materiales y secciones (dedupe por nombre)
+    const matByName = new Map([...dst.materials.values()].map(m => [m.name, m.id]));
+    const matMap = new Map();
+    for (const m of src.materials.values()) {
+      if (matByName.has(m.name)) { matMap.set(m.id, matByName.get(m.name)); continue; }
+      const nm = dst.addMaterial(strip(m)); matMap.set(m.id, nm.id); matByName.set(nm.name, nm.id);
+    }
+    const secByName = new Map([...dst.sections.values()].map(s => [s.name, s.id]));
+    const secMap = new Map();
+    for (const s of src.sections.values()) {
+      if (secByName.has(s.name)) { secMap.set(s.id, secByName.get(s.name)); continue; }
+      const ns = dst.addSection(strip(s)); secMap.set(s.id, ns.id); secByName.set(ns.name, ns.id);
+    }
+
+    // Nodos: fundir por coordenada
+    const coordIdx = new Map();
+    for (const n of dst.nodes.values()) coordIdx.set(ckey(n.x, n.y, n.z), n.id);
+    const nodeMap = new Map();
+    let welded = 0;
+    for (const n of src.nodes.values()) {
+      const k = ckey(n.x, n.y, n.z);
+      if (coordIdx.has(k)) {
+        const exId = coordIdx.get(k);
+        nodeMap.set(n.id, exId);
+        const r = {};
+        for (const g of ['ux', 'uy', 'uz', 'rx', 'ry', 'rz']) if (n.restraints?.[g]) r[g] = 1;
+        dst.updateNode(exId, { restraints: r, springs: n.springs, nodeMass: n.nodeMass });
+        welded++;
+      } else {
+        const nn = dst.addNode(n.x, n.y, n.z, n.restraints || {});
+        dst.updateNode(nn.id, { springs: n.springs, nodeMass: n.nodeMass });
+        nodeMap.set(n.id, nn.id);
+        coordIdx.set(k, nn.id);
+      }
+    }
+
+    // Elementos (dedupe por par de nodos)
+    const pk = (a, b) => a < b ? `${a}-${b}` : `${b}-${a}`;
+    const elemPairs = new Set([...dst.elements.values()].map(e => pk(e.n1, e.n2)));
+    const elemMap = new Map();
+    for (const e of src.elements.values()) {
+      const a = nodeMap.get(e.n1), b = nodeMap.get(e.n2);
+      if (a == null || b == null || a === b || elemPairs.has(pk(a, b))) continue;
+      const ne = dst.addElement(a, b, matMap.get(e.matId), secMap.get(e.secId));
+      if (!ne) continue;
+      if (e.releases) dst.updateElement(ne.id, { releases: e.releases });
+      elemMap.set(e.id, ne.id);
+      elemPairs.add(pk(a, b));
+    }
+
+    // Casos de carga (merge por nombre; cargas con destino remapeado)
+    const srcLcName = new Map([...src.loadCases.values()].map(l => [l.id, l.name]));
+    const lcByName = new Map([...dst.loadCases.values()].map(l => [l.name, l.id]));
+    for (const lc of src.loadCases.values()) {
+      let dstLcId = lcByName.get(lc.name);
+      if (dstLcId == null) {
+        const nl = dst.addLoadCase(lc.name, lc.selfWeight, lc.type, lc.specDir);
+        if (lc.spec) nl.spec = lc.spec;
+        dstLcId = nl.id; lcByName.set(nl.name, nl.id);
+      }
+      const dlc = dst.loadCases.get(dstLcId);
+      for (const ld of (lc.loads || [])) {
+        if (ld.type === 'nodal') { const id = nodeMap.get(ld.nodeId); if (id != null) dlc.loads.push({ type: 'nodal', nodeId: id, F: [...ld.F] }); }
+        else if (ld.type === 'dist') { const id = elemMap.get(ld.elemId); if (id != null) dlc.loads.push({ type: 'dist', elemId: id, dir: ld.dir, w: ld.w }); }
+      }
+    }
+
+    // Diafragmas (remapear nodos / masterId)
+    for (const d of src.diaphragms.values()) {
+      const nodes = (d.nodes || []).map(id => nodeMap.get(id)).filter(x => x != null);
+      if (!nodes.length) continue;
+      const nd = dst.addDiaphragm({ ...strip(d), nodes });
+      if (d.masterId != null && nodeMap.get(d.masterId) != null) nd.masterId = nodeMap.get(d.masterId);
+    }
+
+    // Combinaciones (remapear lcId de los factores; dedupe por nombre)
+    const comboNames = new Set([...dst.combinations.values()].map(c => c.name));
+    for (const c of src.combinations.values()) {
+      if (comboNames.has(c.name)) continue;
+      const factors = (c.factors || [])
+        .map(f => ({ lcId: lcByName.get(srcLcName.get(f.lcId)), factor: f.factor }))
+        .filter(f => f.lcId != null);
+      dst.addCombination({ name: c.name, factors });
+      comboNames.add(c.name);
+    }
+
+    return { welded };
   }
 
   /** Resumen de reemplazos/estimaciones/omisiones del generador. */
