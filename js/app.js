@@ -1,21 +1,21 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=64';
-import { Serializer }      from './model/serializer.js?v=64';
-import { Viewport }        from './ui/viewport.js?v=64';
-import { PropertiesPanel } from './ui/properties.js?v=64';
-import { MenuBar }         from './ui/menu.js?v=64';
-import { UndoStack }       from './utils/undo.js?v=64';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=64';
-import { Results }                         from './solver/postprocess.js?v=64';
-import { ModalSolver }                     from './solver/modal_solver.js?v=64';
-import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=64';
-import { ModalResults }                    from './solver/modal_results.js?v=64';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=64';
-import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=64';
-import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=64';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=64';
+import { Model }           from './model/model.js?v=65';
+import { Serializer }      from './model/serializer.js?v=65';
+import { Viewport }        from './ui/viewport.js?v=65';
+import { PropertiesPanel } from './ui/properties.js?v=65';
+import { MenuBar }         from './ui/menu.js?v=65';
+import { UndoStack }       from './utils/undo.js?v=65';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=65';
+import { Results }                         from './solver/postprocess.js?v=65';
+import { ModalSolver }                     from './solver/modal_solver.js?v=65';
+import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=65';
+import { ModalResults }                    from './solver/modal_results.js?v=65';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=65';
+import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=65';
+import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=65';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=65';
 
 class App {
   constructor() {
@@ -2271,6 +2271,7 @@ class App {
         const data = await r.json().catch(() => ({}));   // el servidor envía { error } aun en fallo
         if (!r.ok) throw new Error(data.error || data.message || `HTTP ${r.status}`);
         const ficha = data.ficha ?? data;
+        this._lastAsisLogId = data._logId || null;   // para feedback tras generar
         const ta = document.getElementById('asis-ficha');
         if (ta) { ta.value = JSON.stringify(ficha, null, 2); ta.closest('details')?.setAttribute('open', ''); }
         this.toast('Ficha recibida — pulsa «Generar modelo»', 'ok');
@@ -2295,6 +2296,7 @@ class App {
       const data = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(data.error || data.message || `HTTP ${r.status}`);
       ficha = data.ficha ?? data;
+      this._lastAsisLogId = data._logId || null;   // para feedback tras generar
       // El modelo que generó la ficha se reporta en la consola (no en pantalla).
       if (data._llm) {
         console.info(`[asistente] proveedor: ${data._llm.proveedor} · modelo: ${data._llm.modelo}`);
@@ -2327,7 +2329,7 @@ class App {
     this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=64');
+      const { generarModelo } = await import('../asistente/generador.js?v=65');
       const modelo = generarModelo(ficha, libs);
 
       if (modo === 'sobreponer') {
@@ -2353,10 +2355,42 @@ class App {
         this.toast(`Modelo generado — ${modelo._generado?.resumen || ''}`, 'ok');
       }
       this._mostrarAvisos(modelo._avisos || []);
+      // Feedback: si esta generación vino de una consulta al asistente, ofrecer
+      // marcarla como "no era lo que pedí" (alimenta la revisión semanal).
+      const fid = this._lastAsisLogId; this._lastAsisLogId = null;
+      if (fid) this._ofrecerFeedbackAsistente(fid);
     } catch (e) {
       this.toast('Error al generar: ' + e.message, 'error');
       console.error(e);
     } finally { this._hideProgress(); }
+  }
+
+  /** Barra de feedback tras generar desde el asistente: ✓ Sí / ✗ No era lo que pedí.
+   *  El "no" envía POST /api/asistente/feedback marcando el registro como incorrecto. */
+  _ofrecerFeedbackAsistente(logId) {
+    if (!logId) return;
+    document.getElementById('asis-feedback')?.remove();
+    const el = document.createElement('div');
+    el.id = 'asis-feedback';
+    el.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:100001;background:var(--bg-elev,#141b27);border:1px solid var(--border,#334);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 30px rgba(0,0,0,.45);font-size:13px;color:var(--text,#e6edf3)';
+    el.innerHTML = `
+      <span>¿El modelo es lo que pediste?</span>
+      <button id="afb-yes" style="border:1px solid var(--success,#15803d);background:transparent;color:var(--success,#15803d);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px">✓ Sí</button>
+      <button id="afb-no" style="border:1px solid var(--danger,#dc2626);background:transparent;color:var(--danger,#dc2626);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px">✗ No era lo que pedí</button>`;
+    document.body.appendChild(el);
+    const close = () => el.remove();
+    const timer = setTimeout(close, 15000);
+    el.querySelector('#afb-yes').onclick = () => { clearTimeout(timer); close(); };
+    el.querySelector('#afb-no').onclick = async () => {
+      clearTimeout(timer); close();
+      const comentario = await this._promptModal('Feedback del asistente', '¿Qué esperabas? (opcional, ayuda a mejorar)', '');
+      try {
+        const base = localStorage.getItem('portico_n8n_endpoint') || '/api/asistente';
+        const r = await fetch(base + '/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: logId, comentario: comentario || null }) });
+        if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.error || `HTTP ${r.status}`); }
+        this.toast('Gracias — registrado como «no era lo solicitado»', 'ok');
+      } catch (e) { this.toast('No se pudo enviar el feedback: ' + e.message, 'warn'); }
+    };
   }
 
   /** Diálogo de 3 opciones cuando ya existe un modelo al generar desde el asistente. */

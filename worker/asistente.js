@@ -148,6 +148,29 @@ async function fichaDesdeLLM(mensaje, env, fewshot = []) {
   throw new Error(`Ningún modelo disponible. Intentos: ${intentos.join(' | ')}`);
 }
 
+// ── Registro de consultas en KV (revisión semanal) ────────────────────────────
+// estado: 'ok' (generó), 'error' (falló LLM o generador), 'incorrecto' (feedback
+// del usuario: no era lo solicitado). 'novedoso' es ortogonal (score RAG bajo).
+// Devuelve la clave del registro (para que la app pueda enviar feedback luego).
+async function registrarConsulta(env, { mensaje, ficha = null, rag = null, llm = null, estado = 'ok', error = null }) {
+  if (!env.ASIS_LOG) return null;
+  const ts = Date.now();
+  const key = `q:${ts}-${Math.random().toString(36).slice(2, 6)}`;   // evita colisión en el mismo ms
+  const registro = {
+    id: key, ts, fecha: new Date(ts).toISOString(), estado,
+    mensaje, ficha: ficha || null, tipologia: ficha?.tipologia || null,
+    score: rag?.score ?? null, novedoso: !!rag?.novedoso,
+    modelo: llm?.modelo || null, error: error || null, comentario: null,
+  };
+  try {
+    await env.ASIS_LOG.put(key, JSON.stringify(registro), {
+      expirationTtl: 60 * 60 * 24 * 180,
+      metadata: { estado, novedoso: registro.novedoso, tipologia: registro.tipologia, score: registro.score },
+    });
+    return key;
+  } catch { return null; }
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -161,46 +184,83 @@ export default {
       const token = url.searchParams.get('token') || request.headers.get('x-asis-token');
       if (!env.ASIS_LOG_TOKEN || token !== env.ASIS_LOG_TOKEN) return json({ error: 'Token inválido (defina el secreto ASIS_LOG_TOKEN y páselo en ?token=).' }, 401);
       const soloNov = url.searchParams.get('solo_novedosos') === '1';
+      const estadoF = url.searchParams.get('estado');   // ok | error | incorrecto
       const limite = Math.min(500, Math.max(1, parseInt(url.searchParams.get('limite') || '100', 10)));
       const lista = await env.ASIS_LOG.list({ prefix: 'q:', limit: 1000 });
+      // Conteo por estado sobre TODO el registro (no solo la página devuelta).
+      const conteo = { ok: 0, error: 0, incorrecto: 0, novedoso: 0 };
+      for (const k of lista.keys) {
+        const e = (k.metadata && k.metadata.estado) || 'ok';
+        if (conteo[e] != null) conteo[e]++;
+        if (k.metadata && k.metadata.novedoso) conteo.novedoso++;
+      }
       let keys = lista.keys.sort((a, b) => b.name.localeCompare(a.name));   // más recientes primero
       if (soloNov) keys = keys.filter((k) => k.metadata && k.metadata.novedoso);
+      if (estadoF) keys = keys.filter((k) => ((k.metadata && k.metadata.estado) || 'ok') === estadoF);
       keys = keys.slice(0, limite);
       const items = await Promise.all(keys.map(async (k) => { try { return JSON.parse(await env.ASIS_LOG.get(k.name)); } catch { return null; } }));
       const reg = items.filter(Boolean);
-      const corpus_sugerido = reg.filter((r) => r.novedoso).map((r) => ({ desc: r.mensaje, ficha: r.ficha }));
-      return json({ total: reg.length, novedosos: reg.filter((r) => r.novedoso).length, registros: reg, corpus_sugerido });
+      // Candidatos a corpus: SOLO novedosos que generaron bien (no errores ni incorrectos).
+      const corpus_sugerido = reg.filter((r) => r.novedoso && r.estado === 'ok').map((r) => ({ desc: r.mensaje, ficha: r.ficha }));
+      // Casos a revisar/arreglar: errores y los marcados incorrectos por el usuario.
+      const revisar = reg.filter((r) => r.estado === 'error' || r.estado === 'incorrecto')
+        .map((r) => ({ id: r.id, estado: r.estado, mensaje: r.mensaje, error: r.error || null, comentario: r.comentario || null, tipologia: r.tipologia, ficha: r.ficha }));
+      return json({ total: reg.length, conteo, registros: reg, corpus_sugerido, revisar });
     }
 
     if (url.pathname === '/api/asistente') {
       if (request.method !== 'POST') return json({ error: 'Use POST' }, 405);
+      let body;
+      try { body = await request.json(); } catch { return json({ error: 'JSON inválido en la solicitud' }, 400); }
+      const desdeMensaje = !body.ficha && !!body.mensaje;   // solo registramos lo que vino del LLM
+      let ficha = body.ficha ?? null, llm = null, rag = null;
       try {
-        const body = await request.json();
-        let ficha = body.ficha ?? null, llm = null, rag = null;
-        if (!ficha && body.mensaje) {
+        if (desdeMensaje) {
           // RAG: recuperar ejemplos parecidos del corpus e inyectarlos como few-shot
           const corpus = await cargarCorpus(env, request.url);
           const rec = recuperarEjemplos(body.mensaje, corpus, 3);
           rag = { usados: rec.ejemplos.map((e) => e.desc.slice(0, 60)), score: +rec.score.toFixed(3), novedoso: rec.score < 0.5 };
           const res = await fichaDesdeLLM(body.mensaje, env, rec.ejemplos);
           ficha = res.ficha; llm = res.llm;
-          // Revisión semanal: registra el pedido + la FICHA generada (candidato a
-          // corpus) en KV. metadata permite listar los novedosos sin leer todo.
-          if (env.ASIS_LOG) {
-            const ts = Date.now();
-            const registro = { ts, fecha: new Date(ts).toISOString(), mensaje: body.mensaje, ficha, tipologia: ficha.tipologia || null, score: rag.score, novedoso: rag.novedoso, modelo: llm?.modelo || null };
-            try { await env.ASIS_LOG.put(`q:${ts}`, JSON.stringify(registro), { expirationTtl: 60 * 60 * 24 * 180, metadata: { novedoso: rag.novedoso, tipologia: registro.tipologia, score: rag.score } }); } catch { /* no bloquear la respuesta */ }
-          }
         }
         if (!ficha) return json({ error: 'Envíe { mensaje } o { ficha }' }, 400);
         const libs = await cargarBibliotecas(env, request.url);
         const modelo = generarModelo(ficha, libs);
-        // _llm: proveedor/modelo usado. _rag: ejemplos recuperados + si el pedido fue 'novedoso'.
+        // Registro OK (candidato a corpus). Devuelve la clave para feedback posterior.
+        const logId = desdeMensaje ? await registrarConsulta(env, { mensaje: body.mensaje, ficha, rag, llm, estado: 'ok' }) : null;
+        // _llm: proveedor/modelo usado. _rag: ejemplos recuperados + si fue 'novedoso'.
         const hdr = llm ? { 'X-Asistente-Proveedor': llm.proveedor, 'X-Asistente-Modelo': String(llm.modelo) } : {};
-        return json({ ficha, resumen: modelo._generado?.resumen, modelo, _llm: llm, _rag: rag }, 200, hdr);
+        return json({ ficha, resumen: modelo._generado?.resumen, modelo, _llm: llm, _rag: rag, _logId: logId }, 200, hdr);
       } catch (e) {
-        return json({ error: String(e.message || e) }, 500);
+        const msg = String(e.message || e);
+        // Registro de ERROR (LLM caído / sin JSON / fallo del generador).
+        if (desdeMensaje) { try { await registrarConsulta(env, { mensaje: body.mensaje, ficha, rag, llm, estado: 'error', error: msg }); } catch { /* no bloquear */ } }
+        return json({ error: msg }, 500);
       }
+    }
+
+    // ── Feedback del usuario: marcar una consulta como 'incorrecto' ──
+    // POST /api/asistente/feedback  body { id, comentario? }
+    if (url.pathname === '/api/asistente/feedback') {
+      if (request.method !== 'POST') return json({ error: 'Use POST' }, 405);
+      if (!env.ASIS_LOG) return json({ error: 'Registro KV no configurado' }, 400);
+      let body;
+      try { body = await request.json(); } catch { return json({ error: 'JSON inválido' }, 400); }
+      const id = String(body.id || '');
+      if (!id.startsWith('q:')) return json({ error: 'id inválido' }, 400);
+      const raw = await env.ASIS_LOG.get(id);
+      if (!raw) return json({ error: 'registro no encontrado' }, 404);
+      let reg; try { reg = JSON.parse(raw); } catch { return json({ error: 'registro corrupto' }, 500); }
+      reg.estado = 'incorrecto';
+      reg.comentario = body.comentario ? String(body.comentario).slice(0, 500) : null;
+      reg.feedback_ts = Date.now();
+      try {
+        await env.ASIS_LOG.put(id, JSON.stringify(reg), {
+          expirationTtl: 60 * 60 * 24 * 180,
+          metadata: { estado: 'incorrecto', novedoso: !!reg.novedoso, tipologia: reg.tipologia, score: reg.score },
+        });
+      } catch (e) { return json({ error: String(e.message || e) }, 500); }
+      return json({ ok: true, id, estado: reg.estado });
     }
 
     // Resto: servir la PWA (assets estáticos)
