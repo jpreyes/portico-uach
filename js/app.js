@@ -1,21 +1,21 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=62';
-import { Serializer }      from './model/serializer.js?v=62';
-import { Viewport }        from './ui/viewport.js?v=62';
-import { PropertiesPanel } from './ui/properties.js?v=62';
-import { MenuBar }         from './ui/menu.js?v=62';
-import { UndoStack }       from './utils/undo.js?v=62';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=62';
-import { Results }                         from './solver/postprocess.js?v=62';
-import { ModalSolver }                     from './solver/modal_solver.js?v=62';
-import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=62';
-import { ModalResults }                    from './solver/modal_results.js?v=62';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=62';
-import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=62';
-import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=62';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=62';
+import { Model }           from './model/model.js?v=63';
+import { Serializer }      from './model/serializer.js?v=63';
+import { Viewport }        from './ui/viewport.js?v=63';
+import { PropertiesPanel } from './ui/properties.js?v=63';
+import { MenuBar }         from './ui/menu.js?v=63';
+import { UndoStack }       from './utils/undo.js?v=63';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=63';
+import { Results }                         from './solver/postprocess.js?v=63';
+import { ModalSolver }                     from './solver/modal_solver.js?v=63';
+import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=63';
+import { ModalResults }                    from './solver/modal_results.js?v=63';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=63';
+import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=63';
+import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=63';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=63';
 
 class App {
   constructor() {
@@ -67,21 +67,33 @@ class App {
     document.getElementById('btn-run')?.addEventListener('click', () => this.runAnalysis());
     document.getElementById('btn-clear-results')?.addEventListener('click', () => this.clearResults());
 
-    // Results type/scale changes
-    document.getElementById('result-type')?.addEventListener('change', () => this._refreshResultView());
+    // Results type/scale changes.
+    // El control de escala es un FACTOR RELATIVO (1 = ajuste automático
+    // normalizado). Al cambiar el tipo de resultado se RE-NORMALIZA siempre
+    // (autoScale=true) para que cada diagrama nazca bien dimensionado y no
+    // herede una escala absurda del tipo anterior.
+    document.getElementById('result-type')?.addEventListener('change', () => this._refreshResultView(true));
     document.getElementById('result-scale')?.addEventListener('change', () => {
       this._refreshResultView();
-      // Sync range slider
-      const v = parseFloat(document.getElementById('result-scale')?.value) || 1;
-      const logV = Math.log10(Math.max(v, 1e-3));
+      // Sync range slider (factor → log10)
+      const f = parseFloat(document.getElementById('result-scale')?.value) || 1;
+      const logV = Math.log10(Math.max(f, 1e-3));
       const rangeEl = document.getElementById('result-scale-range');
-      if (rangeEl) rangeEl.value = Math.max(-2, Math.min(4, logV));
+      if (rangeEl) rangeEl.value = Math.max(-1.5, Math.min(1.5, logV));
     });
     document.getElementById('result-scale-range')?.addEventListener('input', e => {
-      const scale = Math.pow(10, parseFloat(e.target.value));
+      const factor = Math.pow(10, parseFloat(e.target.value));
       const numEl = document.getElementById('result-scale');
-      if (numEl) numEl.value = +scale.toPrecision(3);
+      if (numEl) numEl.value = +factor.toPrecision(3);
       if (this._results) this._refreshResultView();
+    });
+    // Doble clic en el control → vuelve al ajuste automático (factor 1).
+    document.getElementById('result-scale')?.addEventListener('dblclick', () => {
+      const numEl = document.getElementById('result-scale');
+      const rangeEl = document.getElementById('result-scale-range');
+      if (numEl) numEl.value = 1;
+      if (rangeEl) rangeEl.value = 0;
+      this._refreshResultView(true);
     });
 
     // Toolbar extras
@@ -1139,13 +1151,14 @@ class App {
 
   _refreshResultView(autoScale = false) {
     if (!this._results) return;
-    const type  = document.getElementById('result-type')?.value || 'deformed';
-    const scale = autoScale ? null : (parseFloat(document.getElementById('result-scale')?.value) || null);
+    const type   = document.getElementById('result-type')?.value || 'deformed';
+    // factor relativo (1 = auto-normalizado); null fuerza la normalización
+    const factor = autoScale ? null : (parseFloat(document.getElementById('result-scale')?.value) || null);
 
     if (type === 'deformed') {
-      this.viewport.showDeformed(this._results, scale);
+      this.viewport.showDeformed(this._results, factor);
     } else {
-      this.viewport.showForceDiagram(this._results, type, scale);
+      this.viewport.showForceDiagram(this._results, type, factor);
     }
     // Reacciones: re-dibujar con los valores del resultado mostrado
     if (this._showReactions) this.viewport.showReactions(this._results);
@@ -1187,7 +1200,8 @@ class App {
     if (!this._results && !this._modalResults) return;
     const sel = document.getElementById('result-type');
     if (sel) sel.value = type;
-    if (this._results) this._refreshResultView();
+    // Re-normalizar al cambiar de tipo (cada diagrama nace bien dimensionado).
+    if (this._results) this._refreshResultView(true);
   }
 
   exportResults() {
@@ -2305,7 +2319,7 @@ class App {
     this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=62');
+      const { generarModelo } = await import('../asistente/generador.js?v=63');
       const modelo = generarModelo(ficha, libs);
       this._loadJSON(JSON.stringify(modelo), (ficha.proyecto || 'asistente') + '.s3d');
       this.markDirty();

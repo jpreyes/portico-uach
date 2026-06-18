@@ -29,8 +29,8 @@
       window.dispatchEvent(new Event('pwa-installed'));
     });
   </script>
-  <link rel="stylesheet" href="style.css?v=62">
-  <link rel="stylesheet" href="ui-v2.css?v=62">
+  <link rel="stylesheet" href="style.css?v=63">
+  <link rel="stylesheet" href="ui-v2.css?v=63">
   <script type="importmap">
   {
     "imports": {
@@ -296,12 +296,12 @@
             <option value="Mz">Momento Mz</option>
           </select>
         </div>
-        <div class="vp-ctrl">
-          <label>Escala</label>
-          <input type="range" id="result-scale-range" min="-2" max="4" step="0.1" value="2"
-            style="width:70px;cursor:pointer">
-          <input type="number" id="result-scale" value="100" step="10" min="0.01"
-            style="width:62px">
+        <div class="vp-ctrl" title="Factor de escala relativo: 1 = ajuste automático normalizado. Doble clic en el número para volver a 1.">
+          <label>Escala ×</label>
+          <input type="range" id="result-scale-range" min="-1.5" max="1.5" step="0.05" value="0"
+            style="width:70px;cursor:pointer" title="Ajuste fino relativo al tamaño automático (×0.03 … ×31)">
+          <input type="number" id="result-scale" value="1" step="0.1" min="0.01"
+            style="width:62px" title="Factor relativo (1 = automático). Doble clic = volver a 1.">
         </div>
         <div id="result-summary"></div>
         <!-- P2-4: Colorbar -->
@@ -655,7 +655,7 @@
           <div>
             <h2 style="margin:0">PÓRTICO</h2>
             <p style="margin:2px 0 0;color:var(--text-muted)">Laboratorio virtual de análisis estructural 3D
-              · <b id="help-version">versión 62</b> · junio 2026</p>
+              · <b id="help-version">versión 63</b> · junio 2026</p>
           </div>
         </div>
         <p><b>Material docente</b> desarrollado por el <b>Dr. Juan Patricio Reyes C.</b> —
@@ -852,7 +852,7 @@
 
 <!-- numeric.js para solver (Fase 2+) -->
 <script src="lib/numeric.js"></script>
-<script type="module" src="js/app.js?v=62"></script>
+<script type="module" src="js/app.js?v=63"></script>
 
 <!-- PWA: registrar el service worker (offline). Solo en contexto seguro
      (https o localhost); el navegador deja navigator.serviceWorker undefined

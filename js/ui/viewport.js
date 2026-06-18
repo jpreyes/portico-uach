@@ -1850,7 +1850,10 @@ export class Viewport {
     if (cbw) cbw.style.display = 'none';
   }
 
-  showDeformed(results, scale) {
+  // factor = multiplicador RELATIVO sobre la escala auto-normalizada (1 = ajuste
+  // automático; null/undefined también = 1). La deformada SIEMPRE se normaliza a
+  // ~span/50 de tamaño en pantalla, independiente de la magnitud real de δ.
+  showDeformed(results, factor) {
     this.clearLoads();
     this.clearResults();
     this._resultObjects = [];
@@ -1859,12 +1862,13 @@ export class Viewport {
     this._currentDiagramType = null;
 
     const maxD = results.getMaxDisp();
-    if (!scale) {
-      const b = this.app.model.getBounds();
-      const span = Math.max(b.max.x-b.min.x, b.max.y-b.min.y, b.max.z-b.min.z, 1);
-      scale = maxD > 1e-12 ? span / 50 / maxD : 100;
-    }
-    document.getElementById('result-scale').value = Math.round(scale);
+    const b = this.app.model.getBounds();
+    const span = Math.max(b.max.x-b.min.x, b.max.y-b.min.y, b.max.z-b.min.z, 1);
+    const autoBase = maxD > 1e-12 ? span / 50 / maxD : 100;   // normaliza: δmax → span/50
+    this._autoScaleBase = autoBase;
+    const f = (factor == null || !isFinite(factor) || factor <= 0) ? 1 : factor;
+    const scale = autoBase * f;
+    document.getElementById('result-scale').value = +f.toPrecision(3);
 
     // Ghost original model
     for (const [, line] of this._elemLines) line.material.color.set(0x222840);
@@ -1908,11 +1912,14 @@ export class Viewport {
       this._scene.add(mesh);
       this._resultObjects.push(mesh);
     }
-    this._showResultsUI(`Deformada ×${Math.round(scale)} | δmax=${_fmt(maxD)}`);
+    this._showResultsUI(`Deformada ×${_fmt(scale)} (factor ×${+f.toPrecision(3)}) | δmax=${_fmt(maxD)}`);
     this._drawColorbar(0, maxD);
   }
 
-  showForceDiagram(results, type, scale) {
+  // factor = multiplicador RELATIVO sobre la escala auto-normalizada (1 = ajuste
+  // automático). El diagrama SIEMPRE se normaliza a ~15% del span, sin importar
+  // la magnitud del esfuerzo (N en kN vs M en kN·m, etc.).
+  showForceDiagram(results, type, factor) {
     this.clearLoads();
     this.clearResults();
     this._resultObjects = [];
@@ -1932,12 +1939,13 @@ export class Viewport {
       for (const p of d.pts)      if (Math.abs(p.val)   > maxVal) maxVal = Math.abs(p.val);
       for (const e of d.extremes) if (Math.abs(e.val)   > maxVal) maxVal = Math.abs(e.val);
     }
-    if (!scale) {
-      const b = this.app.model.getBounds();
-      const span = Math.max(b.max.x-b.min.x, b.max.y-b.min.y, b.max.z-b.min.z, 1);
-      scale = maxVal > 1e-12 ? span * 0.15 / maxVal : 1;
-    }
-    document.getElementById('result-scale').value = +scale.toExponential(3);
+    const b = this.app.model.getBounds();
+    const span = Math.max(b.max.x-b.min.x, b.max.y-b.min.y, b.max.z-b.min.z, 1);
+    const autoBase = maxVal > 1e-12 ? span * 0.15 / maxVal : 1;   // normaliza: máx → 15% del span
+    this._autoScaleBase = autoBase;
+    const f = (factor == null || !isFinite(factor) || factor <= 0) ? 1 : factor;
+    const scale = autoBase * f;
+    document.getElementById('result-scale').value = +f.toPrecision(3);
 
     for (const [, line] of this._elemLines) line.material.color.set(0x222840);
     const useLocalZ = (type === 'My' || type === 'Vz');
@@ -2015,7 +2023,7 @@ export class Viewport {
         this._resultObjects.push(sp);
       }
     }
-    this._showResultsUI(`${type} | max = ${_fmt(maxVal)}`);
+    this._showResultsUI(`${type} | máx = ${_fmt(maxVal)} (factor ×${+f.toPrecision(3)})`);
     this._drawColorbar(0, maxVal);
   }
 
