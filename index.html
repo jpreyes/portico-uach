@@ -29,8 +29,8 @@
       window.dispatchEvent(new Event('pwa-installed'));
     });
   </script>
-  <link rel="stylesheet" href="style.css?v=71">
-  <link rel="stylesheet" href="ui-v2.css?v=71">
+  <link rel="stylesheet" href="style.css?v=72">
+  <link rel="stylesheet" href="ui-v2.css?v=72">
   <script type="importmap">
   {
     "imports": {
@@ -154,6 +154,7 @@
     </nav>
 
     <div class="menubar-right">
+      <span id="pro-badge" title="Modo profesional activo" style="display:none;background:#0d9488;color:#fff;border-radius:6px;font-size:10px;font-weight:700;padding:3px 7px;margin-right:8px;letter-spacing:.5px">PRO</span>
       <button id="btn-config" type="button" title="Configuración (memoria, visualización, modificadores de sección)"
         style="background:var(--bg4);border:1px solid var(--border2);color:var(--text);border-radius:6px;cursor:pointer;font-size:14px;line-height:1;padding:4px 8px;margin-right:6px">⚙</button>
       <button id="btn-theme" type="button" title="Cambiar tema claro/oscuro"
@@ -669,7 +670,7 @@
           <div>
             <h2 style="margin:0">PÓRTICO</h2>
             <p style="margin:2px 0 0;color:var(--text-muted)">Laboratorio virtual de análisis estructural 3D
-              · <b id="help-version">versión 71</b> · junio 2026</p>
+              · <b id="help-version">versión 72</b> · junio 2026</p>
           </div>
         </div>
         <p><b>Material docente</b> desarrollado por el <b>Dr. Juan Patricio Reyes C.</b> —
@@ -866,9 +867,17 @@
 })();
 </script>
 
+<!-- Aviso de rotación: en teléfonos en vertical, PÓRTICO se usa en horizontal
+     (apaisado) para que se vean las barras laterales. -->
+<div id="rotate-hint">
+  <div class="rotate-ico">⟲📱</div>
+  <p><b>Gira el dispositivo</b></p>
+  <p>PÓRTICO se usa en horizontal (apaisado) para ver las barras laterales.</p>
+</div>
+
 <!-- numeric.js para solver (Fase 2+) -->
 <script src="lib/numeric.js"></script>
-<script type="module" src="js/app.js?v=71"></script>
+<script type="module" src="js/app.js?v=72"></script>
 
 <!-- PWA: registrar el service worker (offline). Solo en contexto seguro
      (https o localhost); el navegador deja navigator.serviceWorker undefined

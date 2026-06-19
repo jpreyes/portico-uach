@@ -1,21 +1,21 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=71';
-import { Serializer }      from './model/serializer.js?v=71';
-import { Viewport }        from './ui/viewport.js?v=71';
-import { PropertiesPanel } from './ui/properties.js?v=71';
-import { MenuBar }         from './ui/menu.js?v=71';
-import { UndoStack }       from './utils/undo.js?v=71';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=71';
-import { Results }                         from './solver/postprocess.js?v=71';
-import { ModalSolver }                     from './solver/modal_solver.js?v=71';
-import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=71';
-import { ModalResults }                    from './solver/modal_results.js?v=71';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=71';
-import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=71';
-import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=71';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=71';
+import { Model }           from './model/model.js?v=72';
+import { Serializer }      from './model/serializer.js?v=72';
+import { Viewport }        from './ui/viewport.js?v=72';
+import { PropertiesPanel } from './ui/properties.js?v=72';
+import { MenuBar }         from './ui/menu.js?v=72';
+import { UndoStack }       from './utils/undo.js?v=72';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=72';
+import { Results }                         from './solver/postprocess.js?v=72';
+import { ModalSolver }                     from './solver/modal_solver.js?v=72';
+import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=72';
+import { ModalResults }                    from './solver/modal_results.js?v=72';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=72';
+import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=72';
+import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=72';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=72';
 
 class App {
   constructor() {
@@ -122,6 +122,7 @@ class App {
 
     this._initHelp();
     this._initTheme();
+    this._initPro();
 
     // F1 / F5 / F6 / F7 / F8 shortcuts
     document.addEventListener('keydown', e => {
@@ -2348,7 +2349,7 @@ class App {
     this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=71');
+      const { generarModelo } = await import('../asistente/generador.js?v=72');
       const modelo = generarModelo(ficha, libs);
 
       if (modo === 'sobreponer') {
@@ -2422,13 +2423,27 @@ class App {
         subInstitucion: 'Facultad de Ciencias de la Ingeniería · Instituto de Obras Civiles',
         proyectista: '',
         revisor: '',
-        descripcion: '',
-        footer: 'Producto académico · IOC · UACh — no sustituye la revisión de un profesional competente',
+        descripcion: '',       // PRO
+        footer: '',            // PRO (vacío = pie académico por defecto)
+        limitaciones: '',      // PRO (vacío = limitaciones académicas por defecto)
+        logoEmpresa: '',       // PRO (data URL del logo de la empresa)
         mostrarIds: true,      // mostrar IDs de nodos/elementos en las figuras
         modosVisibles: true,   // amplificar las formas modales para que se noten
       },
+      analisis: { motor: 'normal' },   // PRO los demás motores (no implementados)
       seccion_mod_default: { A: 1, Iy: 1, Iz: 1, J: 1 },
     };
+  }
+
+  // Pie de página y limitaciones de la VERSIÓN ACADÉMICA (no editables sin token).
+  get _ACAD_FOOTER() { return 'Producto académico · IOC · UACh — no sustituye la revisión de un profesional competente'; }
+  get _ACAD_LIMITS() {
+    return [
+      'Documento generado automáticamente por PÓRTICO con fines <b>docentes</b>; no reemplaza el criterio ni la firma de un profesional competente.',
+      'La verificación de diseño usa propiedades de sección (A, I) y los parámetros editables de <code>asistente/diseno_params.json</code>; el hormigón armado se evalúa con la cuantía indicada y supuestos declarados.',
+      'La verificación cubre flexión, corte, axial, interacción flexo-axial (AISC H1 / NDS) y flecha de servicio por envolvente de combinaciones. NO incluye diseño de uniones, fundaciones, pandeo lateral-torsional, clasificación de perfiles ni efectos P-Δ.',
+      'Las cargas de viento, nieve y sobrecargas se representan como casos de carga; verifique su clasificación y magnitud según la normativa aplicable.',
+    ];
   }
   _loadConfig() {
     const def = this._defaultConfig();
@@ -2436,44 +2451,124 @@ class App {
       const raw = JSON.parse(localStorage.getItem('portico_config') || '{}');
       return {
         memoria: { ...def.memoria, ...(raw.memoria || {}) },
+        analisis: { ...def.analisis, ...(raw.analisis || {}) },
         seccion_mod_default: { ...def.seccion_mod_default, ...(raw.seccion_mod_default || {}) },
       };
     } catch { return def; }
   }
   _saveConfig() { try { localStorage.setItem('portico_config', JSON.stringify(this._config)); } catch (e) {} }
 
+  // ── Modo profesional (token validado contra el secreto del Worker) ──────────
+  async _verificarPro(token) {
+    const base = localStorage.getItem('portico_n8n_endpoint') || '/api/asistente';
+    const r = await fetch(base + '/pro', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+    const d = await r.json().catch(() => ({}));
+    return { ok: r.ok && d.ok, error: d.error };
+  }
+  async activarPro(token) {
+    token = String(token || '').trim();
+    if (!token) return { ok: false, error: 'Ingrese un token.' };
+    try {
+      const res = await this._verificarPro(token);
+      if (res.ok) {
+        this._pro = true;
+        try { localStorage.setItem('portico_pro_token', token); } catch (e) {}
+        this._actualizarBadgePro();
+        return { ok: true };
+      }
+      return { ok: false, error: res.error || 'Token inválido.' };
+    } catch (e) { return { ok: false, error: 'No se pudo contactar el servidor: ' + e.message }; }
+  }
+  desactivarPro() {
+    this._pro = false;
+    try { localStorage.removeItem('portico_pro_token'); } catch (e) {}
+    this._actualizarBadgePro();
+  }
+  _initPro() {
+    this._pro = false;
+    this._actualizarBadgePro();
+    let tok = null; try { tok = localStorage.getItem('portico_pro_token'); } catch (e) {}
+    if (tok) this._verificarPro(tok).then(r => { this._pro = !!r.ok; this._actualizarBadgePro(); }).catch(() => {});
+  }
+  _actualizarBadgePro() {
+    const b = document.getElementById('pro-badge');
+    if (b) b.style.display = this._pro ? '' : 'none';
+  }
+
   configDialog() {
-    const mm = this._config.memoria, sd = this._config.seccion_mod_default;
+    const mm = this._config.memoria, sd = this._config.seccion_mod_default, an = this._config.analisis;
+    const pro = !!this._pro;
     const overlay = document.getElementById('modal-overlay');
     const ea = s => String(s ?? '').replace(/"/g, '&quot;');
+    const G = pro ? '' : 'disabled';   // gate: deshabilitado sin token
+    const lock = pro ? '' : ' 🔒';
+    const motores = [['normal','Normal (lineal elástico)'],['rapido','Rápido (no implementado)'],
+      ['no_lineal_estatico','No lineal estático (no implementado)'],['pushover','Carga progresiva — pushover (no implementado)'],
+      ['no_lineal_dinamico','No lineal dinámico, integración directa (no implementado)']];
     document.getElementById('modal-title').textContent = '⚙ Configuración';
     document.getElementById('modal-box')?.classList.add('modal-wide');
     document.getElementById('modal-cancel').style.display = '';
     document.getElementById('modal-body').innerHTML = `
       <div style="display:flex;flex-direction:column;gap:14px;font-size:13px">
+        <fieldset style="border:1px solid ${pro ? 'var(--teal)' : 'var(--border)'};border-radius:6px;padding:10px 12px">
+          <legend style="padding:0 6px;color:${pro ? 'var(--teal)' : 'var(--accent)'}">Modo profesional ${pro ? '— ACTIVO ✔' : '— inactivo'}</legend>
+          <p style="color:var(--text-muted);font-size:11px;margin-bottom:6px">Las funciones profesionales (editar descripción, pie de página, limitaciones, logo de empresa, motor de análisis y elementos de área) requieren un <b>token autorizado</b>, que se obtiene enviando una solicitud. Garantiza que la herramienta no se use con fines comerciales sin autorización. La versión académica conserva los créditos UACh · Facultad · IOC.</p>
+          ${pro
+            ? `<button type="button" id="cfg-pro-off" class="btn">Desactivar modo profesional</button>`
+            : `<div class="prop-row" style="gap:8px;align-items:end"><div class="prop-field" style="flex:1"><label>Token profesional</label><input id="cfg-pro-token" type="password" placeholder="pegue su token"></div><button type="button" id="cfg-pro-on" class="btn-primary" style="margin-left:8px">Activar</button></div>`}
+        </fieldset>
+
         <fieldset style="border:1px solid var(--border);border-radius:6px;padding:10px 12px">
-          <legend style="padding:0 6px;color:var(--accent)">Memoria de cálculo — encabezado</legend>
+          <legend style="padding:0 6px;color:var(--accent)">Memoria — encabezado</legend>
           <div class="prop-row cols2" style="gap:8px">
             <div class="prop-field"><label>Título</label><input id="cfg-titulo" value="${ea(mm.titulo)}"></div>
-            <div class="prop-field"><label>Subtítulo (kicker)</label><input id="cfg-kicker" value="${ea(mm.kicker)}"></div>
+            <div class="prop-field"><label>Subtítulo (kicker)${lock}</label><input id="cfg-kicker" value="${ea(mm.kicker)}" ${G}></div>
           </div>
           <div class="prop-row cols2" style="gap:8px;margin-top:6px">
-            <div class="prop-field"><label>Institución</label><input id="cfg-inst" value="${ea(mm.institucion)}"></div>
-            <div class="prop-field"><label>Sub-institución / unidad</label><input id="cfg-subinst" value="${ea(mm.subInstitucion)}"></div>
+            <div class="prop-field"><label>Institución${lock}</label><input id="cfg-inst" value="${ea(mm.institucion)}" ${G}></div>
+            <div class="prop-field"><label>Sub-institución / unidad${lock}</label><input id="cfg-subinst" value="${ea(mm.subInstitucion)}" ${G}></div>
           </div>
           <div class="prop-row cols2" style="gap:8px;margin-top:6px">
             <div class="prop-field"><label>Proyectista</label><input id="cfg-proy" value="${ea(mm.proyectista)}"></div>
             <div class="prop-field"><label>Revisó</label><input id="cfg-rev" value="${ea(mm.revisor)}"></div>
           </div>
-          <div class="prop-field" style="margin-top:6px"><label>Descripción del proyecto</label>
-            <textarea id="cfg-desc" rows="3" style="width:100%">${ea(mm.descripcion)}</textarea></div>
-          <div class="prop-field" style="margin-top:6px"><label>Pie de página</label><input id="cfg-footer" value="${ea(mm.footer)}"></div>
         </fieldset>
+
+        <fieldset style="border:1px solid var(--border);border-radius:6px;padding:10px 12px">
+          <legend style="padding:0 6px;color:var(--accent)">Memoria — contenido profesional${lock}</legend>
+          <div class="prop-field"><label>Descripción del proyecto</label><textarea id="cfg-desc" rows="3" style="width:100%" ${G}>${ea(mm.descripcion)}</textarea></div>
+          <div class="prop-field" style="margin-top:6px"><label>Pie de página (vacío = pie académico)</label><input id="cfg-footer" value="${ea(mm.footer)}" placeholder="${ea(this._ACAD_FOOTER)}" ${G}></div>
+          <div class="prop-field" style="margin-top:6px"><label>Limitaciones (una por línea; vacío = limitaciones académicas)</label><textarea id="cfg-limit" rows="3" style="width:100%" ${G}>${ea(mm.limitaciones)}</textarea></div>
+          <div class="prop-field" style="margin-top:6px"><label>Logo de empresa</label>
+            <div style="display:flex;align-items:center;gap:8px">
+              <input id="cfg-logo-file" type="file" accept="image/*" ${G} style="flex:1">
+              ${mm.logoEmpresa ? '<img id="cfg-logo-prev" src="' + mm.logoEmpresa + '" style="height:28px;border:1px solid var(--border);border-radius:4px;background:#fff">' : ''}
+              <button type="button" id="cfg-logo-clear" class="btn" ${G}>Quitar</button>
+            </div>
+          </div>
+        </fieldset>
+
         <fieldset style="border:1px solid var(--border);border-radius:6px;padding:10px 12px">
           <legend style="padding:0 6px;color:var(--accent)">Visualización de la memoria</legend>
           <label style="display:block;margin-bottom:5px"><input type="checkbox" id="cfg-ids" ${mm.mostrarIds ? 'checked' : ''}> Mostrar IDs de nodos y elementos en las figuras</label>
           <label style="display:block"><input type="checkbox" id="cfg-modos" ${mm.modosVisibles ? 'checked' : ''}> Amplificar las formas modales para que se observen</label>
         </fieldset>
+
+        <fieldset style="border:1px solid var(--border);border-radius:6px;padding:10px 12px">
+          <legend style="padding:0 6px;color:var(--accent)">Funciones avanzadas (profesional)${lock}</legend>
+          <div class="prop-field"><label>Motor de análisis</label>
+            <select id="cfg-motor" ${G}>${motores.map(([v, t]) => `<option value="${v}" ${an.motor === v ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+          <div class="prop-field" style="margin-top:6px"><label>Elementos de área (membrana / placa / Shell lineal elástico)</label>
+            <select id="cfg-shell" ${G}>
+              <option value="">— no usar —</option>
+              <option value="membrana">Membrana (no implementado)</option>
+              <option value="placa">Placa (no implementado)</option>
+              <option value="shell">Shell lineal elástico (no implementado)</option>
+            </select>
+            <small style="color:var(--text-muted);font-size:10.5px">Mostrará tensiones, deformaciones y esfuerzos; con subdivisión configurable (N divisiones horizontales/verticales). Disponible en la versión avanzada.</small>
+          </div>
+        </fieldset>
+
         <fieldset style="border:1px solid var(--border);border-radius:6px;padding:10px 12px">
           <legend style="padding:0 6px;color:var(--accent)">Modificadores de sección por defecto (rigidez)</legend>
           <p style="color:var(--text-muted);font-size:11px;margin-bottom:6px">Factores aplicados a A, I, J en el análisis (p.ej. sección agrietada ACI: viga 0.35, columna 0.70). Editables por sección en la pestaña Sec.</p>
@@ -2488,6 +2583,23 @@ class App {
         <p style="color:var(--text-muted);font-size:11px">Los parámetros de diseño (Fy, f′c, φ, cuantía…) se editan en <code>asistente/diseno_params.json</code>.</p>
       </div>`;
     overlay.classList.remove('hidden');
+
+    // Activar / desactivar modo profesional
+    document.getElementById('cfg-pro-on')?.addEventListener('click', async () => {
+      const tok = document.getElementById('cfg-pro-token')?.value;
+      const r = await this.activarPro(tok);
+      if (r.ok) { this.toast('Modo profesional activado', 'ok'); this.configDialog(); }
+      else this.toast(r.error || 'Token inválido', 'error');
+    });
+    document.getElementById('cfg-pro-off')?.addEventListener('click', () => { this.desactivarPro(); this.toast('Modo profesional desactivado', 'ok'); this.configDialog(); });
+    // Logo de empresa (file → data URL)
+    document.getElementById('cfg-logo-file')?.addEventListener('change', (e) => {
+      const f = e.target.files?.[0]; if (!f) return;
+      const rd = new FileReader();
+      rd.onload = () => { mm.logoEmpresa = rd.result; this.toast('Logo cargado (se aplica al guardar)', 'ok'); };
+      rd.readAsDataURL(f);
+    });
+    document.getElementById('cfg-logo-clear')?.addEventListener('click', () => { if (pro) { mm.logoEmpresa = ''; document.getElementById('cfg-logo-prev')?.remove(); } });
     document.getElementById('cfg-apply-mod')?.addEventListener('click', () => {
       const mod = { A: +document.getElementById('cfg-mA').value || 1, Iy: +document.getElementById('cfg-mIy').value || 1,
         Iz: +document.getElementById('cfg-mIz').value || 1, J: +document.getElementById('cfg-mJ').value || 1 };
@@ -2497,11 +2609,18 @@ class App {
     });
     overlay._resolve = () => {
       const v = id => document.getElementById(id)?.value ?? '';
-      mm.titulo = v('cfg-titulo'); mm.kicker = v('cfg-kicker'); mm.institucion = v('cfg-inst');
-      mm.subInstitucion = v('cfg-subinst'); mm.proyectista = v('cfg-proy'); mm.revisor = v('cfg-rev');
-      mm.descripcion = v('cfg-desc'); mm.footer = v('cfg-footer');
+      mm.titulo = v('cfg-titulo'); mm.proyectista = v('cfg-proy'); mm.revisor = v('cfg-rev');
       mm.mostrarIds = document.getElementById('cfg-ids')?.checked ?? true;
       mm.modosVisibles = document.getElementById('cfg-modos')?.checked ?? true;
+      if (pro) {   // campos profesionales solo si hay token
+        mm.kicker = v('cfg-kicker'); mm.institucion = v('cfg-inst'); mm.subInstitucion = v('cfg-subinst');
+        mm.descripcion = v('cfg-desc'); mm.footer = v('cfg-footer'); mm.limitaciones = v('cfg-limit');
+        const motorSel = v('cfg-motor');
+        if (motorSel && motorSel !== 'normal') this.toast('El motor seleccionado no está implementado en esta versión; se usará Normal.', 'warn');
+        an.motor = motorSel || 'normal';
+        const shellSel = v('cfg-shell');
+        if (shellSel) this.toast('Los elementos de área (membrana/placa/Shell) no están implementados aún (versión avanzada).', 'warn');
+      }
       sd.A = +v('cfg-mA') || 1; sd.Iy = +v('cfg-mIy') || 1; sd.Iz = +v('cfg-mIz') || 1; sd.J = +v('cfg-mJ') || 1;
       this._saveConfig();
       document.getElementById('modal-box')?.classList.remove('modal-wide');
@@ -3088,7 +3207,7 @@ class App {
   // Verificación de diseño (flexión/corte/axial) por elemento, usando los
   // resultados actuales y los parámetros editables de asistente/diseno_params.json.
   async _calcularDiseno() {
-    const ver = '?v=71';
+    const ver = '?v=72';
     let params = null;
     try { params = await fetch('asistente/diseno_params.json' + ver).then(r => r.json()); }
     catch (e) { console.error('No se pudo cargar diseno_params.json:', e); return null; }
@@ -3432,7 +3551,13 @@ class App {
     }
 
     // ── Portada (estilo institucional, configurable) ────────────────────────
+    // Logos: versión académica = UACh + Facultad + IOC; versión profesional puede
+    // anteponer el logo de la empresa.
+    const logosAcad = `<div class="cover-logos">
+        <img src="icons/UACh-color-negro.svg" alt="UACh"><img src="icons/Facultad-color-negro.svg" alt="Facultad"><img src="icons/IOC-color.svg" alt="IOC"></div>`;
+    const logoEmp = (this._pro && cm.logoEmpresa) ? `<div class="cover-logo-emp"><img src="${cm.logoEmpresa}" alt="Empresa"></div>` : '';
     const portada = `<section class="cover">
+      ${logoEmp}${logosAcad}
       <div class="cover-inst">${esc(cm.institucion || 'UNIVERSIDAD AUSTRAL DE CHILE')}<br><span>${esc(cm.subInstitucion || 'Facultad de Ciencias de la Ingeniería · Instituto de Obras Civiles')}</span></div>
       <svg class="cover-frame" viewBox="0 0 360 200" aria-hidden="true">
         <path d="M60 175 V55 H300 V175" fill="none" stroke="#0a3a57" stroke-width="4" stroke-linecap="round"/>
@@ -3453,7 +3578,13 @@ class App {
       </tbody></table>
       <p class="cover-note">Documento de carácter docente. Los resultados deben ser validados por un profesional competente antes de cualquier uso en obra.</p>
     </section>`;
-    const descripcionHTML = cm.descripcion ? `<p>${esc(cm.descripcion)}</p>` : '';
+    const descripcionHTML = (this._pro && cm.descripcion) ? `<p>${esc(cm.descripcion)}</p>` : '';
+    // Pie y limitaciones: académicos por defecto; editables solo con token profesional.
+    const footerTxt = (this._pro && cm.footer) ? cm.footer : this._ACAD_FOOTER;
+    const limitItems = (this._pro && cm.limitaciones)
+      ? cm.limitaciones.split('\n').map(s => s.trim()).filter(Boolean).map(esc)
+      : this._ACAD_LIMITS;
+    const limitHTML = limitItems.map(li => `<li>${li}</li>`).join('');
 
     return `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
 <base href="${esc(location.origin)}/">
@@ -3486,6 +3617,9 @@ class App {
     padding:0 40px;font-size:9px;color:var(--mut);border-top:1px solid var(--bd);background:#fff;}
   .page-footer b{color:var(--head);}
   .cover{min-height:88vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;page-break-after:always;}
+  .cover-logos{display:flex;gap:22px;align-items:center;justify-content:center;margin-bottom:10px;flex-wrap:wrap;}
+  .cover-logos img{height:46px;width:auto;border:none;background:none;border-radius:0;}
+  .cover-logo-emp{margin-bottom:8px;} .cover-logo-emp img{height:54px;width:auto;border:none;background:none;}
   .cover-inst{font-size:12px;letter-spacing:.5px;color:var(--head);font-weight:600;margin-bottom:6px;}
   .cover-inst span{display:block;font-weight:400;color:var(--mut);font-size:10px;letter-spacing:0;}
   .cover-frame{width:240px;height:auto;margin:14px 0;}
@@ -3499,7 +3633,7 @@ class App {
 </style></head><body>
 <button class="print-btn" onclick="window.print()">🖨 Imprimir / Guardar PDF</button>
 <div class="page-footer"><span><b>PÓRTICO</b> · ${esc(cm.titulo || 'Memoria de Cálculo')} — ${esc(proyecto)}</span>
-  <span>${esc(cm.footer || 'Producto académico · IOC · UACh — no sustituye la revisión de un profesional competente')}</span>
+  <span>${esc(footerTxt)}</span>
   <span>${esc(fecha)}</span></div>
 
 ${portada}
@@ -3551,12 +3685,7 @@ ${modalHTML}
 ${disenoHTML}
 
 <h2>4. Limitaciones y alcances</h2>
-<ul style="font-size:11px;line-height:1.6">
-  <li>Documento generado automáticamente por PÓRTICO con fines <b>docentes</b>; no reemplaza el criterio ni la firma de un profesional competente.</li>
-  <li>La verificación de diseño usa propiedades de sección (A, I) y los parámetros editables de <code>asistente/diseno_params.json</code>; el hormigón armado se evalúa con la cuantía indicada y supuestos declarados.</li>
-  <li>La verificación cubre flexión, corte, axial, interacción flexo-axial (AISC H1 / NDS) y flecha de servicio por envolvente de combinaciones. NO incluye diseño de uniones, fundaciones, pandeo lateral-torsional, clasificación de perfiles ni efectos P-Δ.</li>
-  <li>Las cargas de viento, nieve y sobrecargas se representan como casos de carga; verifique su clasificación y magnitud según la normativa aplicable.</li>
-</ul>
+<ul style="font-size:11px;line-height:1.6">${limitHTML}</ul>
 </body></html>`;
   }
 

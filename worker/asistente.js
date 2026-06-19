@@ -263,6 +263,22 @@ export default {
       return json({ ok: true, id, estado: reg.estado });
     }
 
+    // ── Verificación del TOKEN PROFESIONAL ──
+    // POST /api/asistente/pro { token } → { ok } si el token coincide con uno de
+    // los configurados en el secreto PRO_TOKENS (lista separada por comas) o
+    // PRO_TOKEN. Habilita en el cliente las funciones profesionales. El token se
+    // obtiene enviando una solicitud; así la app NO se usa con fines comerciales
+    // sin autorización. (La verificación de fondo es del lado servidor.)
+    if (url.pathname === '/api/asistente/pro') {
+      if (request.method !== 'POST') return json({ error: 'Use POST' }, 405);
+      const conf = (env.PRO_TOKENS || env.PRO_TOKEN || '').split(',').map(s => s.trim()).filter(Boolean);
+      if (!conf.length) return json({ ok: false, error: 'El modo profesional no está habilitado en el servidor (defina el secreto PRO_TOKENS).' }, 503);
+      let body; try { body = await request.json(); } catch { return json({ ok: false, error: 'JSON inválido' }, 400); }
+      const token = String(body.token || '').trim();
+      if (token && conf.includes(token)) return json({ ok: true, nivel: 'profesional' });
+      return json({ ok: false, error: 'Token inválido. Solicite un token autorizado para habilitar las funciones profesionales.' }, 401);
+    }
+
     // Resto: servir la PWA (assets estáticos)
     return env.ASSETS.fetch(request);
   },
