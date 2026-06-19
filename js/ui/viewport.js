@@ -2669,11 +2669,11 @@ export class Viewport {
 
         let dir3 = (dirMap[ld.dir] || dirMap.gravity).clone();
         dir3.multiplyScalar(Math.sign(ld.w || -1));
-        const frac = Math.abs(ld.w) / maxF * 0.75;
+        const frac = Math.abs(ld.w) / maxF;
 
-        const N = 6;
-        for (let k = 0; k <= N; k++) {
-          const t = k / N;
+        // perElem flechas centradas (sin duplicar en los extremos compartidos)
+        for (let k = 0; k < perElem; k++) {
+          const t = (k + 0.5) / perElem;
           const o = p1.clone().lerp(p2, t);
           addArrow(dir3, o, frac, 0x4ade80);
         }

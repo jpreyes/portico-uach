@@ -1,21 +1,21 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=66';
-import { Serializer }      from './model/serializer.js?v=66';
-import { Viewport }        from './ui/viewport.js?v=66';
-import { PropertiesPanel } from './ui/properties.js?v=66';
-import { MenuBar }         from './ui/menu.js?v=66';
-import { UndoStack }       from './utils/undo.js?v=66';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=66';
-import { Results }                         from './solver/postprocess.js?v=66';
-import { ModalSolver }                     from './solver/modal_solver.js?v=66';
-import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=66';
-import { ModalResults }                    from './solver/modal_results.js?v=66';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=66';
-import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=66';
-import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=66';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=66';
+import { Model }           from './model/model.js?v=67';
+import { Serializer }      from './model/serializer.js?v=67';
+import { Viewport }        from './ui/viewport.js?v=67';
+import { PropertiesPanel } from './ui/properties.js?v=67';
+import { MenuBar }         from './ui/menu.js?v=67';
+import { UndoStack }       from './utils/undo.js?v=67';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=67';
+import { Results }                         from './solver/postprocess.js?v=67';
+import { ModalSolver }                     from './solver/modal_solver.js?v=67';
+import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=67';
+import { ModalResults }                    from './solver/modal_results.js?v=67';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=67';
+import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=67';
+import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=67';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=67';
 
 class App {
   constructor() {
@@ -1816,6 +1816,11 @@ class App {
 
     document.getElementById('btn-add-lc')?.addEventListener('click', () => this.newCaseDialog());
     document.getElementById('btn-edit-lc')?.addEventListener('click', () => this.editCaseDialog());
+    document.getElementById('btn-toggle-loads')?.addEventListener('click', () => {
+      const vis = this.viewport.toggleLoads();
+      const btn = document.getElementById('btn-toggle-loads');
+      if (btn) { btn.style.color = vis ? 'var(--success)' : 'var(--text-muted)'; btn.textContent = vis ? '⬇ cargas' : '⬇ cargas (off)'; }
+    });
   }
 
   // Diálogo "+": crear caso de carga (con opción de peso propio) o combinación
@@ -2329,7 +2334,7 @@ class App {
     this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=66');
+      const { generarModelo } = await import('../asistente/generador.js?v=67');
       const modelo = generarModelo(ficha, libs);
 
       if (modo === 'sobreponer') {
@@ -2559,18 +2564,23 @@ class App {
   _initTheme() {
     const t = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
     this.aplicarTema(t);
-    document.getElementById('btn-theme')?.addEventListener('click', () => {
+    const toggle = () => {
       const actual = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
       this.aplicarTema(actual === 'dark' ? 'light' : 'dark');
-    });
+    };
+    document.getElementById('btn-theme')?.addEventListener('click', toggle);
+    document.getElementById('landing-theme')?.addEventListener('click', toggle);   // mismo toggle en la portada
   }
 
   aplicarTema(theme) {
     document.documentElement.dataset.theme = theme;
     try { localStorage.setItem('portico_theme', theme); } catch (e) {}   // se recuerda por máquina
-    const btn = document.getElementById('btn-theme');
-    if (btn) { btn.textContent = theme === 'dark' ? '☀️' : '🌙';
-               btn.title = theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'; }
+    const icon = theme === 'dark' ? '☀️' : '🌙';
+    const ttl  = theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro';
+    for (const id of ['btn-theme', 'landing-theme']) {
+      const btn = document.getElementById(id);
+      if (btn) { btn.textContent = icon; btn.title = ttl; }
+    }
     this._swapLogos(theme);
     this.viewport?.setTheme?.(theme === 'light');
   }

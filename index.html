@@ -29,8 +29,8 @@
       window.dispatchEvent(new Event('pwa-installed'));
     });
   </script>
-  <link rel="stylesheet" href="style.css?v=66">
-  <link rel="stylesheet" href="ui-v2.css?v=66">
+  <link rel="stylesheet" href="style.css?v=67">
+  <link rel="stylesheet" href="ui-v2.css?v=67">
   <script type="importmap">
   {
     "imports": {
@@ -100,6 +100,7 @@
           <li class="sep"></li>
           <li data-action="hide-sel">Ocultar selección <kbd>H</kbd></li>
           <li data-action="show-all">Mostrar todo <kbd>Shift+H</kbd></li>
+          <li data-action="toggle-loads">Mostrar/ocultar cargas</li>
           <li class="sep"></li>
           <li data-action="res-deformed">Resultado: Deformada <kbd>1</kbd></li>
           <li data-action="res-N">Resultado: Axial N <kbd>2</kbd></li>
@@ -340,6 +341,7 @@
           <select id="lc-select"></select>
           <button id="btn-add-lc" title="Nuevo caso de carga o combinación" style="background:transparent;border:none;color:var(--accent);cursor:pointer;font-size:16px;padding:0 4px;">＋</button>
           <button id="btn-edit-lc" title="Editar caso activo: nombre, peso propio, eliminar" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:13px;padding:0 4px;">✎</button>
+          <button id="btn-toggle-loads" title="Mostrar / ocultar las flechas de carga" style="background:transparent;border:none;color:var(--success);cursor:pointer;font-size:13px;padding:0 4px;">⬇ cargas</button>
         </div>
       </div>
 
@@ -655,7 +657,7 @@
           <div>
             <h2 style="margin:0">PÓRTICO</h2>
             <p style="margin:2px 0 0;color:var(--text-muted)">Laboratorio virtual de análisis estructural 3D
-              · <b id="help-version">versión 66</b> · junio 2026</p>
+              · <b id="help-version">versión 67</b> · junio 2026</p>
           </div>
         </div>
         <p><b>Material docente</b> desarrollado por el <b>Dr. Juan Patricio Reyes C.</b> —
@@ -698,6 +700,8 @@
 
 <!-- ══ PORTADA — pantalla de bienvenida ══ -->
 <div id="landing">
+  <button id="landing-theme" type="button" title="Cambiar tema claro/oscuro"
+    style="position:fixed;top:14px;right:16px;z-index:9100;background:var(--bg4,#e2e8f1);border:1px solid var(--border2,#bcc8d8);color:var(--text,#1b2533);border-radius:8px;cursor:pointer;font-size:17px;line-height:1;padding:6px 10px">🌙</button>
   <header class="landing-inst">
     <img class="inst-logo" src="icons/UACh-color-negro.svg" alt="Universidad Austral de Chile">
     <div class="inst-names">
@@ -852,7 +856,7 @@
 
 <!-- numeric.js para solver (Fase 2+) -->
 <script src="lib/numeric.js"></script>
-<script type="module" src="js/app.js?v=66"></script>
+<script type="module" src="js/app.js?v=67"></script>
 
 <!-- PWA: registrar el service worker (offline). Solo en contexto seguro
      (https o localhost); el navegador deja navigator.serviceWorker undefined

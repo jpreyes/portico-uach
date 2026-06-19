@@ -85,6 +85,7 @@ export class MenuBar {
       case 'zoom-extents':   a.viewport.zoomExtents();       break;
       case 'hide-sel':       a.hideSelected();               break;
       case 'show-all':       a.showAllElements();            break;
+      case 'toggle-loads':   a.viewport.toggleLoads();       break;
       case 'run':            a.runAnalysis();                break;
       case 'run-force':      a.runAnalysis(true);            break;
       case 'run-modal':      a.runModal();                   break;
