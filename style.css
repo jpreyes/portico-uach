@@ -418,6 +418,20 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 .rtab-content { display: none; padding: 10px; }
 .rtab-content.active { display: block; }
 
+/* ── Panel de Diseño (D/C) ───────────────────────────────────── */
+.dis-summary { font-size: 12px; margin: 6px 0 8px; color: var(--text); line-height: 1.5; }
+.dis-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.dis-table th, .dis-table td { border: 1px solid var(--border); padding: 3px 6px; text-align: left; }
+.dis-table th { background: var(--bg4); color: var(--text-muted); font-weight: 600; }
+.dis-row { cursor: pointer; }
+.dis-row:hover td { background: var(--accent-soft); }
+.dc-ok   { color: #15803d; }
+.dc-warn { color: #b45309; }
+.dc-bad  { color: #dc2626; font-weight: 700; }
+:root[data-theme="dark"] .dc-ok { color: #4ade80; }
+:root[data-theme="dark"] .dc-warn { color: #fbbf24; }
+:root[data-theme="dark"] .dc-bad { color: #f87171; }
+
 .panel-hint {
   color: var(--text-muted);
   font-size: 12px;

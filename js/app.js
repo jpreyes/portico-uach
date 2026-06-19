@@ -1,21 +1,21 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=68';
-import { Serializer }      from './model/serializer.js?v=68';
-import { Viewport }        from './ui/viewport.js?v=68';
-import { PropertiesPanel } from './ui/properties.js?v=68';
-import { MenuBar }         from './ui/menu.js?v=68';
-import { UndoStack }       from './utils/undo.js?v=68';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=68';
-import { Results }                         from './solver/postprocess.js?v=68';
-import { ModalSolver }                     from './solver/modal_solver.js?v=68';
-import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=68';
-import { ModalResults }                    from './solver/modal_results.js?v=68';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=68';
-import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=68';
-import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=68';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=68';
+import { Model }           from './model/model.js?v=69';
+import { Serializer }      from './model/serializer.js?v=69';
+import { Viewport }        from './ui/viewport.js?v=69';
+import { PropertiesPanel } from './ui/properties.js?v=69';
+import { MenuBar }         from './ui/menu.js?v=69';
+import { UndoStack }       from './utils/undo.js?v=69';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=69';
+import { Results }                         from './solver/postprocess.js?v=69';
+import { ModalSolver }                     from './solver/modal_solver.js?v=69';
+import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=69';
+import { ModalResults }                    from './solver/modal_results.js?v=69';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=69';
+import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=69';
+import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=69';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=69';
 
 class App {
   constructor() {
@@ -2334,7 +2334,7 @@ class App {
     this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=68');
+      const { generarModelo } = await import('../asistente/generador.js?v=69');
       const modelo = generarModelo(ficha, libs);
 
       if (modo === 'sobreponer') {
@@ -2976,7 +2976,7 @@ class App {
   // Verificación de diseño (flexión/corte/axial) por elemento, usando los
   // resultados actuales y los parámetros editables de asistente/diseno_params.json.
   async _calcularDiseno() {
-    const ver = '?v=68';
+    const ver = '?v=69';
     let params = null;
     try { params = await fetch('asistente/diseno_params.json' + ver).then(r => r.json()); }
     catch (e) { console.error('No se pudo cargar diseno_params.json:', e); return null; }

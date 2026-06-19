@@ -1,8 +1,8 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // PropertiesPanel — right-side panel: node/element properties + mat/sec tabs
 // ──────────────────────────────────────────────────────────────────────────────
-import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=68';
-import { localAxes } from '../solver/timoshenko.js?v=68';
+import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=69';
+import { localAxes } from '../solver/timoshenko.js?v=69';
 
 export class PropertiesPanel {
   constructor(panelEl, app) {
@@ -14,6 +14,7 @@ export class PropertiesPanel {
     this._vpanels  = {
       modelo:     document.getElementById('vpanel-modelo'),
       resultados: document.getElementById('vpanel-resultados'),
+      diseno:     document.getElementById('vpanel-diseno'),
     };
     this._currentVTab = 'modelo';
 
@@ -59,6 +60,7 @@ export class PropertiesPanel {
     document.getElementById('btn-detect-dia')?.addEventListener('click', () => this.app.autoDetectDiaphragms());
     document.getElementById('btn-add-combo')?.addEventListener('click',  () => this._addCombination());
     document.getElementById('btn-add-node-row')?.addEventListener('click', () => this._addNodeRow());
+    document.getElementById('btn-verificar-diseno')?.addEventListener('click', () => this.renderDiseno());
   }
 
   _switchVTab(vtab) {
@@ -68,6 +70,43 @@ export class PropertiesPanel {
       el?.classList.toggle('active', k === vtab)
     );
     if (vtab === 'resultados') this._switchRTab(this._currentRTab);
+    if (vtab === 'diseno') this.renderDiseno();
+  }
+
+  // Verificación de diseño (flexión/corte/axial) en el panel lateral.
+  async renderDiseno() {
+    const body = document.getElementById('diseno-body');
+    if (!body) return;
+    const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+    if (!this.app._results || typeof this.app._calcularDiseno !== 'function') {
+      body.innerHTML = '<p class="panel-hint">Ejecute el análisis estático (F5). Para verificar la combinación última, selecciónela como resultado mostrado y vuelva a verificar.</p>';
+      return;
+    }
+    body.innerHTML = '<p class="panel-hint">Calculando…</p>';
+    const dis = await this.app._calcularDiseno();
+    if (!dis || !dis.filas || !dis.filas.length) {
+      body.innerHTML = '<p class="panel-hint">No hay resultados para verificar.</p>';
+      return;
+    }
+    const f = dis.filas;
+    const nOk = f.filter(x => x.estado === 'cumple').length;
+    const nAj = f.filter(x => x.estado === 'ajustado').length;
+    const nNo = f.filter(x => x.estado === 'NO CUMPLE').length;
+    const cls = r => r > 1 ? 'dc-bad' : r > 0.9 ? 'dc-warn' : 'dc-ok';
+    const fmt = v => (v == null || !isFinite(v)) ? '—' : (+v).toFixed(2);
+    const rows = f.map(x => `<tr class="dis-row" data-elem="${x.id}" title="flexión ${fmt(x.flexion.ratio)} · corte ${fmt(x.corte.ratio)} · axial ${fmt(x.axial.ratio)}">
+      <td>#${x.id}</td><td>${esc(x.sec)}</td><td>${x.gobierna}</td>
+      <td class="${cls(x.ratioMax)}"><b>${fmt(x.ratioMax)}</b></td>
+      <td class="${cls(x.ratioMax)}">${x.estado === 'NO CUMPLE' ? '✗' : x.estado === 'ajustado' ? '!' : '✓'}</td></tr>`).join('');
+    body.innerHTML = `
+      <div class="dis-summary">Caso: <b>${esc(dis.caso || 'activo')}</b><br>
+        <span class="dc-ok">${nOk} cumplen</span> · <span class="dc-warn">${nAj} ajustados</span> · <span class="dc-bad">${nNo} no cumplen</span></div>
+      <table class="dis-table"><thead><tr><th>Elem</th><th>Sección</th><th>Gob.</th><th>D/C</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="panel-hint" style="margin-top:6px">D/C ≤ 1 cumple. Clic en una fila selecciona el elemento. Detalle completo en <b>Análisis → Memoria de Cálculo</b>.</p>`;
+    body.querySelectorAll('.dis-row').forEach(tr => tr.addEventListener('click', () => {
+      const id = +tr.dataset.elem;
+      if (this.app.viewport.selectElements) this.app.viewport.selectElements([id]);
+    }));
   }
 
   _switchTab(tab) {
@@ -434,6 +473,7 @@ export class PropertiesPanel {
     if (this._currentTab === 'dia')   this.renderDiaphragms();
     if (this._currentTab === 'nodos') this.renderNodesGrid();
     if (this._currentVTab === 'resultados') this._switchRTab(this._currentRTab);
+    if (this._currentVTab === 'diseno') this.renderDiseno();
     if (this._currentTab === 'elems') this.renderElemsGrid();
   }
 
