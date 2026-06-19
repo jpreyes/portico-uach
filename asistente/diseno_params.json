@@ -1,0 +1,63 @@
+{
+  "_meta": {
+    "version": "1.0",
+    "descripcion": "Parámetros de diseño editables por material. Edite estos valores para ajustar el criterio de verificación (resistencias, factores phi/seguridad, límites). Las resistencias van en MPa; el módulo convierte a kN·m internamente. NO requiere servidor: se evalúa en el navegador.",
+    "normas": {
+      "acero": "AISC 360-16 (LRFD) — NCh427/1",
+      "hormigon": "ACI 318-19 — NCh430",
+      "madera": "NCh1198 (tensiones admisibles modificadas)"
+    }
+  },
+
+  "acero": {
+    "metodo": "LRFD — Factores de carga y resistencia (AISC 360-16, NCh427/1)",
+    "Fy_MPa": 250,
+    "Fu_MPa": 400,
+    "E_MPa": 200000,
+    "phi": { "flexion": 0.90, "corte": 0.90, "axial_traccion": 0.90, "axial_compresion": 0.90 },
+    "Cv_corte": 1.0,
+    "Z_sobre_S": 1.12,
+    "K_pandeo": 1.0,
+    "_nota": "Fy/Fu por calidad: A270ES≈Fy250/Fu400, S355≈Fy355. Z_sobre_S estima el módulo plástico desde el elástico (perfiles I ≈1.10–1.15; rectangular macizo =1.5). Cv=1 asume alma compacta (sin pandeo por corte). K_pandeo es el factor de longitud efectiva para compresión (Fcr según AISC E3)."
+  },
+
+  "hormigon": {
+    "metodo": "Resistencia última (ACI 318-19, NCh430)",
+    "fc_MPa": 25,
+    "fy_refuerzo_MPa": 420,
+    "E_MPa": 23500,
+    "phi": { "flexion": 0.90, "corte": 0.75, "axial_compresion": 0.65 },
+    "cuantia_long_rho": 0.012,
+    "recubrimiento_mm": 40,
+    "_nota": "El hormigón ARMADO requiere armadura: como las secciones del modelo son genéricas (A, I), se diseña con la cuantía longitudinal rho indicada (As = rho·b·d) y supuestos declarados (b, h estimados de A e I; d = h − recubrimiento). Ajuste rho/recubrimiento para su armado real. phi por ACI 318 (flexión controlada por tracción 0.90; corte 0.75; compresión con estribos 0.65)."
+  },
+
+  "madera": {
+    "metodo": "Tensiones admisibles modificadas (NCh1198)",
+    "Fb_MPa": 10.0,
+    "Fv_MPa": 1.2,
+    "Fc_MPa": 8.0,
+    "Ft_MPa": 7.0,
+    "E_MPa": 10000,
+    "factores_modificacion": {
+      "KD_duracion_carga": 1.0,
+      "KH_contenido_humedad": 1.0,
+      "Kt_temperatura": 1.0,
+      "otros": 1.0
+    },
+    "_nota": "Pino Radiata grado estructural referencial (NCh1198/NCh1989). Las tensiones admisibles se multiplican por el producto de los factores de modificación. Para compresión se aplica además el factor de estabilidad de columna CP (calculado con la esbeltez)."
+  },
+
+  "flechas_admisibles": {
+    "viga_carga_total_L_sobre": 300,
+    "viga_sobrecarga_L_sobre": 360,
+    "voladizo_L_sobre": 150,
+    "_nota": "Límites de flecha como fracción de la luz L (p.ej. L/300). Referencia NCh1537 / prácticas habituales."
+  },
+
+  "limites": {
+    "ratio_aviso": 0.90,
+    "ratio_falla": 1.0,
+    "_nota": "ratio = demanda/capacidad. ≤ ratio_aviso: holgado; entre aviso y 1.0: ajustado; > 1.0: NO CUMPLE."
+  }
+}
