@@ -1,8 +1,8 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // PropertiesPanel — right-side panel: node/element properties + mat/sec tabs
 // ──────────────────────────────────────────────────────────────────────────────
-import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=82';
-import { localAxes } from '../solver/timoshenko.js?v=82';
+import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=83';
+import { localAxes } from '../solver/timoshenko.js?v=83';
 
 export class PropertiesPanel {
   constructor(panelEl, app) {
@@ -372,6 +372,13 @@ export class PropertiesPanel {
             <button class="btn-secondary" id="sel-w-go" style="flex:1;font-size:11px" title="Asigna la misma carga distribuida a todos (reemplaza la previa en ese caso)">Aplicar carga</button>
             <button class="btn-secondary" id="sel-w-clr" style="flex:1;font-size:11px" title="Quita las cargas distribuidas de estos elementos en el caso elegido">Quitar carga</button>
           </div>
+          <div class="prop-row" style="margin-top:6px">
+            <div class="prop-field"><label>Temperatura ΔT (°C)</label><input type="number" id="sel-dt" value="20" step="5" title="Cambio uniforme de temperatura. Usa α del material → carga axial térmica."></div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn-secondary" id="sel-dt-go" style="flex:1;font-size:11px" title="Asigna ΔT uniforme a los elementos (reemplaza la previa en ese caso)">Aplicar ΔT</button>
+            <button class="btn-secondary" id="sel-dt-clr" style="flex:1;font-size:11px" title="Quita las cargas de temperatura de estos elementos en el caso elegido">Quitar ΔT</button>
+          </div>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
           <button class="btn-secondary" id="sel-join" style="flex:1;font-size:11px" title="Une tramos colineales en una sola barra">Unir colineales</button>
@@ -393,6 +400,8 @@ export class PropertiesPanel {
     $('#sel-disc-go')?.addEventListener('click', () => this.app.discretizeSelected(parseInt($('#sel-disc').value, 10)));
     $('#sel-w-go')?.addEventListener('click', () => this.app.setCargaDistSelected(parseFloat($('#sel-w').value), $('#sel-wdir').value, $('#sel-wlc').value));
     $('#sel-w-clr')?.addEventListener('click', () => this.app.setCargaDistSelected(0, $('#sel-wdir').value, $('#sel-wlc').value));
+    $('#sel-dt-go')?.addEventListener('click', () => this.app.setCargaTempSelected(parseFloat($('#sel-dt').value), $('#sel-wlc').value));
+    $('#sel-dt-clr')?.addEventListener('click', () => this.app.setCargaTempSelected(0, $('#sel-wlc').value));
     $('#sel-join')?.addEventListener('click', () => this.app.joinSelectedElements());
     $('#sel-inter')?.addEventListener('click', () => this.app.unirInterseccion());
     $('#sel-hide')?.addEventListener('click', () => this.app.hideSelected());
@@ -1346,6 +1355,7 @@ export class PropertiesPanel {
         </div>
         <div class="prop-row">
           <div class="prop-field"><label>ν</label><input type="number" data-f="nu" value="${mat.nu}" step="0.01" min="0" max="0.5"></div>
+          <div class="prop-field"><label>α (1/°C)</label><input type="number" data-f="alpha" value="${mat.alpha ?? 1e-5}" step="1e-6" title="Coef. de dilatación térmica (hormigón ~1e-5, acero ~1.2e-5). Para cargas de temperatura ΔT."></div>
         </div>
         <div class="card-actions">
           <button class="btn-danger btn-del-mat" style="flex:1;">Eliminar</button>

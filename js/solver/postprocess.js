@@ -7,8 +7,8 @@
 // For UDL this reduces to the exact parabolic formula.
 // Displacements at arbitrary xi use cubic Hermite shape functions.
 // ──────────────────────────────────────────────────────────────────────────────
-import { localAxes, stiffnessMatrix, transformMatrix, fixedEndForces, applyReleases, condenseFEF, recoverReleasedDisp } from './timoshenko.js?v=82';
-import { getNodeDOFs } from './assembler.js?v=82';
+import { localAxes, stiffnessMatrix, transformMatrix, fixedEndForces, applyReleases, condenseFEF, recoverReleasedDisp } from './timoshenko.js?v=83';
+import { getNodeDOFs } from './assembler.js?v=83';
 
 function _toLocalLoad(load, ex, ey, ez) {
   const w   = load.w;
@@ -175,10 +175,21 @@ export class Results {
     const lc = this.lcId ? this.model.loadCases.get(this.lcId) : null;
     if (lc) {
       for (const load of lc.loads) {
-        if (load.type !== 'dist' || load.elemId !== elem.id) continue;
-        for (const { d, w } of _toLocalLoad(load, ex, ey, ez)) {
-          const f = fixedEndForces(L, { dir: d, w });
-          for (let i = 0; i < 12; i++) fef[i] += f[i];
+        if (load.type === 'dist' && load.elemId === elem.id) {
+          for (const { d, w } of _toLocalLoad(load, ex, ey, ez)) {
+            const f = fixedEndForces(L, { dir: d, w });
+            for (let i = 0; i < 12; i++) fef[i] += f[i];
+          }
+        }
+        // Temperatura uniforme → FEF axial (misma convención que en assembleF):
+        // recupera N correcto (barra empotrada calentada → N=−EA·α·ΔT).
+        if (load.type === 'temp' && load.elemId === elem.id) {
+          const mat = this.model.materials.get(elem.matId);
+          const sec = this.model.sections.get(elem.secId);
+          if (mat && sec) {
+            const Nt = mat.E * sec.A * (sec.mod?.A ?? 1) * (mat.alpha ?? 0) * (load.dT || 0);
+            fef[0] += Nt; fef[6] -= Nt;
+          }
         }
       }
     }

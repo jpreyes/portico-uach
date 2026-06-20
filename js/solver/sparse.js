@@ -13,8 +13,8 @@
 import {
   localAxes, stiffnessMatrix, massMatrix,
   transformMatrix, globalStiffness, applyReleases
-} from './timoshenko.js?v=82';
-import { applyDiaphragmConstraintsW, applyDiaphragmMassW } from './diaphragm.js?v=82';
+} from './timoshenko.js?v=83';
+import { applyDiaphragmConstraintsW, applyDiaphragmMassW } from './diaphragm.js?v=83';
 
 // ── Matriz simétrica dispersa (acumulador por filas) ──────────────────────────
 export class SparseSym {
@@ -139,14 +139,16 @@ export function extractFreeCSR(S, freeMap, nF) {
       entries.sort((a, b) => a[0] - b[0]);
       for (const [fj, v] of entries) { const p = cur[fi]++; colIdx[p] = fj; val[p] = v; }
     } else {
-      // fila fija → guardar acoplamiento a columnas libres (para reacciones)
-      let any = false;
+      // fila fija → acoplamiento a columnas libres (para reacciones). Se incluye
+      // SIEMPRE el GDL fijo (aunque no tenga acoplamiento) para que la reacción
+      // capture también las cargas aplicadas directamente en él (p.ej. térmicas):
+      // reac = Σ K[fijo,libre]·u_libre − F[fijo]  →  si no hay acoplamiento, −F.
       for (const [j, v] of row) {
         if (v === 0) continue;
         const fj = freeMap[j];
-        if (fj >= 0) { cfFreeIdx.push(fj); cfVal.push(v); any = true; }
+        if (fj >= 0) { cfFreeIdx.push(fj); cfVal.push(v); }
       }
-      if (any) { cfRowDof.push(i); cfPtrArr.push(cfFreeIdx.length); }
+      cfRowDof.push(i); cfPtrArr.push(cfFreeIdx.length);
     }
   }
 

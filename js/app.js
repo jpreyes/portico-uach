@@ -1,26 +1,26 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=82';
-import { Serializer }      from './model/serializer.js?v=82';
-import { Viewport }        from './ui/viewport.js?v=82';
-import { PropertiesPanel } from './ui/properties.js?v=82';
-import { MenuBar }         from './ui/menu.js?v=82';
-import { UndoStack }       from './utils/undo.js?v=82';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=82';
-import { Results }                         from './solver/postprocess.js?v=82';
-import { ModalSolver }                     from './solver/modal_solver.js?v=82';
-import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=82';
-import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=82';
-import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=82';
-import { assembleKg } from './solver/geometric.js?v=82';
-import { denseFactor, triForward, triBackward, makeFactor } from './solver/linsolve.js?v=82';
-import { formFind } from './solver/formfind.js?v=82';
-import { ModalResults }                    from './solver/modal_results.js?v=82';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=82';
-import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=82';
-import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=82';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=82';
+import { Model }           from './model/model.js?v=83';
+import { Serializer }      from './model/serializer.js?v=83';
+import { Viewport }        from './ui/viewport.js?v=83';
+import { PropertiesPanel } from './ui/properties.js?v=83';
+import { MenuBar }         from './ui/menu.js?v=83';
+import { UndoStack }       from './utils/undo.js?v=83';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=83';
+import { Results }                         from './solver/postprocess.js?v=83';
+import { ModalSolver }                     from './solver/modal_solver.js?v=83';
+import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=83';
+import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=83';
+import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=83';
+import { assembleKg } from './solver/geometric.js?v=83';
+import { denseFactor, triForward, triBackward, makeFactor } from './solver/linsolve.js?v=83';
+import { formFind } from './solver/formfind.js?v=83';
+import { ModalResults }                    from './solver/modal_results.js?v=83';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=83';
+import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=83';
+import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=83';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=83';
 
 class App {
   constructor() {
@@ -456,6 +456,22 @@ class App {
     if (w && Number.isFinite(w)) for (const id of ids) lc.loads.push({ type: 'dist', elemId: id, dir, w });
     this.refreshLoads(); this.markDirty(); this._updateStats();
     this.toast(w ? `Carga ${w} kN/m (${dir}) en ${ids.length} elem. · ${lc.name}` : `Cargas distribuidas quitadas de ${ids.length} elem. · ${lc.name}`, 'ok');
+    this._reselect(ids);
+  }
+
+  // ── Carga de TEMPERATURA (ΔT uniforme) sobre los elementos seleccionados ────
+  setCargaTempSelected(dT, lcId) {
+    const ids = this._selElems(); if (!ids.length) { this.toast('Seleccione elementos', 'warn'); return; }
+    const lc = this.model.loadCases.get(+lcId) || this.model.loadCases.get(this._activeLcId) || [...this.model.loadCases.values()][0];
+    if (!lc) { this.toast('No hay caso de carga', 'warn'); return; }
+    if (lc.type === 'spectrum') { this.toast('El caso espectral no admite cargas de temperatura', 'warn'); return; }
+    dT = +dT;
+    this.snapshot();
+    const set = new Set(ids);
+    lc.loads = (lc.loads || []).filter(l => !(l.type === 'temp' && set.has(l.elemId)));   // reemplaza la previa
+    if (dT && Number.isFinite(dT)) for (const id of ids) lc.loads.push({ type: 'temp', elemId: id, dT });
+    this.refreshLoads(); this.markDirty(); this._updateStats();
+    this.toast(dT ? `ΔT = ${dT} °C en ${ids.length} elem. · ${lc.name}` : `Cargas de temperatura quitadas de ${ids.length} elem. · ${lc.name}`, 'ok');
     this._reselect(ids);
   }
 
@@ -1121,7 +1137,7 @@ class App {
   _staticWorkerSolve(K, nDOF, freeDOF, Flist, dense = false) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=82', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=83', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -1150,7 +1166,7 @@ class App {
   _staticWorkerSolveSparse(csr, cf, nDOF, freeDOF, Flist) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=82', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=83', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -3222,7 +3238,7 @@ class App {
     this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=82');
+      const { generarModelo } = await import('../asistente/generador.js?v=83');
       const modelo = generarModelo(ficha, libs);
 
       if (modo === 'sobreponer') {
@@ -4098,7 +4114,7 @@ class App {
   // Verificación de diseño (flexión/corte/axial) por elemento, usando los
   // resultados actuales y los parámetros editables de asistente/diseno_params.json.
   async _calcularDiseno() {
-    const ver = '?v=82';
+    const ver = '?v=83';
     let params = null;
     try { params = await fetch('asistente/diseno_params.json' + ver).then(r => r.json()); }
     catch (e) { console.error('No se pudo cargar diseno_params.json:', e); return null; }
@@ -4385,6 +4401,9 @@ class App {
           const [Fx,Fy,Fz,Mx,My,Mz] = ld.F || [];
           return `<tr><td>Puntual</td><td>Nodo ${ld.nodeId}</td><td>—</td>
             <td>F=(${fmt(Fx,2)}, ${fmt(Fy,2)}, ${fmt(Fz,2)}) kN · M=(${fmt(Mx,2)}, ${fmt(My,2)}, ${fmt(Mz,2)}) kN·m</td></tr>`;
+        }
+        if (ld.type === 'temp') {
+          return `<tr><td>Temperatura</td><td>Elem ${ld.elemId}</td><td>Uniforme</td><td>ΔT = ${fmt(ld.dT,1)} °C</td></tr>`;
         }
         return `<tr><td>Distribuida</td><td>Elem ${ld.elemId}</td>
           <td>${esc(dirLabel[ld.dir] || ld.dir || 'Gravedad')}</td><td>w = ${fmt(ld.w,2)} kN/m</td></tr>`;

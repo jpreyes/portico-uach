@@ -126,6 +126,7 @@ export class Model {
     const mat = {
       id, name: 'Material',
       E: 2.87e7, G: 1.19e7, nu: 0.2, rho: 2.5,
+      alpha: 1e-5,   // coef. de dilatación térmica [1/°C] (hormigón ~1e-5, acero ~1.2e-5)
       ...props
     };
     this.materials.set(id, mat);
@@ -140,6 +141,7 @@ export class Model {
     if (props.G !== undefined) m.G = +props.G;
     if (props.nu !== undefined) m.nu = +props.nu;
     if (props.rho !== undefined) m.rho = +props.rho;
+    if (props.alpha !== undefined) m.alpha = +props.alpha;
     return m;
   }
 

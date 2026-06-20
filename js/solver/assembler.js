@@ -5,8 +5,8 @@ import {
   localAxes, stiffnessMatrix, massMatrix,
   transformMatrix, globalStiffness,
   applyReleases, fixedEndForces, condenseFEF
-} from './timoshenko.js?v=82';
-import { applyDiaphragmConstraints, applyDiaphragmMass } from './diaphragm.js?v=82';
+} from './timoshenko.js?v=83';
+import { applyDiaphragmConstraints, applyDiaphragmMass } from './diaphragm.js?v=83';
 
 // ── Node index (contiguous 0-based numbering) ─────────────────────────────
 export function buildNodeIndex(model) {
@@ -142,6 +142,35 @@ export function assembleF(model, nodeIndex, lcId, selfWeight = false) {
               f_global[i] += T[j][i] * f_local[j];
           for (let i=0; i<12; i++) F[ed[i]] -= f_global[i];
         }
+      }
+
+      // Carga de TEMPERATURA uniforme ΔT: el elemento quiere dilatarse α·ΔT·L.
+      // FEF térmica (igual convención que las distribuidas, F -= FEF):
+      //   axial nodo1 = +EA·α·ΔT,  axial nodo2 = −EA·α·ΔT  (resto 0).
+      // Barra libre → N=0 (dilata α·ΔT·L); empotrada → N=−EA·α·ΔT.
+      if (load.type === 'temp') {
+        const elem = model.elements.get(load.elemId);
+        if (!elem) continue;
+        const n1  = model.nodes.get(elem.n1);
+        const n2  = model.nodes.get(elem.n2);
+        const mat = model.materials.get(elem.matId);
+        const sec = model.sections.get(elem.secId);
+        if (!n1 || !n2 || !mat || !sec) continue;
+
+        const { ex, ey, ez, L } = localAxes(n1, n2);
+        const T  = transformMatrix(ex, ey, ez);
+        const EA = mat.E * sec.A * (sec.mod?.A ?? 1);
+        const Nt = EA * (mat.alpha ?? 0) * (load.dT || 0);
+        let f_local = Array(12).fill(0);
+        f_local[0] = +Nt; f_local[6] = -Nt;
+        const hasRelease = elem.releases?.some(r => r !== 0);
+        if (hasRelease) f_local = condenseFEF(stiffnessMatrix(L, mat, sec), elem.releases.map(r => r !== 0), f_local);
+        const ed = [...dofs(nodeIndex, elem.n1), ...dofs(nodeIndex, elem.n2)];
+        const f_global = Array(12).fill(0);
+        for (let i=0; i<12; i++)
+          for (let j=0; j<12; j++)
+            f_global[i] += T[j][i] * f_local[j];
+        for (let i=0; i<12; i++) F[ed[i]] -= f_global[i];
       }
     }
   }
