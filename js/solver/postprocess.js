@@ -7,8 +7,9 @@
 // For UDL this reduces to the exact parabolic formula.
 // Displacements at arbitrary xi use cubic Hermite shape functions.
 // ──────────────────────────────────────────────────────────────────────────────
-import { localAxes, stiffnessMatrix, transformMatrix, fixedEndForces, applyReleases, condenseFEF, recoverReleasedDisp } from './timoshenko.js?v=83';
-import { getNodeDOFs } from './assembler.js?v=83';
+import { localAxes, stiffnessMatrix, transformMatrix, fixedEndForces, applyReleases, condenseFEF, recoverReleasedDisp } from './timoshenko.js?v=85';
+import { getNodeDOFs } from './assembler.js?v=85';
+import { areaStress, vonMises } from './membrane.js?v=85';
 
 function _toLocalLoad(load, ex, ey, ez) {
   const w   = load.w;
@@ -82,6 +83,35 @@ export class Results {
 
   // ── Element internal forces ──────────────────────────────────────────────────
   getElemForces(elemId) { return this._elemForces.get(elemId); }
+
+  // ── Tensiones de los elementos de área (membrana) ───────────────────────────
+  // ΔT del área en este caso de carga (cargas tipo 'temp' con areaId).
+  _areaDT(areaId) {
+    const lc = this.lcId ? this.model.loadCases.get(this.lcId) : null;
+    if (!lc) return 0;
+    let dT = 0;
+    for (const l of (lc.loads || [])) if (l.type === 'temp' && l.areaId === areaId) dT += (l.dT || 0);
+    return dT;
+  }
+  getAreaStress(areaId) {
+    if (!this._areaStress) this._areaStress = new Map();
+    if (this._areaStress.has(areaId)) return this._areaStress.get(areaId);
+    const area = this.model.areas?.get(areaId);
+    let res = null;
+    if (area) {
+      const s = areaStress(area, this.model, this.nodeIndex, this.u, this._areaDT(areaId));
+      if (s) {
+        // σx,σy,τxy están en el marco LOCAL del elemento (ex=nodo1→nodo2). Las
+        // invariantes (von Mises, principales σ1≥σ2) NO dependen del marco → son
+        // las magnitudes a comparar/contornear entre elementos.
+        const [sx, sy, txy] = s;
+        const c = (sx + sy) / 2, r = Math.hypot((sx - sy) / 2, txy);
+        res = { sx, sy, txy, vm: vonMises(s), s1: c + r, s2: c - r };
+      }
+    }
+    this._areaStress.set(areaId, res);
+    return res;
+  }
 
   _computeAllElemForces() {
     for (const elem of this.model.elements.values()) {

@@ -5,8 +5,9 @@ import {
   localAxes, stiffnessMatrix, massMatrix,
   transformMatrix, globalStiffness,
   applyReleases, fixedEndForces, condenseFEF
-} from './timoshenko.js?v=83';
-import { applyDiaphragmConstraints, applyDiaphragmMass } from './diaphragm.js?v=83';
+} from './timoshenko.js?v=85';
+import { applyDiaphragmConstraints, applyDiaphragmMass } from './diaphragm.js?v=85';
+import { assembleAreasInto, areaThermalContribs } from './membrane.js?v=85';
 
 // ── Node index (contiguous 0-based numbering) ─────────────────────────────
 export function buildNodeIndex(model) {
@@ -78,6 +79,9 @@ export function assembleK(model, nodeIndex) {
     }
   }
 
+  // Elementos de área (membrana CST/QUAD) → GDL de traslación globales
+  assembleAreasInto({ add: (i, j, v) => { K[i * nDOF + j] += v; } }, model, nodeIndex);
+
   // Apply rigid diaphragm constraints (penalty method)
   applyDiaphragmConstraints(K, model, nodeIndex, nDOF);
 
@@ -148,6 +152,14 @@ export function assembleF(model, nodeIndex, lcId, selfWeight = false) {
       // FEF térmica (igual convención que las distribuidas, F -= FEF):
       //   axial nodo1 = +EA·α·ΔT,  axial nodo2 = −EA·α·ΔT  (resto 0).
       // Barra libre → N=0 (dilata α·ΔT·L); empotrada → N=−EA·α·ΔT.
+      // Temperatura sobre un ÁREA (membrana): carga térmica de superficie.
+      if (load.type === 'temp' && load.areaId != null) {
+        const area = model.areas.get(load.areaId);
+        if (!area) continue;
+        for (const { dof, val } of areaThermalContribs(area, model, nodeIndex, load.dT || 0)) F[dof] += val;
+        continue;
+      }
+
       if (load.type === 'temp') {
         const elem = model.elements.get(load.elemId);
         if (!elem) continue;

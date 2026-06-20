@@ -1,26 +1,26 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=83';
-import { Serializer }      from './model/serializer.js?v=83';
-import { Viewport }        from './ui/viewport.js?v=83';
-import { PropertiesPanel } from './ui/properties.js?v=83';
-import { MenuBar }         from './ui/menu.js?v=83';
-import { UndoStack }       from './utils/undo.js?v=83';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=83';
-import { Results }                         from './solver/postprocess.js?v=83';
-import { ModalSolver }                     from './solver/modal_solver.js?v=83';
-import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=83';
-import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=83';
-import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=83';
-import { assembleKg } from './solver/geometric.js?v=83';
-import { denseFactor, triForward, triBackward, makeFactor } from './solver/linsolve.js?v=83';
-import { formFind } from './solver/formfind.js?v=83';
-import { ModalResults }                    from './solver/modal_results.js?v=83';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=83';
-import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=83';
-import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=83';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=83';
+import { Model }           from './model/model.js?v=85';
+import { Serializer }      from './model/serializer.js?v=85';
+import { Viewport }        from './ui/viewport.js?v=85';
+import { PropertiesPanel } from './ui/properties.js?v=85';
+import { MenuBar }         from './ui/menu.js?v=85';
+import { UndoStack }       from './utils/undo.js?v=85';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=85';
+import { Results }                         from './solver/postprocess.js?v=85';
+import { ModalSolver }                     from './solver/modal_solver.js?v=85';
+import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=85';
+import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=85';
+import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=85';
+import { assembleKg } from './solver/geometric.js?v=85';
+import { denseFactor, triForward, triBackward, makeFactor } from './solver/linsolve.js?v=85';
+import { formFind } from './solver/formfind.js?v=85';
+import { ModalResults }                    from './solver/modal_results.js?v=85';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=85';
+import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=85';
+import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=85';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=85';
 
 class App {
   constructor() {
@@ -336,6 +336,43 @@ class App {
   ocultarGrupo(nombre) { const g = this.grupos().get(nombre); if (!g) return; this.viewport.hideElements([...g]); this.toast(`Grupo "${nombre}" oculto`, 'ok'); }
   mostrarGrupo(nombre) { const g = this.grupos().get(nombre); if (!g) return; this.viewport.showElements([...g]); this.toast(`Grupo "${nombre}" mostrado`, 'ok'); }
   eliminarGrupo(nombre) { this.grupos().delete(nombre); this.toast(`Grupo "${nombre}" eliminado`, 'ok'); this.panel.showSelection(this.viewport.getSelected()); }
+
+  // ── Elementos de área (membrana CST/QUAD) ────────────────────────────────
+  async crearAreaSeleccion() {
+    const ids = this._selNodes();
+    if (ids.length !== 3 && ids.length !== 4) { this.toast('Seleccione 3 nodos (CST) o 4 nodos (QUAD) para crear un elemento de área', 'warn'); return; }
+    const tStr = await this._promptModal('Elemento de área (membrana)', 'Espesor t (m):', '0.2');
+    if (tStr == null) return;
+    const t = parseFloat(tStr); if (!(t > 0)) { this.toast('Espesor inválido', 'warn'); return; }
+    const ordered = ids.length === 4 ? this._ordenarCuad(ids) : ids;
+    this.snapshot();
+    const matId = [...this.model.materials.keys()][0];
+    const a = this.model.addArea(ordered, matId, { thickness: t });
+    if (!a) { this.toast('No se pudo crear el área (nodos repetidos o inexistentes)', 'warn'); return; }
+    this.viewport.addAreaMesh(a);
+    this.markDirty(); this._updateStats?.();
+    this.toast(`Elemento de área ${a.kind} #${a.id} (t=${t} m) creado`, 'ok');
+  }
+
+  // Ordena 4 nodos en sentido antihorario alrededor del centroide, en su plano,
+  // para que el cuadrilátero no quede cruzado sin importar el orden de selección.
+  _ordenarCuad(ids) {
+    const P = ids.map(id => { const n = this.model.nodes.get(id); return { id, x: n.x, y: n.y, z: n.z }; });
+    const c = P.reduce((s, p) => ({ x: s.x + p.x / 4, y: s.y + p.y / 4, z: s.z + p.z / 4 }), { x: 0, y: 0, z: 0 });
+    const v1 = [P[1].x - P[0].x, P[1].y - P[0].y, P[1].z - P[0].z];
+    let nrm = null;
+    for (let k = 2; k < 4; k++) {
+      const w = [P[k].x - P[0].x, P[k].y - P[0].y, P[k].z - P[0].z];
+      const cr = [v1[1] * w[2] - v1[2] * w[1], v1[2] * w[0] - v1[0] * w[2], v1[0] * w[1] - v1[1] * w[0]];
+      if (Math.hypot(...cr) > 1e-9) { nrm = cr; break; }
+    }
+    if (!nrm) return ids;
+    const nn = Math.hypot(...nrm), ez = nrm.map(v => v / nn);
+    const e1n = Math.hypot(...v1), ex = v1.map(v => v / e1n);
+    const ey = [ez[1] * ex[2] - ez[2] * ex[1], ez[2] * ex[0] - ez[0] * ex[2], ez[0] * ex[1] - ez[1] * ex[0]];
+    const ang = p => { const d = [p.x - c.x, p.y - c.y, p.z - c.z]; return Math.atan2(d[0] * ey[0] + d[1] * ey[1] + d[2] * ey[2], d[0] * ex[0] + d[1] * ex[1] + d[2] * ex[2]); };
+    return [...P].sort((a, b) => ang(a) - ang(b)).map(p => p.id);
+  }
 
   // ── Acciones masivas sobre NODOS ────────────────────────────────────────────
   _selNodes() { return this.viewport.getSelected().filter(s => s.type === 'node').map(s => s.id); }
@@ -1137,7 +1174,7 @@ class App {
   _staticWorkerSolve(K, nDOF, freeDOF, Flist, dense = false) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=83', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=85', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -1166,7 +1203,7 @@ class App {
   _staticWorkerSolveSparse(csr, cf, nDOF, freeDOF, Flist) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=83', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=85', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -3238,7 +3275,7 @@ class App {
     this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=83');
+      const { generarModelo } = await import('../asistente/generador.js?v=85');
       const modelo = generarModelo(ficha, libs);
 
       if (modo === 'sobreponer') {
@@ -4114,7 +4151,7 @@ class App {
   // Verificación de diseño (flexión/corte/axial) por elemento, usando los
   // resultados actuales y los parámetros editables de asistente/diseno_params.json.
   async _calcularDiseno() {
-    const ver = '?v=83';
+    const ver = '?v=85';
     let params = null;
     try { params = await fetch('asistente/diseno_params.json' + ver).then(r => r.json()); }
     catch (e) { console.error('No se pudo cargar diseno_params.json:', e); return null; }

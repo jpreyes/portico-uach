@@ -8,13 +8,14 @@ export class Model {
     // Maps: id (int) → object
     this.nodes      = new Map();
     this.elements   = new Map();
+    this.areas      = new Map();   // elementos de área 2D (membrana CST/QUAD)
     this.materials  = new Map();
     this.sections   = new Map();
     this.diaphragms   = new Map();
     this.loadCases    = new Map();
     this.combinations = new Map();
 
-    this._cnt = { nodes: 0, elements: 0, materials: 0,
+    this._cnt = { nodes: 0, elements: 0, areas: 0, materials: 0,
                   sections: 0, diaphragms: 0, loadCases: 0, combinations: 0 };
 
     this.units = 'kN-m';
@@ -119,6 +120,36 @@ export class Model {
   }
 
   removeElement(id) { return this.elements.delete(id); }
+
+  // ── Elementos de área (membrana 2D: CST 3 nodos / QUAD 4 nodos) ─────────────
+  addArea(nodes, matId, opts = {}) {
+    const ns = (nodes || []).map(Number);
+    if (ns.length !== 3 && ns.length !== 4) return null;
+    if (ns.some(n => !this.nodes.has(n))) return null;
+    if (new Set(ns).size !== ns.length) return null;
+    const id = this._next('areas');
+    const area = {
+      id, nodes: ns,
+      matId: matId ?? this._firstKey('materials'),
+      thickness: opts.thickness ?? 0.2,
+      planeStrain: !!opts.planeStrain,
+      kind: ns.length === 3 ? 'CST' : 'QUAD',
+    };
+    this.areas.set(id, area);
+    return area;
+  }
+
+  updateArea(id, props) {
+    const a = this.areas.get(id);
+    if (!a) return null;
+    if (props.matId      !== undefined) a.matId = +props.matId;
+    if (props.thickness  !== undefined) a.thickness = +props.thickness;
+    if (props.planeStrain !== undefined) a.planeStrain = !!props.planeStrain;
+    if (props.nodes) { a.nodes = props.nodes.map(Number); a.kind = a.nodes.length === 3 ? 'CST' : 'QUAD'; }
+    return a;
+  }
+
+  removeArea(id) { return this.areas.delete(id); }
 
   // ── Materials ──────────────────────────────────────────────────────────────
   addMaterial(props) {

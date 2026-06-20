@@ -1,7 +1,7 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // Serializer — JSON (.s3d) and CSV import/export
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model } from './model.js?v=83';
+import { Model } from './model.js?v=85';
 
 export class Serializer {
 
@@ -14,6 +14,7 @@ export class Serializer {
       mode: model.mode || '3D',
       nodes:      [...model.nodes.values()],
       elements:   [...model.elements.values()],
+      areas:      [...model.areas.values()],
       materials:  [...model.materials.values()],
       sections:   [...model.sections.values()],
       diaphragms:   [...model.diaphragms.values()],
@@ -33,7 +34,7 @@ export class Serializer {
     const m = new Model();
     // Clear defaults, we'll load from file
     m.materials.clear(); m.sections.clear();
-    m._cnt = { nodes:0, elements:0, materials:0, sections:0, diaphragms:0, loadCases:0, combinations:0 };
+    m._cnt = { nodes:0, elements:0, areas:0, materials:0, sections:0, diaphragms:0, loadCases:0, combinations:0 };
 
     m.units = obj.units || 'kN-m';
     m.mode  = obj.mode === '2D' ? '2D' : '3D';
@@ -48,6 +49,10 @@ export class Serializer {
     for (const d of (obj.elements  || []))  {
       if (!d.releases) d.releases = Array(12).fill(0);
       m.elements.set(d.id, d);
+    }
+    for (const d of (obj.areas || []))  {
+      if (!d.kind) d.kind = (d.nodes || []).length === 3 ? 'CST' : 'QUAD';
+      m.areas.set(d.id, d);
     }
     for (const d of (obj.diaphragms|| []))  { m.diaphragms.set(d.id, d); }
     for (const d of (obj.loadCases    || [])) {

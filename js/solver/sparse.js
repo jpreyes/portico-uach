@@ -13,8 +13,9 @@
 import {
   localAxes, stiffnessMatrix, massMatrix,
   transformMatrix, globalStiffness, applyReleases
-} from './timoshenko.js?v=83';
-import { applyDiaphragmConstraintsW, applyDiaphragmMassW } from './diaphragm.js?v=83';
+} from './timoshenko.js?v=85';
+import { applyDiaphragmConstraintsW, applyDiaphragmMassW } from './diaphragm.js?v=85';
+import { assembleAreasInto } from './membrane.js?v=85';
 
 // ── Matriz simétrica dispersa (acumulador por filas) ──────────────────────────
 export class SparseSym {
@@ -81,6 +82,9 @@ export function assembleSparseGlobal(model, nodeIndex, { withMass = false } = {}
     const b = nodeIndex.get(node.id) * 6;
     for (let i = 0; i < 6; i++) if (ks[i] > 0) S.add(b + i, b + i, ks[i]);
   }
+
+  // Elementos de área (membrana CST/QUAD) → GDL de traslación globales
+  assembleAreasInto(S.writer(), model, nodeIndex);
 
   // Restricciones de diafragma rígido (penalización) — lógica compartida
   applyDiaphragmConstraintsW(S.writer(), model, nodeIndex, nDOF);

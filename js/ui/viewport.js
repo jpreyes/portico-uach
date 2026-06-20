@@ -42,6 +42,7 @@ export class Viewport {
 
     this._nodeMeshes  = new Map();  // nodeId  → THREE.Mesh
     this._elemLines   = new Map();  // elemId  → THREE.Line
+    this._areaMeshes  = new Map();  // areaId  → THREE.Group (relleno + borde)
     this._suppGroups  = new Map();  // nodeId  → THREE.Group
     this._diaGroups   = new Map();  // diaphragmId → THREE.Group
 
@@ -318,6 +319,7 @@ export class Viewport {
     // Clear all model objects
     for (const m of this._nodeMeshes.values()) this._scene.remove(m);
     for (const l of this._elemLines.values())  this._scene.remove(l);
+    for (const g of this._areaMeshes.values())  this._scene.remove(g);
     for (const g of this._suppGroups.values())  this._scene.remove(g);
     if (this._hingeSprites) {
       for (const g of this._hingeSprites.values()) this._scene.remove(g);
@@ -330,6 +332,7 @@ export class Viewport {
     this.clearReactions();
     this._nodeMeshes.clear();
     this._elemLines.clear();
+    this._areaMeshes.clear();
     this._suppGroups.clear();
     this._selected.clear();
     this._hovered = null;
@@ -339,6 +342,7 @@ export class Viewport {
 
     for (const n of model.nodes.values())    this.addNodeMesh(n);
     for (const e of model.elements.values()) this.addElemLine(e);
+    for (const a of (model.areas?.values() || [])) this.addAreaMesh(a);
     this.refreshDiaphragms();
     this.refreshGridAxes();
     this.refreshElevationOptions();
@@ -403,6 +407,57 @@ export class Viewport {
     this._scene.add(line);
     this._elemLines.set(elem.id, line);
     this._buildHingeMarkers(elem);
+  }
+
+  // ── Elementos de área (membrana CST/QUAD) ────────────────────────────────
+  addAreaMesh(area, color = null) {
+    this.removeAreaMesh(area.id);
+    const pts = area.nodes.map(id => { const n = this.app.model.nodes.get(id); return n ? this.m2t(n.x, n.y, n.z) : null; });
+    if (pts.some(p => !p)) return;
+    const grp = new THREE.Group();
+    // relleno (triangulado): tri = [0,1,2]; quad = [0,1,2, 0,2,3]
+    const idx = pts.length === 3 ? [0, 1, 2] : [0, 1, 2, 0, 2, 3];
+    const pos = []; for (const k of idx) pos.push(pts[k].x, pts[k].y, pts[k].z);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geo.computeVertexNormals();
+    const fill = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
+      color: color ?? 0x3b82f6, transparent: true, opacity: color != null ? 0.85 : 0.22,
+      side: THREE.DoubleSide, depthWrite: false,
+    }));
+    fill.userData = { type: 'area', id: area.id };
+    grp.add(fill);
+    // borde
+    const loop = [...pts, pts[0]];
+    const edge = new THREE.Line(new THREE.BufferGeometry().setFromPoints(loop),
+      new THREE.LineBasicMaterial({ color: 0x60a5fa, transparent: true, opacity: 0.7 }));
+    edge.userData = { type: 'area', id: area.id };
+    grp.add(edge);
+    grp.userData = { type: 'area', id: area.id };
+    this._scene.add(grp);
+    this._areaMeshes.set(area.id, grp);
+  }
+
+  removeAreaMesh(areaId) {
+    const g = this._areaMeshes.get(areaId);
+    if (g) { this._scene.remove(g); this._areaMeshes.delete(areaId); }
+  }
+
+  // Colorea los elementos de área por tensión de von Mises (modo resultados).
+  colorAreasByVM(results) {
+    const model = this.app.model;
+    if (!model.areas || model.areas.size === 0 || !results || typeof results.getAreaStress !== 'function') return;
+    let mn = Infinity, mx = -Infinity; const vals = new Map();
+    for (const a of model.areas.values()) { const s = results.getAreaStress(a.id); const v = s ? s.vm : 0; vals.set(a.id, v); if (v < mn) mn = v; if (v > mx) mx = v; }
+    const span = (mx - mn) || 1;
+    for (const a of model.areas.values()) this.addAreaMesh(a, _dispColor((vals.get(a.id) - mn) / span));
+    this._areaVMrange = [mn, mx];
+  }
+
+  resetAreaColors() {
+    const model = this.app.model;
+    if (model.areas) for (const a of model.areas.values()) this.addAreaMesh(a);
+    this._areaVMrange = null;
   }
 
   removeElemLine(elemId) {
@@ -1851,6 +1906,7 @@ export class Viewport {
       line.visible = true;
     }
     for (const [, grp] of this._suppGroups) grp.visible = true;
+    this.resetAreaColors();
     this._inResultsMode = false;
     this._results = null;
     this._currentDiagramType = null;
@@ -1930,6 +1986,7 @@ export class Viewport {
     }
     this._showResultsUI(`Deformada ×${_fmt(scale)} (factor ×${+f.toPrecision(3)}) | δmax=${_fmt(maxD)}`);
     this._drawColorbar(0, maxD);
+    this.colorAreasByVM(results);   // tensión de membrana (von Mises) si hay áreas
   }
 
   // ── Deformada NO LINEAL (NL-lite): solo desplazamientos nodales ────────────
