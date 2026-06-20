@@ -1,21 +1,21 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=72';
-import { Serializer }      from './model/serializer.js?v=72';
-import { Viewport }        from './ui/viewport.js?v=72';
-import { PropertiesPanel } from './ui/properties.js?v=72';
-import { MenuBar }         from './ui/menu.js?v=72';
-import { UndoStack }       from './utils/undo.js?v=72';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=72';
-import { Results }                         from './solver/postprocess.js?v=72';
-import { ModalSolver }                     from './solver/modal_solver.js?v=72';
-import { buildNodeIndex, assembleK, getNodeDOFs } from './solver/assembler.js?v=72';
-import { ModalResults }                    from './solver/modal_results.js?v=72';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=72';
-import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=72';
-import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=72';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=72';
+import { Model }           from './model/model.js?v=73';
+import { Serializer }      from './model/serializer.js?v=73';
+import { Viewport }        from './ui/viewport.js?v=73';
+import { PropertiesPanel } from './ui/properties.js?v=73';
+import { MenuBar }         from './ui/menu.js?v=73';
+import { UndoStack }       from './utils/undo.js?v=73';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=73';
+import { Results }                         from './solver/postprocess.js?v=73';
+import { ModalSolver }                     from './solver/modal_solver.js?v=73';
+import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=73';
+import { ModalResults }                    from './solver/modal_results.js?v=73';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=73';
+import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=73';
+import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=73';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=73';
 
 class App {
   constructor() {
@@ -950,7 +950,7 @@ class App {
     document.getElementById('sb-mode').textContent = 'Analizando…';
 
     // Slight delay so browser can repaint before heavy computation
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
         // ── Auto-discretización (×10) para el análisis ──
         // El modelo original se guarda y se restaura al limpiar resultados.
@@ -979,7 +979,6 @@ class App {
         if (!reused) {
           // Resolver todos los casos ESTÁTICOS (los espectrales se calculan con
           // F6+F7 y conservan su resultado en _resultsByCase si ya corrieron).
-          const solver = new StaticSolver();
           const prevSpec = new Map();
           if (this._resultsByCase) {
             for (const lc of this.model.loadCases.values()) {
@@ -988,15 +987,19 @@ class App {
             }
           }
           this._resultsByCase = new Map(prevSpec);
+          const staticLcs = [...this.model.loadCases.values()].filter(lc => lc.type !== 'spectrum');
           const cases = [];
-          for (const lc of this.model.loadCases.values()) {
-            if (lc.type === 'spectrum') continue;
-            const res = solver.solve(this.model, lc.id, !!lc.selfWeight);
-            this._resultsByCase.set(lc.id, res);
-            cases.push({
-              key: lc.id, lcId: lc.id, selfWeight: !!lc.selfWeight,
-              u: Array.from(res.u), reactions: Array.from(res.reactions),
-            });
+          if (staticLcs.length) {
+            // Solver en Web Worker (no congela la UI), factorización única + banda.
+            const resMap = await this._solveStaticCases(staticLcs);
+            for (const lc of staticLcs) {
+              const res = resMap.get(lc.id); if (!res) continue;
+              this._resultsByCase.set(lc.id, res);
+              cases.push({
+                key: lc.id, lcId: lc.id, selfWeight: !!lc.selfWeight,
+                u: Array.from(res.u), reactions: Array.from(res.reactions),
+              });
+            }
           }
           if (!cases.length) { this.toast('No hay casos de carga estáticos que analizar', 'warn'); }
           // Combinaciones por superposición de lo ya resuelto
@@ -1037,13 +1040,91 @@ class App {
         // Kick off background diagram pre-computation (shows progress bar)
         this._precomputeDiagramsAsync(this._results);
       } catch (err) {
-        this.toast(`Error: ${err.message}`, 'error');
-        console.error(err);
+        if (err.message === 'cancelado') this.toast('Análisis cancelado', 'warn');
+        else { this.toast(`Error: ${err.message}`, 'error'); console.error(err); }
       } finally {
         if (btn) btn.classList.remove('running');
         document.getElementById('sb-mode').textContent = 'Modo: Resultados';
       }
     }, 20);
+  }
+
+  // Resuelve TODOS los casos estáticos en un Web Worker (no congela la UI),
+  // ensamblando K una vez y factorizando una vez (Cholesky en banda con RCM).
+  // Si el worker falla o la matriz no es SPD, usa el solver denso de respaldo.
+  async _solveStaticCases(staticLcs) {
+    const model = this.model;
+    const nodeIndex = buildNodeIndex(model);
+    const { K, nDOF } = assembleK(model, nodeIndex);
+
+    const is2D = model.mode === '2D';
+    const freeDOF = [];
+    for (const node of model.nodes.values()) {
+      const d = getNodeDOFs(nodeIndex, node.id);
+      const r = node.restraints;
+      const rArr = [r.ux, is2D ? 1 : r.uy, r.uz, is2D ? 1 : r.rx, r.ry, is2D ? 1 : r.rz];
+      d.forEach((gi, li) => { if (!rArr[li]) freeDOF.push(gi); });
+    }
+    if (!freeDOF.length) throw new Error('El modelo no tiene grados de libertad libres (¿todos los nodos están empotrados?)');
+
+    const Flist = staticLcs.map(lc => assembleF(model, nodeIndex, lc.id, !!lc.selfWeight));
+    const map = new Map();
+
+    let out = null;
+    try { out = await this._staticWorkerSolve(K, nDOF, Int32Array.from(freeDOF), Flist); }
+    catch (e) {
+      if (e?.message === 'cancelado') throw e;   // cancelación → abortar, no usar respaldo
+      console.warn('Worker estático falló, se usa el solver de respaldo:', e?.message || e); out = null;
+    }
+
+    if (out && out.ok) {
+      const freeSet = new Set(freeDOF);
+      staticLcs.forEach((lc, idx) => {
+        const u = out.uList[idx], reactions = out.reactionsList[idx], F = Flist[idx];
+        for (const node of model.nodes.values()) {   // reacciones de apoyos elásticos
+          const sp = node.springs; if (!sp) continue;
+          const ks = [sp.kux, sp.kuy, sp.kuz, sp.krx, sp.kry, sp.krz];
+          if (!ks.some(k => k > 0)) continue;
+          const d = getNodeDOFs(nodeIndex, node.id);
+          for (let i = 0; i < 6; i++) if (ks[i] > 0 && freeSet.has(d[i])) reactions[d[i]] = -ks[i] * u[d[i]];
+        }
+        map.set(lc.id, new Results(model, nodeIndex, u, reactions, F, lc.id, !!lc.selfWeight));
+      });
+      return map;
+    }
+
+    // ── Respaldo: solver denso original (numeric.js), por caso ──
+    const solver = new StaticSolver();
+    for (const lc of staticLcs) map.set(lc.id, solver.solve(model, lc.id, !!lc.selfWeight));
+    return map;
+  }
+
+  // Lanza el worker estático y resuelve con progreso + cancelar.
+  _staticWorkerSolve(K, nDOF, freeDOF, Flist) {
+    return new Promise((resolve, reject) => {
+      let worker;
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=73', import.meta.url), { type: 'module' }); }
+      catch (e) { reject(e); return; }
+      this._staticWorker = worker;
+      const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
+      this._showProgress('Analizando…', 'Resolviendo K·u = F (en segundo plano)', cancelar);
+      worker.onmessage = (ev) => {
+        const d = ev.data;
+        if (d && d.progress) {
+          const sub = d.progress === 'factorizando' ? 'Factorizando la matriz de rigidez…'
+            : `Resolviendo caso ${d.done}/${d.total}…`;
+          this._showProgress('Analizando…', sub, cancelar);
+          return;
+        }
+        try { worker.terminate(); } catch (e) {}
+        this._staticWorker = null;
+        this._hideProgress();
+        resolve(d);
+      };
+      worker.onerror = (ev) => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error(ev.message || 'error en worker estático')); };
+      // K se transfiere (zero-copy); Flist se copia (el main lo necesita para los Results).
+      worker.postMessage({ Kflat: K, nDOF, freeDOF, Flist }, [K.buffer, freeDOF.buffer]);
+    });
   }
 
   // Combina resultados ya resueltos (this._resultsByCase) según los factores
@@ -2349,7 +2430,7 @@ class App {
     this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=72');
+      const { generarModelo } = await import('../asistente/generador.js?v=73');
       const modelo = generarModelo(ficha, libs);
 
       if (modo === 'sobreponer') {
@@ -2764,7 +2845,7 @@ class App {
   }
 
   /** Overlay de progreso a pantalla completa que bloquea la interacción. */
-  _showProgress(titulo, sub = '') {
+  _showProgress(titulo, sub = '', onCancel = null) {
     let el = document.getElementById('portico-progress');
     if (!el) {
       el = document.createElement('div');
@@ -2777,12 +2858,16 @@ class App {
            <div style="height:6px;border-radius:3px;background:var(--border,#223);overflow:hidden">
              <div style="height:100%;width:40%;border-radius:3px;background:var(--accent,#4ea1ff);animation:pp-slide 1.1s ease-in-out infinite"></div>
            </div>
+           <button id="pp-cancel" style="display:none;margin-top:14px;background:transparent;border:1px solid var(--danger,#dc2626);color:var(--danger,#dc2626);border-radius:6px;padding:4px 12px;cursor:pointer;font-size:12px">Cancelar</button>
          </div>
          <style>@keyframes pp-slide{0%{margin-left:-40%}100%{margin-left:100%}}</style>`;
       document.body.appendChild(el);
     }
     el.querySelector('#pp-titulo').textContent = titulo;
     el.querySelector('#pp-sub').textContent = sub;
+    const cancel = el.querySelector('#pp-cancel');
+    cancel.style.display = onCancel ? '' : 'none';
+    cancel.onclick = onCancel || null;
     el.style.display = 'flex';
   }
 
@@ -3207,7 +3292,7 @@ class App {
   // Verificación de diseño (flexión/corte/axial) por elemento, usando los
   // resultados actuales y los parámetros editables de asistente/diseno_params.json.
   async _calcularDiseno() {
-    const ver = '?v=72';
+    const ver = '?v=73';
     let params = null;
     try { params = await fetch('asistente/diseno_params.json' + ver).then(r => r.json()); }
     catch (e) { console.error('No se pudo cargar diseno_params.json:', e); return null; }
