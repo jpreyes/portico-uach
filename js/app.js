@@ -1,23 +1,25 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=78';
-import { Serializer }      from './model/serializer.js?v=78';
-import { Viewport }        from './ui/viewport.js?v=78';
-import { PropertiesPanel } from './ui/properties.js?v=78';
-import { MenuBar }         from './ui/menu.js?v=78';
-import { UndoStack }       from './utils/undo.js?v=78';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=78';
-import { Results }                         from './solver/postprocess.js?v=78';
-import { ModalSolver }                     from './solver/modal_solver.js?v=78';
-import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=78';
-import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=78';
-import { solveNonlinear } from './solver/nl_lite.js?v=78';
-import { ModalResults }                    from './solver/modal_results.js?v=78';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=78';
-import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=78';
-import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=78';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=78';
+import { Model }           from './model/model.js?v=79';
+import { Serializer }      from './model/serializer.js?v=79';
+import { Viewport }        from './ui/viewport.js?v=79';
+import { PropertiesPanel } from './ui/properties.js?v=79';
+import { MenuBar }         from './ui/menu.js?v=79';
+import { UndoStack }       from './utils/undo.js?v=79';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=79';
+import { Results }                         from './solver/postprocess.js?v=79';
+import { ModalSolver }                     from './solver/modal_solver.js?v=79';
+import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=79';
+import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=79';
+import { solveNonlinear } from './solver/nl_lite.js?v=79';
+import { assembleKg } from './solver/geometric.js?v=79';
+import { denseFactor, triForward, triBackward } from './solver/linsolve.js?v=79';
+import { ModalResults }                    from './solver/modal_results.js?v=79';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=79';
+import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=79';
+import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=79';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=79';
 
 class App {
   constructor() {
@@ -1118,7 +1120,7 @@ class App {
   _staticWorkerSolve(K, nDOF, freeDOF, Flist, dense = false) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=78', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=79', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -1147,7 +1149,7 @@ class App {
   _staticWorkerSolveSparse(csr, cf, nDOF, freeDOF, Flist) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=78', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=79', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -1864,6 +1866,196 @@ class App {
       const Nmax = Math.max(0, ...step.N.map(Math.abs));
       ro.innerHTML = `λ = <b>${step.lambda.toFixed(3)}</b> · iter ${step.iters} · resid ${step.resid.toExponential(1)}<br>|N|máx = ${Nmax.toFixed(2)} kN · cables tensos ${taut}${slack ? ` · flojos ${slack}` : ''}`;
     }
+  }
+
+  // ── NL-lite Fase 2: rigidez geométrica (P-Delta + pandeo lineal) ──────────
+  // Monta el problema geométrico: K densa, GDL libres y la carga estática
+  // COMBINADA (todos los casos a factor 1) como carga de referencia.
+  _buildGeomProblem() {
+    const model = this.model;
+    const nodeIndex = buildNodeIndex(model);
+    const { K, nDOF } = assembleK(model, nodeIndex);
+    const is2D = model.mode === '2D';
+    const freeDOF = [];
+    for (const node of model.nodes.values()) {
+      const d = getNodeDOFs(nodeIndex, node.id), r = node.restraints;
+      const rArr = [r.ux, is2D ? 1 : r.uy, r.uz, is2D ? 1 : r.rx, r.ry, is2D ? 1 : r.rz];
+      d.forEach((gi, li) => { if (!rArr[li]) freeDOF.push(gi); });
+    }
+    const F = new Float64Array(nDOF);
+    let nCasos = 0;
+    for (const lc of model.loadCases.values()) {
+      if (lc.type === 'spectrum') continue;
+      const Fi = assembleF(model, nodeIndex, lc.id, !!lc.selfWeight);
+      for (let i = 0; i < nDOF; i++) F[i] += Fi[i];
+      nCasos++;
+    }
+    return { nodeIndex, K, nDOF, freeDOF, F, nCasos };
+  }
+
+  _maxTransDisp(u) {
+    let mx = 0;
+    for (const node of this.model.nodes.values()) {
+      const d = getNodeDOFs(this._geomNI, node.id);
+      mx = Math.max(mx, Math.hypot(u[d[0]], u[d[1]], u[d[2]]));
+    }
+    return mx;
+  }
+
+  // PANDEO lineal por autovalores: (K + λ·Kg)·φ = 0 → λcr y modo de pandeo.
+  runBuckling() {
+    if (!this._config?.analisis?.nlLite) { this.toast('Active «Análisis no lineal (NL-lite)» en ⚙ Configuración', 'warn'); this.configDialog?.(); return; }
+    const num = window.numeric;
+    if (!num) { this.toast('numeric.js no disponible', 'error'); return; }
+    if (this.model.nodes.size === 0 || this.model.elements.size === 0) { this.toast('Modelo vacío', 'warn'); return; }
+
+    const { nodeIndex, K, nDOF, freeDOF, F, nCasos } = this._buildGeomProblem();
+    this._geomNI = nodeIndex;
+    if (!freeDOF.length) { this.toast('Sin GDL libres', 'warn'); return; }
+    if (!nCasos) { this.toast('Defina al menos un caso de carga: es la carga de referencia del pandeo.', 'warn'); return; }
+
+    const nF = freeDOF.length;
+    // Kff y Kgff en formato plano (Float64Array nF×nF)
+    const Kff = new Float64Array(nF * nF);
+    const Ff = new Float64Array(nF);
+    for (let i = 0; i < nF; i++) { Ff[i] = F[freeDOF[i]]; const ri = freeDOF[i] * nDOF; for (let j = 0; j < nF; j++) Kff[i * nF + j] = K[ri + freeDOF[j]]; }
+
+    // Estado de referencia: K_ff·u = F_ff (Cholesky densa; sirve para el axial Y
+    // para reducir el problema de autovalores).
+    const F0 = denseFactor(Kff, nF);
+    if (!F0.ok) { this.toast('Estado de referencia singular/inestable (mecanismo). Revise apoyos — p.ej. torsión libre del conjunto.', 'error'); return; }
+    const ufA = triBackward(F0, triForward(F0, Ff));   // u_f = K_ff⁻¹·F_ff
+    const u = new Float64Array(nDOF); for (let i = 0; i < nF; i++) u[freeDOF[i]] = ufA[i];
+
+    const { Kg, Nmax } = assembleKg(this.model, nodeIndex, u);
+    if (Nmax < 1e-9) { this.toast('La carga de referencia no genera fuerzas axiales (sin efecto de pandeo).', 'warn'); return; }
+
+    // Reducción simétrica del problema (K+λKg)φ=0:
+    //   Kff = L·Lᵀ ⇒ A = L⁻¹·(−Kgff)·L⁻ᵀ (simétrica). A·ψ = μ·ψ con μ = 1/λ.
+    //   φ = L⁻ᵀ·ψ.  El mayor μ>0 ⇒ el menor λcr>0. eig de matriz SIMÉTRICA = robusto.
+    const M = [];   // M[c] = L⁻¹·(−Kg)[:,c]
+    for (let c = 0; c < nF; c++) {
+      const col = new Float64Array(nF);
+      for (let i = 0; i < nF; i++) col[i] = -Kg[freeDOF[i] * nDOF + freeDOF[c]];
+      M.push(triForward(F0, col));
+    }
+    const A = [];   // A[c] = L⁻¹·(fila c de M)   ⇒ A simétrica
+    for (let c = 0; c < nF; c++) {
+      const rowc = new Float64Array(nF);
+      for (let i = 0; i < nF; i++) rowc[i] = M[i][c];
+      A.push(triForward(F0, rowc));
+    }
+    const Asym = Array.from({ length: nF }, (_, i) => Array.from({ length: nF }, (_, j) => A[j][i]));
+
+    let eig;
+    try { eig = num.eig(Asym); } catch (e) { this.toast('Falló el cálculo de autovalores de pandeo.', 'error'); console.error(e); return; }
+    const mu = eig.lambda.x, muI = eig.lambda.y || [];
+    const Ex = eig.E.x;
+    const modes = [];
+    for (let k = 0; k < mu.length; k++) {
+      const re = mu[k], im = muI[k] || 0;
+      if (Math.abs(im) > 1e-6 * Math.max(1, Math.abs(re))) continue;   // sin parte imaginaria
+      if (re <= 1e-9) continue;                                         // μ>0 ⇒ λ>0 (compresión)
+      const lambda = 1 / re;
+      const psi = new Float64Array(nF);
+      for (let i = 0; i < nF; i++) psi[i] = Ex[i][k];
+      const phi = triBackward(F0, psi);                                 // φ = L⁻ᵀ·ψ
+      const vec = new Float64Array(nDOF);
+      for (let i = 0; i < nF; i++) vec[freeDOF[i]] = phi[i];
+      modes.push({ lambda, vec });
+    }
+    modes.sort((a, b) => a.lambda - b.lambda);
+    if (!modes.length) { this.toast('No se hallaron modos de pandeo (la carga de referencia no produce compresión). Revise su sentido.', 'warn'); return; }
+
+    this._buckResult = { modes: modes.slice(0, 6), nCasos };
+    this.toast(`Pandeo: λcr = ${modes[0].lambda.toFixed(3)} · carga crítica = λcr × carga de referencia`, 'ok');
+    this._buckOpenOverlay();
+  }
+
+  _buckOpenOverlay() {
+    const modes = this._buckResult.modes;
+    let el = document.getElementById('buck-overlay');
+    if (!el) { el = document.createElement('div'); el.id = 'buck-overlay'; document.body.appendChild(el); }
+    el.style.cssText = 'position:fixed;right:16px;bottom:84px;z-index:50;background:var(--panel,#0f1830);border:1px solid var(--border,#26324d);border-radius:8px;padding:10px 12px;width:268px;box-shadow:0 8px 24px rgba(0,0,0,.4);font-size:12px;color:var(--text,#dbe4f5)';
+    el.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <b style="color:var(--accent,#38bdf8)">Pandeo lineal</b>
+        <button id="buck-close" title="Cerrar" style="background:none;border:none;color:var(--text-muted,#94a3b8);cursor:pointer;font-size:16px;line-height:1">✕</button>
+      </div>
+      <div style="margin-bottom:6px">Modo:
+        <select id="buck-mode">${modes.map((m, i) => `<option value="${i}">#${i + 1} — λcr = ${m.lambda.toFixed(3)}</option>`).join('')}</select>
+      </div>
+      <div id="buck-readout" style="color:var(--text-muted,#94a3b8);font-size:11px;line-height:1.5;margin-bottom:6px"></div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <label style="color:var(--text-muted,#94a3b8)">Escala ×</label>
+        <input type="number" id="buck-scale" value="1" min="0.05" step="0.25" style="width:64px">
+      </div>`;
+    const sel = el.querySelector('#buck-mode'), scl = el.querySelector('#buck-scale');
+    const redraw = () => this._buckShowMode(+sel.value);
+    sel.addEventListener('change', redraw);
+    scl.addEventListener('input', redraw);
+    el.querySelector('#buck-close').addEventListener('click', () => { el.remove(); this.viewport.clearResults(); });
+    redraw();
+  }
+
+  _buckShowMode(k) {
+    const m = this._buckResult.modes[k]; if (!m) return;
+    const uByNode = new Map();
+    for (const node of this.model.nodes.values()) {
+      const d = getNodeDOFs(this._geomNI, node.id);
+      uByNode.set(node.id, [m.vec[d[0]], m.vec[d[1]], m.vec[d[2]]]);
+    }
+    const factor = parseFloat(document.getElementById('buck-scale')?.value) || 1;
+    this.viewport.showNLDeformed(uByNode, new Map(), factor,
+      `Pandeo modo ${k + 1} · factor crítico λcr = ${m.lambda.toFixed(3)} (carga crítica = λcr × carga de referencia)`);
+    const ro = document.getElementById('buck-readout');
+    if (ro) ro.innerHTML = `λcr = <b>${m.lambda.toFixed(4)}</b><br>Carga de pandeo = ${m.lambda.toFixed(3)} × la carga aplicada combinada.<br>${m.lambda < 1 ? '<b style="color:#f87171">λcr &lt; 1: la estructura pandea bajo la carga actual.</b>' : 'λcr &gt; 1: estable ante pandeo bajo la carga actual.'}`;
+  }
+
+  // P-DELTA: resuelve (K + Kg(u))·u = F iterando (frames). Muestra la deformada
+  // amplificada y compara δmax lineal vs P-Delta.
+  runPDelta() {
+    if (!this._config?.analisis?.nlLite) { this.toast('Active «Análisis no lineal (NL-lite)» en ⚙ Configuración', 'warn'); this.configDialog?.(); return; }
+    const num = window.numeric;
+    if (!num) { this.toast('numeric.js no disponible', 'error'); return; }
+    const { nodeIndex, K, nDOF, freeDOF, F, nCasos } = this._buildGeomProblem();
+    this._geomNI = nodeIndex;
+    if (!freeDOF.length) { this.toast('Sin GDL libres', 'warn'); return; }
+    if (!nCasos) { this.toast('Defina al menos un caso de carga.', 'warn'); return; }
+
+    const nF = freeDOF.length;
+    const Kff = freeDOF.map(a => freeDOF.map(b => K[a * nDOF + b]));
+    const Ff = freeDOF.map(a => F[a]);
+    let uf;
+    try { uf = num.solve(Kff, Ff); } catch (e) { this.toast('Estado lineal inestable (mecanismo).', 'error'); return; }
+    if (!uf || uf.some(v => !isFinite(v))) { this.toast('Estado lineal singular.', 'error'); return; }
+    let u = new Float64Array(nDOF); freeDOF.forEach((d, i) => u[d] = uf[i]);
+    const dLin = this._maxTransDisp(u);
+
+    let conv = false, it = 0;
+    for (it = 0; it < 25; it++) {
+      const { Kg } = assembleKg(this.model, nodeIndex, u);
+      const KT = freeDOF.map(a => freeDOF.map(b => K[a * nDOF + b] + Kg[a * nDOF + b]));
+      let uf2;
+      try { uf2 = num.solve(KT, Ff); } catch (e) { this.toast('Tangente singular: la carga iguala o supera la de pandeo (λcr ≤ 1). Reduzca la carga o ejecute Pandeo.', 'error'); return; }
+      if (!uf2 || uf2.some(v => !isFinite(v))) { this.toast('Divergió: la carga alcanza la de pandeo.', 'error'); return; }
+      const uNew = new Float64Array(nDOF); freeDOF.forEach((d, i) => uNew[d] = uf2[i]);
+      let dn = 0, de = 0; for (let i = 0; i < nDOF; i++) { dn += (uNew[i] - u[i]) ** 2; de += uNew[i] ** 2; }
+      u = uNew;
+      if (de > 0 && Math.sqrt(dn / de) < 1e-6) { conv = true; it++; break; }
+    }
+    const dPD = this._maxTransDisp(u);
+    this._pdResult = { u };
+    const amp = dLin > 1e-12 ? dPD / dLin : 1;
+    this.toast(`P-Delta: δmax ${dLin.toExponential(2)} → ${dPD.toExponential(2)} m (amplificación ×${amp.toFixed(2)}) · ${conv ? it + ' iter' : 'no convergió'}`, conv ? 'ok' : 'warn');
+
+    const uByNode = new Map();
+    for (const node of this.model.nodes.values()) {
+      const d = getNodeDOFs(nodeIndex, node.id);
+      uByNode.set(node.id, [u[d[0]], u[d[1]], u[d[2]]]);
+    }
+    this.viewport.showNLDeformed(uByNode, new Map(), 1,
+      `P-Delta · δmax=${dPD.toExponential(2)} m · amplificación ×${amp.toFixed(2)} vs lineal · ${conv ? it + ' iter' : 'sin converger'}`);
   }
 
   _spectrumDialog(defaultText) {
@@ -2637,7 +2829,7 @@ class App {
     this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=78');
+      const { generarModelo } = await import('../asistente/generador.js?v=79');
       const modelo = generarModelo(ficha, libs);
 
       if (modo === 'sobreponer') {
@@ -2729,7 +2921,7 @@ class App {
     return [
       'Documento generado automáticamente por PÓRTICO con fines <b>docentes</b>; no reemplaza el criterio ni la firma de un profesional competente.',
       'La verificación de diseño usa propiedades de sección (A, I) y los parámetros editables de <code>asistente/diseno_params.json</code>; el hormigón armado se evalúa con la cuantía indicada y supuestos declarados.',
-      'La verificación de <b>resistencia</b> cubre flexión, corte, axial e interacción flexo-axial (AISC H1 / NDS) por envolvente de combinaciones. La de <b>servicio</b> cubre la flecha de vigas bajo sobrecarga de uso sin mayorar y las derivas de entrepiso (NCh433, límite 2/1000·h, entre centros de masa y entre nodos externos). NO incluye diseño de uniones, fundaciones, pandeo lateral-torsional, clasificación de perfiles ni efectos P-Δ.',
+      'La verificación de <b>resistencia</b> cubre flexión, corte, axial e interacción flexo-axial (AISC H1 / NDS) por envolvente de combinaciones. La de <b>servicio</b> cubre la flecha de vigas bajo sobrecarga de uso sin mayorar y las derivas de entrepiso (NCh433, límite 2/1000·h, entre centros de masa y entre nodos externos). NO incluye diseño de uniones, fundaciones, pandeo lateral-torsional ni clasificación de perfiles. Los efectos P-Δ y el pandeo global (factor crítico λcr) se evalúan aparte con NL-lite (no se incorporan automáticamente a las razones D/C).',
       'Las cargas de viento, nieve y sobrecargas se representan como casos de carga; verifique su clasificación y magnitud según la normativa aplicable.',
     ];
   }
@@ -3513,7 +3705,7 @@ class App {
   // Verificación de diseño (flexión/corte/axial) por elemento, usando los
   // resultados actuales y los parámetros editables de asistente/diseno_params.json.
   async _calcularDiseno() {
-    const ver = '?v=78';
+    const ver = '?v=79';
     let params = null;
     try { params = await fetch('asistente/diseno_params.json' + ver).then(r => r.json()); }
     catch (e) { console.error('No se pudo cargar diseno_params.json:', e); return null; }

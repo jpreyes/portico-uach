@@ -155,6 +155,18 @@ export function denseSolve(F, b, out) {
   for (let i = n - 1; i >= 0; i--) { let s = y[i]; for (let j = i + 1; j < n; j++) s -= L[j * n + i] * x[j]; x[i] = s / L[i * n + i]; }
   return x;
 }
+// Sustitución hacia adelante: resuelve L·y = b (L triangular inferior de denseFactor).
+export function triForward(F, b) {
+  const { L, n } = F; const y = new Float64Array(n);
+  for (let i = 0; i < n; i++) { let s = b[i]; const off = i * n; for (let j = 0; j < i; j++) s -= L[off + j] * y[j]; y[i] = s / L[off + i]; }
+  return y;
+}
+// Sustitución hacia atrás: resuelve Lᵀ·x = b.
+export function triBackward(F, b) {
+  const { L, n } = F; const x = new Float64Array(n);
+  for (let i = n - 1; i >= 0; i--) { let s = b[i]; for (let j = i + 1; j < n; j++) s -= L[j * n + i] * x[j]; x[i] = s / L[i * n + i]; }
+  return x;
+}
 
 // Selector: factoriza Kff con el método elegido y devuelve { ok, solve(b,out), kind, m }.
 //   dense=false (por defecto) → Cholesky en banda (rápida). dense=true → densa.

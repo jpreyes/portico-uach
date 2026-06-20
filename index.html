@@ -29,8 +29,8 @@
       window.dispatchEvent(new Event('pwa-installed'));
     });
   </script>
-  <link rel="stylesheet" href="style.css?v=78">
-  <link rel="stylesheet" href="ui-v2.css?v=78">
+  <link rel="stylesheet" href="style.css?v=79">
+  <link rel="stylesheet" href="ui-v2.css?v=79">
   <script type="importmap">
   {
     "imports": {
@@ -119,7 +119,9 @@
           <li data-action="run-force">↻ Recalcular (forzar, ignora resultados guardados)</li>
           <li data-action="run-modal">▶ Análisis Modal… <kbd>F6</kbd></li>
           <li data-action="run-spectrum">▶ Espectro de Respuesta… <kbd>F7</kbd></li>
-          <li data-action="run-nonlinear">▶ Análisis No Lineal (NL-lite)…</li>
+          <li data-action="run-nonlinear">▶ Análisis No Lineal — cables (NL-lite)…</li>
+          <li data-action="run-pdelta">▶ Análisis P-Delta (NL-lite)…</li>
+          <li data-action="run-buckling">▶ Pandeo Lineal — factor crítico (NL-lite)…</li>
           <li class="sep"></li>
           <li data-action="combos">Combinaciones de Carga… <kbd>F8</kbd></li>
           <li data-action="global-matrices">Ver Matrices Globales K · M…</li>
@@ -671,7 +673,7 @@
           <div>
             <h2 style="margin:0">PÓRTICO</h2>
             <p style="margin:2px 0 0;color:var(--text-muted)">Laboratorio virtual de análisis estructural 3D
-              · <b id="help-version">versión 78</b> · junio 2026</p>
+              · <b id="help-version">versión 79</b> · junio 2026</p>
           </div>
         </div>
         <p><b>Material docente</b> desarrollado por el <b>Dr. Juan Patricio Reyes C.</b> —
@@ -878,7 +880,7 @@
 
 <!-- numeric.js para solver (Fase 2+) -->
 <script src="lib/numeric.js"></script>
-<script type="module" src="js/app.js?v=78"></script>
+<script type="module" src="js/app.js?v=79"></script>
 
 <!-- PWA: registrar el service worker (offline). Solo en contexto seguro
      (https o localhost); el navegador deja navigator.serviceWorker undefined

@@ -91,6 +91,8 @@ export class MenuBar {
       case 'run-modal':      a.runModal();                   break;
       case 'run-spectrum':   a.runSpectrum();                break;
       case 'run-nonlinear':  a.runNonlinear();               break;
+      case 'run-pdelta':     a.runPDelta();                  break;
+      case 'run-buckling':   a.runBuckling();                break;
       case 'combos':         a.openCombosTab();              break;
       case 'asistente':      a.asistenteDialog();            break;
       case 'res-deformed':   a.setResultType('deformed');    break;
