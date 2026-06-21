@@ -420,6 +420,7 @@
       <!-- Vertical super-tabs -->
       <div id="panel-vtabs">
         <button class="vtab active" data-vtab="modelo">Modelo</button>
+        <button class="vtab" data-vtab="asistente">Asistente</button>
         <button class="vtab" data-vtab="resultados">Resultados</button>
         <button class="vtab" data-vtab="diseno">Diseño</button>
       </div>
@@ -502,9 +503,23 @@
         <!-- DISEÑO -->
         <div id="vpanel-diseno" class="vpanel-content">
           <div style="padding:8px">
-            <p class="panel-hint">Verificación de <b>flexión, corte y axial</b> (razón D/C = demanda/capacidad) por elemento. Acero LRFD (AISC 360), hormigón ACI 318, madera NCh1198. Parámetros editables en <code>asistente/diseno_params.json</code>.</p>
+            <p class="panel-hint">Verificación de <b>flexión, corte y axial</b> (razón D/C = demanda/capacidad) por elemento. Acero LRFD (AISC 360), hormigón ACI 318, madera NCh1198 con valores normativos estándar.</p>
             <button class="btn-add" id="btn-verificar-diseno" style="background:rgba(14,127,192,0.12);color:var(--accent);border-color:var(--accent)">⚙ Verificar diseño</button>
             <div id="diseno-body" style="margin-top:8px"></div>
+          </div>
+        </div>
+
+        <!-- ── ASISTENTE ── -->
+        <div id="vpanel-asistente" class="vpanel-content">
+          <div style="padding:8px">
+            <p class="panel-hint">Describe la estructura en palabras y el asistente arma la ficha y genera el modelo (geometría, secciones, cargas NCh y combinaciones).</p>
+            <div class="prop-field">
+              <label>Descripción del modelo</label>
+              <textarea id="asis-nl-side" rows="5" class="sp-textarea" placeholder="Ej.: edificio de 4 niveles de 3 m, 3 vanos de 6 m en X y 2 de 5 m en Y, hormigón H30, vigas 25x50, pilares 35x35, salas de clases, en Valdivia, con sismo zona 2 suelo D"></textarea>
+            </div>
+            <button class="btn-add" id="btn-asis-side-gen" style="margin-top:8px;background:rgba(14,127,192,0.12);color:var(--accent);border-color:var(--accent)">✦ Generar modelo con el asistente</button>
+            <button class="btn-add" id="btn-asis-side-ficha" style="margin-top:6px">Editar ficha avanzada (JSON)…</button>
+            <small style="color:var(--text-muted);display:block;margin-top:6px">La credencial del asistente vive como secreto del servidor; nunca en el navegador. Reemplaza el modelo actual.</small>
           </div>
         </div>
 

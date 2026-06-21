@@ -15,6 +15,7 @@ export class PropertiesPanel {
       modelo:     document.getElementById('vpanel-modelo'),
       resultados: document.getElementById('vpanel-resultados'),
       diseno:     document.getElementById('vpanel-diseno'),
+      asistente:  document.getElementById('vpanel-asistente'),
     };
     this._currentVTab = 'modelo';
 
@@ -62,6 +63,12 @@ export class PropertiesPanel {
     document.getElementById('btn-combos-norma')?.addEventListener('click', () => this.app.crearCasosYCombosNorma());
     document.getElementById('btn-add-node-row')?.addEventListener('click', () => this._addNodeRow());
     document.getElementById('btn-verificar-diseno')?.addEventListener('click', () => this.renderDiseno());
+    document.getElementById('btn-asis-side-gen')?.addEventListener('click', () => {
+      const txt = document.getElementById('asis-nl-side')?.value.trim();
+      if (!txt) { this.app.toast('Escribe una descripción del modelo', 'warn'); return; }
+      this.app.asistenteDesdeTexto(txt);
+    });
+    document.getElementById('btn-asis-side-ficha')?.addEventListener('click', () => this.app.asistenteDialog());
   }
 
   _switchVTab(vtab) {
