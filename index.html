@@ -29,8 +29,8 @@
       window.dispatchEvent(new Event('pwa-installed'));
     });
   </script>
-  <link rel="stylesheet" href="style.css?v=88">
-  <link rel="stylesheet" href="ui-v2.css?v=88">
+  <link rel="stylesheet" href="style.css?v=89">
+  <link rel="stylesheet" href="ui-v2.css?v=89">
   <script type="importmap">
   {
     "imports": {
@@ -98,6 +98,7 @@
           <li data-action="view-side">Lateral YZ <kbd>L</kbd></li>
           <li class="sep"></li>
           <li data-action="toggle-grid">Grilla <kbd>G</kbd></li>
+          <li data-action="toggle-axes">Ejes XYZ</li>
           <li data-action="zoom-extents">Zoom Extensión <kbd>Home</kbd></li>
           <li class="sep"></li>
           <li data-action="hide-sel">Ocultar selección <kbd>H</kbd></li>
@@ -186,6 +187,12 @@
       <button class="tool active" data-mode="select" title="Seleccionar  S">
         <svg viewBox="0 0 24 24"><polygon points="5,2 5,18 9,14 12,21 14,20 11,13 17,13" fill="currentColor"/></svg>
         <span>Sel.</span>
+      </button>
+      <button class="tool" data-mode="pan" title="Mover vista — PAN  (arrastrar con la izquierda)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V10m0 0V4.5a1.5 1.5 0 0 1 3 0V11m0-1.5a1.5 1.5 0 0 1 3 0V14c0 3.3-2.2 6-6 6-2 0-3.4-.7-4.6-2L7 14.2c-.6-.9-.3-1.8.5-2.2.7-.4 1.6-.2 2 .5L11 14"/>
+        </svg>
+        <span>Pan</span>
       </button>
       <button class="tool" data-mode="addnode" title="Agregar Nodo  N">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -885,7 +892,7 @@
 
 <!-- numeric.js para solver (Fase 2+) -->
 <script src="lib/numeric.js"></script>
-<script type="module" src="js/app.js?v=88"></script>
+<script type="module" src="js/app.js?v=89"></script>
 
 <!-- PWA: registrar el service worker (offline). Solo en contexto seguro
      (https o localhost); el navegador deja navigator.serviceWorker undefined

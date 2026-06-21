@@ -84,6 +84,7 @@ export class MenuBar {
       case 'view-front':  a.viewport.setView('front'); break;
       case 'view-side':   a.viewport.setView('side');  break;
       case 'toggle-grid':    a.viewport.toggleGrid();        break;
+      case 'toggle-axes':    a.viewport.toggleAxes();        break;
       case 'zoom-extents':   a.viewport.zoomExtents();       break;
       case 'hide-sel':       a.hideSelected();               break;
       case 'show-all':       a.showAllElements();            break;

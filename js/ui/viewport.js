@@ -203,7 +203,7 @@ export class Viewport {
     this._grid = new THREE.Group();
     const main = new THREE.GridHelper(200, 200, center, minor);
     main.material.transparent = true;
-    main.material.opacity = 0.7;
+    main.material.opacity = 0.38;   // grilla tenue → no se confunde con los elementos
     this._grid.add(main);
     this._scene.add(this._grid);
   }
@@ -1736,6 +1736,15 @@ export class Viewport {
     if (mode !== 'addnode' && mode !== 'addelem') {
       this._previewSphere.visible = false;
     }
+    // PAN (manito): arrastrar con la izquierda panea en vez de orbitar. Al salir
+    // del modo se restaura el orbit (salvo en vista 2D/elevación, que ya panea).
+    if (mode === 'pan') {
+      this._controls.enableRotate = false;
+      this._controls.mouseButtons = this._MB_2D;
+    } else if (this.app.model.mode !== '2D' && !this._elevation) {
+      this._controls.enableRotate = true;
+      this._controls.mouseButtons = this._MB_3D;
+    }
     // Toolbar highlight
     document.querySelectorAll('.tool[data-mode]').forEach(b =>
       b.classList.toggle('active', b.dataset.mode === mode)
@@ -1743,6 +1752,7 @@ export class Viewport {
     // Status bar mode
     const names = {
       select:     'Seleccionar',
+      pan:        'Mover vista (PAN)',
       addnode:    'Agregar Nodo',
       addelem:    'Agregar Elemento',
       addsupport: 'Asignar Apoyo'
@@ -1750,6 +1760,7 @@ export class Viewport {
     document.getElementById('sb-mode').textContent = `Modo: ${names[mode] || mode}`;
     // Hint overlay
     const hints = {
+      pan:        'Arrastra con el botón izquierdo para mover la vista',
       addnode:    'Clic en la grilla para crear nodo',
       addelem:    'Clic en nodo origen → nodo destino  |  Esc para cancelar',
       addsupport: 'Clic en un nodo para editar sus restricciones'
@@ -1758,7 +1769,8 @@ export class Viewport {
     el.textContent = hints[mode] || '';
     el.classList.toggle('visible', !!hints[mode]);
     // Cursor
-    const cur = (mode === 'addnode' || mode === 'addelem') ? 'crosshair' : 'default';
+    const cur = (mode === 'addnode' || mode === 'addelem') ? 'crosshair'
+              : mode === 'pan' ? 'grab' : 'default';
     this._renderer.domElement.style.cursor = cur;
   }
 
