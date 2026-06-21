@@ -9,7 +9,7 @@ similaridad. `[#]` referencia el pedido original. Estado: ⬜ pendiente · 🟡 
 *El cuello de botella del flujo: lanzar análisis y reusar resultados.*
 - ✅ **Ventana flotante de análisis** (Centro de análisis): el botón "Análisis" de la barra lateral abre un panel con TODOS los análisis (Estático, Modal, Espectro + 6 avanzados NL-lite), cada uno con botón Ejecutar. `[#4]`
 - 🟡 **Acceso a resultados ya corridos**: badges ✓/sin-ejecutar por análisis y botón **Ver** que re-muestra sin recalcular (estático, modal, y cada caso espectral listado). Falta: indicador permanente fuera del hub. `[#1]`
-- 🟡 **Modal/progreso**: ✅ el modal **sale del modo resultados antes de correr**; ✅ la **estructura original** se dibuja como **fantasma tenue** (gris translúcido 0.28) durante la animación del modo. ⬜ Falta: **caja de progreso unificada** (la misma del estático) para todos los análisis. `[#2]`
+- ✅ **Modal/progreso**: el modal **sale del modo resultados antes de correr**; la **estructura original** se dibuja como **fantasma tenue** (0.28) durante la animación; la **caja flotante de progreso** del estático (`_showProgress/_hideProgress`) ahora también aparece en **Modal** y **Espectro**. ⬜ Pendiente menor: los 6 NL-lite son síncronos (rápidos) — para mostrarles la caja habría que volverlos async. `[#2]`
 
 ## G2 · Motor modal y rendimiento
 - ⬜ **Método modal alternativo** (el de las referencias) + **selector de método** en la ventana modal; el modal actual es lento. `[#3]`
