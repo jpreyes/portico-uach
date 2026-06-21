@@ -1,8 +1,8 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // PropertiesPanel — right-side panel: node/element properties + mat/sec tabs
 // ──────────────────────────────────────────────────────────────────────────────
-import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=99';
-import { localAxes } from '../solver/timoshenko.js?v=99';
+import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=100';
+import { localAxes } from '../solver/timoshenko.js?v=100';
 
 export class PropertiesPanel {
   constructor(panelEl, app) {
@@ -599,12 +599,14 @@ export class PropertiesPanel {
     const f = v => (v == null || !isFinite(v)) ? '—' : (+v).toExponential(3);
     return `
       <div class="prop-section" style="border:1px solid var(--warn);border-radius:6px;padding:8px">
-        <div class="prop-title" style="color:var(--warn);margin-top:0">Tensiones de membrana (centro)</div>
+        <div class="prop-title" style="color:var(--warn);margin-top:0">Tensiones (centro)</div>
         <table class="res-table"><tbody>
-          <tr><td>von Mises</td><td style="text-align:right;font-family:var(--font-mono)">${f(s.vm)}</td></tr>
-          <tr><td>σ₁ (principal)</td><td style="text-align:right;font-family:var(--font-mono)">${f(s.s1)}</td></tr>
-          <tr><td>σ₂ (principal)</td><td style="text-align:right;font-family:var(--font-mono)">${f(s.s2)}</td></tr>
-          <tr><td>σx, σy, τxy (local)</td><td style="text-align:right;font-family:var(--font-mono);font-size:10px">${f(s.sx)}, ${f(s.sy)}, ${f(s.txy)}</td></tr>
+          <tr><td>von Mises${s.vmSurf != null ? ' (superficie)' : ' (membrana)'}</td><td style="text-align:right;font-family:var(--font-mono)">${f(s.vm)}</td></tr>
+          ${s.vmSurf != null ? `<tr><td>· membrana</td><td style="text-align:right;font-family:var(--font-mono);color:var(--text-muted)">${f(s.vmMembrane)}</td></tr>
+          <tr><td>· cara sup / inf</td><td style="text-align:right;font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">${f(s.vmTop)} / ${f(s.vmBot)}</td></tr>` : ''}
+          <tr><td>σ₁ (principal, membrana)</td><td style="text-align:right;font-family:var(--font-mono)">${f(s.s1)}</td></tr>
+          <tr><td>σ₂ (principal, membrana)</td><td style="text-align:right;font-family:var(--font-mono)">${f(s.s2)}</td></tr>
+          <tr><td>σx, σy, τxy (membrana, local)</td><td style="text-align:right;font-family:var(--font-mono);font-size:10px">${f(s.sx)}, ${f(s.sy)}, ${f(s.txy)}</td></tr>
         </tbody></table>
       </div>`;
   }

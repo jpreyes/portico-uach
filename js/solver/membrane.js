@@ -14,7 +14,7 @@
 // Convención de GDL local: [u1,v1, u2,v2, ...] (x,y en el plano del elemento).
 // ──────────────────────────────────────────────────────────────────────────────
 
-import { mitc4Plate, dktPlate } from './plate.js?v=99';
+import { mitc4Plate, dktPlate, plateMoments } from './plate.js?v=100';
 
 // Matriz constitutiva D (3×3) plana. planeStrain=false → tensión plana.
 export function Dmatrix(E, nu, planeStrain = false) {
@@ -283,4 +283,23 @@ export function areaStress(area, model, nodeIndex, u, dT = 0) {
   }
   return nN === 3 ? cstStress(cstElement(local, D, area.thickness).B, D, ul, e0)
                   : quadStressCenter(local, D, ul, e0);
+}
+
+// Tensión de FLEXIÓN en la fibra de superficie (placa/shell): σ = 6·M/t²
+// [σx,σy,τxy] en el marco local, a partir de los momentos de placa en el centro.
+// Devuelve null si el área no tiene flexión (membrana pura).
+export function areaBendingStress(area, model, nodeIndex, u) {
+  if (!hasPlate(area)) return null;
+  const S = _areaSetup(area, model, nodeIndex, [0, 0, 0]); if (!S) return null;
+  const { ex, ey, ez, gdof, nN, local, mat } = S;
+  const dLocal = [];
+  for (let a = 0; a < nN; a++) {
+    const Ut = [u[gdof[a]] || 0, u[gdof[a] + 1] || 0, u[gdof[a] + 2] || 0];
+    const Ur = [u[gdof[a] + 3] || 0, u[gdof[a] + 4] || 0, u[gdof[a] + 5] || 0];
+    dLocal.push(_dot(ez, Ut), _dot(ex, Ur), _dot(ey, Ur));   // [w, θx, θy]
+  }
+  const t = area.thickness;
+  const M = plateMoments(local, mat.E, mat.nu, t, dLocal);
+  const c = 6 / (t * t);
+  return [c * M[0], c * M[1], c * M[2]];   // tensión de superficie (fibra inferior)
 }

@@ -141,17 +141,15 @@ export function mitc4Plate(coords, E, nu, t) {
 }
 
 // ── DKT (Batoz) ──────────────────────────────────────────────────────────────
-// Triángulo Kirchhoff delgado.  DOF por nodo [w,θx,θy] (θx=rot x, θy=rot y).
-// Construcción serendípita autoritativa (a,b,c,d,e) de Batoz–Bathe–Ho (1980):
-// los campos de rotación βx,βy se interpolan con funciones cuadráticas N1..N6 y se
-// derivan analíticamente en (ξ,η).  Integración de 3 puntos en mitades de lado.
-export function dktPlate(coords, E, nu, t) {
+// Constructor de la matriz B (3×9) del DKT y el área, compartido por la rigidez
+// (dktPlate) y la recuperación de momentos (plateMoments).  Construcción
+// serendípita autoritativa (a,b,c,d,e) de Batoz–Bathe–Ho (1980).
+function _dktBMat(coords) {
   const [[x1, y1], [x2, y2], [x3, y3]] = coords;
   const x23 = x2 - x3, x31 = x3 - x1, x12 = x1 - x2;
   const y23 = y2 - y3, y31 = y3 - y1, y12 = y1 - y2;
   const A2 = x31 * y12 - x12 * y31;                // = 2·Area (orientado)
   const Ar = Math.abs(A2) / 2;
-  // Parámetros por lado k=4,5,6 (lados 23,31,12).
   const L = { 4: x23 * x23 + y23 * y23, 5: x31 * x31 + y31 * y31, 6: x12 * x12 + y12 * y12 };
   const xij = { 4: x23, 5: x31, 6: x12 }, yij = { 4: y23, 5: y31, 6: y12 };
   const a = {}, b = {}, c = {}, d = {}, e = {};
@@ -162,8 +160,6 @@ export function dktPlate(coords, E, nu, t) {
     d[k] = -yij[k] / L[k];
     e[k] = (0.25 * yij[k] * yij[k] - 0.5 * xij[k] * xij[k]) / L[k];
   }
-  const cp = E / (1 - nu * nu), f = t * t * t / 12;
-  const Db = [[cp * f, cp * nu * f, 0], [cp * nu * f, cp * f, 0], [0, 0, cp * (1 - nu) / 2 * f]];
 
   // Derivadas de las N serendípitas en (ξ,η).  L1=1-ξ-η, L2=ξ, L3=η.
   function dN(xi, eta) {
@@ -208,6 +204,15 @@ export function dktPlate(coords, E, nu, t) {
     }
     return B;
   }
+  return { bMat, Ar };
+}
+
+// Triángulo Kirchhoff delgado.  DOF por nodo [w,θx,θy] (θx=rot x, θy=rot y).
+// Integración de 3 puntos en los puntos medios de los lados.
+export function dktPlate(coords, E, nu, t) {
+  const { bMat, Ar } = _dktBMat(coords);
+  const cp = E / (1 - nu * nu), f = t * t * t / 12;
+  const Db = [[cp * f, cp * nu * f, 0], [cp * nu * f, cp * f, 0], [0, 0, cp * (1 - nu) / 2 * f]];
 
   const Ke = new Float64Array(81);
   const gp = [[0.5, 0], [0.5, 0.5], [0, 0.5]];   // puntos medios de lados, peso A/3
@@ -226,4 +231,32 @@ export function dktPlate(coords, E, nu, t) {
   const sgn = [1, -1, -1, 1, -1, -1, 1, -1, -1];
   for (let i = 0; i < 9; i++) for (let j = 0; j < 9; j++) Ke[i * 9 + j] *= sgn[i] * sgn[j];
   return Ke;
+}
+
+// ── Recuperación de momentos de placa ────────────────────────────────────────
+// Momentos por unidad de longitud [Mx, My, Mxy] en el centro del elemento, a
+// partir de los GDL locales dLocal = [w,θx,θy]×nN (NUESTRA convención).  Sirven
+// para la tensión de fibra superficie σ = ±6·M/t².
+export function plateMoments(coords, E, nu, t, dLocal) {
+  const { Db } = plateD(E, nu, t);
+  const nN = coords.length;
+  let B, nD, d = dLocal;
+  if (nN === 4) {
+    B = bBendingQ4(coords, 0, 0).Bb;   // centro (ξ=η=0)
+    nD = 12;
+  } else {
+    // DKT: B está en convención de Batoz → llevar dLocal a Batoz (signo de las
+    // rotaciones) antes de aplicar B (mismo flip que en la rigidez).
+    d = dLocal.slice();
+    for (let aN = 0; aN < 3; aN++) { d[3 * aN + 1] *= -1; d[3 * aN + 2] *= -1; }
+    B = _dktBMat(coords).bMat(1 / 3, 1 / 3);   // centroide
+    nD = 9;
+  }
+  const kappa = [0, 0, 0];
+  for (let r = 0; r < 3; r++) { let s = 0; for (let k = 0; k < nD; k++) s += B[r][k] * d[k]; kappa[r] = s; }
+  return [
+    Db[0][0] * kappa[0] + Db[0][1] * kappa[1] + Db[0][2] * kappa[2],
+    Db[1][0] * kappa[0] + Db[1][1] * kappa[1] + Db[1][2] * kappa[2],
+    Db[2][0] * kappa[0] + Db[2][1] * kappa[1] + Db[2][2] * kappa[2],
+  ];
 }

@@ -7,9 +7,9 @@
 // For UDL this reduces to the exact parabolic formula.
 // Displacements at arbitrary xi use cubic Hermite shape functions.
 // ──────────────────────────────────────────────────────────────────────────────
-import { localAxes, stiffnessMatrix, transformMatrix, fixedEndForces, applyReleases, condenseFEF, recoverReleasedDisp } from './timoshenko.js?v=99';
-import { getNodeDOFs } from './assembler.js?v=99';
-import { areaStress, vonMises } from './membrane.js?v=99';
+import { localAxes, stiffnessMatrix, transformMatrix, fixedEndForces, applyReleases, condenseFEF, recoverReleasedDisp } from './timoshenko.js?v=100';
+import { getNodeDOFs } from './assembler.js?v=100';
+import { areaStress, areaBendingStress, vonMises } from './membrane.js?v=100';
 
 function _toLocalLoad(load, ex, ey, ez) {
   const w   = load.w;
@@ -107,6 +107,17 @@ export class Results {
         const [sx, sy, txy] = s;
         const c = (sx + sy) / 2, r = Math.hypot((sx - sy) / 2, txy);
         res = { sx, sy, txy, vm: vonMises(s), s1: c + r, s2: c - r };
+        // Flexión (placa/shell): tensión de superficie = membrana ± 6M/t².  La
+        // envolvente max(vM cara sup, vM cara inf) NO depende del signo de M.
+        const sb = areaBendingStress(area, this.model, this.nodeIndex, this.u);
+        if (sb) {
+          const top = [sx - sb[0], sy - sb[1], txy - sb[2]];
+          const bot = [sx + sb[0], sy + sb[1], txy + sb[2]];
+          res.vmTop = vonMises(top); res.vmBot = vonMises(bot);
+          res.vmMembrane = res.vm;
+          res.vmSurf = Math.max(res.vmTop, res.vmBot);   // envolvente de superficie
+          res.vm = res.vmSurf;                            // el contorno usa la envolvente
+        }
       }
     }
     this._areaStress.set(areaId, res);
