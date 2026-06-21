@@ -1,27 +1,27 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=105';
-import { Serializer }      from './model/serializer.js?v=105';
-import { Viewport }        from './ui/viewport.js?v=105';
-import { PropertiesPanel } from './ui/properties.js?v=105';
-import { MenuBar }         from './ui/menu.js?v=105';
-import { UndoStack }       from './utils/undo.js?v=105';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=105';
-import { Results }                         from './solver/postprocess.js?v=105';
-import { ModalSolver }                     from './solver/modal_solver.js?v=105';
-import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=105';
-import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=105';
-import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=105';
-import { assembleKg } from './solver/geometric.js?v=105';
-import { denseFactor, triForward, triBackward, makeFactor } from './solver/linsolve.js?v=105';
-import { formFind } from './solver/formfind.js?v=105';
-import { ModalResults }                    from './solver/modal_results.js?v=105';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=105';
-import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=105';
-import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=105';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=105';
-import { bilinearGrid, blockCells, cornerGridIndices } from './model/mesher.js?v=105';
+import { Model }           from './model/model.js?v=106';
+import { Serializer }      from './model/serializer.js?v=106';
+import { Viewport }        from './ui/viewport.js?v=106';
+import { PropertiesPanel } from './ui/properties.js?v=106';
+import { MenuBar }         from './ui/menu.js?v=106';
+import { UndoStack }       from './utils/undo.js?v=106';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=106';
+import { Results }                         from './solver/postprocess.js?v=106';
+import { ModalSolver }                     from './solver/modal_solver.js?v=106';
+import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=106';
+import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=106';
+import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=106';
+import { assembleKg } from './solver/geometric.js?v=106';
+import { denseFactor, triForward, triBackward, makeFactor } from './solver/linsolve.js?v=106';
+import { formFind } from './solver/formfind.js?v=106';
+import { ModalResults }                    from './solver/modal_results.js?v=106';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=106';
+import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=106';
+import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=106';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=106';
+import { bilinearGrid, blockCells, cornerGridIndices } from './model/mesher.js?v=106';
 
 class App {
   constructor() {
@@ -1466,7 +1466,7 @@ class App {
   _staticWorkerSolve(K, nDOF, freeDOF, Flist, dense = false) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=105', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=106', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -1495,7 +1495,7 @@ class App {
   _staticWorkerSolveSparse(csr, cf, nDOF, freeDOF, Flist) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=105', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=106', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -1748,7 +1748,7 @@ class App {
       // ── Run Stodola in a Web Worker (non-blocking) ───────────────────────────
       const denseModal = !!this._config?.analisis?.matrizDensa;
       const modes = await new Promise((resolve, reject) => {
-        const worker = new Worker(new URL('./solver/modal_worker.js?v=105', import.meta.url), { type: 'module' });
+        const worker = new Worker(new URL('./solver/modal_worker.js?v=106', import.meta.url), { type: 'module' });
         worker.postMessage({ Kff_flat, Mff_flat, nF, nModes, dense: denseModal, method: modalMethod },
           [Kff_flat.buffer, Mff_flat.buffer]); // transfer — zero copy
         worker.onmessage = (ev) => {
@@ -3668,7 +3668,7 @@ class App {
               selectedNodes: sel.filter(s => s.type === 'node').map(s => s.id) };
     }
     this.snapshot();
-    const { aplicarOperaciones } = await import('./model/model_ops.js?v=105');
+    const { aplicarOperaciones } = await import('./model/model_ops.js?v=106');
     const res = aplicarOperaciones(this.model, ops, ctx);
     // los resultados previos dejan de ser válidos tras modificar la geometría/cargas
     this.viewport.clearResults?.();
@@ -3716,7 +3716,7 @@ class App {
     this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=105');
+      const { generarModelo } = await import('../asistente/generador.js?v=106');
       const modelo = generarModelo(ficha, libs);
 
       if (modo === 'sobreponer') {
@@ -4592,7 +4592,7 @@ class App {
   // Verificación de diseño (flexión/corte/axial) por elemento, usando los
   // resultados actuales y los parámetros editables de asistente/diseno_params.json.
   async _calcularDiseno() {
-    const ver = '?v=105';
+    const ver = '?v=106';
     let params = null;
     try { params = await fetch('asistente/diseno_params.json' + ver).then(r => r.json()); }
     catch (e) { console.error('No se pudo cargar diseno_params.json:', e); return null; }
