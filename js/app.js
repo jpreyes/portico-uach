@@ -1,27 +1,27 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=106';
-import { Serializer }      from './model/serializer.js?v=106';
-import { Viewport }        from './ui/viewport.js?v=106';
-import { PropertiesPanel } from './ui/properties.js?v=106';
-import { MenuBar }         from './ui/menu.js?v=106';
-import { UndoStack }       from './utils/undo.js?v=106';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=106';
-import { Results }                         from './solver/postprocess.js?v=106';
-import { ModalSolver }                     from './solver/modal_solver.js?v=106';
-import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=106';
-import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=106';
-import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=106';
-import { assembleKg } from './solver/geometric.js?v=106';
-import { denseFactor, triForward, triBackward, makeFactor } from './solver/linsolve.js?v=106';
-import { formFind } from './solver/formfind.js?v=106';
-import { ModalResults }                    from './solver/modal_results.js?v=106';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=106';
-import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=106';
-import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=106';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=106';
-import { bilinearGrid, blockCells, cornerGridIndices } from './model/mesher.js?v=106';
+import { Model }           from './model/model.js?v=107';
+import { Serializer }      from './model/serializer.js?v=107';
+import { Viewport }        from './ui/viewport.js?v=107';
+import { PropertiesPanel } from './ui/properties.js?v=107';
+import { MenuBar }         from './ui/menu.js?v=107';
+import { UndoStack }       from './utils/undo.js?v=107';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=107';
+import { Results }                         from './solver/postprocess.js?v=107';
+import { ModalSolver }                     from './solver/modal_solver.js?v=107';
+import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=107';
+import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=107';
+import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=107';
+import { assembleKg } from './solver/geometric.js?v=107';
+import { makeFactor } from './solver/linsolve.js?v=107';
+import { formFind } from './solver/formfind.js?v=107';
+import { ModalResults }                    from './solver/modal_results.js?v=107';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=107';
+import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=107';
+import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=107';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=107';
+import { bilinearGrid, blockCells, cornerGridIndices } from './model/mesher.js?v=107';
 
 class App {
   constructor() {
@@ -1201,13 +1201,12 @@ class App {
       'run-pushover-dc': () => this.runPushoverDC(),
     }[act];
     if (!fn) return;
-    // Caja de progreso para los NL-lite SÍNCRONOS y sin diálogo (nonlinear/pdelta/
-    // buckling): se muestra, se cede el hilo para que pinte, y se corre. Los demás
-    // gestionan su propia caja (estático/modal/espectro) o su diálogo.
+    // Caja de progreso para los NL-lite SÍNCRONOS y sin diálogo (nonlinear/pdelta):
+    // se muestra, se cede el hilo para que pinte, y se corre. Los demás gestionan su
+    // propia caja (estático/modal/espectro/pandeo) o su diálogo.
     const heavy = {
       'run-nonlinear': 'Resolviendo el sistema no lineal (Newton)…',
       'run-pdelta': 'Resolviendo P-Delta (rigidez geométrica)…',
-      'run-buckling': 'Factor crítico de pandeo (autovalores)…',
     };
     if (heavy[act] && this._config?.analisis?.nlLite) {
       this._showProgress('Analizando…', heavy[act]);
@@ -1466,7 +1465,7 @@ class App {
   _staticWorkerSolve(K, nDOF, freeDOF, Flist, dense = false) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=106', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=107', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -1495,7 +1494,7 @@ class App {
   _staticWorkerSolveSparse(csr, cf, nDOF, freeDOF, Flist) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=106', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=107', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -1748,7 +1747,7 @@ class App {
       // ── Run Stodola in a Web Worker (non-blocking) ───────────────────────────
       const denseModal = !!this._config?.analisis?.matrizDensa;
       const modes = await new Promise((resolve, reject) => {
-        const worker = new Worker(new URL('./solver/modal_worker.js?v=106', import.meta.url), { type: 'module' });
+        const worker = new Worker(new URL('./solver/modal_worker.js?v=107', import.meta.url), { type: 'module' });
         worker.postMessage({ Kff_flat, Mff_flat, nF, nModes, dense: denseModal, method: modalMethod },
           [Kff_flat.buffer, Mff_flat.buffer]); // transfer — zero copy
         worker.onmessage = (ev) => {
@@ -2270,73 +2269,112 @@ class App {
   }
 
   // PANDEO lineal por autovalores: (K + λ·Kg)·φ = 0 → λcr y modo de pandeo.
-  runBuckling() {
+  // ITERACIÓN DE SUBESPACIO en un Web Worker (igual que el modal): extrae los
+  // menores λcr en bloque, sin bloquear la UI ni el num.eig denso O(n³) que se
+  // colgaba. El estado de referencia (K·u = F) se resuelve con Cholesky en banda.
+  async runBuckling() {
     if (!this._config?.analisis?.nlLite) { this.toast('Active «Análisis no lineal (NL-lite)» en ⚙ Configuración', 'warn'); this.configDialog?.(); return; }
-    const num = window.numeric;
-    if (!num) { this.toast('numeric.js no disponible', 'error'); return; }
     if (this.model.nodes.size === 0 || this.model.elements.size === 0) { this.toast('Modelo vacío', 'warn'); return; }
 
-    const { nodeIndex, K, nDOF, freeDOF, F, nCasos } = this._buildGeomProblem();
-    this._geomNI = nodeIndex;
-    if (!freeDOF.length) { this.toast('Sin GDL libres', 'warn'); return; }
-    if (!nCasos) { this.toast('Defina al menos un caso de carga: es la carga de referencia del pandeo.', 'warn'); return; }
+    const buckOpts = await this._buckNModesDialog();
+    if (!buckOpts) return;
+    const { nModes } = buckOpts;
 
-    const nF = freeDOF.length;
-    // Kff y Kgff en formato plano (Float64Array nF×nF)
-    const Kff = new Float64Array(nF * nF);
-    const Ff = new Float64Array(nF);
-    for (let i = 0; i < nF; i++) { Ff[i] = F[freeDOF[i]]; const ri = freeDOF[i] * nDOF; for (let j = 0; j < nF; j++) Kff[i * nF + j] = K[ri + freeDOF[j]]; }
+    if (this.viewport._inResultsMode) this.viewport.clearResults();
+    const btn = document.getElementById('btn-run');
+    if (btn) btn.classList.add('running');
+    document.getElementById('sb-mode').textContent = 'Pandeo lineal…';
+    this._showProgress('Pandeo lineal…', 'Resolviendo el problema de autovalores (K + λ·Kg)·φ = 0 por iteración de subespacio (en segundo plano)');
+    await new Promise(r => setTimeout(r, 20));   // deja pintar la caja antes de ensamblar
 
-    // Estado de referencia: K_ff·u = F_ff (Cholesky densa; sirve para el axial Y
-    // para reducir el problema de autovalores).
-    const F0 = denseFactor(Kff, nF);
-    if (!F0.ok) { this.toast('Estado de referencia singular/inestable (mecanismo). Revise apoyos — p.ej. torsión libre del conjunto.', 'error'); return; }
-    const ufA = triBackward(F0, triForward(F0, Ff));   // u_f = K_ff⁻¹·F_ff
-    const u = new Float64Array(nDOF); for (let i = 0; i < nF; i++) u[freeDOF[i]] = ufA[i];
+    try {
+      const { nodeIndex, K, nDOF, freeDOF, F, nCasos } = this._buildGeomProblem();
+      this._geomNI = nodeIndex;
+      if (!freeDOF.length) throw new Error('Sin GDL libres');
+      if (!nCasos) throw new Error('Defina al menos un caso de carga: es la carga de referencia del pandeo.');
 
-    const { Kg, Nmax } = assembleKg(this.model, nodeIndex, u);
-    if (Nmax < 1e-9) { this.toast('La carga de referencia no genera fuerzas axiales (sin efecto de pandeo).', 'warn'); return; }
+      const nF = freeDOF.length;
+      // Kff y Ff en formato plano (Float64Array nF×nF)
+      const Kff_flat = new Float64Array(nF * nF);
+      const Ff = new Float64Array(nF);
+      for (let i = 0; i < nF; i++) { Ff[i] = F[freeDOF[i]]; const ri = freeDOF[i] * nDOF; for (let j = 0; j < nF; j++) Kff_flat[i * nF + j] = K[ri + freeDOF[j]]; }
 
-    // Reducción simétrica del problema (K+λKg)φ=0:
-    //   Kff = L·Lᵀ ⇒ A = L⁻¹·(−Kgff)·L⁻ᵀ (simétrica). A·ψ = μ·ψ con μ = 1/λ.
-    //   φ = L⁻ᵀ·ψ.  El mayor μ>0 ⇒ el menor λcr>0. eig de matriz SIMÉTRICA = robusto.
-    const M = [];   // M[c] = L⁻¹·(−Kg)[:,c]
-    for (let c = 0; c < nF; c++) {
-      const col = new Float64Array(nF);
-      for (let i = 0; i < nF; i++) col[i] = -Kg[freeDOF[i] * nDOF + freeDOF[c]];
-      M.push(triForward(F0, col));
+      // Estado de referencia: K_ff·u = F_ff (Cholesky en banda; da el axial para Kg).
+      const dense = !!this._config?.analisis?.matrizDensa;
+      const fac = makeFactor(Kff_flat, nF, dense);
+      if (!fac.ok) throw new Error('Estado de referencia singular/inestable (mecanismo). Revise apoyos — p.ej. torsión libre del conjunto.');
+      const ufA = fac.solve(Ff);
+      const u = new Float64Array(nDOF); for (let i = 0; i < nF; i++) u[freeDOF[i]] = ufA[i];
+
+      const { Kg, Nmax } = assembleKg(this.model, nodeIndex, u);
+      if (Nmax < 1e-9) throw new Error('La carga de referencia no genera fuerzas axiales (sin efecto de pandeo).');
+
+      // Kgff en plano para el worker
+      const Kgff_flat = new Float64Array(nF * nF);
+      for (let i = 0; i < nF; i++) { const ri = freeDOF[i] * nDOF; for (let j = 0; j < nF; j++) Kgff_flat[i * nF + j] = Kg[ri + freeDOF[j]]; }
+
+      // Iteración de subespacio en el Worker (no bloquea la UI)
+      const rawModes = await new Promise((resolve, reject) => {
+        const worker = new Worker(new URL('./solver/buckling_worker.js?v=107', import.meta.url), { type: 'module' });
+        worker.postMessage({ Kff_flat, Kgff_flat, nF, nModes, dense },
+          [Kff_flat.buffer, Kgff_flat.buffer]);   // transfer — zero copy
+        worker.onmessage = (ev) => { worker.terminate(); ev.data.error ? reject(new Error(ev.data.error)) : resolve(ev.data.modes); };
+        worker.onerror = (ev) => { worker.terminate(); reject(new Error(ev.message || 'Error en worker de pandeo')); };
+      });
+
+      // Expandir cada modo (vec en GDL libres) al vector global indexado por nDOF.
+      const modes = rawModes.map(m => {
+        const vec = new Float64Array(nDOF);
+        for (let i = 0; i < nF; i++) vec[freeDOF[i]] = m.vec[i];
+        return { lambda: m.lambda, vec };
+      });
+      if (!modes.length) throw new Error('No se hallaron modos de pandeo (la carga de referencia no produce compresión). Revise su sentido.');
+
+      this._buckResult = { modes, nCasos };
+      this.toast(`Pandeo: λcr = ${modes[0].lambda.toFixed(3)} · carga crítica = λcr × carga de referencia`, 'ok');
+      this._buckOpenOverlay();
+    } catch (err) {
+      this.toast(`Pandeo: ${err.message}`, 'error');
+      console.error(err);
+    } finally {
+      if (btn) btn.classList.remove('running');
+      this._hideProgress();
+      document.getElementById('sb-mode').textContent = 'Modo: Pandeo';
     }
-    const A = [];   // A[c] = L⁻¹·(fila c de M)   ⇒ A simétrica
-    for (let c = 0; c < nF; c++) {
-      const rowc = new Float64Array(nF);
-      for (let i = 0; i < nF; i++) rowc[i] = M[i][c];
-      A.push(triForward(F0, rowc));
-    }
-    const Asym = Array.from({ length: nF }, (_, i) => Array.from({ length: nF }, (_, j) => A[j][i]));
+  }
 
-    let eig;
-    try { eig = num.eig(Asym); } catch (e) { this.toast('Falló el cálculo de autovalores de pandeo.', 'error'); console.error(e); return; }
-    const mu = eig.lambda.x, muI = eig.lambda.y || [];
-    const Ex = eig.E.x;
-    const modes = [];
-    for (let k = 0; k < mu.length; k++) {
-      const re = mu[k], im = muI[k] || 0;
-      if (Math.abs(im) > 1e-6 * Math.max(1, Math.abs(re))) continue;   // sin parte imaginaria
-      if (re <= 1e-9) continue;                                         // μ>0 ⇒ λ>0 (compresión)
-      const lambda = 1 / re;
-      const psi = new Float64Array(nF);
-      for (let i = 0; i < nF; i++) psi[i] = Ex[i][k];
-      const phi = triBackward(F0, psi);                                 // φ = L⁻ᵀ·ψ
-      const vec = new Float64Array(nDOF);
-      for (let i = 0; i < nF; i++) vec[freeDOF[i]] = phi[i];
-      modes.push({ lambda, vec });
-    }
-    modes.sort((a, b) => a.lambda - b.lambda);
-    if (!modes.length) { this.toast('No se hallaron modos de pandeo (la carga de referencia no produce compresión). Revise su sentido.', 'warn'); return; }
-
-    this._buckResult = { modes: modes.slice(0, 6), nCasos };
-    this.toast(`Pandeo: λcr = ${modes[0].lambda.toFixed(3)} · carga crítica = λcr × carga de referencia`, 'ok');
-    this._buckOpenOverlay();
+  /** Diálogo HTML — N° de modos de pandeo a extraer (análogo al modal). */
+  _buckNModesDialog() {
+    return new Promise(resolve => {
+      const overlay = document.getElementById('modal-overlay');
+      document.getElementById('modal-title').textContent = 'Pandeo lineal';
+      document.getElementById('modal-cancel').style.display = '';
+      document.getElementById('modal-body').innerHTML = `
+        <div class="prop-row">
+          <div class="prop-field">
+            <label>Número de modos de pandeo (1–20)</label>
+            <input type="number" id="buck-nmodes" value="6" min="1" max="20" step="1" style="width:90px">
+          </div>
+          <div class="prop-field" style="justify-content:flex-end">
+            <span style="color:var(--text-muted);font-size:11px">
+              Iteración de subespacio.<br>El menor λcr gobierna.
+            </span>
+          </div>
+        </div>
+        <div class="prop-row cols1" style="margin-top:8px">
+          <span style="color:var(--text-muted);font-size:11px;line-height:1.5">
+            Resuelve (K + λ·Kg)·φ = 0 sobre la carga de referencia (combinación de
+            todos los casos estáticos a factor 1). Carga de pandeo = λcr × esa carga.
+          </span>
+        </div>`;
+      overlay.classList.remove('hidden');
+      setTimeout(() => { const el = document.getElementById('buck-nmodes'); el?.focus(); el?.select(); }, 50);
+      overlay._resolve = () => {
+        const v = parseInt(document.getElementById('buck-nmodes')?.value) || 6;
+        resolve({ nModes: Math.max(1, Math.min(20, v)) });
+      };
+      overlay._reject = () => resolve(null);
+    });
   }
 
   _buckOpenOverlay() {
@@ -3668,7 +3706,7 @@ class App {
               selectedNodes: sel.filter(s => s.type === 'node').map(s => s.id) };
     }
     this.snapshot();
-    const { aplicarOperaciones } = await import('./model/model_ops.js?v=106');
+    const { aplicarOperaciones } = await import('./model/model_ops.js?v=107');
     const res = aplicarOperaciones(this.model, ops, ctx);
     // los resultados previos dejan de ser válidos tras modificar la geometría/cargas
     this.viewport.clearResults?.();
@@ -3716,7 +3754,7 @@ class App {
     this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=106');
+      const { generarModelo } = await import('../asistente/generador.js?v=107');
       const modelo = generarModelo(ficha, libs);
 
       if (modo === 'sobreponer') {
@@ -4592,7 +4630,7 @@ class App {
   // Verificación de diseño (flexión/corte/axial) por elemento, usando los
   // resultados actuales y los parámetros editables de asistente/diseno_params.json.
   async _calcularDiseno() {
-    const ver = '?v=106';
+    const ver = '?v=107';
     let params = null;
     try { params = await fetch('asistente/diseno_params.json' + ver).then(r => r.json()); }
     catch (e) { console.error('No se pudo cargar diseno_params.json:', e); return null; }
