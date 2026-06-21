@@ -29,12 +29,12 @@ similaridad. `[#]` referencia el pedido original. Estado: ⬜ pendiente · 🟡 
 - ⬜ **Fuerza nodal a multi-selección**: aplicar una carga nodal a *todos* los nodos seleccionados de una vez (hoy solo de a uno). `[#32]`
 - ⬜ **Limpiar cargas huérfanas**: al borrar un nodo o elemento, sus cargas (flechas) deben desaparecer de la vista y del modelo; hoy la flecha de la carga nodal persiste tras borrar el nodo. `[#31]`
 
-## G5 · Cargas, normativa y asistente de modificación *(parcial)*
+## G5 · Cargas, normativa y asistente de modificación ✅
 - ✅ **Casos de carga y combinaciones de la norma por defecto**: Análisis → "Crear casos y combos de norma (NCh3171)" → casos D (PP) y L, combos 1.4D y 1.2D+1.6L, y sísmicas ±1.4Ex/±1.4Ey si existen casos espectrales. Editables, idempotente (`crearCasosYCombosNorma`). `[#16]`
-- ⬜ **Asistente sobre el modelo ya construido**: "agrega carga viva de 20 kN", viento, sismo, modificadores, desplazamiento de masa, anexar estructuras (encima/laterales) — acciones fáciles de interpretar y ejecutar. `[#5]`
-- ⬜ **Asistente en la barra lateral derecha**: exponerlo como pestaña junto a **Modelo / Diseño / Resultados** (no solo en un diálogo modal). `[#23]`
-- ⬜ **Combos de servicio / tensiones admisibles**: agregar a la generación automática (además de LRFD), las combinaciones de servicio (D+L, etc.) para verificación de deformaciones/tensiones admisibles. `[#25a]`
-- ⬜ **Creación automática de combos accesible en dos lugares**: en el diálogo de creación de combos **y** en la pestaña de combos de la barra lateral derecha. `[#25b]`
+- ✅ **Asistente sobre el modelo ya construido (#5)**: pestaña Asistente → "Modificar el modelo actual": orden en lenguaje natural → el Worker/LLM la traduce a **operaciones** (`/api/asistente/modificar`) y un ejecutor determinista cliente (`js/model/model_ops.js`, `aplicarOperacionesModelo`) las aplica. Operaciones: `add_load` (cargas viva/uniforme/trapecial a selección/vigas/columnas), `add_story` (anexar piso encima), `add_bay` (anexar vano lateral ±x/±y), `set_modifiers` (factores de rigidez, sección clonada), `set_mass` (masa nodal). Verificado: pórtico → 2 pisos × 2 vanos resuelve con ΣRz = carga total (equilibrio); apoyos heredados en la base del vano nuevo evitan el mecanismo. `[#5]`
+- ✅ **Asistente en la barra lateral derecha**: pestaña **Asistente** junto a Modelo/Resultados/Diseño (`vpanel-asistente`: generar modelo + modificar modelo). `[#23]`
+- ✅ **Combos de servicio / tensiones admisibles**: `crearCasosYCombosNorma` agrega, además del LRFD, el set ASD (NCh3171·ASCE-7): D, D+L y por dirección sísmica D±0.7E, D+0.75L±0.525E, 0.6D±0.7E. `[#25a]`
+- ✅ **Creación automática de combos accesible en dos lugares**: menú Análisis **y** botón "⚙ Crear casos y combos de norma" en la pestaña Combos de la barra lateral (`#btn-combos-norma`). `[#25b]`
 - ✅ **Cargas trapeciales (trapezoidales)** en elementos: campo "w en j" en el panel del elemento (vacío = uniforme). FEF exacta (uniforme + triangular), diagramas V(x)/M(x) con q lineal y extremo por cuadrática, interpolación correcta al discretizar (auto-disc) y al unir/partir, round-trip JSON y CSV (w2 opcional). Verificado: viga SS con carga triangular → reacciones w₀L/6 y w₀L/3 exactas, M_max=w₀L²/(9√3)=10.264 en x=L/√3, idéntico con 1/4/10 sub-elementos. `[#35]`
 
 ## G6 · Diseño, memoria y reportes *(parcial)*

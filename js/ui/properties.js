@@ -69,6 +69,11 @@ export class PropertiesPanel {
       this.app.asistenteDesdeTexto(txt);
     });
     document.getElementById('btn-asis-side-ficha')?.addEventListener('click', () => this.app.asistenteDialog());
+    document.getElementById('btn-asis-side-mod')?.addEventListener('click', () => {
+      const txt = document.getElementById('asis-mod-nl')?.value.trim();
+      if (!txt) { this.app.toast('Escribe qué cambio hacer', 'warn'); return; }
+      this.app.modificarModeloDesdeTexto(txt);
+    });
   }
 
   _switchVTab(vtab) {

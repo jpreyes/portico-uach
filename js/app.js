@@ -3628,6 +3628,79 @@ class App {
     await this._generarDesdeFicha(JSON.stringify(ficha));
   }
 
+  /** Modifica el modelo YA CONSTRUIDO a partir de una orden en lenguaje natural.
+   *  El asistente (Worker/LLM) traduce la orden a OPERACIONES estructuradas;
+   *  `aplicarOperacionesModelo` (determinista) las ejecuta. */
+  async modificarModeloDesdeTexto(mensaje) {
+    if (!mensaje || !mensaje.trim()) { this.toast('Escribe qué cambiar en el modelo', 'warn'); return; }
+    if (this.model.nodes.size === 0) { this.toast('No hay modelo que modificar (créalo primero)', 'warn'); return; }
+    const base = localStorage.getItem('portico_n8n_endpoint') || '/api/asistente';
+    const url  = base.replace(/\/+$/, '') + '/modificar';
+    const sel  = this.viewport.getSelected();
+    const ctx  = {
+      selection:     sel.filter(s => s.type === 'elem').map(s => s.id),
+      selectedNodes: sel.filter(s => s.type === 'node').map(s => s.id),
+    };
+    this._showProgress('Consultando al asistente…', 'Interpretando la modificación');
+    let ops = null;
+    try {
+      const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mensaje, modelo: this._resumenModelo(), seleccion: ctx }) });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.error || data.message || `HTTP ${r.status}`);
+      ops = data.ops || data.operaciones || (Array.isArray(data) ? data : null);
+      if (data._llm) console.info(`[asistente·modificar] ${data._llm.proveedor} · ${data._llm.modelo}`);
+    } catch (e) {
+      this._hideProgress();
+      this.toast('Error asistente: ' + e.message, 'error');
+      return;
+    }
+    this._hideProgress();
+    await this.aplicarOperacionesModelo(ops, ctx);
+  }
+
+  /** Aplica una lista de operaciones (del asistente, o manuales) al modelo y
+   *  refresca la vista. Reutilizable; verificable sin servidor. */
+  async aplicarOperacionesModelo(ops, ctx = null) {
+    if (!ctx) {
+      const sel = this.viewport.getSelected();
+      ctx = { selection: sel.filter(s => s.type === 'elem').map(s => s.id),
+              selectedNodes: sel.filter(s => s.type === 'node').map(s => s.id) };
+    }
+    this.snapshot();
+    const { aplicarOperaciones } = await import('./model/model_ops.js?v=105');
+    const res = aplicarOperaciones(this.model, ops, ctx);
+    // los resultados previos dejan de ser válidos tras modificar la geometría/cargas
+    this.viewport.clearResults?.();
+    this._results = null; this._resultsByCase = null; this._discardResultsCache?.();
+    this.viewport.renderModel(this.model);
+    this.panel.refresh?.(this.model);
+    this._renderLcSelector?.();
+    this.refreshLoads?.();
+    this._updateStats?.();
+    this.markDirty();
+    if (this.model.mode !== '2D') this.viewport.zoomExtents?.();
+    if (res.resumen.length) this.toast(res.resumen.join(' · '), 'ok');
+    if (res.avisos.length)  this._mostrarAvisos?.(res.avisos.map(m => ({ tipo: 'aviso', msg: m })));
+    return res;
+  }
+
+  /** Resumen compacto del modelo para dar contexto al asistente (sin volcar todo). */
+  _resumenModelo() {
+    const ns = [...this.model.nodes.values()];
+    if (!ns.length) return { nodos: 0 };
+    const xs = ns.map(n => n.x), ys = ns.map(n => n.y), zs = ns.map(n => n.z);
+    const uniq = a => [...new Set(a.map(v => +v.toFixed(3)))].sort((p, q) => p - q);
+    return {
+      nodos: this.model.nodes.size, elementos: this.model.elements.size, areas: this.model.areas.size,
+      bbox: { x: [Math.min(...xs), Math.max(...xs)], y: [Math.min(...ys), Math.max(...ys)], z: [Math.min(...zs), Math.max(...zs)] },
+      niveles_z: uniq(zs), ejes_x: uniq(xs), ejes_y: uniq(ys),
+      casos: [...this.model.loadCases.values()].map(l => l.name),
+      secciones: [...this.model.sections.values()].map(s => s.name),
+      unidades: this.model.units,
+    };
+  }
+
   async _generarDesdeFicha(fichaText) {
     let ficha;
     try { ficha = JSON.parse(fichaText); }

@@ -34,6 +34,24 @@ EJEMPLO madera (entrada: "casa de 2 niveles de 3m, planta 8x6, tabiques 2x4 cada
 EJEMPLO cercha (entrada: "cercha de techo de madera a dos aguas, luz 10m, pendiente 10%, cerchas cada 60cm, tipo warren"):
 {"modo":"2D","tipologia":"cercha","secciones":{"material":"Pino Radiata"},"cercha":{"luz_m":10,"pendiente_pct":10,"n_paneles":8,"separacion_m":0.6,"escuadria_cordon":"2x6","escuadria_diagonal":"2x4"}}`;
 
+// Prompt para MODIFICAR un modelo ya construido: orden NL → lista de OPERACIONES
+// (las ejecuta el cliente de forma determinista, ver js/model/model_ops.js).
+const MOD_SYSTEM = `Eres un asistente que convierte una ORDEN de modificacion sobre un modelo estructural PORTICO YA CONSTRUIDO en una lista JSON de OPERACIONES. Responde SOLO con JSON {"ops":[...]}, sin texto ni markdown. Cada operacion es un objeto con "op". Tipos validos:
+- {"op":"add_load","target","caso?","dir?","w","w2?"}: agrega carga distribuida (kN/m). target: "selection" (lo seleccionado por el usuario), "all_beams" (todas las vigas/horizontales), "columns", "all", o lista de ids de elemento. dir: "gravity" (por defecto, hacia abajo -Z), "globalX","globalY","localY","localZ". w = intensidad; w2 = intensidad en el extremo j (carga TRAPECIAL); omite w2 si es uniforme. caso = nombre del caso de carga (por defecto la sobrecarga de uso L).
+- {"op":"add_story","height","copies?"}: anexa piso(s) ENCIMA replicando el nivel superior una altura height (m). copies = numero de pisos (def 1).
+- {"op":"add_bay","dir","span","copies?"}: anexa vano(s) LATERAL(es) extendiendo la planta. dir: "x" o "y". span = luz del vano (m). copies def 1.
+- {"op":"set_modifiers","target","mods":{"A?","Iy?","Iz?","J?"}}: factores de rigidez (seccion agrietada, etc.) a los elementos target.
+- {"op":"set_mass","target","mass":{"mx?","my?","mz?"}}: masa nodal (ton) a NODOS. target de nodos: "selection","all" o lista de ids de nodo.
+Usa el resumen del modelo (niveles_z, ejes_x, ejes_y, casos, secciones, bbox, unidades) y la seleccion para elegir target y valores coherentes. Si la orden menciona "seleccion"/"seleccionados" usa target "selection". No inventes operaciones fuera de esta lista; si algo no se puede expresar, omitelo. Devuelve {"ops":[]} si nada aplica.
+Ejemplos:
+"agrega carga viva de 20 kN/m a todas las vigas" -> {"ops":[{"op":"add_load","target":"all_beams","w":20}]}
+"anexa un piso de 3 m encima" -> {"ops":[{"op":"add_story","height":3}]}
+"agrega dos pisos mas de 3.5 m" -> {"ops":[{"op":"add_story","height":3.5,"copies":2}]}
+"agrega un vano de 5 m hacia la derecha en X" -> {"ops":[{"op":"add_bay","dir":"x","span":5}]}
+"carga triangular de 0 a 10 kN/m en la seleccion" -> {"ops":[{"op":"add_load","target":"selection","w":0,"w2":10}]}
+"aplica modificador de rigidez Iz 0.5 a la seleccion" -> {"ops":[{"op":"set_modifiers","target":"selection","mods":{"Iz":0.5}}]}
+"pon 2 ton de masa horizontal en todos los nodos" -> {"ops":[{"op":"set_mass","target":"all","mass":{"mx":2,"my":2}}]}`;
+
 function parseCSV(txt) {
   const lines = txt.split(/\r?\n/).filter((l) => l.trim() && !l.startsWith('#'));
   const head = lines[0].split(',').map((s) => s.trim());
@@ -148,6 +166,44 @@ async function fichaDesdeLLM(mensaje, env, fewshot = []) {
   throw new Error(`Ningún modelo disponible. Intentos: ${intentos.join(' | ')}`);
 }
 
+// Llamada genérica chat/completions con un system prompt arbitrario (JSON mode).
+async function chatJSON(prov, modelo, system, userContent) {
+  return fetch(prov.url, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${prov.key}`, 'Content-Type': 'application/json', ...prov.extraHeaders },
+    body: JSON.stringify({
+      model: modelo, temperature: 0, response_format: { type: 'json_object' },
+      messages: [{ role: 'system', content: system }, { role: 'user', content: userContent }],
+    }),
+  });
+}
+
+// Orden de modificación → { ops:[...] } (cascada de proveedores/modelos, como la ficha).
+async function opsDesdeLLM(payload, env) {
+  const provs = proveedoresLLM(env);
+  if (!provs.length) throw new Error('Falta el secreto OPENAI_API_KEY u OPENROUTER_API_KEY en el Worker.');
+  const userContent = JSON.stringify(payload);   // { mensaje, modelo, seleccion }
+  const intentos = [];
+  for (const prov of provs) {
+    for (const modelo of prov.modelos) {
+      const r = await chatJSON(prov, modelo, MOD_SYSTEM, userContent);
+      if (r.ok) {
+        const data = await r.json();
+        if (data.error) { intentos.push(`${prov.nombre}/${modelo}: ${data.error.message || JSON.stringify(data.error)}`); continue; }
+        let raw = String(data.choices?.[0]?.message?.content ?? '').trim().replace(/^```(json)?/i, '').replace(/```$/, '').trim();
+        const i = raw.indexOf('{'), j = raw.lastIndexOf('}');
+        if (i < 0 || j < 0) { intentos.push(`${prov.nombre}/${modelo}: no devolvió JSON`); continue; }
+        const parsed = JSON.parse(raw.slice(i, j + 1));
+        const ops = Array.isArray(parsed) ? parsed : (parsed.ops || parsed.operaciones || []);
+        return { ops, llm: { proveedor: prov.nombre, modelo: data.model || modelo, intentos } };
+      }
+      intentos.push(`${prov.nombre}/${modelo}: HTTP ${r.status} ${(await r.text()).slice(0, 160)}`);
+      if (r.status === 401 || r.status === 403) break;
+    }
+  }
+  throw new Error(`Ningún modelo disponible. Intentos: ${intentos.join(' | ')}`);
+}
+
 // ── Registro de consultas en KV (revisión semanal) ────────────────────────────
 // estado: 'ok' (generó), 'error' (falló LLM o generador), 'incorrecto' (feedback
 // del usuario: no era lo solicitado). 'novedoso' es ortogonal (score RAG bajo).
@@ -236,6 +292,24 @@ export default {
         // Registro de ERROR (LLM caído / sin JSON / fallo del generador).
         if (desdeMensaje) { try { await registrarConsulta(env, { mensaje: body.mensaje, ficha, rag, llm, estado: 'error', error: msg }); } catch { /* no bloquear */ } }
         return json({ error: msg }, 500);
+      }
+    }
+
+    // ── MODIFICAR el modelo ya construido: orden NL → operaciones ──
+    // POST /api/asistente/modificar  body { mensaje, modelo?, seleccion? }
+    //   → { ops:[...] }  (el cliente las ejecuta con js/model/model_ops.js)
+    if (url.pathname === '/api/asistente/modificar') {
+      if (request.method !== 'POST') return json({ error: 'Use POST' }, 405);
+      let body;
+      try { body = await request.json(); } catch { return json({ error: 'JSON inválido en la solicitud' }, 400); }
+      if (!body.mensaje) return json({ error: 'Envíe { mensaje }' }, 400);
+      try {
+        const { ops, llm } = await opsDesdeLLM(
+          { mensaje: body.mensaje, modelo: body.modelo || null, seleccion: body.seleccion || null }, env);
+        const hdr = llm ? { 'X-Asistente-Proveedor': llm.proveedor, 'X-Asistente-Modelo': String(llm.modelo) } : {};
+        return json({ ops, _llm: llm }, 200, hdr);
+      } catch (e) {
+        return json({ error: String(e.message || e) }, 500);
       }
     }
 
