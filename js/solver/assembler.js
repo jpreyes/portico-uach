@@ -5,9 +5,9 @@ import {
   localAxes, stiffnessMatrix, massMatrix,
   transformMatrix, globalStiffness,
   applyReleases, fixedEndForces, condenseFEF
-} from './timoshenko.js?v=96';
-import { applyDiaphragmConstraints, applyDiaphragmMass } from './diaphragm.js?v=96';
-import { assembleAreasInto, areaThermalContribs } from './membrane.js?v=96';
+} from './timoshenko.js?v=97';
+import { applyDiaphragmConstraints, applyDiaphragmMass } from './diaphragm.js?v=97';
+import { assembleAreasInto, assembleAreasMassInto, areaThermalContribs } from './membrane.js?v=97';
 
 // ── Node index (contiguous 0-based numbering) ─────────────────────────────
 export function buildNodeIndex(model) {
@@ -81,6 +81,8 @@ export function assembleK(model, nodeIndex) {
 
   // Elementos de área (membrana CST/QUAD) → GDL de traslación globales
   assembleAreasInto({ add: (i, j, v) => { K[i * nDOF + j] += v; } }, model, nodeIndex);
+  // Masa de las áreas (ρ·t·A lumped) para el modal
+  assembleAreasMassInto({ add: (i, j, v) => { M[i * nDOF + j] += v; } }, model, nodeIndex);
 
   // Apply rigid diaphragm constraints (penalty method)
   applyDiaphragmConstraints(K, model, nodeIndex, nDOF);

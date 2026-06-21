@@ -50,7 +50,7 @@ similaridad. `[#]` referencia el pedido original. Estado: ⬜ pendiente · 🟡 
 *Continuación del trabajo de placa/shell.*
 - ⬜ **Contorno de tensiones de flexión de placa**: momentos `Mx,My,Mxy` desde curvaturas → tensiones de fibra sup./inf. `σ=±6M/t²` → von Mises de superficie, con selector (membrana / cara sup / cara inf) y suavizado nodal. *(Comparte con G1.)*
 - ⬜ **Torsión de St. Venant**: cálculo automático de `J` según la geometría de la sección. *(Toca secciones.)*
-- ⬜ **Masa de área para el modal**: las áreas aportan `ρ·t·A` a la matriz de masas. *(Depende de / habilita G2.)*
+- ✅ **Masa de área para el modal**: las áreas aportan `ρ·t·A` (lumped, repartida a los GDL de traslación) a la matriz de masas, en el ensamblaje denso y disperso (`assembleAreasMassInto`). Verificado: masa total por dirección = ρ·t·A.
 
 ---
 

@@ -14,7 +14,7 @@
 // Convención de GDL local: [u1,v1, u2,v2, ...] (x,y en el plano del elemento).
 // ──────────────────────────────────────────────────────────────────────────────
 
-import { mitc4Plate, dktPlate } from './plate.js?v=96';
+import { mitc4Plate, dktPlate } from './plate.js?v=97';
 
 // Matriz constitutiva D (3×3) plana. planeStrain=false → tensión plana.
 export function Dmatrix(E, nu, planeStrain = false) {
@@ -239,6 +239,21 @@ export function assembleAreasInto(writer, model, nodeIndex, opts = {}) {
         for (let r = 3; r < 6; r++) writer.add(gdof[a] + r, gdof[a] + r, kr);
       }
     }
+  }
+}
+
+// Masa de las áreas para el análisis modal: masa total m = ρ·t·A repartida por
+// igual entre los nodos (lumped), aplicada a los 3 GDL de traslación de cada nodo.
+export function assembleAreasMassInto(writer, model, nodeIndex) {
+  for (const area of model.areas.values()) {
+    const S = _areaSetup(area, model, nodeIndex, [0, 0, 0]);
+    if (!S) continue;
+    const { el, gdof, nN, mat } = S;
+    const m = (mat.rho || 0) * (area.thickness || 0) * (el.area || 0);
+    if (!(m > 0)) continue;
+    const mn = m / nN;
+    for (let a = 0; a < nN; a++)
+      for (let r = 0; r < 3; r++) writer.add(gdof[a] + r, gdof[a] + r, mn);
   }
 }
 
