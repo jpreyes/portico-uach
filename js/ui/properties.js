@@ -59,6 +59,7 @@ export class PropertiesPanel {
     document.getElementById('btn-add-dia')?.addEventListener('click',    () => this.app.addDiaphragmManual());
     document.getElementById('btn-detect-dia')?.addEventListener('click', () => this.app.autoDetectDiaphragms());
     document.getElementById('btn-add-combo')?.addEventListener('click',  () => this._addCombination());
+    document.getElementById('btn-combos-norma')?.addEventListener('click', () => this.app.crearCasosYCombosNorma());
     document.getElementById('btn-add-node-row')?.addEventListener('click', () => this._addNodeRow());
     document.getElementById('btn-verificar-diseno')?.addEventListener('click', () => this.renderDiseno());
   }

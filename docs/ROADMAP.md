@@ -9,6 +9,7 @@ similaridad. `[#]` referencia el pedido original. Estado: ⬜ pendiente · 🟡 
 *El cuello de botella del flujo: lanzar análisis y reusar resultados.*
 - ✅ **Ventana flotante de análisis** (Centro de análisis): el botón "Análisis" de la barra lateral abre un panel con TODOS los análisis (Estático, Modal, Espectro + 6 avanzados NL-lite), cada uno con botón Ejecutar. `[#4]`
 - 🟡 **Acceso a resultados ya corridos**: badges ✓/sin-ejecutar por análisis y botón **Ver** que re-muestra sin recalcular (estático, modal, y cada caso espectral listado). Falta: indicador permanente fuera del hub. `[#1]`
+- ⬜ **Analizar seleccionados (batch)**: casillas por análisis en el Centro de análisis + botón **Analizar seleccionados** que corre la secuencia elegida en orden (p.ej. estático + modal + espectro) con una sola caja de progreso. `[#24]`
 - ✅ **Modal/progreso**: el modal **sale del modo resultados antes de correr**; la **estructura original** se dibuja como **fantasma tenue** (0.28); la **caja flotante de progreso** aparece en estático, **Modal**, **Espectro** y los NL-lite síncronos sin diálogo (No lineal / P-Delta / Pandeo, vía `_runByAction` con yield). Los NL-lite con diálogo (form-finding/plástico/pushover-DC) gestionan su propio flujo. `[#2]`
 
 ## G2 · Motor modal y rendimiento ✅
@@ -24,15 +25,23 @@ similaridad. `[#]` referencia el pedido original. Estado: ⬜ pendiente · 🟡 
 - ✅ **Herramienta "Área" en la barra lateral** (Nodo/Elem/**Área**/Apoyo): clic en 3 (CST) o 4 (QUAD) nodos; el 4º crea el QUAD, Enter crea el CST, Esc reinicia. Usa las últimas opciones (espesor/comportamiento) y se ajustan luego en el panel del área. `[#nuevo]`
 - ✅ **Acciones + Mover/Copiar con un solo elemento** seleccionado (antes solo con multi-selección). `[#7]`
 - ✅ **Copiar elemento = copiar también sus cargas (dist/temp), cable/L0, y grupos.** `[#11]`
+- ⬜ **Nodo + elemento en un solo clic**: al crear un elemento sin nodos previos, el clic debe crear el nodo *y* continuar/cerrar el elemento sin exigir un segundo clic sobre el nodo recién creado. `[#26]`
+- ⬜ **Fuerza nodal a multi-selección**: aplicar una carga nodal a *todos* los nodos seleccionados de una vez (hoy solo de a uno). `[#32]`
+- ⬜ **Limpiar cargas huérfanas**: al borrar un nodo o elemento, sus cargas (flechas) deben desaparecer de la vista y del modelo; hoy la flecha de la carga nodal persiste tras borrar el nodo. `[#31]`
 
 ## G5 · Cargas, normativa y asistente de modificación *(parcial)*
 - ✅ **Casos de carga y combinaciones de la norma por defecto**: Análisis → "Crear casos y combos de norma (NCh3171)" → casos D (PP) y L, combos 1.4D y 1.2D+1.6L, y sísmicas ±1.4Ex/±1.4Ey si existen casos espectrales. Editables, idempotente (`crearCasosYCombosNorma`). `[#16]`
 - ⬜ **Asistente sobre el modelo ya construido**: "agrega carga viva de 20 kN", viento, sismo, modificadores, desplazamiento de masa, anexar estructuras (encima/laterales) — acciones fáciles de interpretar y ejecutar. `[#5]`
+- ⬜ **Asistente en la barra lateral derecha**: exponerlo como pestaña junto a **Modelo / Diseño / Resultados** (no solo en un diálogo modal). `[#23]`
+- ⬜ **Combos de servicio / tensiones admisibles**: agregar a la generación automática (además de LRFD), las combinaciones de servicio (D+L, etc.) para verificación de deformaciones/tensiones admisibles. `[#25a]`
+- ⬜ **Creación automática de combos accesible en dos lugares**: en el diálogo de creación de combos **y** en la pestaña de combos de la barra lateral derecha. `[#25b]`
+- ⬜ **Cargas trapeciales (trapezoidales)** en elementos (hoy solo uniforme/puntual). `[#35]`
 
 ## G6 · Diseño, memoria y reportes *(parcial)*
 - ✅ **Tabla de diseño explorable**: wrapper con scroll (max-height 58vh) hasta el último elemento + columna **|δ| mm** (desplazamiento máx. de los nodos del elemento en el caso/combo mostrado). `[#12]`
 - ⬜ **Memoria de cálculo descargable en `.docx`**. `[#14]`
 - ⬜ **Quitar logos UACh de la memoria** cuando se cargue el logo profesional (condicionado a que exista la carga del logo). `[#18]`
+- ⬜ **Portada/landing flotante al entrar**: reemplazar la imagen flotante actual por una portada flotante con logo **PÓRTICO**, logos institucionales, autor y botones (**Entrar**, **Manuales**, **Instalar**). `[#22]`
 - ✅ **Quitar de la UI/ayuda referencias a editar archivos de config**: reformuladas las menciones a editar `asistente/diseno_params.json` → "valores normativos estándar". `[#13]`
 
 ## G7 · Gestión de proyecto multi-modelo
@@ -43,7 +52,7 @@ similaridad. `[#]` referencia el pedido original. Estado: ⬜ pendiente · 🟡 
 
 ## G9 · Verificación documentada y documentación
 - ⬜ **Casos de la literatura SAP2000** (en `referencias/`) → convertirlos a formato Pórtico, **comparar/verificar y documentar**; quedan en **Ejemplos** como casos de verificación. `[#19]`
-- ⬜ **Mejorar UX de los análisis avanzados** (no lineales) + **ejemplo sencillo y `.md` por funcionalidad** (pandeo, form-finding, pushover). `[#20]`
+- ⬜ **Mejorar UX de los análisis avanzados** (no lineales) + **ejemplo sencillo y `.md` por funcionalidad** (pandeo, form-finding, pushover). `[#20]` *(detalle técnico desglosado en G11.)*
 - ⬜ **Documentación integral de toda funcionalidad**: qué hace, teoría mínima, cómo ejecutarla en la app. `[#21]`
 
 ## G10 · Completar la física de elementos (FEM / shell) ✅
@@ -51,6 +60,16 @@ similaridad. `[#]` referencia el pedido original. Estado: ⬜ pendiente · 🟡 
 - ✅ **Contorno de tensiones de flexión de placa**: `plateMoments` (momentos Mx,My,Mxy en el centro, MITC4 y DKT) → tensión de superficie `σ=±6M/t²` → von Mises de **envolvente** max(cara sup, cara inf) en `getAreaStress` (`areaBendingStress`); el contorno y el suavizado nodal usan la envolvente para shells. Panel del área muestra vM superficie/membrana/sup/inf. Verificado: momento central placa SS quad −1.6% / tri −2.6% vs 0.0479·q·a²; contorno de voladizo shell flexión-dominado.
 - ✅ **Torsión de St. Venant**: el `J` ya se auto-calcula de la geometría en todas las secciones paramétricas (rect, circular, huecas; IPE/HEB tabuladas). Mejorado: fórmula rectangular a la serie precisa de Roark `J=a·t³·[1/3−0.21(t/a)(1−(t/a)⁴/12)]`; corregido el `J` de la sección por defecto 30×30 (era 1.13e-4, 10× bajo → 1.14e-3).
 - ✅ **Masa de área para el modal**: las áreas aportan `ρ·t·A` (lumped, repartida a los GDL de traslación) a la matriz de masas, en el ensamblaje denso y disperso (`assembleAreasMassInto`). Verificado: masa total por dirección = ρ·t·A.
+
+## G11 · Análisis avanzados: corrección, rendimiento y UX *(nuevo — uso profesional)*
+*Cluster de incidencias detectadas usando los análisis no lineales en producción.*
+- ⬜ **Rótulas plásticas — panel en la barra derecha**: hoy abre una ventana flotante con modo oscuro fijo (ilegible en modo claro). Llevarla a una **pestaña "Rótulas plásticas"** junto a Resultados, que respete el tema. `[#27a]`
+- ⬜ **Rótulas plásticas — selección por elemento**: elegir a qué elemento(s) se asigna la rótula y su rigidez, en vez de aplicarlo a todos por igual. `[#27b]`
+- ⬜ **Pandeo lineal — motor rápido tipo modal**: hoy es muy lento o se cuelga sin feedback. Reusar la maquinaria modal (iteración de subespacio) para el problema de autovalores de pandeo `(K + λKg)φ = 0`. `[#28][#33a]`
+- ⬜ **Pandeo lineal — UI análoga a la modal**: diálogo con N° de modos/factores, caja de progreso, y resultados: **modo de pandeo + factor λ**, e idealmente **carga de pandeo por elemento**. `[#33b]`
+- ⬜ **Form-finding — bug de geometría**: en un marco, el form-finding **borró los pilares** y dejó la viga en **z=0**. Debe restringirse a los GDL/elementos objetivo sin destruir apoyos ni geometría existente. `[#29]` *(bug)*
+- ⬜ **Form-finding — metodología documentada**: documentar el flujo (rol de la densidad de fuerza **Q**, cómo fijar la referencia/objetivo; ejemplo: viga cargada que debe quedar recta al invertir la carga). `[#30]`
+- ⬜ **Pushover — documentar ejecución**: no queda claro cómo se corre; documentar paso a paso + ejemplo. `[#34]`
 
 ---
 

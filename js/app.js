@@ -3331,14 +3331,26 @@ class App {
     const ex = specs.find(s => s.specDir === 'X'), ey = specs.find(s => s.specDir === 'Y');
 
     const combos = [
+      // ── Resistencia última (LRFD) ──────────────────────────────────────────
       { name: '1.4D', f: [[D, 1.4]] },
       { name: '1.2D + 1.6L', f: [[D, 1.2], [L, 1.6]] },
+      // ── Servicio / tensiones admisibles (ASD, NCh3171·ASCE-7) ──────────────
+      { name: 'D (servicio)', f: [[D, 1.0]] },
+      { name: 'D + L (servicio)', f: [[D, 1.0], [L, 1.0]] },
     ];
     const seismic = (E, d) => {
+      // Resistencia última (LRFD)
       combos.push({ name: `1.2D + 1.0L + 1.4E${d}`, f: [[D, 1.2], [L, 1.0], [E, 1.4]] });
       combos.push({ name: `1.2D + 1.0L − 1.4E${d}`, f: [[D, 1.2], [L, 1.0], [E, -1.4]] });
       combos.push({ name: `0.9D + 1.4E${d}`, f: [[D, 0.9], [E, 1.4]] });
       combos.push({ name: `0.9D − 1.4E${d}`, f: [[D, 0.9], [E, -1.4]] });
+      // Tensiones admisibles (ASD): E reducido por 0.7
+      combos.push({ name: `D + 0.7E${d} (servicio)`, f: [[D, 1.0], [E, 0.7]] });
+      combos.push({ name: `D − 0.7E${d} (servicio)`, f: [[D, 1.0], [E, -0.7]] });
+      combos.push({ name: `D + 0.75L + 0.525E${d} (servicio)`, f: [[D, 1.0], [L, 0.75], [E, 0.525]] });
+      combos.push({ name: `D + 0.75L − 0.525E${d} (servicio)`, f: [[D, 1.0], [L, 0.75], [E, -0.525]] });
+      combos.push({ name: `0.6D + 0.7E${d} (servicio)`, f: [[D, 0.6], [E, 0.7]] });
+      combos.push({ name: `0.6D − 0.7E${d} (servicio)`, f: [[D, 0.6], [E, -0.7]] });
     };
     if (ex) seismic(ex, 'x');
     if (ey) seismic(ey, 'y');
@@ -3353,7 +3365,7 @@ class App {
     this.markDirty(); this._updateStats?.(); this.refreshLoads?.();
     this.panel.renderCombinations?.(); this._renderLcSelector?.();
     const note = (ex || ey) ? '' : ' · las sísmicas se añaden al correr el espectro X/Y';
-    this.toast(`Norma NCh3171: casos D/L + ${n} combinación(es)${note}`, 'ok');
+    this.toast(`Norma NCh3171: casos D/L + ${n} combinación(es) LRFD y servicio${note}`, 'ok');
     this.openCombosTab();
   }
 
