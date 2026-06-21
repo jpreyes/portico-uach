@@ -1,27 +1,27 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=102';
-import { Serializer }      from './model/serializer.js?v=102';
-import { Viewport }        from './ui/viewport.js?v=102';
-import { PropertiesPanel } from './ui/properties.js?v=102';
-import { MenuBar }         from './ui/menu.js?v=102';
-import { UndoStack }       from './utils/undo.js?v=102';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=102';
-import { Results }                         from './solver/postprocess.js?v=102';
-import { ModalSolver }                     from './solver/modal_solver.js?v=102';
-import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=102';
-import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=102';
-import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=102';
-import { assembleKg } from './solver/geometric.js?v=102';
-import { denseFactor, triForward, triBackward, makeFactor } from './solver/linsolve.js?v=102';
-import { formFind } from './solver/formfind.js?v=102';
-import { ModalResults }                    from './solver/modal_results.js?v=102';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=102';
-import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=102';
-import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=102';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=102';
-import { bilinearGrid, blockCells, cornerGridIndices } from './model/mesher.js?v=102';
+import { Model }           from './model/model.js?v=103';
+import { Serializer }      from './model/serializer.js?v=103';
+import { Viewport }        from './ui/viewport.js?v=103';
+import { PropertiesPanel } from './ui/properties.js?v=103';
+import { MenuBar }         from './ui/menu.js?v=103';
+import { UndoStack }       from './utils/undo.js?v=103';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=103';
+import { Results }                         from './solver/postprocess.js?v=103';
+import { ModalSolver }                     from './solver/modal_solver.js?v=103';
+import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=103';
+import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=103';
+import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=103';
+import { assembleKg } from './solver/geometric.js?v=103';
+import { denseFactor, triForward, triBackward, makeFactor } from './solver/linsolve.js?v=103';
+import { formFind } from './solver/formfind.js?v=103';
+import { ModalResults }                    from './solver/modal_results.js?v=103';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=103';
+import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=103';
+import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=103';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=103';
+import { bilinearGrid, blockCells, cornerGridIndices } from './model/mesher.js?v=103';
 
 class App {
   constructor() {
@@ -1452,7 +1452,7 @@ class App {
   _staticWorkerSolve(K, nDOF, freeDOF, Flist, dense = false) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=102', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=103', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -1481,7 +1481,7 @@ class App {
   _staticWorkerSolveSparse(csr, cf, nDOF, freeDOF, Flist) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=102', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=103', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -1734,7 +1734,7 @@ class App {
       // ── Run Stodola in a Web Worker (non-blocking) ───────────────────────────
       const denseModal = !!this._config?.analisis?.matrizDensa;
       const modes = await new Promise((resolve, reject) => {
-        const worker = new Worker(new URL('./solver/modal_worker.js?v=102', import.meta.url), { type: 'module' });
+        const worker = new Worker(new URL('./solver/modal_worker.js?v=103', import.meta.url), { type: 'module' });
         worker.postMessage({ Kff_flat, Mff_flat, nF, nModes, dense: denseModal, method: modalMethod },
           [Kff_flat.buffer, Mff_flat.buffer]); // transfer — zero copy
         worker.onmessage = (ev) => {
@@ -3617,7 +3617,7 @@ class App {
     this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=102');
+      const { generarModelo } = await import('../asistente/generador.js?v=103');
       const modelo = generarModelo(ficha, libs);
 
       if (modo === 'sobreponer') {
@@ -3708,7 +3708,7 @@ class App {
   get _ACAD_LIMITS() {
     return [
       'Documento generado automáticamente por PÓRTICO con fines <b>docentes</b>; no reemplaza el criterio ni la firma de un profesional competente.',
-      'La verificación de diseño usa propiedades de sección (A, I) y los parámetros editables de <code>asistente/diseno_params.json</code>; el hormigón armado se evalúa con la cuantía indicada y supuestos declarados.',
+      'La verificación de diseño usa propiedades de sección (A, I) y parámetros normativos estándar (Fy, f′c, φ, cuantía); el hormigón armado se evalúa con la cuantía indicada y supuestos declarados.',
       'La verificación de <b>resistencia</b> cubre flexión, corte, axial e interacción flexo-axial (AISC H1 / NDS) por envolvente de combinaciones. La de <b>servicio</b> cubre la flecha de vigas bajo sobrecarga de uso sin mayorar y las derivas de entrepiso (NCh433, límite 2/1000·h, entre centros de masa y entre nodos externos). NO incluye diseño de uniones, fundaciones, pandeo lateral-torsional ni clasificación de perfiles. Los efectos P-Δ y el pandeo global (factor crítico λcr) se evalúan aparte con NL-lite (no se incorporan automáticamente a las razones D/C).',
       'Las cargas de viento, nieve y sobrecargas se representan como casos de carga; verifique su clasificación y magnitud según la normativa aplicable.',
     ];
@@ -3852,7 +3852,7 @@ class App {
           </div>
           <button type="button" id="cfg-apply-mod" class="btn" style="margin-top:8px">Aplicar estos modificadores a TODAS las secciones</button>
         </fieldset>
-        <p style="color:var(--text-muted);font-size:11px">Los parámetros de diseño (Fy, f′c, φ, cuantía…) se editan en <code>asistente/diseno_params.json</code>.</p>
+        <p style="color:var(--text-muted);font-size:11px">Los parámetros de diseño (Fy, f′c, φ, cuantía…) usan valores normativos estándar.</p>
       </div>`;
     overlay.classList.remove('hidden');
 
@@ -4493,7 +4493,7 @@ class App {
   // Verificación de diseño (flexión/corte/axial) por elemento, usando los
   // resultados actuales y los parámetros editables de asistente/diseno_params.json.
   async _calcularDiseno() {
-    const ver = '?v=102';
+    const ver = '?v=103';
     let params = null;
     try { params = await fetch('asistente/diseno_params.json' + ver).then(r => r.json()); }
     catch (e) { console.error('No se pudo cargar diseno_params.json:', e); return null; }

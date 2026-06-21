@@ -1,8 +1,8 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // PropertiesPanel — right-side panel: node/element properties + mat/sec tabs
 // ──────────────────────────────────────────────────────────────────────────────
-import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=102';
-import { localAxes } from '../solver/timoshenko.js?v=102';
+import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=103';
+import { localAxes } from '../solver/timoshenko.js?v=103';
 
 export class PropertiesPanel {
   constructor(panelEl, app) {
@@ -96,15 +96,29 @@ export class PropertiesPanel {
     const nOk = f.length - nNo - nAj;
     const cls = r => r > 1 ? 'dc-bad' : r > 0.9 ? 'dc-warn' : 'dc-ok';
     const fmt = v => (v == null || !isFinite(v)) ? '—' : (+v).toFixed(2);
+    // δmax del elemento = máximo |desplazamiento| de sus nodos extremos (m → mm)
+    const dispOf = (id) => {
+      try {
+        const el = this.app.model.elements.get(id); if (!el) return null;
+        const r = this.app._results; if (!r) return null;
+        let mx = 0;
+        for (const nid of [el.n1, el.n2]) { const d = r.getNodeDisp(nid); mx = Math.max(mx, Math.hypot(d[0], d[1], d[2])); }
+        return mx;
+      } catch { return null; }
+    };
+    const fmtmm = v => (v == null || !isFinite(v)) ? '—' : (v * 1000).toFixed(2);
     const rows = f.map(x => `<tr class="dis-row" data-elem="${x.id}" title="${esc(x.combo||'')} — flexión ${fmt(x.flexion.ratio)} · corte ${fmt(x.corte.ratio)} · axial ${fmt(x.axial.ratio)} · interacción ${fmt(x.interaccion?.ratio)}">
       <td>#${x.id}</td><td>${esc(x.sec)}</td><td>${x.gobierna}</td>
       <td class="${cls(x.ratioMax)}"><b>${fmt(x.ratioMax)}</b></td>
+      <td style="text-align:right;font-family:var(--font-mono);font-size:10px">${fmtmm(dispOf(x.id))}</td>
       <td class="${malo(x) ? 'dc-bad' : aj(x) ? 'dc-warn' : 'dc-ok'}">${malo(x) ? '✗' : aj(x) ? '!' : '✓'}</td></tr>`).join('');
     body.innerHTML = `
       <div class="dis-summary">Estados: <b>${esc(dis.caso || 'activo')}</b><br>
         <span class="dc-ok">${nOk} cumplen</span> · <span class="dc-warn">${nAj} ajustados</span> · <span class="dc-bad">${nNo} no cumplen</span></div>
-      <table class="dis-table"><thead><tr><th>Elem</th><th>Sec.</th><th>Gob.</th><th>D/C</th><th></th></tr></thead><tbody>${rows}</tbody></table>
-      <p class="panel-hint" style="margin-top:6px">D/C = resistencia (flexión/corte/axial/interacción) ≤ 1. Las deformaciones (servicio) y derivas se documentan en <b>Análisis → Memoria</b>.</p>`;
+      <div style="max-height:58vh;overflow:auto;border:1px solid var(--border,#334);border-radius:5px">
+        <table class="dis-table"><thead><tr><th>Elem</th><th>Sec.</th><th>Gob.</th><th>D/C</th><th>|δ| mm</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+      </div>
+      <p class="panel-hint" style="margin-top:6px">D/C = resistencia (flexión/corte/axial/interacción) ≤ 1. <b>|δ|</b> = desplazamiento máx. de los nodos del elemento en el caso/combo mostrado. Las flechas de servicio y derivas se documentan en <b>Análisis → Memoria</b>.</p>`;
     body.querySelectorAll('.dis-row').forEach(tr => tr.addEventListener('click', () => {
       const id = +tr.dataset.elem;
       if (this.app.viewport.selectElements) this.app.viewport.selectElements([id]);

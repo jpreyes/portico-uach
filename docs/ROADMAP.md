@@ -29,11 +29,11 @@ similaridad. `[#]` referencia el pedido original. Estado: ⬜ pendiente · 🟡 
 - ✅ **Casos de carga y combinaciones de la norma por defecto**: Análisis → "Crear casos y combos de norma (NCh3171)" → casos D (PP) y L, combos 1.4D y 1.2D+1.6L, y sísmicas ±1.4Ex/±1.4Ey si existen casos espectrales. Editables, idempotente (`crearCasosYCombosNorma`). `[#16]`
 - ⬜ **Asistente sobre el modelo ya construido**: "agrega carga viva de 20 kN", viento, sismo, modificadores, desplazamiento de masa, anexar estructuras (encima/laterales) — acciones fáciles de interpretar y ejecutar. `[#5]`
 
-## G6 · Diseño, memoria y reportes
-- ⬜ **Tabla de diseño explorable**: scroll hasta el último elemento + mostrar **desplazamientos**. `[#12]`
+## G6 · Diseño, memoria y reportes *(parcial)*
+- ✅ **Tabla de diseño explorable**: wrapper con scroll (max-height 58vh) hasta el último elemento + columna **|δ| mm** (desplazamiento máx. de los nodos del elemento en el caso/combo mostrado). `[#12]`
 - ⬜ **Memoria de cálculo descargable en `.docx`**. `[#14]`
-- ⬜ **Quitar logos UACh de la memoria** cuando se cargue el logo profesional. `[#18]`
-- ⬜ **Quitar de la UI/ayuda toda referencia a editar archivos de config** (json, etc.). `[#13]`
+- ⬜ **Quitar logos UACh de la memoria** cuando se cargue el logo profesional (condicionado a que exista la carga del logo). `[#18]`
+- ✅ **Quitar de la UI/ayuda referencias a editar archivos de config**: reformuladas las menciones a editar `asistente/diseno_params.json` → "valores normativos estándar". `[#13]`
 
 ## G7 · Gestión de proyecto multi-modelo
 - ⬜ **Un proyecto con varios modelos** (edificio principal, cercha plana, viga de fundación…) que se integran en **una sola memoria**. `[#17]` *(cambio más arquitectónico: serializer, estado de la app, generador de memoria).*
