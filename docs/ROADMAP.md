@@ -5,10 +5,10 @@ similaridad. `[#]` referencia el pedido original. Estado: ⬜ pendiente · 🟡 
 
 ---
 
-## G1 · Panel de análisis y acceso a resultados
+## G1 · Panel de análisis y acceso a resultados *(parcial)*
 *El cuello de botella del flujo: lanzar análisis y reusar resultados.*
-- ⬜ **Ventana flotante de análisis** desde el botón "Análisis" de la barra lateral: elegir/lanzar varios (estático, modal, espectral, no lineales) sin ir uno por uno. `[#4]`
-- ⬜ **Acceso a resultados ya corridos**: badges/selector que indiquen qué resultados existen (estático/modal/espectral) y permitan verlos sin recalcular; para espectral **listar los casos espectrales ejecutados** (no solo X/Y — otros modos, otro suelo). `[#1]`
+- ✅ **Ventana flotante de análisis** (Centro de análisis): el botón "Análisis" de la barra lateral abre un panel con TODOS los análisis (Estático, Modal, Espectro + 6 avanzados NL-lite), cada uno con botón Ejecutar. `[#4]`
+- 🟡 **Acceso a resultados ya corridos**: badges ✓/sin-ejecutar por análisis y botón **Ver** que re-muestra sin recalcular (estático, modal, y cada caso espectral listado). Falta: indicador permanente fuera del hub. `[#1]`
 - ⬜ **Caja de progreso unificada** (la misma del estático) para *todos* los análisis; el modal debe **salir del modo resultados antes de correr** y mostrar la **estructura original tenue** de fondo. `[#2]`
 
 ## G2 · Motor modal y rendimiento

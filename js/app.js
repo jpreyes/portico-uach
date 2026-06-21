@@ -1,27 +1,27 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=92';
-import { Serializer }      from './model/serializer.js?v=92';
-import { Viewport }        from './ui/viewport.js?v=92';
-import { PropertiesPanel } from './ui/properties.js?v=92';
-import { MenuBar }         from './ui/menu.js?v=92';
-import { UndoStack }       from './utils/undo.js?v=92';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=92';
-import { Results }                         from './solver/postprocess.js?v=92';
-import { ModalSolver }                     from './solver/modal_solver.js?v=92';
-import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=92';
-import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=92';
-import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=92';
-import { assembleKg } from './solver/geometric.js?v=92';
-import { denseFactor, triForward, triBackward, makeFactor } from './solver/linsolve.js?v=92';
-import { formFind } from './solver/formfind.js?v=92';
-import { ModalResults }                    from './solver/modal_results.js?v=92';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=92';
-import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=92';
-import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=92';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=92';
-import { bilinearGrid, blockCells, cornerGridIndices } from './model/mesher.js?v=92';
+import { Model }           from './model/model.js?v=94';
+import { Serializer }      from './model/serializer.js?v=94';
+import { Viewport }        from './ui/viewport.js?v=94';
+import { PropertiesPanel } from './ui/properties.js?v=94';
+import { MenuBar }         from './ui/menu.js?v=94';
+import { UndoStack }       from './utils/undo.js?v=94';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=94';
+import { Results }                         from './solver/postprocess.js?v=94';
+import { ModalSolver }                     from './solver/modal_solver.js?v=94';
+import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=94';
+import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=94';
+import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=94';
+import { assembleKg } from './solver/geometric.js?v=94';
+import { denseFactor, triForward, triBackward, makeFactor } from './solver/linsolve.js?v=94';
+import { formFind } from './solver/formfind.js?v=94';
+import { ModalResults }                    from './solver/modal_results.js?v=94';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=94';
+import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=94';
+import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=94';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=94';
+import { bilinearGrid, blockCells, cornerGridIndices } from './model/mesher.js?v=94';
 
 class App {
   constructor() {
@@ -70,8 +70,8 @@ class App {
     this.refreshLoads();
     this._initResizeHandle();
 
-    // Analysis button
-    document.getElementById('btn-run')?.addEventListener('click', () => this.runAnalysis());
+    // Analysis button → abre el centro de análisis (ventana flotante)
+    document.getElementById('btn-run')?.addEventListener('click', () => this.openAnalysisHub());
     document.getElementById('btn-clear-results')?.addEventListener('click', () => this.clearResults());
 
     // Results type/scale changes.
@@ -1100,6 +1100,127 @@ class App {
     this.toast(`Diafragma ${d.id} creado — asigne nodos en el panel`, 'ok');
   }
 
+  // ── Centro de análisis (ventana flotante) ──────────────────────────────────
+  // Abierta desde el botón "Análisis" de la barra lateral: reúne TODOS los
+  // análisis en un solo lugar con su estado (ejecutado / sin ejecutar) y permite
+  // VER resultados ya calculados sin recalcular.
+  _tieneEstaticos() { return !!(this._results || (this._resultsByCase && this._resultsByCase.size)); }
+  _ensureHubStyles() {
+    if (document.getElementById('analysis-hub-style')) return;
+    const s = document.createElement('style');
+    s.id = 'analysis-hub-style';
+    s.textContent = `
+      #analysis-hub{position:absolute;inset:0;z-index:60;display:flex;align-items:flex-start;justify-content:center;
+        background:rgba(0,0,0,.28);padding-top:54px}
+      #analysis-hub .ah-card{width:min(440px,92%);max-height:82%;overflow:auto;background:var(--bg-elev,#141b27);
+        border:1px solid var(--border,#334);border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.5);color:var(--text,#e6edf3)}
+      #analysis-hub .ah-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;
+        border-bottom:1px solid var(--border,#334);font-size:14px;position:sticky;top:0;background:var(--bg-elev,#141b27)}
+      #analysis-hub .ah-x{background:none;border:none;color:var(--text-muted,#9aa);cursor:pointer;font-size:14px}
+      #analysis-hub .ah-body{padding:8px 12px}
+      #analysis-hub .ah-sec{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted,#9aa);
+        margin:10px 2px 4px}
+      #analysis-hub .ah-row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px;align-items:center;
+        padding:8px;border:1px solid var(--border,#334);border-radius:7px;margin-bottom:6px}
+      #analysis-hub .ah-info{flex:1 1 200px;min-width:0}
+      #analysis-hub .ah-name{font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+      #analysis-hub .ah-desc{font-size:11px;color:var(--text-muted,#9aa);margin-top:1px}
+      #analysis-hub .ah-acts{display:flex;gap:6px;flex:0 0 auto}
+      #analysis-hub .ah-extra{flex:1 1 100%;font-size:11px;color:var(--text-muted,#9aa);margin-top:4px;
+        display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+      #analysis-hub button.ah-run,#analysis-hub button.ah-see{font-size:11px;padding:4px 9px;border-radius:5px;cursor:pointer;
+        border:1px solid var(--border,#334);background:var(--bg4,#1e2735);color:var(--text,#e6edf3)}
+      #analysis-hub button.ah-run{background:var(--accent,#388bfd);border-color:var(--accent,#388bfd);color:#fff}
+      #analysis-hub .ah-badge{font-size:10px;font-weight:500;padding:1px 7px;border-radius:10px}
+      #analysis-hub .ah-ok{background:rgba(52,199,89,.18);color:#34c759}
+      #analysis-hub .ah-no{background:rgba(150,160,175,.15);color:var(--text-muted,#9aa)}
+      #analysis-hub .ah-foot{padding:8px 14px;border-top:1px solid var(--border,#334);font-size:11px;color:var(--text-muted,#9aa)}`;
+    document.head.appendChild(s);
+  }
+  openAnalysisHub() {
+    this._ensureHubStyles();
+    document.getElementById('analysis-hub')?.remove();
+    const esc = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+    const badge = ok => ok
+      ? '<span class="ah-badge ah-ok">✓ resultados</span>'
+      : '<span class="ah-badge ah-no">sin ejecutar</span>';
+    const espList = [...this._spectrumResults.entries()].map(([k, v]) =>
+      `<button class="ah-see" data-see="esp:${esc(k)}">Ver ${esc(k.replace(/^esp/, 'Dir '))}${v?.params?.method ? ' · ' + esc(v.params.method) : ''}</button>`
+    ).join('');
+
+    const row = (titulo, desc, runAct, seeOk, extra = '') => `
+      <div class="ah-row">
+        <div class="ah-info"><div class="ah-name">${titulo} ${badge(seeOk)}</div><div class="ah-desc">${desc}</div></div>
+        <div class="ah-acts">
+          <button class="ah-run" data-run="${runAct}">Ejecutar…</button>
+          ${seeOk ? `<button class="ah-see" data-see="${runAct}">Ver</button>` : ''}
+        </div>
+        ${extra ? `<div class="ah-extra">${extra}</div>` : ''}
+      </div>`;
+
+    const el = document.createElement('div');
+    el.id = 'analysis-hub';
+    el.innerHTML = `
+      <div class="ah-card" role="dialog" aria-label="Centro de análisis">
+        <div class="ah-head"><b>Análisis</b><button class="ah-x" title="Cerrar">✕</button></div>
+        <div class="ah-body">
+          <div class="ah-sec">Lineal</div>
+          ${row('Estático', 'Todos los casos y combinaciones', 'run', this._tieneEstaticos())}
+          ${row('Modal', 'Frecuencias y formas modales', 'run-modal', !!this._modalResults)}
+          ${row('Espectro de respuesta', 'NCh433 · requiere modal', 'run-spectrum', this._spectrumResults.size > 0,
+            this._spectrumResults.size ? `Casos espectrales corridos: ${espList}` : '')}
+          <div class="ah-sec">Avanzado (NL-lite)</div>
+          ${row('No lineal — cables', 'Cables tracción / pretensado', 'run-nonlinear', false)}
+          ${row('P-Delta', 'Rigidez geométrica iterativa', 'run-pdelta', false)}
+          ${row('Pandeo lineal', 'Factor crítico (autovalores)', 'run-buckling', false)}
+          ${row('Form-finding', 'Densidades de fuerza (FDM)', 'run-formfind', false)}
+          ${row('Rótulas plásticas', 'Colapso evento a evento', 'run-plastic', false)}
+          ${row('Pushover (control δ)', 'Curva carga–desplazamiento', 'run-pushover-dc', false)}
+        </div>
+        <div class="ah-foot">Tip: "Ver" muestra resultados ya calculados sin volver a correrlos.</div>
+      </div>`;
+    document.getElementById('viewport-wrap')?.appendChild(el) || document.body.appendChild(el);
+
+    const close = () => el.remove();
+    el.querySelector('.ah-x').addEventListener('click', close);
+    el.addEventListener('click', e => { if (e.target === el) close(); });
+    el.querySelectorAll('[data-run]').forEach(b => b.addEventListener('click', () => {
+      close(); this._runByAction(b.dataset.run);
+    }));
+    el.querySelectorAll('[data-see]').forEach(b => b.addEventListener('click', () => {
+      close(); this._verResultados(b.dataset.see);
+    }));
+  }
+
+  _runByAction(act) {
+    ({
+      'run': () => this.runAnalysis(), 'run-modal': () => this.runModal(),
+      'run-spectrum': () => this.runSpectrum(), 'run-nonlinear': () => this.runNonlinear(),
+      'run-pdelta': () => this.runPDelta(), 'run-buckling': () => this.runBuckling(),
+      'run-formfind': () => this.runFormFinding(), 'run-plastic': () => this.runPlastic(),
+      'run-pushover-dc': () => this.runPushoverDC(),
+    }[act] || (() => {}))();
+  }
+
+  // Re-muestra resultados YA calculados, sin recalcular.
+  _verResultados(key) {
+    if (key === 'run') {                       // estáticos
+      if (!this._tieneEstaticos()) { this.toast('No hay resultados estáticos', 'warn'); return; }
+      this.panel._switchVTab('resultados'); this.panel._switchRTab?.('estatico');
+      this._refreshResultView(true); this.panel.renderStaticResults?.();
+    } else if (key === 'run-modal') {          // modal
+      if (!this._modalResults) { this.toast('No hay resultados modales', 'warn'); return; }
+      this._setupModalOverlay?.(); this._refreshModalView?.();
+      this.panel._switchVTab('resultados'); this.panel._switchRTab?.('modal'); this.panel.renderModalResults?.();
+    } else if (key.startsWith('esp:')) {       // un caso espectral concreto
+      const entry = this._spectrumResults.get(key.slice(4));
+      if (!entry) { this.toast('Caso espectral no encontrado', 'warn'); return; }
+      this._results = entry.result;
+      this.panel._switchVTab('resultados'); this.panel._switchRTab?.('estatico');
+      this._refreshResultView(true); this.panel.renderStaticResults?.();
+    }
+  }
+
   // ── Analysis ──────────────────────────────────────────────────────────────
   // Resuelve TODOS los casos de carga (cada uno con su propio flag de peso
   // propio) y todas las combinaciones por superposición. El resultado mostrado
@@ -1286,7 +1407,7 @@ class App {
   _staticWorkerSolve(K, nDOF, freeDOF, Flist, dense = false) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=92', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=94', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -1315,7 +1436,7 @@ class App {
   _staticWorkerSolveSparse(csr, cf, nDOF, freeDOF, Flist) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=92', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=94', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -3387,7 +3508,7 @@ class App {
     this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=92');
+      const { generarModelo } = await import('../asistente/generador.js?v=94');
       const modelo = generarModelo(ficha, libs);
 
       if (modo === 'sobreponer') {
@@ -4263,7 +4384,7 @@ class App {
   // Verificación de diseño (flexión/corte/axial) por elemento, usando los
   // resultados actuales y los parámetros editables de asistente/diseno_params.json.
   async _calcularDiseno() {
-    const ver = '?v=92';
+    const ver = '?v=94';
     let params = null;
     try { params = await fetch('asistente/diseno_params.json' + ver).then(r => r.json()); }
     catch (e) { console.error('No se pudo cargar diseno_params.json:', e); return null; }
