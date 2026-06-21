@@ -100,6 +100,7 @@ export class MenuBar {
       case 'run-plastic':    a.runPlastic();                 break;
       case 'run-pushover-dc': a.runPushoverDC();             break;
       case 'combos':         a.openCombosTab();              break;
+      case 'combos-norma':   a.crearCasosYCombosNorma();     break;
       case 'asistente':      a.asistenteDialog();            break;
       case 'res-deformed':   a.setResultType('deformed');    break;
       case 'res-N':          a.setResultType('N');           break;

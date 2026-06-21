@@ -1,27 +1,27 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=98';
-import { Serializer }      from './model/serializer.js?v=98';
-import { Viewport }        from './ui/viewport.js?v=98';
-import { PropertiesPanel } from './ui/properties.js?v=98';
-import { MenuBar }         from './ui/menu.js?v=98';
-import { UndoStack }       from './utils/undo.js?v=98';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=98';
-import { Results }                         from './solver/postprocess.js?v=98';
-import { ModalSolver }                     from './solver/modal_solver.js?v=98';
-import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=98';
-import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=98';
-import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=98';
-import { assembleKg } from './solver/geometric.js?v=98';
-import { denseFactor, triForward, triBackward, makeFactor } from './solver/linsolve.js?v=98';
-import { formFind } from './solver/formfind.js?v=98';
-import { ModalResults }                    from './solver/modal_results.js?v=98';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=98';
-import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=98';
-import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=98';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=98';
-import { bilinearGrid, blockCells, cornerGridIndices } from './model/mesher.js?v=98';
+import { Model }           from './model/model.js?v=99';
+import { Serializer }      from './model/serializer.js?v=99';
+import { Viewport }        from './ui/viewport.js?v=99';
+import { PropertiesPanel } from './ui/properties.js?v=99';
+import { MenuBar }         from './ui/menu.js?v=99';
+import { UndoStack }       from './utils/undo.js?v=99';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=99';
+import { Results }                         from './solver/postprocess.js?v=99';
+import { ModalSolver }                     from './solver/modal_solver.js?v=99';
+import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=99';
+import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=99';
+import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=99';
+import { assembleKg } from './solver/geometric.js?v=99';
+import { denseFactor, triForward, triBackward, makeFactor } from './solver/linsolve.js?v=99';
+import { formFind } from './solver/formfind.js?v=99';
+import { ModalResults }                    from './solver/modal_results.js?v=99';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=99';
+import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=99';
+import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=99';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=99';
+import { bilinearGrid, blockCells, cornerGridIndices } from './model/mesher.js?v=99';
 
 class App {
   constructor() {
@@ -1407,7 +1407,7 @@ class App {
   _staticWorkerSolve(K, nDOF, freeDOF, Flist, dense = false) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=98', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=99', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -1436,7 +1436,7 @@ class App {
   _staticWorkerSolveSparse(csr, cf, nDOF, freeDOF, Flist) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=98', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=99', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -3242,6 +3242,48 @@ class App {
     this.panel.renderCombinations();
   }
 
+  // Crea los casos de carga base (D, L) y las combinaciones de la norma por
+  // defecto (NCh3171 / LRFD). Las sísmicas se agregan por dirección si existen
+  // casos espectrales (X/Y). Todas son EDITABLES en la pestaña Combos.
+  crearCasosYCombosNorma() {
+    const m = this.model;
+    this.snapshot();
+    const findLC = re => [...m.loadCases.values()].find(l => l.type === 'static' && re.test(l.name));
+    let D = [...m.loadCases.values()].find(l => l.type === 'static' && l.selfWeight) || findLC(/muerta|dead|peso propio|\bpp\b|\bd\b/i);
+    if (!D) D = m.addLoadCase('D — Carga muerta (PP)', true);
+    let L = findLC(/viva|sobrecarga|live|uso|\bl\b/i);
+    if (!L) L = m.addLoadCase('L — Sobrecarga de uso', false);
+
+    const specs = [...m.loadCases.values()].filter(l => l.type === 'spectrum');
+    const ex = specs.find(s => s.specDir === 'X'), ey = specs.find(s => s.specDir === 'Y');
+
+    const combos = [
+      { name: '1.4D', f: [[D, 1.4]] },
+      { name: '1.2D + 1.6L', f: [[D, 1.2], [L, 1.6]] },
+    ];
+    const seismic = (E, d) => {
+      combos.push({ name: `1.2D + 1.0L + 1.4E${d}`, f: [[D, 1.2], [L, 1.0], [E, 1.4]] });
+      combos.push({ name: `1.2D + 1.0L − 1.4E${d}`, f: [[D, 1.2], [L, 1.0], [E, -1.4]] });
+      combos.push({ name: `0.9D + 1.4E${d}`, f: [[D, 0.9], [E, 1.4]] });
+      combos.push({ name: `0.9D − 1.4E${d}`, f: [[D, 0.9], [E, -1.4]] });
+    };
+    if (ex) seismic(ex, 'x');
+    if (ey) seismic(ey, 'y');
+
+    const exist = new Set([...m.combinations.values()].map(c => c.name));
+    let n = 0;
+    for (const c of combos) {
+      if (exist.has(c.name)) continue;
+      m.addCombination({ name: c.name, factors: c.f.map(([lc, factor]) => ({ lcId: lc.id, factor })) });
+      n++;
+    }
+    this.markDirty(); this._updateStats?.(); this.refreshLoads?.();
+    this.panel.renderCombinations?.(); this._renderLcSelector?.();
+    const note = (ex || ey) ? '' : ' · las sísmicas se añaden al correr el espectro X/Y';
+    this.toast(`Norma NCh3171: casos D/L + ${n} combinación(es)${note}`, 'ok');
+    this.openCombosTab();
+  }
+
   async runCombinationDialog() {
     if (this.model.combinations.size === 0) {
       this.toast('No hay combinaciones — créelas en la pestaña Combos.', 'warn'); return;
@@ -3516,7 +3558,7 @@ class App {
     this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=98');
+      const { generarModelo } = await import('../asistente/generador.js?v=99');
       const modelo = generarModelo(ficha, libs);
 
       if (modo === 'sobreponer') {
@@ -4392,7 +4434,7 @@ class App {
   // Verificación de diseño (flexión/corte/axial) por elemento, usando los
   // resultados actuales y los parámetros editables de asistente/diseno_params.json.
   async _calcularDiseno() {
-    const ver = '?v=98';
+    const ver = '?v=99';
     let params = null;
     try { params = await fetch('asistente/diseno_params.json' + ver).then(r => r.json()); }
     catch (e) { console.error('No se pudo cargar diseno_params.json:', e); return null; }
