@@ -9,9 +9,12 @@
 // Chandrupatla & Belegundu. Trabajan en coordenadas LOCALES 2D del elemento; el
 // ensamblador las transforma a los GDL globales de traslación (cualquier plano 3D).
 //
-// AUTÓNOMO (sin dependencias) → verificable en Node con un patch test.
+// Verificable en Node con un patch test.  El término de FLEXIÓN (placa) lo aporta
+// plate.js → un área 'shell' = membrana + placa.
 // Convención de GDL local: [u1,v1, u2,v2, ...] (x,y en el plano del elemento).
 // ──────────────────────────────────────────────────────────────────────────────
+
+import { mitc4Plate, dktPlate } from './plate.js?v=88';
 
 // Matriz constitutiva D (3×3) plana. planeStrain=false → tensión plana.
 export function Dmatrix(E, nu, planeStrain = false) {
@@ -174,28 +177,67 @@ function _areaSetup(area, model, nodeIndex, e0) {
   return { D, el, ex, ey, ez, gdof, nN, local, mat };
 }
 
+// ¿El área incluye comportamiento de membrana / placa según su 'behavior'?
+const hasMembrane = a => (a.behavior ?? 'membrane') !== 'plate';
+const hasPlate = a => { const b = a.behavior ?? 'membrane'; return b === 'plate' || b === 'shell'; };
+
 // Ensambla la rigidez de TODAS las áreas en el writer {add(i,j,v)} (denso o disperso).
-// Transforma los 2 GDL locales en-plano de cada nodo a los 3 GDL globales de
-// traslación. Regulariza la dirección normal (kn·ez⊗ez) y las rotaciones (kr) de
-// los nodos de membrana para evitar singularidad (no afecta la respuesta en-plano).
+//   · Membrana: transforma los 2 GDL locales en-plano (ex,ey) → 3 GDL globales de
+//     traslación.
+//   · Placa:    transforma los 3 GDL locales [w,θx,θy] → traslación normal (w·ez) y
+//     rotaciones globales (θx·ex + θy·ey).
+// Regulariza SOLO las direcciones de GDL no cubiertas (evita singularidad sin
+// rigidizar la respuesta real): traslación normal si no hay placa; rotaciones
+// flectoras si no hay placa; SIEMPRE el giro de "drilling" (alrededor de ez).
 export function assembleAreasInto(writer, model, nodeIndex, opts = {}) {
   const regN = opts.regN ?? 1e-4, regR = opts.regR ?? 1e-4;
   for (const area of model.areas.values()) {
     const S = _areaSetup(area, model, nodeIndex, [0, 0, 0]);
     if (!S) continue;
-    const { el, ex, ey, ez, gdof, nN } = S;
-    const Ke = el.Ke, m = 2 * nN, R = [ex, ey];
-    for (let a = 0; a < nN; a++) for (let b = 0; b < nN; b++)
-      for (let r = 0; r < 3; r++) for (let s = 0; s < 3; s++) {
-        let v = 0;
-        for (let p = 0; p < 2; p++) for (let q = 0; q < 2; q++) v += R[p][r] * Ke[(2 * a + p) * m + (2 * b + q)] * R[q][s];
-        if (v !== 0) writer.add(gdof[a] + r, gdof[b] + s, v);
-      }
-    let kref = 0; for (let i = 0; i < m; i++) kref = Math.max(kref, Ke[i * m + i]);
+    const { el, ex, ey, ez, gdof, nN, local, mat } = S;
+    const mem = hasMembrane(area), pla = hasPlate(area);
+    let kref = 0;
+
+    if (mem) {                       // ── membrana (en-plano) ──────────────────
+      const Ke = el.Ke, m = 2 * nN, R = [ex, ey];
+      for (let a = 0; a < nN; a++) for (let b = 0; b < nN; b++)
+        for (let r = 0; r < 3; r++) for (let s = 0; s < 3; s++) {
+          let v = 0;
+          for (let p = 0; p < 2; p++) for (let q = 0; q < 2; q++) v += R[p][r] * Ke[(2 * a + p) * m + (2 * b + q)] * R[q][s];
+          if (v !== 0) writer.add(gdof[a] + r, gdof[b] + s, v);
+        }
+      for (let i = 0; i < m; i++) kref = Math.max(kref, Ke[i * m + i]);
+    }
+
+    if (pla) {                       // ── placa (flexión) ─────────────────────
+      const Kp = nN === 3 ? dktPlate(local, mat.E, mat.nu, area.thickness)
+                          : mitc4Plate(local, mat.E, mat.nu, area.thickness);
+      // Transform. nodal 6×3: cols [w,θx,θy] → filas [tx,ty,tz,rx,ry,rz].
+      const Tn = [[ez[0], 0, 0], [ez[1], 0, 0], [ez[2], 0, 0],
+                  [0, ex[0], ey[0]], [0, ex[1], ey[1]], [0, ex[2], ey[2]]];
+      const m = 3 * nN;
+      for (let a = 0; a < nN; a++) for (let b = 0; b < nN; b++)
+        for (let r = 0; r < 6; r++) for (let s = 0; s < 6; s++) {
+          let v = 0;
+          for (let p = 0; p < 3; p++) { const tap = Tn[r][p]; if (!tap) continue;
+            for (let q = 0; q < 3; q++) v += tap * Kp[(3 * a + p) * m + (3 * b + q)] * Tn[s][q]; }
+          if (v !== 0) writer.add(gdof[a] + r, gdof[b] + s, v);
+        }
+      for (let i = 0; i < m; i++) kref = Math.max(kref, Kp[i * m + i]);
+    }
+
+    // ── Regularización de GDL no cubiertos ──────────────────────────────────
     const kn = regN * kref, kr = regR * kref;
     for (let a = 0; a < nN; a++) {
-      for (let r = 0; r < 3; r++) for (let s = 0; s < 3; s++) { const v = kn * ez[r] * ez[s]; if (v !== 0) writer.add(gdof[a] + r, gdof[a] + s, v); }
-      for (let r = 3; r < 6; r++) writer.add(gdof[a] + r, gdof[a] + r, kr);
+      if (!mem)                       // traslaciones en-plano (ex,ey) sin cubrir
+        for (let r = 0; r < 3; r++) for (let s = 0; s < 3; s++) { const v = kn * (ex[r] * ex[s] + ey[r] * ey[s]); if (v !== 0) writer.add(gdof[a] + r, gdof[a] + s, v); }
+      if (!pla)                       // traslación normal (ez) sin cubrir
+        for (let r = 0; r < 3; r++) for (let s = 0; s < 3; s++) { const v = kn * ez[r] * ez[s]; if (v !== 0) writer.add(gdof[a] + r, gdof[a] + s, v); }
+      if (pla) {                      // placa cubre flexión: regular SOLO drilling (ez)
+        for (let r = 3; r < 6; r++) for (let s = 3; s < 6; s++) { const v = kr * ez[r - 3] * ez[s - 3]; if (v !== 0) writer.add(gdof[a] + r, gdof[a] + s, v); }
+      } else {                        // sin placa: regular las 3 rotaciones
+        for (let r = 3; r < 6; r++) writer.add(gdof[a] + r, gdof[a] + r, kr);
+      }
     }
   }
 }

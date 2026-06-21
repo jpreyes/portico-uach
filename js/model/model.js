@@ -133,6 +133,8 @@ export class Model {
       matId: matId ?? this._firstKey('materials'),
       thickness: opts.thickness ?? 0.2,
       planeStrain: !!opts.planeStrain,
+      // 'membrane' (solo en-plano) | 'plate' (solo flexión) | 'shell' (membrana+placa)
+      behavior: opts.behavior ?? 'membrane',
       kind: ns.length === 3 ? 'CST' : 'QUAD',
     };
     this.areas.set(id, area);
@@ -145,6 +147,7 @@ export class Model {
     if (props.matId      !== undefined) a.matId = +props.matId;
     if (props.thickness  !== undefined) a.thickness = +props.thickness;
     if (props.planeStrain !== undefined) a.planeStrain = !!props.planeStrain;
+    if (props.behavior   !== undefined) a.behavior = props.behavior;
     if (props.nodes) { a.nodes = props.nodes.map(Number); a.kind = a.nodes.length === 3 ? 'CST' : 'QUAD'; }
     return a;
   }

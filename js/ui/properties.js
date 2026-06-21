@@ -1,8 +1,8 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // PropertiesPanel — right-side panel: node/element properties + mat/sec tabs
 // ──────────────────────────────────────────────────────────────────────────────
-import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=87';
-import { localAxes } from '../solver/timoshenko.js?v=87';
+import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=88';
+import { localAxes } from '../solver/timoshenko.js?v=88';
 
 export class PropertiesPanel {
   constructor(panelEl, app) {
@@ -176,6 +176,7 @@ export class PropertiesPanel {
     const res  = this.app._results;
     const elems = items.filter(i => i.type === 'elem');
     const nodes = items.filter(i => i.type === 'node');
+    const areas = items.filter(i => i.type === 'area');
 
     // colour helper: sign-based for individual values, amber for aggregates
     const fv = (v, amber = false) => {
@@ -257,6 +258,9 @@ export class PropertiesPanel {
       }
     }
 
+    // ── Áreas ─────────────────────────────────────────────────────────────────
+    if (areas.length > 0) html += this._accionesAreasHTML(areas);
+
     // ── Acciones masivas ──────────────────────────────────────────────────────
     if (elems.length > 0) html += this._accionesSelHTML(elems);
     if (nodes.length > 0) html += this._accionesNodosHTML(nodes);
@@ -266,8 +270,51 @@ export class PropertiesPanel {
     this._tabContents.sel.innerHTML = html;
     if (elems.length > 0) this._bindAccionesSel(elems.map(e => e.id));
     if (nodes.length > 0) this._bindAccionesNodos();
+    if (areas.length > 0) this._bindAccionesAreas();
     this._bindTransform();
     this._bindGrupos();
+  }
+
+  _accionesAreasHTML(areas) {
+    const mats = [...this.app.model.materials.values()].map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+    return `
+      <div class="prop-section" style="border:1px solid var(--area-col,#3b82f6);border-radius:6px;padding:8px;margin-top:8px">
+        <div class="prop-title" style="color:var(--area-col,#3b82f6);margin-top:0">Áreas · ${areas.length} seleccionada(s)</div>
+        <div class="prop-row" style="gap:6px;align-items:flex-end">
+          <div class="prop-field"><label>Comportamiento</label>
+            <select id="ar-beh">
+              <option value="">—</option>
+              <option value="membrane">Membrana</option>
+              <option value="plate">Placa</option>
+              <option value="shell">Shell</option>
+            </select></div>
+          <button class="btn-secondary" id="ar-beh-apply" style="flex:0 0 auto;font-size:11px">Aplicar</button>
+        </div>
+        <div class="prop-row" style="gap:6px;align-items:flex-end;margin-top:6px">
+          <div class="prop-field"><label>Espesor t (m)</label><input type="number" id="ar-t" value="0.2" min="0.001" step="0.05"></div>
+          <button class="btn-secondary" id="ar-t-apply" style="flex:0 0 auto;font-size:11px">Aplicar</button>
+        </div>
+        <div class="prop-row" style="gap:6px;align-items:flex-end;margin-top:6px">
+          <div class="prop-field"><label>Material</label><select id="ar-mat"><option value="">—</option>${mats}</select></div>
+          <button class="btn-secondary" id="ar-mat-apply" style="flex:0 0 auto;font-size:11px">Aplicar</button>
+        </div>
+        <div class="prop-row" style="margin-top:8px">
+          <button class="btn-danger" id="ar-del" style="width:100%;font-size:11px">Eliminar ${areas.length} área(s)</button>
+        </div>
+      </div>`;
+  }
+  _bindAccionesAreas() {
+    const sel = this._tabContents.sel;
+    sel.querySelector('#ar-beh-apply')?.addEventListener('click', () => {
+      const v = sel.querySelector('#ar-beh').value; if (v) this.app.setAreasProps({ behavior: v });
+    });
+    sel.querySelector('#ar-t-apply')?.addEventListener('click', () => {
+      const t = parseFloat(sel.querySelector('#ar-t').value); if (t > 0) this.app.setAreasProps({ thickness: t });
+    });
+    sel.querySelector('#ar-mat-apply')?.addEventListener('click', () => {
+      const m = +sel.querySelector('#ar-mat').value; if (m) this.app.setAreasProps({ matId: m });
+    });
+    sel.querySelector('#ar-del')?.addEventListener('click', () => this.app.deleteSelected());
   }
 
   _accionesNodosHTML(nodes) {
@@ -438,7 +485,7 @@ export class PropertiesPanel {
     const sel = this._tabContents.sel;
     if (sel) {
       const ocultos = this.app.viewport?.hiddenCount?.() || 0;
-      sel.innerHTML = '<p class="panel-hint">Haga clic en un nodo o elemento para editar sus propiedades. Ctrl+clic para seleccionar varios.</p>'
+      sel.innerHTML = '<p class="panel-hint">Haga clic en un nodo, elemento o área para editar sus propiedades. Ctrl+clic para seleccionar varios.</p>'
         + (ocultos ? `<p class="panel-hint" style="color:var(--warn)">${ocultos} elemento(s) oculto(s) · Vista → Mostrar todo</p>` : '')
         + this._gruposHTML();
       this._bindGrupos();
@@ -478,6 +525,101 @@ export class PropertiesPanel {
       + this._cargasTodasHTML('elem', elem.id);
     this._bindElemEvents(elem);
     this._bindElemLoadsEvents(elem);
+  }
+
+  // ── Elemento de ÁREA (membrana / placa / shell) ───────────────────────────
+  showArea(area) {
+    if (!area) { this.showNothing(); return; }
+    this._switchVTab('modelo');
+    this._switchTab('sel');
+    this._tabContents.sel.innerHTML = this._areaHTML(area) + this._areaResultsHTML(area);
+    this._bindAreaEvents(area);
+  }
+
+  _areaHTML(area) {
+    const model = this.app.model;
+    const matOptions = [...model.materials.values()].map(m =>
+      `<option value="${m.id}" ${m.id === area.matId ? 'selected' : ''}>${m.name}</option>`).join('');
+    const beh = area.behavior || 'membrane';
+    const behOpt = (v, lbl) => `<option value="${v}" ${beh === v ? 'selected' : ''}>${lbl}</option>`;
+    const kind = area.kind || (area.nodes.length === 3 ? 'CST' : 'QUAD');
+    const elemTipo = area.nodes.length === 3 ? 'DKT' : 'MITC4';
+    return `
+      <div class="prop-id">Área #${area.id} · ${kind} (${area.nodes.length} nodos)</div>
+
+      <div class="prop-section">
+        <div class="prop-title">Nodos</div>
+        <p class="panel-hint" style="font-family:var(--font-mono)">${area.nodes.join(' · ')}</p>
+      </div>
+
+      <div class="prop-section">
+        <div class="prop-title">Material y espesor</div>
+        <div class="prop-row cols1">
+          <div class="prop-field"><label>Material</label><select id="a-mat">${matOptions}</select></div>
+        </div>
+        <div class="prop-row">
+          <div class="prop-field"><label>Espesor t (m)</label><input type="number" id="a-t" value="${area.thickness}" min="0.001" step="0.05"></div>
+        </div>
+      </div>
+
+      <div class="prop-section">
+        <div class="prop-title">Comportamiento</div>
+        <div class="prop-row cols1">
+          <div class="prop-field"><label>Tipo</label>
+            <select id="a-beh" title="Membrana = solo en-plano · Placa = solo flexión · Shell = membrana + placa (flexión)">
+              ${behOpt('membrane', 'Membrana (en-plano)')}
+              ${behOpt('plate', 'Placa (flexión)')}
+              ${behOpt('shell', 'Shell (membrana + placa)')}
+            </select>
+          </div>
+        </div>
+        <p class="rel-hint">Flexión con elemento <b>${elemTipo}</b>. La membrana resiste cargas en su plano; la placa/shell resiste flexión fuera del plano.</p>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;margin-top:6px" title="Deformación plana (ε_z=0) en vez de tensión plana (σ_z=0). Solo afecta la parte de membrana.">
+          <input type="checkbox" id="a-pstrain" ${area.planeStrain ? 'checked' : ''}> Deformación plana (membrana)
+        </label>
+      </div>
+
+      <div class="delete-btn-row">
+        <button class="btn-danger" id="btn-del-area" style="width:100%;">Eliminar Área #${area.id}</button>
+      </div>
+    `;
+  }
+
+  // Tensiones (von Mises e invariantes) del área si hay resultados.
+  _areaResultsHTML(area) {
+    const res = this.app._results;
+    if (!res || typeof res.getAreaStress !== 'function') return '';
+    let s = null; try { s = res.getAreaStress(area.id); } catch { /* sin resultados válidos */ }
+    if (!s) return '';
+    const f = v => (v == null || !isFinite(v)) ? '—' : (+v).toExponential(3);
+    return `
+      <div class="prop-section" style="border:1px solid var(--warn);border-radius:6px;padding:8px">
+        <div class="prop-title" style="color:var(--warn);margin-top:0">Tensiones de membrana (centro)</div>
+        <table class="res-table"><tbody>
+          <tr><td>von Mises</td><td style="text-align:right;font-family:var(--font-mono)">${f(s.vm)}</td></tr>
+          <tr><td>σ₁ (principal)</td><td style="text-align:right;font-family:var(--font-mono)">${f(s.s1)}</td></tr>
+          <tr><td>σ₂ (principal)</td><td style="text-align:right;font-family:var(--font-mono)">${f(s.s2)}</td></tr>
+          <tr><td>σx, σy, τxy (local)</td><td style="text-align:right;font-family:var(--font-mono);font-size:10px">${f(s.sx)}, ${f(s.sy)}, ${f(s.txy)}</td></tr>
+        </tbody></table>
+      </div>`;
+  }
+
+  _bindAreaEvents(area) {
+    const sel = this._tabContents.sel;
+    const save = () => {
+      this.app.snapshot();
+      this.app.model.updateArea(area.id, {
+        matId: +sel.querySelector('#a-mat').value,
+        thickness: parseFloat(sel.querySelector('#a-t').value),
+        behavior: sel.querySelector('#a-beh').value,
+        planeStrain: sel.querySelector('#a-pstrain').checked,
+      });
+      this.app.viewport.addAreaMesh(this.app.model.areas.get(area.id));
+      this.app.viewport._setAreaHL(area.id, 0xffc107);   // mantener resaltada
+      this.app.markDirty();
+    };
+    sel.querySelectorAll('#a-mat, #a-t, #a-beh, #a-pstrain').forEach(inp => inp.addEventListener('change', save));
+    sel.querySelector('#btn-del-area')?.addEventListener('click', () => this.app.deleteArea(area.id));
   }
 
   // Lista TODAS las cargas (de todos los casos) sobre un elemento/nodo + las

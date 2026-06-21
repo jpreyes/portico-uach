@@ -1,27 +1,27 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=87';
-import { Serializer }      from './model/serializer.js?v=87';
-import { Viewport }        from './ui/viewport.js?v=87';
-import { PropertiesPanel } from './ui/properties.js?v=87';
-import { MenuBar }         from './ui/menu.js?v=87';
-import { UndoStack }       from './utils/undo.js?v=87';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=87';
-import { Results }                         from './solver/postprocess.js?v=87';
-import { ModalSolver }                     from './solver/modal_solver.js?v=87';
-import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=87';
-import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=87';
-import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=87';
-import { assembleKg } from './solver/geometric.js?v=87';
-import { denseFactor, triForward, triBackward, makeFactor } from './solver/linsolve.js?v=87';
-import { formFind } from './solver/formfind.js?v=87';
-import { ModalResults }                    from './solver/modal_results.js?v=87';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=87';
-import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=87';
-import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=87';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=87';
-import { bilinearGrid, blockCells, cornerGridIndices } from './model/mesher.js?v=87';
+import { Model }           from './model/model.js?v=88';
+import { Serializer }      from './model/serializer.js?v=88';
+import { Viewport }        from './ui/viewport.js?v=88';
+import { PropertiesPanel } from './ui/properties.js?v=88';
+import { MenuBar }         from './ui/menu.js?v=88';
+import { UndoStack }       from './utils/undo.js?v=88';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=88';
+import { Results }                         from './solver/postprocess.js?v=88';
+import { ModalSolver }                     from './solver/modal_solver.js?v=88';
+import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=88';
+import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=88';
+import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=88';
+import { assembleKg } from './solver/geometric.js?v=88';
+import { denseFactor, triForward, triBackward, makeFactor } from './solver/linsolve.js?v=88';
+import { formFind } from './solver/formfind.js?v=88';
+import { ModalResults }                    from './solver/modal_results.js?v=88';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=88';
+import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=88';
+import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=88';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=88';
+import { bilinearGrid, blockCells, cornerGridIndices } from './model/mesher.js?v=88';
 
 class App {
   constructor() {
@@ -188,6 +188,7 @@ class App {
     for (const [eid, el] of this.model.elements) {
       if (el.n1 === id || el.n2 === id) this.viewport.removeElemLine(eid);
     }
+    for (const aid of this._areasDeNodo(id)) { this.viewport.removeAreaMesh(aid); this.model.removeArea(aid); }
     this.viewport.removeNodeMesh(id);
     this.model.removeNode(id);
     this.panel.showNothing();
@@ -206,13 +207,32 @@ class App {
     this.toast(`Elemento #${id} eliminado`, 'ok');
   }
 
+  deleteArea(id) {
+    this.snapshot();
+    this.viewport.removeAreaMesh(id);
+    this.model.removeArea(id);
+    this.panel.showNothing();
+    this.markDirty();
+    this._updateStats?.();
+    this.toast(`Elemento de área #${id} eliminado`, 'ok');
+  }
+
+  // Áreas que tocan un nodo dado (para limpiarlas al borrar el nodo).
+  _areasDeNodo(nodeId) {
+    const out = [];
+    for (const [aid, a] of this.model.areas) if (a.nodes.includes(nodeId)) out.push(aid);
+    return out;
+  }
+
   deleteSelected() {
     const sel = this.viewport.getSelected();
     if (!sel.length) return;
     this.snapshot();
-    // Delete elements before nodes to avoid dangling references
+    // Delete areas + elements before nodes to avoid dangling references
+    const areas = sel.filter(s => s.type === 'area');
     const elems = sel.filter(s => s.type === 'elem');
     const nodes = sel.filter(s => s.type === 'node');
+    for (const { id } of areas) { this.viewport.removeAreaMesh(id); this.model.removeArea(id); }
     for (const { id } of elems) {
       this.viewport.removeElemLine(id);
       this.model.removeElement(id);
@@ -224,6 +244,7 @@ class App {
           this.model.removeElement(eid);
         }
       }
+      for (const aid of this._areasDeNodo(id)) { this.viewport.removeAreaMesh(aid); this.model.removeArea(aid); }
       this.viewport.removeNodeMesh(id);
       this.model.removeNode(id);
     }
@@ -287,6 +308,20 @@ class App {
 
   // ── Acciones masivas sobre la selección de elementos ───────────────────────
   _selElems() { return this.viewport.getSelected().filter(s => s.type === 'elem').map(s => s.id); }
+  _selAreas() { return this.viewport.getSelected().filter(s => s.type === 'area').map(s => s.id); }
+
+  // Aplica comportamiento / espesor / material a TODAS las áreas seleccionadas.
+  setAreasProps(props) {
+    const ids = this._selAreas(); if (!ids.length) return;
+    this.snapshot();
+    for (const id of ids) {
+      this.model.updateArea(id, props);
+      this.viewport.addAreaMesh(this.model.areas.get(id));
+      this.viewport._setAreaHL(id, 0xffc107);
+    }
+    this.markDirty(); this._updateStats?.();
+    this.toast(`${ids.length} área(s) actualizadas`, 'ok');
+  }
   _reselect(ids) { this.viewport.selectElements(ids); this.panel.showSelection(this.viewport.getSelected()); }
 
   setMaterialSelected(matId) {
@@ -342,18 +377,25 @@ class App {
   async crearAreaSeleccion() {
     const ids = this._selNodes();
     if (ids.length !== 3 && ids.length !== 4) { this.toast('Seleccione 3 nodos (CST) o 4 nodos (QUAD) para crear un elemento de área', 'warn'); return; }
-    const tStr = await this._promptModal('Elemento de área (membrana)', 'Espesor t (m):', '0.2');
-    if (tStr == null) return;
-    const t = parseFloat(tStr); if (!(t > 0)) { this.toast('Espesor inválido', 'warn'); return; }
+    const str = await this._promptModal('Elemento de área',
+      'Espesor t (m) y comportamiento (M=membrana, P=placa, S=shell=membrana+placa), separados por coma. Ej: 0.2,S', '0.2,M');
+    if (str == null) return;
+    const p = str.split(',').map(s => s.trim());
+    const t = parseFloat(p[0]); if (!(t > 0)) { this.toast('Espesor inválido', 'warn'); return; }
+    const behavior = this._behaviorCode(p[1]);
     const ordered = ids.length === 4 ? this._ordenarCuad(ids) : ids;
     this.snapshot();
     const matId = [...this.model.materials.keys()][0];
-    const a = this.model.addArea(ordered, matId, { thickness: t });
+    const a = this.model.addArea(ordered, matId, { thickness: t, behavior });
     if (!a) { this.toast('No se pudo crear el área (nodos repetidos o inexistentes)', 'warn'); return; }
     this.viewport.addAreaMesh(a);
     this.markDirty(); this._updateStats?.();
-    this.toast(`Elemento de área ${a.kind} #${a.id} (t=${t} m) creado`, 'ok');
+    this.toast(`Elemento de área ${a.kind} #${a.id} (${this._behaviorLabel(behavior)}, t=${t} m) creado`, 'ok');
   }
+
+  // Códigos/etiquetas de comportamiento de área.
+  _behaviorCode(s) { const c = (s || 'M').toUpperCase()[0]; return c === 'S' ? 'shell' : c === 'P' ? 'plate' : 'membrane'; }
+  _behaviorLabel(b) { return b === 'shell' ? 'shell' : b === 'plate' ? 'placa' : 'membrana'; }
 
   // Ordena 4 nodos en sentido antihorario alrededor del centroide, en su plano,
   // para que el cuadrilátero no quede cruzado sin importar el orden de selección.
@@ -380,12 +422,13 @@ class App {
   async mallarPanelSeleccion() {
     const ids = this._selNodes();
     if (ids.length !== 4) { this.toast('Seleccione 4 nodos esquina del panel (en cualquier orden)', 'warn'); return; }
-    const str = await this._promptModal('Mallar panel (4 esquinas → membrana)',
-      'Divisiones nx, ny, espesor t (m) y tipo (Q=quad / T=tri), separados por coma. Ej: 6,2,0.2,Q', '4,2,0.2,Q');
+    const str = await this._promptModal('Mallar panel (4 esquinas)',
+      'nx, ny, espesor t (m), tipo (Q=quad / T=tri) y comportamiento (M=membrana/P=placa/S=shell). Ej: 6,2,0.2,Q,S', '4,2,0.2,Q,M');
     if (str == null) return;
     const p = str.split(',').map(s => s.trim());
     const nx = Math.round(+p[0]), ny = Math.round(+p[1]), t = parseFloat(p[2]);
     const tri = (p[3] || 'Q').toUpperCase().startsWith('T');
+    const behavior = this._behaviorCode(p[4]);
     if (!(nx >= 1 && ny >= 1 && t > 0)) { this.toast('Valores inválidos (nx, ny ≥ 1; t > 0)', 'warn'); return; }
     if (nx * ny > 2500) { this.toast('Demasiados elementos (>2500). Reduzca nx·ny.', 'warn'); return; }
 
@@ -404,12 +447,12 @@ class App {
     const matId = [...this.model.materials.keys()][0];
     let created = 0;
     for (const cell of blockCells(nx, ny, tri)) {
-      const a = this.model.addArea(cell.map(g => nodeId[g]), matId, { thickness: t });
+      const a = this.model.addArea(cell.map(g => nodeId[g]), matId, { thickness: t, behavior });
       if (a) created++;
     }
     this.viewport.renderModel(this.model);
     this.markDirty(); this._updateStats?.();
-    this.toast(`Panel mallado: ${created} ${tri ? 'CST' : 'QUAD'} (${nx}×${ny}), ${pts.length - 4} nodos nuevos · t=${t} m`, 'ok');
+    this.toast(`Panel mallado: ${created} ${tri ? 'CST' : 'QUAD'} (${nx}×${ny}, ${this._behaviorLabel(behavior)}), ${pts.length - 4} nodos nuevos · t=${t} m`, 'ok');
   }
 
   // ── Acciones masivas sobre NODOS ────────────────────────────────────────────
@@ -431,6 +474,7 @@ class App {
   _nodosDeSeleccion() {
     const set = new Set(this._selNodes());
     for (const id of this._selElems()) { const e = this.model.elements.get(id); if (e) { set.add(e.n1); set.add(e.n2); } }
+    for (const s of this.viewport.getSelected()) if (s.type === 'area') { const a = this.model.areas.get(s.id); if (a) a.nodes.forEach(n => set.add(n)); }
     return set;
   }
   moverSeleccion(dx, dy, dz) {
@@ -1212,7 +1256,7 @@ class App {
   _staticWorkerSolve(K, nDOF, freeDOF, Flist, dense = false) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=87', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=88', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -1241,7 +1285,7 @@ class App {
   _staticWorkerSolveSparse(csr, cf, nDOF, freeDOF, Flist) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=87', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=88', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -3313,7 +3357,7 @@ class App {
     this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=87');
+      const { generarModelo } = await import('../asistente/generador.js?v=88');
       const modelo = generarModelo(ficha, libs);
 
       if (modo === 'sobreponer') {
@@ -4189,7 +4233,7 @@ class App {
   // Verificación de diseño (flexión/corte/axial) por elemento, usando los
   // resultados actuales y los parámetros editables de asistente/diseno_params.json.
   async _calcularDiseno() {
-    const ver = '?v=87';
+    const ver = '?v=88';
     let params = null;
     try { params = await fetch('asistente/diseno_params.json' + ver).then(r => r.json()); }
     catch (e) { console.error('No se pudo cargar diseno_params.json:', e); return null; }

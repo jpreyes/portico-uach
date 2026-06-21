@@ -1,7 +1,7 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // Serializer — JSON (.s3d) and CSV import/export
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model } from './model.js?v=87';
+import { Model } from './model.js?v=88';
 
 export class Serializer {
 
@@ -52,6 +52,7 @@ export class Serializer {
     }
     for (const d of (obj.areas || []))  {
       if (!d.kind) d.kind = (d.nodes || []).length === 3 ? 'CST' : 'QUAD';
+      if (!d.behavior) d.behavior = 'membrane';
       m.areas.set(d.id, d);
     }
     for (const d of (obj.diaphragms|| []))  { m.diaphragms.set(d.id, d); }

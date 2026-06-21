@@ -20,6 +20,9 @@ const COL = {
   ELEM:        0x607d8b,
   ELEM_HOVER:  0xff9800,
   ELEM_SEL:    0xffc107,
+  AREA:        0x3b82f6,
+  AREA_HOVER:  0xff9800,
+  AREA_SEL:    0xffc107,
   PREVIEW:     0x64b5f6,
   AXIS_X:      0xff4444,
   AXIS_Y:      0x44cc44,
@@ -1259,12 +1262,14 @@ export class Viewport {
       .map(g => g.children.find(c => c.userData.type === 'cm-sphere')).filter(Boolean);
     const diaHits  = this._raycaster.intersectObjects(diaPlanes);
     const cmHits   = this._raycaster.intersectObjects(cmSpheres);
+    const areaHits = this._raycaster.intersectObjects(this._areaFills());
 
     let next = null;
     if (nodeHits.length)      next = { type: 'node',      id: nodeHits[0].object.userData.id };
     else if (elemHits.length) next = { type: 'elem',      id: elemHits[0].object.userData.id };
     else if (cmHits.length)   next = { type: 'cm-sphere', id: cmHits[0].object.userData.diaId };
     else if (diaHits.length)  next = { type: 'diaphragm', id: diaHits[0].object.userData.id };
+    else if (areaHits.length) next = { type: 'area',      id: areaHits[0].object.userData.id };
 
     if (prev && (!next || prev.type !== next.type || prev.id !== next.id)) {
       if (prev.type !== 'diaphragm' && !this._selected.has(`${prev.type}:${prev.id}`))
@@ -1289,6 +1294,7 @@ export class Viewport {
       .map(g => g.children.find(c => c.userData.type === 'cm-sphere')).filter(Boolean);
     const diaHits  = this._raycaster.intersectObjects(diaPlanes);
     const cmHits   = this._raycaster.intersectObjects(cmSpheres);
+    const areaHits = this._raycaster.intersectObjects(this._areaFills());
 
     if (nodeHits.length) {
       const id = nodeHits[0].object.userData.id;
@@ -1306,6 +1312,10 @@ export class Viewport {
       } else {
         this._selectSingle('elem', id);
       }
+    } else if (areaHits.length) {
+      const id = areaHits[0].object.userData.id;
+      if (ctrlHeld) { this._toggleMulti('area', id); this._notifyMultiSelection(); }
+      else this._selectSingle('area', id);
     } else if (cmHits.length) {
       // CM sphere clicked → show diaphragm + CM displacements
       const dId = cmHits[0].object.userData.diaId;
@@ -1346,8 +1356,9 @@ export class Viewport {
     if (items.length === 0) { this.app.panel.showNothing(); return; }
     if (items.length === 1) {
       const { type, id } = items[0];
-      if (type === 'node') this.app.panel.showNode(this.app.model.nodes.get(id));
-      else                 this.app.panel.showElement(this.app.model.elements.get(id));
+      if (type === 'node')      this.app.panel.showNode(this.app.model.nodes.get(id));
+      else if (type === 'area') this.app.panel.showArea(this.app.model.areas.get(id));
+      else                      this.app.panel.showElement(this.app.model.elements.get(id));
     } else {
       this.app.panel.showSelection(items);
     }
@@ -1363,11 +1374,12 @@ export class Viewport {
   _selectSingle(type, id) {
     this.clearSelection();
     this._selected.add(`${type}:${id}`);
-    this._setColor(type, id, COL.NODE_SEL, COL.ELEM_SEL);
-    const lbl = type === 'node' ? `Nodo #${id}` : `Elemento #${id}`;
+    this._setColor(type, id, COL.NODE_SEL, type === 'area' ? COL.AREA_SEL : COL.ELEM_SEL);
+    const lbl = type === 'node' ? `Nodo #${id}` : type === 'area' ? `Área #${id}` : `Elemento #${id}`;
     document.getElementById('sb-sel').textContent = `${lbl} seleccionado`;
-    if (type === 'node') this.app.panel.showNode(this.app.model.nodes.get(id));
-    else                 this.app.panel.showElement(this.app.model.elements.get(id));
+    if (type === 'node')      this.app.panel.showNode(this.app.model.nodes.get(id));
+    else if (type === 'area') this.app.panel.showArea(this.app.model.areas.get(id));
+    else                      this.app.panel.showElement(this.app.model.elements.get(id));
   }
 
   clearSelection() {
@@ -1395,6 +1407,10 @@ export class Viewport {
     for (const id of this._elemLines.keys()) {
       this._selected.add(`elem:${id}`);
       this._elemLines.get(id).material.color.set(COL.ELEM_SEL);
+    }
+    for (const id of this._areaMeshes.keys()) {
+      this._selected.add(`area:${id}`);
+      this._setAreaHL(id, COL.AREA_SEL);
     }
   }
 
@@ -1654,6 +1670,7 @@ export class Viewport {
 
   // ── Color helpers ──────────────────────────────────────────────────────────
   _setColor(type, id, nc, ec) {
+    if (type === 'area') { this._setAreaHL(id, ec ?? COL.AREA_SEL); return; }
     if (type === 'node') {
       const m = this._nodeMeshes.get(id);
       if (m && nc != null) m.material.color.set(nc);
@@ -1664,12 +1681,29 @@ export class Viewport {
   }
 
   _refreshColor(type, id) {
+    if (type === 'area') { this._setAreaHL(id, null); return; }
     if (type === 'node') {
       const node = this.app.model.nodes.get(id);
       if (node) this._setColor('node', id, this._nodeColor(node), null);
     } else {
       this._setColor('elem', id, null, COL.ELEM);
     }
+  }
+
+  // Resalta (color) un área; col=null restaura el estilo por defecto.
+  _setAreaHL(id, col) {
+    const g = this._areaMeshes.get(id); if (!g) return;
+    const fill = g.children.find(c => c.type === 'Mesh');
+    const edge = g.children.find(c => c.type === 'Line');
+    if (fill) { fill.material.color.set(col ?? COL.AREA); fill.material.opacity = col ? 0.42 : 0.22; }
+    if (edge) { edge.material.color.set(col ?? 0x60a5fa); edge.material.opacity = col ? 1 : 0.7; }
+  }
+
+  // Mallas-relleno de las áreas (para raycasting de selección).
+  _areaFills() {
+    const out = [];
+    for (const g of this._areaMeshes.values()) { const f = g.children.find(c => c.type === 'Mesh'); if (f && f.visible) out.push(f); }
+    return out;
   }
 
   _nodeColor(node) {
