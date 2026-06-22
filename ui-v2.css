@@ -469,9 +469,31 @@ button:focus-visible, select:focus-visible, input:focus-visible {
   .landing-credit { padding: 12px 26px 16px; font-size: 11px; }
 }
 
+/* Pantallas BAJAS: en lugar de ocultar el logo, la tarjeta se APAISA →
+   dos columnas (logo a la izquierda, título + acciones a la derecha) para
+   reducir la altura sin perder el pórtico. */
 @media (max-height: 620px) {
-  #hero-frame { display: none; }
-  .hero-desc  { display: none; }
+  .landing-card { width: min(780px, 96vw); max-height: 96vh; }
+  .landing-card .landing-inst { padding: 12px 22px 2px; }
+  .landing-card .landing-hero {
+    display: grid;
+    grid-template-columns: minmax(150px, 40%) 1fr;
+    grid-template-areas:
+      "logo title"
+      "logo tag"
+      "logo actions"
+      "logo kbd";
+    align-items: center;
+    column-gap: 24px;
+    text-align: left;
+  }
+  .landing-card #hero-frame { display: block; grid-area: logo; align-self: center; width: min(220px, 96%); margin: 0 auto; }
+  .landing-card .hero-title { grid-area: title; text-align: left; }
+  .landing-card .hero-tag { grid-area: tag; text-align: left; }
+  .landing-card .hero-actions { grid-area: actions; align-items: stretch; margin-top: 8px; }
+  .landing-card .hero-kbd { grid-area: kbd; text-align: left; }
+  .landing-card #install-hint { grid-column: 1 / -1; }
+  .landing-card .landing-credit { padding: 8px 22px 14px; }
 }
 
 /* ── Pantallas angostas (móvil): portada responsive ── */
