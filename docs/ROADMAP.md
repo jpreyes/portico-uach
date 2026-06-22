@@ -52,7 +52,8 @@ similaridad. `[#]` referencia el pedido original. Estado: ⬜ pendiente · 🟡 
 - ✅ **Memoria independiente por proyecto (modelo)** `[#41]`: la memoria (título, kicker, institución, proyectista, revisor, descripción, pie, limitaciones, flags de figuras) pasa a ser **por proyecto** en `model.memoria` y viaja en el `.s3d`. `_memoria()` devuelve la **efectiva** = defaults globales (config) sobrescritos por los del modelo; `configDialog` edita la del modelo y refleja un default global para modelos nuevos; los generadores HTML/`.docx` usan `_memoria()`. El logo de empresa sigue global (branding del despacho). Compatible con archivos viejos (sin `memoria` → defaults). Verificado round-trip y que editar la memoria **no** invalida la caché de resultados.
 
 ## G7 · Gestión de proyecto multi-modelo
-- ⬜ **Un proyecto con varios modelos** (edificio principal, cercha plana, viga de fundación…) que se integran en **una sola memoria**. `[#17]` *(cambio más arquitectónico: serializer, estado de la app, generador de memoria).*
+*Decisión tomada: los modelos se integran **sólo en la memoria** (una sola memoria de cálculo), **sin** vínculo geométrico entre ellos.*
+- ⬜ **Un proyecto con varios modelos** (edificio principal, cercha plana, viga de fundación…) que se integran en **una sola memoria**, cada uno como una **sección/capítulo** del documento; no se comparten ni vinculan geometrías. `[#17]` *(cambio más arquitectónico: serializer guarda una lista de modelos por proyecto, estado de la app con modelo activo, generador de memoria que recorre todos).*
 
 ## G8 · Robustez y diagnóstico ✅
 - ✅ **Diagnóstico de inestabilidades**: `diagnoseInstability()` detecta los GDL libres con rigidez nula (diagonal de K ≈ 0) → nodo/GDL culpable. `runStabilityDiagnosis()` (menú Análisis → "Diagnosticar estabilidad") los **resalta en rojo, agranda y centra la vista**; se invoca **automáticamente** cuando un análisis falla por singular/mecanismo. Verificado: nodo aislado "invisible" detectado con sus 6 GDL y resaltado. `[#15]` *(Nota: cubre el caso común de rigidez nula; mecanismos multi-GDL acoplados se avisan pero no se localizan.)*
@@ -60,7 +61,8 @@ similaridad. `[#]` referencia el pedido original. Estado: ⬜ pendiente · 🟡 
 - ✅ **Autoguardado periódico + recuperación múltiple** `[#43]`: cada **sesión** autoguarda en su propio slot (`portico_autosave_<sid>`) + un índice (`portico_autosaves`) con los **6 modelos más recientes**; autoguardado **cada 5 min** (además del debounced a 1.5 s y el `beforeunload`), tolerante a cierre/corte de luz durante ediciones largas. La portada muestra un **diálogo que lista** los autoguardados (nombre, fecha, nº nodos/elem.) para **reanudar cualquiera**, eliminar uno o empezar nuevo. No autoguarda el modelo vacío. Compatible con la clave única antigua. Verificado en navegador.
 
 ## G9 · Verificación documentada y documentación
-- ⬜ **Casos de la literatura SAP2000 y Sofistik** (en `referencias/`) → convertirlos a formato Pórtico, **comparar/verificar y documentar**; quedan en **Ejemplos** como casos de verificación. `[#19]`
+*Decisión tomada: priorizar los casos en este orden → **viga → pórtico → muro/shell → modal**.*
+- ⬜ **Casos de la literatura SAP2000 y Sofistik** (en `referencias/`) → convertirlos a formato Pórtico, **comparar/verificar y documentar**; quedan en **Ejemplos** como casos de verificación. **Orden de prioridad (decisión tomada): (1) viga, (2) pórtico, (3) muro/shell, (4) modal.** `[#19]`
 - ⬜ **Mejorar UX de los análisis avanzados** (no lineales) + **ejemplo sencillo y `.md` por funcionalidad** (pandeo, form-finding, pushover). `[#20]` *(detalle técnico desglosado en G11.)*
 - ⬜ **Documentación integral de toda funcionalidad**: qué hace, teoría mínima, cómo ejecutarla en la app, ejemplo caracterìstico. `[#21]`
 
@@ -88,9 +90,10 @@ similaridad. `[#]` referencia el pedido original. Estado: ⬜ pendiente · 🟡 
 
 ## G12 · Análisis dinámico en el tiempo (time-history) ⬜ *(nuevo)*
 *Respuesta dinámica ante un acelerograma en la base; se apoya en el modal (G2) y en las rótulas (G11).*
-- ⬜ **Time-history lineal modal (rápido)** `[#48a]`: superposición modal con integración paso a paso de las ecuaciones desacopladas (Newmark/Duhamel por modo), con **acelerograma en la base** (excitación de soporte). Reusa los modos y masas del análisis modal.
+*Decisiones tomadas: integración por **Duhamel** por modo (es lineal, no hace falta Newmark); excitación **uniforme en la base** (sin soporte multi-apoyo); registros de ejemplo incluidos: **Llolleo y Constitución 2010**.*
+- ⬜ **Time-history lineal modal (rápido)** `[#48a]`: superposición modal con **integral de Duhamel por modo** (decisión: Duhamel, no Newmark), con **acelerograma uniforme en la base** (excitación de soporte idéntica en todos los apoyos). Reusa los modos y masas del análisis modal.
 - ⬜ **Time-history incremental modal (no lineal)** `[#48b]`: carga incremental / actualización de la base modal a medida que se forman rótulas plásticas (modal no lineal por tramos).
-- ⬜ **Entrada de acelerograma** `[#48c]`: cargar/pegar un registro (t, a) por dirección (X/Y/Z), escala y Δt; biblioteca mínima de registros de ejemplo.
+- ⬜ **Entrada de acelerograma** `[#48c]`: cargar/pegar un registro (t, a) por dirección (X/Y/Z), escala y Δt; **biblioteca de ejemplo con Llolleo y Constitución 2010** (decisión tomada).
 - ⬜ **Resultados en el tiempo** `[#48d]`: historias y envolventes de respuesta para **nodos** (desplaz./acel.), **elementos** (esfuerzos), **rótulas plásticas** (rotación/secuencia) y **diafragmas** (deriva/corte de piso). Reproducción animada + exportación.
 
 ---
@@ -105,9 +108,10 @@ similaridad. `[#]` referencia el pedido original. Estado: ⬜ pendiente · 🟡 
 7. ✅ **G10 `[#49]`** — postproceso de elementos de área (tensiones/deformada/selección) + análisis de modelos sólo-área (muros/losas) — **hecho**.
 8. **G9** + **G10/contorno** — verificación y documentación. **G7** — multi-modelo al final (rediseño mayor).
 
-## Decisiones pendientes
-- **G2 (método modal)**: ¿qué método de las referencias (subespacio / Lanczos / el documentado allí)? Usar subespacio.
-- **G7 (multi-modelo)**: ¿modelos solo unidos *en la memoria*, o vinculados geométricamente? Solo unidos en la memoria.
-- **G9 (verificación SAP2000)**: ¿cuántos casos priorizar (sugerencia: viga, pórtico, muro/shell, modal)? Priorizar segun la sugerencia. 
-- **G12 (time-history)**: ¿integración Newmark por modo o Duhamel?; Duhamel ya que es lineal. ¿registros de ejemplo a incluir (¿Llolleo, Constitución 2010?)? Incluye ambos; ¿soporte multi-apoyo o excitación uniforme en la base? Uniforme en la Base.
-- **G6 `[#41]` (memoria por proyecto)**: ¿migrar los datos de memoria de la config global al `.s3d` conservando compatibilidad con archivos viejos? Si.
+## Decisiones tomadas
+*Todas resueltas y ya reflejadas en los grupos correspondientes.*
+- ✅ **G2 (método modal)**: usar **iteración de subespacio** (Bathe). *(Implementado — ver G2.)*
+- ✅ **G7 (multi-modelo)**: modelos unidos **sólo en la memoria**, sin vínculo geométrico. *(Reflejado en G7.)*
+- ✅ **G9 (verificación SAP2000)**: priorizar en el orden **viga → pórtico → muro/shell → modal**. *(Reflejado en G9.)*
+- ✅ **G12 (time-history)**: integración por **Duhamel** por modo (es lineal); registros de ejemplo **Llolleo y Constitución 2010**; excitación **uniforme en la base** (sin multi-apoyo). *(Reflejado en G12.)*
+- ✅ **G6 `[#41]` (memoria por proyecto)**: migrar los datos de memoria al `.s3d` **conservando compatibilidad** con archivos viejos. *(Implementado — ver G6.)*
