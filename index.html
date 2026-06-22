@@ -29,8 +29,8 @@
       window.dispatchEvent(new Event('pwa-installed'));
     });
   </script>
-  <link rel="stylesheet" href="style.css?v=114">
-  <link rel="stylesheet" href="ui-v2.css?v=114">
+  <link rel="stylesheet" href="style.css?v=115">
+  <link rel="stylesheet" href="ui-v2.css?v=115">
   <script type="importmap">
   {
     "imports": {
@@ -865,7 +865,11 @@
 
   // ── "Generar modelo con el asistente": entra al laboratorio y abre el panel
   //    del Asistente (super-pestaña derecha). ──
+  // El flag lo honra la app al terminar de inicializar (tras recuperar la sesión
+  // / cargar el modelo, que dejan la pestaña en «Modelo»); el cambio inmediato es
+  // la vía rápida cuando la app ya está lista.
   function abrirAsistente() {
+    window.__porticoGoAsistente = true;
     enter();   // oculta la portada
     const go = () => {
       const p = window.app && window.app.panel;
@@ -932,7 +936,7 @@
 
 <!-- numeric.js para solver (Fase 2+) -->
 <script src="lib/numeric.js"></script>
-<script type="module" src="js/app.js?v=114"></script>
+<script type="module" src="js/app.js?v=115"></script>
 
 <!-- PWA: registrar el service worker (offline). Solo en contexto seguro
      (https o localhost); el navegador deja navigator.serviceWorker undefined
