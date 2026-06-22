@@ -61,8 +61,8 @@ similaridad. `[#]` referencia el pedido original. Estado: ⬜ pendiente · 🟡 
 - ✅ **Autoguardado periódico + recuperación múltiple** `[#43]`: cada **sesión** autoguarda en su propio slot (`portico_autosave_<sid>`) + un índice (`portico_autosaves`) con los **6 modelos más recientes**; autoguardado **cada 5 min** (además del debounced a 1.5 s y el `beforeunload`), tolerante a cierre/corte de luz durante ediciones largas. La portada muestra un **diálogo que lista** los autoguardados (nombre, fecha, nº nodos/elem.) para **reanudar cualquiera**, eliminar uno o empezar nuevo. No autoguarda el modelo vacío. Compatible con la clave única antigua. Verificado en navegador.
 
 ## G9 · Verificación documentada y documentación
-*Decisión tomada: priorizar los casos en este orden → **viga → pórtico → muro/shell → modal**.*
-- ⬜ **Casos de la literatura SAP2000 y Sofistik** (en `referencias/`) → convertirlos a formato Pórtico, **comparar/verificar y documentar**; quedan en **Ejemplos** como casos de verificación. **Orden de prioridad (decisión tomada): (1) viga, (2) pórtico, (3) muro/shell, (4) modal.** `[#19]`
+*Decisión tomada: priorizar los casos en este orden → **análisis dinámico modal → viga → pórtico → muro/shell**.*
+- ⬜ **Casos de la literatura SAP2000 y Sofistik** (en `referencias/`) → convertirlos a formato Pórtico, **comparar/verificar y documentar**; quedan en **Ejemplos** como casos de verificación. **Orden de prioridad (decisión tomada): (1) análisis dinámico modal (frecuencias/períodos, formas modales, masa participante), (2) viga, (3) pórtico, (4) muro/shell.** `[#19]`
 - ⬜ **Mejorar UX de los análisis avanzados** (no lineales) + **ejemplo sencillo y `.md` por funcionalidad** (pandeo, form-finding, pushover). `[#20]` *(detalle técnico desglosado en G11.)*
 - ⬜ **Documentación integral de toda funcionalidad**: qué hace, teoría mínima, cómo ejecutarla en la app, ejemplo caracterìstico. `[#21]`
 
@@ -112,6 +112,6 @@ similaridad. `[#]` referencia el pedido original. Estado: ⬜ pendiente · 🟡 
 *Todas resueltas y ya reflejadas en los grupos correspondientes.*
 - ✅ **G2 (método modal)**: usar **iteración de subespacio** (Bathe). *(Implementado — ver G2.)*
 - ✅ **G7 (multi-modelo)**: modelos unidos **sólo en la memoria**, sin vínculo geométrico. *(Reflejado en G7.)*
-- ✅ **G9 (verificación SAP2000)**: priorizar en el orden **viga → pórtico → muro/shell → modal**. *(Reflejado en G9.)*
+- ✅ **G9 (verificación SAP2000)**: priorizar en el orden **análisis dinámico modal → viga → pórtico → muro/shell** (el modal va primero). *(Reflejado en G9.)*
 - ✅ **G12 (time-history)**: integración por **Duhamel** por modo (es lineal); registros de ejemplo **Llolleo y Constitución 2010**; excitación **uniforme en la base** (sin multi-apoyo). *(Reflejado en G12.)*
 - ✅ **G6 `[#41]` (memoria por proyecto)**: migrar los datos de memoria al `.s3d` **conservando compatibilidad** con archivos viejos. *(Implementado — ver G6.)*
