@@ -10,7 +10,7 @@
 // [u1,v1,w1,rx1,ry1,rz1, u2,v2,w2,rx2,ry2,rz2], plano XZ con dw/dx = −θy).
 // N en TRACCIÓN positiva (compresión N<0 → reduce la rigidez → pandeo).
 // ──────────────────────────────────────────────────────────────────────────────
-import { localAxes, transformMatrix, globalStiffness } from './timoshenko.js?v=109';
+import { localAxes, transformMatrix, globalStiffness } from './timoshenko.js?v=110';
 
 // 12×12 geométrica local a partir del axial N (tracción +) y la longitud L.
 // Forma consistente (Przemieniecti) para flexión en ambos planos; los términos
@@ -53,10 +53,13 @@ function dofs(nodeIndex, id) {
 // Ensambla la rigidez geométrica global (densa, nDOF×nDOF) a partir del campo de
 // desplazamientos uGlobal: para cada elemento calcula su axial N desde la
 // elongación local (N = EA·Δ/L, tracción +) y arma Kg = Tᵀ·Kg_local·T.
-// Devuelve { Kg, Nmax } (Nmax = |N| máximo, para diagnóstico).
+// Devuelve { Kg, Nmax, Nby } (Nmax = |N| máximo, para diagnóstico; Nby = Map
+// elemId → N axial bajo uGlobal, tracción +, usado p.ej. para la carga de pandeo
+// por elemento = λcr·N).
 export function assembleKg(model, nodeIndex, uGlobal) {
   const nDOF = nodeIndex.size * 6;
   const Kg = new Float64Array(nDOF * nDOF);
+  const Nby = new Map();
   let Nmax = 0;
 
   for (const elem of model.elements.values()) {
@@ -75,6 +78,7 @@ export function assembleKg(model, nodeIndex, uGlobal) {
     const mA = sec.mod?.A ?? 1;
     const EA = mat.E * sec.A * mA;
     const N = EA * (ul6 - ul0) / L;       // tracción positiva
+    Nby.set(elem.id, N);
     if (Math.abs(N) > Nmax) Nmax = Math.abs(N);
 
     const KgG = globalStiffness(geometricMatrixLocal(N, L), T);
@@ -82,5 +86,5 @@ export function assembleKg(model, nodeIndex, uGlobal) {
       for (let j = 0; j < 12; j++)
         Kg[ed[i] * nDOF + ed[j]] += KgG[i][j];
   }
-  return { Kg, Nmax };
+  return { Kg, Nmax, Nby };
 }

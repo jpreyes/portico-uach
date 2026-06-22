@@ -1,27 +1,27 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=109';
-import { Serializer }      from './model/serializer.js?v=109';
-import { Viewport }        from './ui/viewport.js?v=109';
-import { PropertiesPanel } from './ui/properties.js?v=109';
-import { MenuBar }         from './ui/menu.js?v=109';
-import { UndoStack }       from './utils/undo.js?v=109';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=109';
-import { Results }                         from './solver/postprocess.js?v=109';
-import { ModalSolver }                     from './solver/modal_solver.js?v=109';
-import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=109';
-import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=109';
-import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=109';
-import { assembleKg } from './solver/geometric.js?v=109';
-import { makeFactor } from './solver/linsolve.js?v=109';
-import { formFind } from './solver/formfind.js?v=109';
-import { ModalResults }                    from './solver/modal_results.js?v=109';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=109';
-import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=109';
-import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=109';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=109';
-import { bilinearGrid, blockCells, cornerGridIndices } from './model/mesher.js?v=109';
+import { Model }           from './model/model.js?v=110';
+import { Serializer }      from './model/serializer.js?v=110';
+import { Viewport }        from './ui/viewport.js?v=110';
+import { PropertiesPanel } from './ui/properties.js?v=110';
+import { MenuBar }         from './ui/menu.js?v=110';
+import { UndoStack }       from './utils/undo.js?v=110';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=110';
+import { Results }                         from './solver/postprocess.js?v=110';
+import { ModalSolver }                     from './solver/modal_solver.js?v=110';
+import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=110';
+import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=110';
+import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=110';
+import { assembleKg } from './solver/geometric.js?v=110';
+import { makeFactor } from './solver/linsolve.js?v=110';
+import { formFind } from './solver/formfind.js?v=110';
+import { ModalResults }                    from './solver/modal_results.js?v=110';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=110';
+import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=110';
+import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=110';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=110';
+import { bilinearGrid, blockCells, cornerGridIndices } from './model/mesher.js?v=110';
 
 class App {
   constructor() {
@@ -1465,7 +1465,7 @@ class App {
   _staticWorkerSolve(K, nDOF, freeDOF, Flist, dense = false) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=109', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=110', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -1494,7 +1494,7 @@ class App {
   _staticWorkerSolveSparse(csr, cf, nDOF, freeDOF, Flist) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=109', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=110', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -1747,7 +1747,7 @@ class App {
       // ── Run Stodola in a Web Worker (non-blocking) ───────────────────────────
       const denseModal = !!this._config?.analisis?.matrizDensa;
       const modes = await new Promise((resolve, reject) => {
-        const worker = new Worker(new URL('./solver/modal_worker.js?v=109', import.meta.url), { type: 'module' });
+        const worker = new Worker(new URL('./solver/modal_worker.js?v=110', import.meta.url), { type: 'module' });
         worker.postMessage({ Kff_flat, Mff_flat, nF, nModes, dense: denseModal, method: modalMethod },
           [Kff_flat.buffer, Mff_flat.buffer]); // transfer — zero copy
         worker.onmessage = (ev) => {
@@ -2306,7 +2306,7 @@ class App {
       const ufA = fac.solve(Ff);
       const u = new Float64Array(nDOF); for (let i = 0; i < nF; i++) u[freeDOF[i]] = ufA[i];
 
-      const { Kg, Nmax } = assembleKg(this.model, nodeIndex, u);
+      const { Kg, Nmax, Nby } = assembleKg(this.model, nodeIndex, u);
       if (Nmax < 1e-9) throw new Error('La carga de referencia no genera fuerzas axiales (sin efecto de pandeo).');
 
       // Kgff en plano para el worker
@@ -2315,7 +2315,7 @@ class App {
 
       // Iteración de subespacio en el Worker (no bloquea la UI)
       const rawModes = await new Promise((resolve, reject) => {
-        const worker = new Worker(new URL('./solver/buckling_worker.js?v=109', import.meta.url), { type: 'module' });
+        const worker = new Worker(new URL('./solver/buckling_worker.js?v=110', import.meta.url), { type: 'module' });
         worker.postMessage({ Kff_flat, Kgff_flat, nF, nModes, dense },
           [Kff_flat.buffer, Kgff_flat.buffer]);   // transfer — zero copy
         worker.onmessage = (ev) => { worker.terminate(); ev.data.error ? reject(new Error(ev.data.error)) : resolve(ev.data.modes); };
@@ -2330,7 +2330,7 @@ class App {
       });
       if (!modes.length) throw new Error('No se hallaron modos de pandeo (la carga de referencia no produce compresión). Revise su sentido.');
 
-      this._buckResult = { modes, nCasos };
+      this._buckResult = { modes, nCasos, Nby };   // Nby = axial de referencia por elemento
       this.toast(`Pandeo: λcr = ${modes[0].lambda.toFixed(3)} · carga crítica = λcr × carga de referencia`, 'ok');
       this._buckOpenOverlay();
     } catch (err) {
@@ -2381,7 +2381,7 @@ class App {
     const modes = this._buckResult.modes;
     let el = document.getElementById('buck-overlay');
     if (!el) { el = document.createElement('div'); el.id = 'buck-overlay'; document.body.appendChild(el); }
-    el.style.cssText = 'position:fixed;right:16px;bottom:84px;z-index:50;background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:10px 12px;width:268px;box-shadow:0 8px 24px rgba(0,0,0,.4);font-size:12px;color:var(--text)';
+    el.style.cssText = 'position:fixed;right:16px;bottom:84px;z-index:50;background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:10px 12px;width:268px;max-height:70vh;overflow:auto;box-shadow:0 8px 24px rgba(0,0,0,.4);font-size:12px;color:var(--text)';
     el.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
         <b style="color:var(--accent)">Pandeo lineal</b>
@@ -2394,7 +2394,8 @@ class App {
       <div style="display:flex;align-items:center;gap:6px">
         <label style="color:var(--text-muted,#94a3b8)">Escala ×</label>
         <input type="number" id="buck-scale" value="1" min="0.05" step="0.25" style="width:64px">
-      </div>`;
+      </div>
+      <div id="buck-elemloads" style="margin-top:8px"></div>`;
     const sel = el.querySelector('#buck-mode'), scl = el.querySelector('#buck-scale');
     const redraw = () => this._buckShowMode(+sel.value);
     sel.addEventListener('change', redraw);
@@ -2415,6 +2416,29 @@ class App {
       `Pandeo modo ${k + 1} · factor crítico λcr = ${m.lambda.toFixed(3)} (carga crítica = λcr × carga de referencia)`);
     const ro = document.getElementById('buck-readout');
     if (ro) ro.innerHTML = `λcr = <b>${m.lambda.toFixed(4)}</b><br>Carga de pandeo = ${m.lambda.toFixed(3)} × la carga aplicada combinada.<br>${m.lambda < 1 ? '<b style="color:#f87171">λcr &lt; 1: la estructura pandea bajo la carga actual.</b>' : 'λcr &gt; 1: estable ante pandeo bajo la carga actual.'}`;
+    this._buckRenderElemLoads(m.lambda);
+  }
+
+  // Carga de pandeo POR ELEMENTO (#33b): a la carga crítica global (λcr) el axial
+  // de cada barra es N_cr = λcr·N_ref. Lista las más comprimidas (las que gobiernan
+  // el pandeo). N en kN, compresión negativa.
+  _buckRenderElemLoads(lambda) {
+    const box = document.getElementById('buck-elemloads');
+    const Nby = this._buckResult?.Nby;
+    if (!box || !Nby) return;
+    const rows = [...Nby.entries()]
+      .map(([id, Nref]) => ({ id, Nref, Ncr: lambda * Nref }))
+      .filter(r => r.Ncr < -1e-9)                 // sólo comprimidas (pandean)
+      .sort((a, b) => a.Ncr - b.Ncr)              // más comprimida primero
+      .slice(0, 8);
+    if (!rows.length) { box.innerHTML = '<span style="color:var(--text-muted,#94a3b8);font-size:11px">Sin elementos en compresión para este modo.</span>'; return; }
+    const mut = 'color:var(--text-muted,#94a3b8)';
+    box.innerHTML = `
+      <div style="${mut};font-size:11px;margin-bottom:3px">Carga de pandeo por elemento (N<sub>cr</sub> = λcr·N), más comprimidos:</div>
+      <table style="width:100%;border-collapse:collapse;font-size:10.5px">
+        <thead><tr style="${mut}"><th style="text-align:left">Elem</th><th style="text-align:right">N ref</th><th style="text-align:right">N cr [kN]</th></tr></thead>
+        <tbody>${rows.map(r => `<tr><td>#${r.id}</td><td style="text-align:right">${r.Nref.toFixed(1)}</td><td style="text-align:right;color:#f87171">${r.Ncr.toFixed(1)}</td></tr>`).join('')}</tbody>
+      </table>`;
   }
 
   // P-DELTA: resuelve (K + Kg(u))·u = F iterando (frames). Muestra la deformada
@@ -3802,7 +3826,7 @@ class App {
               selectedNodes: sel.filter(s => s.type === 'node').map(s => s.id) };
     }
     this.snapshot();
-    const { aplicarOperaciones } = await import('./model/model_ops.js?v=109');
+    const { aplicarOperaciones } = await import('./model/model_ops.js?v=110');
     const res = aplicarOperaciones(this.model, ops, ctx);
     // los resultados previos dejan de ser válidos tras modificar la geometría/cargas
     this.viewport.clearResults?.();
@@ -3850,7 +3874,7 @@ class App {
     this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=109');
+      const { generarModelo } = await import('../asistente/generador.js?v=110');
       const modelo = generarModelo(ficha, libs);
 
       if (modo === 'sobreponer') {
@@ -4726,7 +4750,7 @@ class App {
   // Verificación de diseño (flexión/corte/axial) por elemento, usando los
   // resultados actuales y los parámetros editables de asistente/diseno_params.json.
   async _calcularDiseno() {
-    const ver = '?v=109';
+    const ver = '?v=110';
     let params = null;
     try { params = await fetch('asistente/diseno_params.json' + ver).then(r => r.json()); }
     catch (e) { console.error('No se pudo cargar diseno_params.json:', e); return null; }
