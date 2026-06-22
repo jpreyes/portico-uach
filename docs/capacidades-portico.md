@@ -43,6 +43,11 @@ Estado: ✅ completo · 🟡 parcial · ⛔ no disponible.
 | **Pushover control-δ** | idealiza **reticulado** (sólo axial) | pushover a **flexión** por control de desplazamiento (para eso están las rótulas) | — |
 | **Térmica en área** | ΔT constante en el espesor | **gradiente** de temperatura a través del espesor | 2-014 |
 
+> **Implementación planificada** en **G14** del ROADMAP: `[#54]` desplazamiento prescrito ·
+> `[#55]` modal con Kg (cuerda tensa) · `[#56]` miembros compression-only · `[#57]` gradiente
+> térmico en el espesor · `[#58]` tensión/deformación plana. Y en backlog: `[#51]` time-history
+> con áreas · `[#52]` mesheador Gmsh.
+
 ---
 
 ## ⛔ Capacidades no disponibles (según los ejemplos de verificación)

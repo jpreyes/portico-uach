@@ -110,6 +110,16 @@ similaridad. `[#]` referencia el pedido original. Estado: ⬜ pendiente · 🟡 
 - ⬜ **Mesheador automático con motor tipo Gmsh** `[#52]`: reemplazar/complementar el mallado actual (`mallar-panel`, `discretize`) por un **mallador automático** robusto (estilo **Gmsh** u OpenCASCADE/Triangle/jigsaw) que genere mallas de calidad para áreas y volúmenes y **respete nuestras metodologías** (convención Z-up, GDL, tipos de elemento membrana/placa/cáscara, diafragmas). Objetivos: mallado de geometrías arbitrarias, control de tamaño/gradación, transición de malla, y reuso en navegador (WASM de Gmsh o equivalente). *(Decidir: Gmsh-WASM embebido vs. servicio; cómo mapear su salida a `model.areas`.)*
 - ⬜ **La IA entiende una torre de alta tensión** `[#53]`: extender el asistente (`asistente/generador.js` + Worker) para describir/generar **torres de transmisión** (celosías 3D): patas, crucetas, ménsulas, diagonales/redundantes, conexiones articuladas (releases), cargas de viento/cable/hielo y combinaciones. Requiere vocabulario de *ficha* para celosías espaciales y un generador paramétrico de torre. *(Caso de uso real del IOC; encaja con NL-lite de cables para los conductores.)*
 
+## G14 · Implementar capacidades parciales / ausentes (detectadas en verificación) ⬜
+*Cierre de las brechas mapeadas en [`docs/capacidades-portico.md`](capacidades-portico.md). Cada una habilita uno o más casos de verificación CSI.*
+- ⬜ **Desplazamiento prescrito de nodo / apoyo** `[#54]`: imponer un desplazamiento o giro a un GDL (asentamiento/giro de apoyo, o desplazamiento de un nodo). Habilita **1-005** (settlement) y los **patch tests con desplazamiento prescrito** (2-001, 3-001). Implementación: GDL prescrito en el solver (partición libre/prescrito, `Kff·u = F − Kfp·u_p`).
+- ⬜ **Modal con rigidez geométrica (Kg)** `[#55]`: análisis modal sobre `K + Kg(estado)` para capturar el efecto de la fuerza axial en las frecuencias (rigidización por tracción / ablandamiento por compresión). Habilita **1-017** (cuerda tensa) y modal de cables/elementos pretensados. Reusa `assembleKg`.
+- ⬜ **Miembros «compression-only»** `[#56]`: complemento del cable **tension-only** del NL-lite — barra que sólo resiste **compresión** (puntal/contacto), N=0 en tracción. Habilita **1-012** (no-tension/no-compression frame) completo.
+- ⬜ **Gradiente térmico a través del espesor en áreas** `[#57]`: además del ΔT uniforme actual, un **gradiente** ΔT a través del espesor de la placa/cáscara (momento térmico). Habilita **2-014**.
+- ⬜ **Continuo plano: tensión plana y deformación plana** `[#58]`: opción de **plane-stress** (viga modelada como membrana, **3-002/3-003**) y **plane-strain** (**3-004** cilindro de pared gruesa) en el elemento de membrana. Hoy la membrana es tensión plana implícita; falta el modo deformación plana y validar la viga recta/curva.
+- ⬜ **Otras parciales** (en `capacidades-portico.md`): fijación parcial de extremo (resorte de extremo, **1-008**), resorte de **línea**/viga sobre fundación (**1-013**), **pandeo de cáscara** (**2-016/2-017**), **gran rotación con flexión** (viga corotacional, **1-029**). Prioridad menor.
+- 🔗 **Ya en el backlog**: time-history modal con **elementos de área** `[#51]` (en G12) · **mesheador automático tipo Gmsh** `[#52]` (en G13) — ambos también cierran brechas de capacidad.
+
 ---
 
 ## Secuencia sugerida (revisada)
