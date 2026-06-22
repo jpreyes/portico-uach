@@ -1174,7 +1174,13 @@ class App {
       #analysis-hub .ah-chk input{width:15px;height:15px;cursor:pointer;accent-color:var(--accent,#388bfd)}
       #analysis-hub .ah-batchbar{display:flex;justify-content:flex-end;padding:8px 12px 0}
       #analysis-hub .ah-batch-run{font-size:12px;padding:6px 12px}
-      #analysis-hub .ah-foot{padding:8px 14px;border-top:1px solid var(--border,#334);font-size:11px;color:var(--text-muted,#9aa)}`;
+      #analysis-hub .ah-foot{padding:8px 14px;border-top:1px solid var(--border,#334);font-size:11px;color:var(--text-muted,#9aa)}
+      #analysis-hub .ah-tabs{display:flex;gap:4px;padding:8px 12px 0}
+      #analysis-hub .ah-tab{flex:1;font-size:12px;font-weight:600;padding:7px 8px;border-radius:7px 7px 0 0;cursor:pointer;
+        border:1px solid var(--border,#334);border-bottom:none;background:var(--bg4,#1e2735);color:var(--text-muted,#9aa)}
+      #analysis-hub .ah-tab.active{background:var(--bg-elev,#141b27);color:var(--accent,#388bfd);border-color:var(--accent,#388bfd)}
+      #analysis-hub .ah-pane{display:none}
+      #analysis-hub .ah-pane.active{display:block}`;
     document.head.appendChild(s);
   }
   openAnalysisHub() {
@@ -1199,35 +1205,58 @@ class App {
         ${extra ? `<div class="ah-extra">${extra}</div>` : ''}
       </div>`;
 
+    // Estado de resultados de los avanzados NL-lite (#37). Form-finding edita la
+    // geometría (no deja un resultado reutilizable) → nunca lleva badge ✓ / Ver.
+    const nlOk = {
+      'run-nonlinear':   !!this._nlResult,
+      'run-pdelta':      !!this._pdResult,
+      'run-buckling':    !!this._buckResult,
+      'run-formfind':    false,
+      'run-plastic':     !!this._plasticResult,
+      'run-pushover-dc': !!this._dcResult,
+    };
+
     const el = document.createElement('div');
     el.id = 'analysis-hub';
     el.innerHTML = `
       <div class="ah-card" role="dialog" aria-label="Centro de análisis">
         <div class="ah-head"><b>Análisis</b><button class="ah-x" title="Cerrar">✕</button></div>
+        <div class="ah-tabs">
+          <button class="ah-tab active" data-pane="lineal">Estático / lineal</button>
+          <button class="ah-tab" data-pane="avanzado">Avanzados (NL-lite)</button>
+        </div>
         <div class="ah-body">
-          <div class="ah-sec">Lineal</div>
-          ${row('Estático', 'Todos los casos y combinaciones', 'run', this._tieneEstaticos())}
-          ${row('Modal', 'Frecuencias y formas modales', 'run-modal', !!this._modalResults)}
-          ${row('Espectro de respuesta', 'NCh433 · requiere modal', 'run-spectrum', this._spectrumResults.size > 0,
-            this._spectrumResults.size ? `Casos espectrales corridos: ${espList}` : '')}
-          <div class="ah-sec">Avanzado (NL-lite)</div>
-          ${row('No lineal — cables', 'Cables tracción / pretensado', 'run-nonlinear', false)}
-          ${row('P-Delta', 'Rigidez geométrica iterativa', 'run-pdelta', false)}
-          ${row('Pandeo lineal', 'Factor crítico (autovalores)', 'run-buckling', false)}
-          ${row('Form-finding', 'Densidades de fuerza (FDM)', 'run-formfind', false)}
-          ${row('Rótulas plásticas', 'Colapso evento a evento', 'run-plastic', false)}
-          ${row('Pushover (control δ)', 'Curva carga–desplazamiento', 'run-pushover-dc', false)}
+          <div class="ah-pane active" data-pane="lineal">
+            ${row('Estático', 'Todos los casos y combinaciones', 'run', this._tieneEstaticos())}
+            ${row('Modal', 'Frecuencias y formas modales', 'run-modal', !!this._modalResults)}
+            ${row('Espectro de respuesta', 'NCh433 · requiere modal', 'run-spectrum', this._spectrumResults.size > 0,
+              this._spectrumResults.size ? `Casos espectrales corridos: ${espList}` : '')}
+          </div>
+          <div class="ah-pane" data-pane="avanzado">
+            ${row('No lineal — cables', 'Cables tracción / pretensado', 'run-nonlinear', nlOk['run-nonlinear'])}
+            ${row('P-Delta', 'Rigidez geométrica iterativa', 'run-pdelta', nlOk['run-pdelta'])}
+            ${row('Pandeo lineal', 'Factor crítico (autovalores)', 'run-buckling', nlOk['run-buckling'])}
+            ${row('Form-finding', 'Densidades de fuerza (FDM) · reposiciona nodos', 'run-formfind', false)}
+            ${row('Rótulas plásticas', 'Colapso evento a evento', 'run-plastic', nlOk['run-plastic'])}
+            ${row('Pushover (control δ)', 'Curva carga–desplazamiento', 'run-pushover-dc', nlOk['run-pushover-dc'])}
+          </div>
         </div>
         <div class="ah-batchbar">
-          <button class="ah-run ah-batch-run" id="ah-batch-run" title="Corre en orden los análisis marcados (una sola secuencia)">▶ Analizar seleccionados</button>
+          <button class="ah-run ah-batch-run" id="ah-batch-run" title="Corre en orden los análisis marcados, con parámetros por defecto (sin diálogos)">▶ Analizar seleccionados</button>
         </div>
-        <div class="ah-foot">Marque las casillas y use «Analizar seleccionados» para correr varios en orden · "Ver" muestra resultados ya calculados sin recalcular.</div>
+        <div class="ah-foot">Marque las casillas y use «Analizar seleccionados» para correr varios en orden con parámetros por defecto · "Ver" muestra resultados ya calculados sin recalcular.</div>
       </div>`;
     document.getElementById('viewport-wrap')?.appendChild(el) || document.body.appendChild(el);
 
     const close = () => el.remove();
     el.querySelector('.ah-x').addEventListener('click', close);
     el.addEventListener('click', e => { if (e.target === el) close(); });
+    // Sub-pestañas (#40)
+    el.querySelectorAll('.ah-tab').forEach(t => t.addEventListener('click', () => {
+      const p = t.dataset.pane;
+      el.querySelectorAll('.ah-tab').forEach(x => x.classList.toggle('active', x.dataset.pane === p));
+      el.querySelectorAll('.ah-pane').forEach(x => x.classList.toggle('active', x.dataset.pane === p));
+    }));
     el.querySelectorAll('[data-run]').forEach(b => b.addEventListener('click', () => {
       close(); this._runByAction(b.dataset.run);
     }));
@@ -1241,13 +1270,13 @@ class App {
     });
   }
 
-  async _runByAction(act) {
+  async _runByAction(act, opts = {}) {
     const fn = {
-      'run': () => this.runAnalysis(), 'run-modal': () => this.runModal(),
-      'run-spectrum': () => this.runSpectrum(), 'run-nonlinear': () => this.runNonlinear(),
-      'run-pdelta': () => this.runPDelta(), 'run-buckling': () => this.runBuckling(),
-      'run-formfind': () => this.runFormFinding(), 'run-plastic': () => this.runPlastic(),
-      'run-pushover-dc': () => this.runPushoverDC(),
+      'run': () => this.runAnalysis(), 'run-modal': () => this.runModal(opts),
+      'run-spectrum': () => this.runSpectrum(opts), 'run-nonlinear': () => this.runNonlinear(opts),
+      'run-pdelta': () => this.runPDelta(opts), 'run-buckling': () => this.runBuckling(opts),
+      'run-formfind': () => this.runFormFinding(opts), 'run-plastic': () => this.runPlastic(opts),
+      'run-pushover-dc': () => this.runPushoverDC(opts),
     }[act];
     if (!fn) return;
     // Caja de progreso para los NL-lite SÍNCRONOS y sin diálogo (nonlinear/pdelta):
@@ -1282,7 +1311,8 @@ class App {
     for (let i = 0; i < lista.length; i++) {
       const act = lista[i];
       this.toast(`Lote ${i + 1}/${lista.length}: ${nombre[act]}…`, '');
-      try { await this._runByAction(act); }
+      // silent: cada análisis corre con sus parámetros por defecto, sin diálogo (#38)
+      try { await this._runByAction(act, { silent: true }); }
       catch (e) { this.toast(`Lote detenido en «${nombre[act]}»: ${e.message}`, 'error'); return; }
     }
     this._updateResultsIndicator();
@@ -1305,7 +1335,71 @@ class App {
       this._results = entry.result;
       this.panel._switchVTab('resultados'); this.panel._switchRTab?.('estatico');
       this._refreshResultView(true); this.panel.renderStaticResults?.();
+    } else if (key === 'run-nonlinear') {       // NL-lite ya corridos (#37)
+      if (!this._nlResult) { this.toast('No hay resultados no lineales', 'warn'); return; }
+      this._nlOpenOverlay();
+    } else if (key === 'run-pdelta') {
+      if (!this._pdResult) { this.toast('No hay resultados P-Delta', 'warn'); return; }
+      this._pdShow();
+    } else if (key === 'run-buckling') {
+      if (!this._buckResult) { this.toast('No hay resultados de pandeo', 'warn'); return; }
+      this._buckOpenOverlay();
+    } else if (key === 'run-plastic') {
+      if (!this._plasticResult) { this.toast('No hay resultados de rótulas plásticas', 'warn'); return; }
+      this._plasticShow();
+    } else if (key === 'run-pushover-dc') {
+      if (!this._dcResult) { this.toast('No hay resultados de pushover', 'warn'); return; }
+      this._dcOpenOverlay();
     }
+  }
+
+  // Re-dibuja la deformada P-Delta guardada (botón Ver del hub, #37).
+  _pdShow() {
+    const u = this._pdResult?.u; if (!u || !this._geomNI) return;
+    const uByNode = new Map();
+    for (const node of this.model.nodes.values()) {
+      const d = getNodeDOFs(this._geomNI, node.id);
+      uByNode.set(node.id, [u[d[0]], u[d[1]], u[d[2]]]);
+    }
+    this.viewport.showNLDeformed(uByNode, new Map(), 1, 'P-Delta · deformada amplificada (resultado guardado)');
+  }
+
+  // Re-muestra el mecanismo de colapso plástico guardado + la pestaña Rótulas (#37).
+  _plasticShow() {
+    const pr = this._plasticResult; if (!pr) return;
+    const ni = pr.nodeIndex || buildNodeIndex(this.model);
+    const uByNode = new Map();
+    for (const node of this.model.nodes.values()) {
+      const d = getNodeDOFs(ni, node.id);
+      uByNode.set(node.id, [pr.u[d[0]], pr.u[d[1]], pr.u[d[2]]]);
+    }
+    this.viewport.showNLDeformed(uByNode, new Map(), 1,
+      pr.collapsed ? `Colapso plástico · λc = ${pr.lambda.toFixed(3)} · ${pr.events.length} rótulas` : `Plástico · λ = ${pr.lambda.toFixed(3)} · ${pr.events.length} rótulas`);
+    this.panel._switchVTab('resultados');
+    this.panel._switchRTab('plastico');
+  }
+
+  // Aplica (o revierte) la auto-discretización ×N al modelo según la casilla
+  // «Auto-discretizar» de la barra. Compartida por el estático, el modal y los
+  // NL-lite para que TODOS los análisis corran sobre la misma malla (#36). El
+  // modelo ORIGINAL queda en `_predisc` (nunca se edita/guarda la malla); se
+  // restaura al limpiar resultados o al primer edit (snapshot). Devuelve si la
+  // auto-disc quedó activa.
+  _applyAutoDiscIfEnabled() {
+    const autoDisc = !!document.getElementById('auto-disc')?.checked;
+    if (autoDisc) {
+      const nParts = Math.max(2, Math.round(parseFloat(document.getElementById('auto-disc-n')?.value) || 5));
+      if (!this._predisc) this._predisc = this.serializer.toJSON(this.model);
+      else this.model = this.serializer.fromJSON(this._predisc);  // re-análisis: partir del original
+      discretizeAll(this.model, { parts: nParts });
+      this.viewport.renderModel(this.model);
+    } else if (this._predisc) {
+      // estaba auto-discretizado y la casilla se desactivó: restaurar
+      this.model = this.serializer.fromJSON(this._predisc);
+      this._predisc = null;
+      this.viewport.renderModel(this.model);
+    }
+    return autoDisc;
   }
 
   // ── Analysis ──────────────────────────────────────────────────────────────
@@ -1334,21 +1428,9 @@ class App {
     // pueda esperar a que termine antes de lanzar el siguiente análisis.
     return new Promise(resolve => setTimeout(async () => {
       try {
-        // ── Auto-discretización (×10) para el análisis ──
+        // ── Auto-discretización (×N) para el análisis ──
         // El modelo original se guarda y se restaura al limpiar resultados.
-        const autoDisc = document.getElementById('auto-disc')?.checked;
-        if (autoDisc) {
-          const nParts = Math.max(2, Math.round(parseFloat(document.getElementById('auto-disc-n')?.value) || 5));
-          if (!this._predisc) this._predisc = this.serializer.toJSON(this.model);
-          else this.model = this.serializer.fromJSON(this._predisc);  // re-análisis: partir del original
-          discretizeAll(this.model, { parts: nParts });
-          this.viewport.renderModel(this.model);
-        } else if (this._predisc) {
-          // estaba auto-discretizado y la casilla se desactivó: restaurar
-          this.model = this.serializer.fromJSON(this._predisc);
-          this._predisc = null;
-          this.viewport.renderModel(this.model);
-        }
+        const autoDisc = this._applyAutoDiscIfEnabled();
 
         // Firma del modelo original (+ auto-disc): identifica unívocamente los
         // resultados. Si coincide con la caché, se reutiliza sin volver a resolver.
@@ -1751,6 +1833,8 @@ class App {
     this._buckResult = null;
     this._plasticResult = null;   // no dejar rótulas/pushover viejos en la pestaña
     this._dcResult = null;
+    this._nlResult = null;
+    this._pdResult = null;
     this.viewport.clearResults();
     // Apagar la visualización de reacciones
     this._showReactions = false;
@@ -1796,7 +1880,7 @@ class App {
   }
 
   // ── Modal analysis ─────────────────────────────────────────────────────────
-  async runModal() {
+  async runModal(opts = {}) {
     if (this.model.nodes.size === 0 || (this.model.elements.size === 0 && (this.model.areas?.size || 0) === 0)) {
       this.toast('El modelo debe tener nodos y elementos (barras o áreas)', 'warn'); return;
     }
@@ -1810,10 +1894,13 @@ class App {
     // modal, para hacerlo "desde afuera" sobre el modelo limpio.
     if (this.viewport._inResultsMode) this.viewport.clearResults();
 
-    // HTML modal instead of native prompt()
-    const modalOpts = await this._modalNModesDialog();
+    // HTML modal instead of native prompt(); en lote, valores por defecto (#38).
+    const modalOpts = opts.silent
+      ? { nModes: this._lastNModes || 10, method: this._modalMethod || 'subspace' }
+      : await this._modalNModesDialog();
     if (!modalOpts) return;
     const { nModes, method: modalMethod } = modalOpts;
+    this._lastNModes = nModes;
 
     const btn = document.getElementById('btn-run');
     if (btn) btn.classList.add('running');
@@ -1822,6 +1909,9 @@ class App {
     await new Promise(r => setTimeout(r, 20));   // deja pintar la caja antes de ensamblar
 
     try {
+      // Auto-discretización ×N (igual que el estático) para el modal (#36).
+      this._applyAutoDiscIfEnabled();
+
       // ── Assemble stiffness / mass on main thread ─────────────────────────────
       const nodeIndex = buildNodeIndex(this.model);
       const { K, M, nDOF } = assembleK(this.model, nodeIndex);
@@ -2109,7 +2199,7 @@ class App {
   }
 
   // ── Response spectrum analysis ─────────────────────────────────────────────
-  async runSpectrum() {
+  async runSpectrum(opts = {}) {
     if (!this._modalResults) {
       this.toast('Ejecute primero el Análisis Modal (F6)', 'warn'); return;
     }
@@ -2118,9 +2208,18 @@ class App {
     // con T* del modal) o lo escribe. Así nada parece "ya calculado".
     const defaultText = this._lastSpectrum || '';
 
-    const params = await this._spectrumDialog(defaultText);
+    // En lote (#38) se reutiliza la última curva definida; si no hay, se omite
+    // (el espectro requiere una curva Sa(T) que el usuario debe fijar una vez).
+    let params;
+    if (opts.silent) {
+      if (!this._lastSpectrumParams) { this.toast('Espectro omitido en el lote: defínalo una vez manualmente para fijar la curva.', 'warn'); return; }
+      params = this._lastSpectrumParams;
+    } else {
+      params = await this._spectrumDialog(defaultText);
+    }
     if (!params) return;
     this._lastSpectrum = params.rawText;
+    this._lastSpectrumParams = params;
 
     const btn = document.getElementById('btn-run');
     if (btn) btn.classList.add('running');
@@ -2189,7 +2288,7 @@ class App {
   // como «cable» resisten solo tracción. Pretensado por longitud natural L0.
   // Combina todos los casos estáticos a factor 1 (cargas nodales + peso propio +
   // distribuidas concentradas a los nodos extremos). Newton incremental.
-  runNonlinear() {
+  runNonlinear(opts = {}) {
     if (!this._config?.analisis?.nlLite) {
       this.toast('Active «Análisis no lineal (NL-lite)» en ⚙ Configuración primero', 'warn');
       this.configDialog?.();
@@ -2380,13 +2479,14 @@ class App {
   // ITERACIÓN DE SUBESPACIO en un Web Worker (igual que el modal): extrae los
   // menores λcr en bloque, sin bloquear la UI ni el num.eig denso O(n³) que se
   // colgaba. El estado de referencia (K·u = F) se resuelve con Cholesky en banda.
-  async runBuckling() {
+  async runBuckling(opts = {}) {
     if (!this._config?.analisis?.nlLite) { this.toast('Active «Análisis no lineal (NL-lite)» en ⚙ Configuración', 'warn'); this.configDialog?.(); return; }
     if (this.model.nodes.size === 0 || this.model.elements.size === 0) { this.toast('Modelo vacío', 'warn'); return; }
 
-    const buckOpts = await this._buckNModesDialog();
+    const buckOpts = opts.silent ? { nModes: this._lastBuckModes || 6 } : await this._buckNModesDialog();
     if (!buckOpts) return;
     const { nModes } = buckOpts;
+    this._lastBuckModes = nModes;
 
     if (this.viewport._inResultsMode) this.viewport.clearResults();
     const btn = document.getElementById('btn-run');
@@ -2396,6 +2496,7 @@ class App {
     await new Promise(r => setTimeout(r, 20));   // deja pintar la caja antes de ensamblar
 
     try {
+      this._applyAutoDiscIfEnabled();   // misma malla que el estático (#36)
       const { nodeIndex, K, nDOF, freeDOF, F, nCasos } = this._buildGeomProblem();
       this._geomNI = nodeIndex;
       if (!freeDOF.length) throw new Error('Sin GDL libres');
@@ -2552,10 +2653,11 @@ class App {
 
   // P-DELTA: resuelve (K + Kg(u))·u = F iterando (frames). Muestra la deformada
   // amplificada y compara δmax lineal vs P-Delta.
-  runPDelta() {
+  runPDelta(opts = {}) {
     if (!this._config?.analisis?.nlLite) { this.toast('Active «Análisis no lineal (NL-lite)» en ⚙ Configuración', 'warn'); this.configDialog?.(); return; }
     const num = window.numeric;
     if (!num) { this.toast('numeric.js no disponible', 'error'); return; }
+    this._applyAutoDiscIfEnabled();   // misma malla que el estático (#36)
     const { nodeIndex, K, nDOF, freeDOF, F, nCasos } = this._buildGeomProblem();
     this._geomNI = nodeIndex;
     if (!freeDOF.length) { this.toast('Sin GDL libres', 'warn'); return; }
@@ -2600,7 +2702,7 @@ class App {
   // Halla la forma de equilibrio de la red de cables/barras y REPOSICIONA los
   // nodos libres a esa geometría (queda como modelo base; Ctrl+Z deshace).
   // Anclas = nodos con alguna restricción de traslación. q = densidad de fuerza.
-  async runFormFinding() {
+  async runFormFinding(opts = {}) {
     if (!this._config?.analisis?.nlLite) { this.toast('Active «Análisis no lineal (NL-lite)» en ⚙ Configuración', 'warn'); this.configDialog?.(); return; }
     const model = this.model;
     if (model.nodes.size === 0 || model.elements.size === 0) { this.toast('Modelo vacío', 'warn'); return; }
@@ -2641,9 +2743,9 @@ class App {
     }
     if (!branches.length) { this.toast('Sin elementos para formar la red.', 'warn'); return; }
 
-    const opts = await this._formFindDialog(hasSel);
-    if (!opts) return;
-    const { q0, axes } = opts;
+    const ffOpts = opts.silent ? { q0: 10, axes: [2] } : await this._formFindDialog(hasSel);
+    if (!ffOpts) return;
+    const { q0, axes } = ffOpts;
     const q = branches.map(() => q0);
 
     // Cargas externas combinadas (todos los casos estáticos) sobre nodos libres.
@@ -2771,7 +2873,7 @@ class App {
   // Material elasto-perfectamente-plástico: cada extremo forma rótula al alcanzar
   // el momento plástico Mp; se libera ese GDL de giro y su momento queda fijo en
   // Mp. El colapso ocurre cuando se forma un MECANISMO (K singular).
-  async runPlastic() {
+  async runPlastic(opts = {}) {
     if (!this._config?.analisis?.nlLite) { this.toast('Active «Análisis no lineal (NL-lite)» en ⚙ Configuración', 'warn'); this.configDialog?.(); return; }
     const model = this.model;
     if (model.nodes.size === 0 || model.elements.size === 0) { this.toast('Modelo vacío', 'warn'); return; }
@@ -2780,9 +2882,15 @@ class App {
     // seleccionados se puede dar un Mp distinto a la selección y, opcionalmente,
     // dejar que SÓLO la selección rotule (el resto permanece elástico).
     const selEls = this._selElems();
-    const popts = await this._plasticDialog(selEls.length > 0);
+    // Auto-disc ×N sólo si NO hay selección: con selección los IDs de la malla no
+    // coinciden con los seleccionados y se perdería el Mp por elemento (#36).
+    if (!selEls.length) this._applyAutoDiscIfEnabled();
+    const popts = opts.silent
+      ? { mpDefault: this._lastMp || 100, mpSel: this._lastMp || 100, soloSel: false }
+      : await this._plasticDialog(selEls.length > 0);
     if (!popts) return;
     const { mpDefault, mpSel, soloSel } = popts;
+    this._lastMp = mpDefault;
     const Mp = mpDefault;
     const selSet = new Set(selEls);
     const capByElem = new Map();
@@ -2998,7 +3106,7 @@ class App {
   // + curva carga–desplazamiento. Traza la trayectoria de equilibrio completa
   // (snap-through / puntos límite). Imperfección inicial opcional para disparar
   // inestabilidades. Trata los elementos como barras/cables (truss).
-  async runPushoverDC() {
+  async runPushoverDC(opts = {}) {
     if (!this._config?.analisis?.nlLite) { this.toast('Active «Análisis no lineal (NL-lite)» en ⚙ Configuración', 'warn'); this.configDialog?.(); return; }
     const model = this.model;
     if (model.nodes.size === 0 || model.elements.size === 0) { this.toast('Modelo vacío', 'warn'); return; }
@@ -3006,7 +3114,7 @@ class App {
     if (!P.free.length) { this.toast('Sin GDL libres', 'warn'); return; }
     if (!P.nCasos) { this.toast('Defina un caso de carga (patrón de referencia).', 'warn'); return; }
 
-    const impStr = await this._promptModal('Pushover — control de desplazamiento',
+    const impStr = opts.silent ? '0' : await this._promptModal('Pushover — control de desplazamiento',
       'Imperfección inicial (amplitud en m; 0 = perfecta). Se aplica en la forma de la respuesta para disparar inestabilidades:', '0');
     if (impStr == null) return;
     const imp = parseFloat(impStr) || 0;
@@ -3788,6 +3896,8 @@ class App {
       this._buckResult = null;
       this._plasticResult = null;
       this._dcResult = null;
+      this._nlResult = null;
+      this._pdResult = null;
       if (!keepResults) { this._modalResults = null; this._spectrumResults.clear(); }
       this._results = null;
       this._resultsByCase = null;
