@@ -43,11 +43,17 @@ function solveSPD(D, b, n) {
  *   branches  [[i,j], ...]            ramas (índices de nodo) — cables/barras
  *   q         number[]                densidad de fuerza por rama (>0 = tracción)
  *   loads     [[px,py,pz], ...]|null  carga externa por nodo (opcional)
+ *   axes      number[]|null           coordenadas a RESOLVER (0=x,1=y,2=z).
+ *                                     Por defecto [0,1,2] (3D). Las no listadas
+ *                                     se mantienen en su valor de la semilla → así
+ *                                     se puede acotar el form-finding a la vertical
+ *                                     (axes=[2]) sin redistribuir las luces en planta.
  * @returns { ok, coords, freeIdx, note }
  *   coords = nuevas coordenadas de equilibrio (los anclas quedan igual).
  */
 export function formFind(o) {
-  const { coords, fixed, branches, q, loads } = o;
+  const { coords, fixed, branches, q, loads, axes } = o;
+  const solveAxes = Array.isArray(axes) && axes.length ? axes : [0, 1, 2];
   const n = fixed.length;
   const map = new Int32Array(n).fill(-1);
   const freeIdx = [];
@@ -77,7 +83,7 @@ export function formFind(o) {
   }
 
   const out = Float64Array.from(coords);
-  for (let c = 0; c < 3; c++) {
+  for (const c of solveAxes) {
     const x = solveSPD(D, rhs[c], nf);
     if (!x) return { ok: false, coords: out, freeIdx, note: 'La red no es estable con estas densidades (¿nodos libres sin conexión a anclas, o q ≤ 0?).' };
     for (let k = 0; k < nf; k++) out[3 * freeIdx[k] + c] = x[k];
