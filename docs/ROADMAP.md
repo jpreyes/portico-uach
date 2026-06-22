@@ -88,10 +88,10 @@ similaridad. `[#]` referencia el pedido original. Estado: ⬜ pendiente · 🟡 
 - ✅ **BUG resultados de rótulas no se actualizan** `[#46]`: `clearResults()` y `_loadJSON()` ahora limpian `_plasticResult`/`_dcResult` → la pestaña «Rótulas» ya no muestra la corrida anterior al limpiar o cambiar de modelo.
 - ✅ **Visualizar la secuencia de formación de rótulas en el modelo** `[#47]`: la deformada plástica marca cada rótula en la posición deformada de su nodo, **coloreada por orden de formación** (gradiente **amarillo→rojo**). Panel flotante con **slider + play** para recorrer la secuencia paso a paso (rótula k/N, elemento, λ). `showNLDeformed` acepta `hinges`; el overlay/timer se limpian al limpiar resultados. Verificado: portal 2D → 4 rótulas (mecanismo, λ 0.90→1.07).
 
-## G12 · Análisis dinámico en el tiempo (time-history) ⬜ *(nuevo)*
+## G12 · Análisis dinámico en el tiempo (time-history) 🟡 *(en curso)*
 *Respuesta dinámica ante un acelerograma en la base; se apoya en el modal (G2) y en las rótulas (G11).*
 *Decisiones tomadas: integración por **Duhamel** por modo (es lineal, no hace falta Newmark); excitación **uniforme en la base** (sin soporte multi-apoyo); registros de ejemplo incluidos: **Llolleo y Constitución 2010**.*
-- ⬜ **Time-history lineal modal (rápido)** `[#48a]`: superposición modal con **integral de Duhamel por modo** (decisión: Duhamel, no Newmark), con **acelerograma uniforme en la base** (excitación de soporte idéntica en todos los apoyos). Reusa los modos y masas del análisis modal.
+- ✅ **Time-history lineal modal — MOTOR** `[#48a]`: `js/solver/timehistory.js` — superposición modal con **integral de Duhamel por modo** evaluada con la recurrencia **exacta de Nigam–Jennings** (Chopra Tabla 5.4.1; exacta para acelerograma lineal por tramos, incondicionalmente estable), **acelerograma uniforme en la base**. Para cada modo i: `q̈ᵢ + 2ζωᵢq̇ᵢ + ωᵢ²qᵢ = −Γᵢ·a_g(t)` con `Γᵢ = φᵢᵀM·r / φᵢᵀMφᵢ`; la respuesta física se reconstruye por `u(t) = Σ φᵢqᵢ(t)`. Núcleo autónomo (verificable en Node). Incluye `responseSpectrum` (auxiliar). **Verificado** (`test_timehistory.mjs`) contra soluciones analíticas SDOF (escalón → DLF=2; armónico → función de transferencia; vibración libre → decremento logarítmico) y un **Newmark directo independiente** en un edificio de corte 2-GDL (RMS modal−Newmark ≈ 8·10⁻⁶). *(Pendiente: integración con el solver modal de la app + UI — `[#48c]`/`[#48d]`.)*
 - ⬜ **Time-history incremental modal (no lineal)** `[#48b]`: carga incremental / actualización de la base modal a medida que se forman rótulas plásticas (modal no lineal por tramos).
 - ⬜ **Entrada de acelerograma** `[#48c]`: cargar/pegar un registro (t, a) por dirección (X/Y/Z), escala y Δt; **biblioteca de ejemplo con Llolleo y Constitución 2010** (decisión tomada).
 - ⬜ **Resultados en el tiempo** `[#48d]`: historias y envolventes de respuesta para **nodos** (desplaz./acel.), **elementos** (esfuerzos), **rótulas plásticas** (rotación/secuencia) y **diafragmas** (deriva/corte de piso). Reproducción animada + exportación.
@@ -104,7 +104,7 @@ similaridad. `[#]` referencia el pedido original. Estado: ⬜ pendiente · 🟡 
 3. ✅ **G1 `[#36]`–`[#40]`** + ✅ **G11 `[#44]`**: auto-disc para los análisis de pórtico, indicadores NL, lote sin diálogos, parámetros persistidos en `.s3d`, sub-pestañas del hub — **hechos**; `[#44]` completo (P-Delta/Rótulas en banda + caja de progreso + No lineal/Pushover en Web Worker).
 4. ✅ **G8 `[#43]`** + **G6 `[#41]`**: autoguardado periódico/recuperación múltiple y memoria por proyecto — **hechos**.
 5. ✅ **G11 `[#45]`/`[#47]`**: elegir caso/combo en rótulas y visualizar la secuencia de formación — **hechos**.
-6. **G12** — análisis dinámico time-history (modal lineal e incremental); se apoya en G2 y G11.
+6. 🟡 **G12** — análisis dinámico time-history (modal lineal e incremental); se apoya en G2 y G11. **`[#48a]` motor verificado** (`timehistory.js`, Duhamel/Nigam–Jennings); falta integrarlo con el modal de la app + UI de acelerograma/resultados (`[#48c]`/`[#48d]`).
 7. ✅ **G10 `[#49]`** — postproceso de elementos de área (tensiones/deformada/selección) + análisis de modelos sólo-área (muros/losas) — **hecho**.
 8. **G9** + **G10/contorno** — verificación y documentación. **G7** — multi-modelo al final (rediseño mayor).
 
