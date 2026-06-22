@@ -64,11 +64,12 @@ similaridad. `[#]` referencia el pedido original. Estado: ⬜ pendiente · 🟡 
 - ⬜ **Mejorar UX de los análisis avanzados** (no lineales) + **ejemplo sencillo y `.md` por funcionalidad** (pandeo, form-finding, pushover). `[#20]` *(detalle técnico desglosado en G11.)*
 - ⬜ **Documentación integral de toda funcionalidad**: qué hace, teoría mínima, cómo ejecutarla en la app, ejemplo caracterìstico. `[#21]`
 
-## G10 · Completar la física de elementos (FEM / shell) ✅
+## G10 · Completar la física de elementos (FEM / shell) 🟡 *(reabierto — postproceso de áreas)*
 *Continuación del trabajo de placa/shell.*
 - ✅ **Contorno de tensiones de flexión de placa**: `plateMoments` (momentos Mx,My,Mxy en el centro, MITC4 y DKT) → tensión de superficie `σ=±6M/t²` → von Mises de **envolvente** max(cara sup, cara inf) en `getAreaStress` (`areaBendingStress`); el contorno y el suavizado nodal usan la envolvente para shells. Panel del área muestra vM superficie/membrana/sup/inf. Verificado: momento central placa SS quad −1.6% / tri −2.6% vs 0.0479·q·a²; contorno de voladizo shell flexión-dominado.
 - ✅ **Torsión de St. Venant**: el `J` ya se auto-calcula de la geometría en todas las secciones paramétricas (rect, circular, huecas; IPE/HEB tabuladas). Mejorado: fórmula rectangular a la serie precisa de Roark `J=a·t³·[1/3−0.21(t/a)(1−(t/a)⁴/12)]`; corregido el `J` de la sección por defecto 30×30 (era 1.13e-4, 10× bajo → 1.14e-3).
 - ✅ **Masa de área para el modal**: las áreas aportan `ρ·t·A` (lumped, repartida a los GDL de traslación) a la matriz de masas, en el ensamblaje denso y disperso (`assembleAreasMassInto`). Verificado: masa total por dirección = ρ·t·A.
+- ⬜ **Postproceso de elementos de área (shell/placa/membrana) — no funciona** `[#49]`: en producción los elementos de área **no muestran resultados**. Pendiente: (a) **opción «Tensiones»** en la lista desplegable de resultados (`#result-type`) — hoy no aparece, no se puede activar el **contorno de tensiones** (`getAreaStress`/von Mises) que sí existe en el solver; (b) **deformada de las áreas** (las caras deben deformarse con los desplazamientos nodales, hoy no se ve); (c) al **seleccionar un área** el panel no muestra **nada** (ni tensiones, ni deformación, ni desplazamientos de sus nodos, ni esfuerzos/momentos `plateMoments`); (d) revisar que las áreas **entren en los resultados** del solve (la "integración no se logra" → ¿el ensamblaje/recuperación de resultados de áreas no se está conectando al postproceso?). Verificar con la placa SS y el voladizo shell ya usados en las pruebas del solver.
 
 ## G11 · Análisis avanzados: corrección, rendimiento y UX 🟡 *(reabierto — bugs en producción)*
 *Cluster de incidencias detectadas usando los análisis no lineales en producción.*
@@ -101,7 +102,8 @@ similaridad. `[#]` referencia el pedido original. Estado: ⬜ pendiente · 🟡 
 4. **G8 `[#43]`** + **G6 `[#41]`**: autoguardado periódico/recuperación múltiple y memoria por proyecto.
 5. **G11 `[#45]`/`[#47]`**: elegir caso/combo en rótulas y visualizar la secuencia de formación.
 6. **G12** — análisis dinámico time-history (modal lineal e incremental); se apoya en G2 y G11.
-7. **G9** + **G10/contorno** — verificación y documentación. **G7** — multi-modelo al final (rediseño mayor).
+7. **G10 `[#49]`** — postproceso de elementos de área (tensiones/deformada/selección): hoy las áreas no muestran resultados; alto valor para los modelos con muros/losas.
+8. **G9** + **G10/contorno** — verificación y documentación. **G7** — multi-modelo al final (rediseño mayor).
 
 ## Decisiones pendientes
 - **G2 (método modal)**: ¿qué método de las referencias (subespacio / Lanczos / el documentado allí)?
