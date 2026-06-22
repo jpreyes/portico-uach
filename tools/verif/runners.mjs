@@ -11,9 +11,17 @@ export async function ensureNumeric() {
   _num = true;
 }
 
+// En modelos 2D la app (runModal) restringe uy/rx/rz; ModalSolver usa los
+// restraints del nodo tal cual, así que replicamos esa restricción aquí.
+function apply2D(model) {
+  if (model.mode !== '2D') return;
+  for (const n of model.nodes.values()) { n.restraints.uy = 1; n.restraints.rx = 1; n.restraints.rz = 1; }
+}
+
 // Análisis modal — devuelve el ModalResults real (period[], freq[], getModeShape…).
 export async function runModal(model, nModes = 6) {
   await ensureNumeric();
+  apply2D(model);
   return new ModalSolver().solve(model, nModes);
 }
 
