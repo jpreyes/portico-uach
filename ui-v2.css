@@ -85,22 +85,59 @@ button:focus-visible, select:focus-visible, input:focus-visible {
 /* ══════════════════════════════════════════════════════════════
    PORTADA — pantalla de bienvenida institucional
    ══════════════════════════════════════════════════════════════ */
+/* Portada como VENTANA FLOTANTE pequeña: #landing es el telón (backdrop) que
+   atenúa la app y centra una tarjeta compacta (.landing-card). */
 #landing {
   position: fixed;
   inset: 0;
   z-index: 9000;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
+  padding: 24px;
   background:
-    radial-gradient(1100px 520px at 50% -8%, rgba(56, 189, 248, 0.13), transparent 65%),
-    radial-gradient(900px 480px at 88% 108%, rgba(45, 212, 191, 0.10), transparent 60%),
-    var(--bg);
-  overflow-y: auto;     /* permite ver el pie (logos) si el contenido no cabe */
-  overflow-x: hidden;
+    radial-gradient(1100px 520px at 50% -8%, rgba(56, 189, 248, 0.10), transparent 65%),
+    rgba(6, 10, 16, 0.62);
+  overflow: auto;
   transition: opacity 0.6s ease, filter 0.6s ease;
 }
+/* Tarjeta flotante compacta */
+.landing-card {
+  position: relative;
+  z-index: 1;
+  width: min(440px, 94vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 18px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
+  padding: 6px 4px 4px;
+  animation: fade-up 0.5s ease both;
+}
+/* ── Compactado de los elementos dentro de la tarjeta flotante ── */
+.landing-card .landing-inst { align-self: center; padding: 16px 22px 6px; gap: 11px; }
+.landing-card .inst-logo { height: 34px; }
+.landing-card .inst-names strong { font-size: 12px; }
+.landing-card .inst-names span { font-size: 9.5px; }
+.landing-card .landing-hero { padding: 0 22px; max-width: 100%; margin: 4px 0 0; }
+.landing-card #hero-frame { width: min(150px, 46%); margin-bottom: 2px; }
+.landing-card .hero-title { font-size: clamp(38px, 9vw, 52px); }
+.landing-card .hero-tag { margin-top: 6px; font-size: 13px; }
+.landing-card .hero-desc { display: none; }      /* descripción larga: fuera para mantenerla pequeña */
+.landing-card .hero-chips { display: none; }       /* chips: fuera por espacio */
+.landing-card .hero-assistant { max-width: 100% !important; margin: 12px auto 10px !important; }
+.landing-card #landing-nl { min-height: 78px !important; font-size: 13px !important; }
+.landing-card .hero-actions { margin-top: 14px; gap: 9px; }
+.landing-card #btn-enter { font-size: 14px; padding: 12px 22px; border-radius: 12px; }
+.landing-card #btn-install, .landing-card #btn-manual { font-size: 13px; padding: 11px 18px; border-radius: 12px; }
+.landing-card .hero-kbd { margin-top: 9px; }
+.landing-card .landing-credit { padding: 14px 22px 18px; font-size: 11px; line-height: 1.6; max-width: 100%; }
+.landing-card .landing-logos { gap: 18px; margin-bottom: 10px; }
+.landing-card .landing-logos img { height: 34px; }
 /* La portada sigue el tema de la app. En OSCURO se redeclaran las variables
    (el :root base ya es oscuro, pero esto la deja explícita para el splash);
    en CLARO hereda las variables de :root[data-theme="light"]. */
@@ -129,9 +166,9 @@ button:focus-visible, select:focus-visible, input:focus-visible {
 }
 #landing.exit { opacity: 0; filter: blur(6px); pointer-events: none; }
 
-/* trama de plano técnico */
+/* trama de plano técnico (oculta en modo ventana flotante) */
 #landing::before {
-  content: "";
+  content: none;
   position: absolute;
   inset: -120px;
   background-image:

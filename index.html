@@ -29,8 +29,8 @@
       window.dispatchEvent(new Event('pwa-installed'));
     });
   </script>
-  <link rel="stylesheet" href="style.css?v=111">
-  <link rel="stylesheet" href="ui-v2.css?v=111">
+  <link rel="stylesheet" href="style.css?v=112">
+  <link rel="stylesheet" href="ui-v2.css?v=112">
   <script type="importmap">
   {
     "imports": {
@@ -781,6 +781,7 @@
 <div id="landing">
   <button id="landing-theme" type="button" title="Cambiar tema claro/oscuro"
     style="position:fixed;top:14px;right:16px;z-index:9100;background:var(--bg4,#e2e8f1);border:1px solid var(--border2,#bcc8d8);color:var(--text,#1b2533);border-radius:8px;cursor:pointer;font-size:17px;line-height:1;padding:6px 10px">🌙</button>
+  <div class="landing-card">
   <header class="landing-inst">
     <img class="inst-logo" src="icons/UACh-color-negro.svg" alt="Universidad Austral de Chile">
     <div class="inst-names">
@@ -846,7 +847,7 @@
     Para estudiantes de <strong>Arquitectura</strong>, <strong>Construcción</strong> e
     <strong>Ingeniería Civil en Obras Civiles</strong>.
   </footer>
-</div>
+  </div><!-- /.landing-card -->
 
 <script>
 /* Portada: entrar con clic, Enter o Escape; bloquea atajos del app mientras está visible */
@@ -943,7 +944,7 @@
 
 <!-- numeric.js para solver (Fase 2+) -->
 <script src="lib/numeric.js"></script>
-<script type="module" src="js/app.js?v=111"></script>
+<script type="module" src="js/app.js?v=112"></script>
 
 <!-- PWA: registrar el service worker (offline). Solo en contexto seguro
      (https o localhost); el navegador deja navigator.serviceWorker undefined
