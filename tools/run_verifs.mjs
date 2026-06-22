@@ -61,7 +61,9 @@ function buildFigure(model, out, caseDef) {
 }
 
 function buildComparison(cmp, out) {
-  const pv = cmp.portico(out.res);
+  // `out` se pasa también (2º arg) para casos multi-LC: cmp.portico(res, out) →
+  // los casos sencillos ignoran el 2º argumento (compatibilidad).
+  const pv = cmp.portico(out.res, out);
   const idxLabel = cmp.indexLabel || 'Modo';
   const header = [idxLabel, 'Descripción', `Independiente (${cmp.unit})`, `SAP2000 (${cmp.unit})`, 'dif. SAP', `**Pórtico (${cmp.unit})**`, '**dif. Pórtico**'];
   const rows = cmp.rows.map((r, i) => {

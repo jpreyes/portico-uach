@@ -37,7 +37,15 @@ export async function runStatic(model, lcId = null, selfWeight = false) {
 export async function runAnalysis(model, spec) {
   switch (spec.analysis) {
     case 'modal': return { type: 'modal', res: await runModal(model, spec.nModes || 6) };
-    case 'static': return { type: 'static', res: await runStatic(model, spec.lcId ?? null, !!spec.selfWeight) };
+    case 'static': {
+      // Multi-caso: si spec.lcIds (array) → corre cada caso y devuelve resById.
+      if (Array.isArray(spec.lcIds) && spec.lcIds.length) {
+        const resById = new Map();
+        for (const id of spec.lcIds) resById.set(id, await runStatic(model, id, !!spec.selfWeight));
+        return { type: 'static', res: resById.get(spec.lcIds[0]), resById };
+      }
+      return { type: 'static', res: await runStatic(model, spec.lcId ?? null, !!spec.selfWeight) };
+    }
     default: throw new Error('Análisis no soportado en el harness: ' + spec.analysis);
   }
 }
