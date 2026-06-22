@@ -29,8 +29,8 @@
       window.dispatchEvent(new Event('pwa-installed'));
     });
   </script>
-  <link rel="stylesheet" href="style.css?v=120">
-  <link rel="stylesheet" href="ui-v2.css?v=120">
+  <link rel="stylesheet" href="style.css?v=121">
+  <link rel="stylesheet" href="ui-v2.css?v=121">
   <script type="importmap">
   {
     "imports": {
@@ -67,6 +67,13 @@
           <li data-action="importcsv">Importar CSV…</li>
           <li data-action="exportcsv">Exportar CSV</li>
           <li data-action="template">Descargar Plantilla CSV</li>
+          <li class="sep"></li>
+          <li data-action="export-results">Exportar Resultados Estáticos</li>
+          <li data-action="export-modal">Exportar Resultados Modales</li>
+          <li data-action="export-spectrum">Exportar Resultados Espectrales</li>
+          <li class="sep"></li>
+          <li data-action="bases-calculo">📄 Memoria / Bases de Cálculo (PDF)…</li>
+          <li data-action="memoria-docx">📝 Memoria de Cálculo (Word .docx)…</li>
         </ul>
       </div>
 
@@ -86,6 +93,8 @@
           <li data-action="mallar-panel">Mallar panel (4 esquinas → malla)…</li>
           <li class="sep"></li>
           <li data-action="grids">Definir Ejes de Grilla…</li>
+          <li data-action="combos">Combinaciones de Carga… <kbd>F8</kbd></li>
+          <li data-action="combos-norma">Crear casos y combos de norma (NCh3171)…</li>
         </ul>
       </div>
 
@@ -119,28 +128,31 @@
       <div class="menu-root">
         <span class="menu-label">Análisis</span>
         <ul class="menu-drop">
-          <li data-action="run">▶ Análisis Estático (todos los casos y combos) <kbd>F5</kbd></li>
+          <li data-action="run">▶ Análisis Estático <kbd>F5</kbd></li>
           <li data-action="run-force">↻ Recalcular (forzar, ignora resultados guardados)</li>
-          <li data-action="run-modal">▶ Análisis Modal… <kbd>F6</kbd></li>
-          <li data-action="run-spectrum">▶ Espectro de Respuesta… <kbd>F7</kbd></li>
-          <li data-action="run-nonlinear">▶ Análisis No Lineal — cables (NL-lite)…</li>
-          <li data-action="run-pdelta">▶ Análisis P-Delta (NL-lite)…</li>
-          <li data-action="run-buckling">▶ Pandeo Lineal — factor crítico (NL-lite)…</li>
-          <li data-action="run-formfind">▶ Form-finding — densidades de fuerza (NL-lite)…</li>
-          <li data-action="run-plastic">▶ Rótulas Plásticas — colapso (NL-lite)…</li>
-          <li data-action="run-pushover-dc">▶ Pushover — control de desplazamiento (NL-lite)…</li>
           <li class="sep"></li>
-          <li data-action="combos">Combinaciones de Carga… <kbd>F8</kbd></li>
-          <li data-action="combos-norma">Crear casos y combos de norma (NCh3171)…</li>
+          <li class="menu-sub">
+            <span>Análisis lineales</span><span class="sub-arrow">▸</span>
+            <ul class="menu-flyout">
+              <li data-action="run">▶ Estático — todos los casos y combos <kbd>F5</kbd></li>
+              <li data-action="run-modal">▶ Modal… <kbd>F6</kbd></li>
+              <li data-action="run-spectrum">▶ Espectro de Respuesta… <kbd>F7</kbd></li>
+            </ul>
+          </li>
+          <li class="menu-sub">
+            <span>Análisis NL-lite</span><span class="sub-arrow">▸</span>
+            <ul class="menu-flyout">
+              <li data-action="run-nonlinear">▶ No Lineal — cables…</li>
+              <li data-action="run-pdelta">▶ P-Delta…</li>
+              <li data-action="run-buckling">▶ Pandeo Lineal — factor crítico…</li>
+              <li data-action="run-formfind">▶ Form-finding — densidades de fuerza…</li>
+              <li data-action="run-plastic">▶ Rótulas Plásticas — colapso…</li>
+              <li data-action="run-pushover-dc">▶ Pushover — control de desplazamiento…</li>
+            </ul>
+          </li>
+          <li class="sep"></li>
           <li data-action="global-matrices">Ver Matrices Globales K · M…</li>
           <li data-action="diag-estabilidad">Diagnosticar estabilidad (nodos sueltos)…</li>
-          <li class="sep"></li>
-          <li data-action="export-results">Exportar Resultados Estáticos</li>
-          <li data-action="export-modal">Exportar Resultados Modales</li>
-          <li data-action="export-spectrum">Exportar Resultados Espectrales</li>
-          <li class="sep"></li>
-          <li data-action="bases-calculo">📄 Memoria / Bases de Cálculo (PDF)…</li>
-          <li data-action="memoria-docx">📝 Memoria de Cálculo (Word .docx)…</li>
           <li class="sep"></li>
           <li data-action="clear-results">Limpiar Resultados</li>
         </ul>
@@ -944,7 +956,7 @@
 
 <!-- numeric.js para solver (Fase 2+) -->
 <script src="lib/numeric.js"></script>
-<script type="module" src="js/app.js?v=120"></script>
+<script type="module" src="js/app.js?v=121"></script>
 
 <!-- PWA: registrar el service worker (offline). Solo en contexto seguro
      (https o localhost); el navegador deja navigator.serviceWorker undefined

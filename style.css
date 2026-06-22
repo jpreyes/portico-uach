@@ -158,6 +158,36 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 }
 .menu-drop li.item-disabled { color: var(--text-muted); cursor: default; }
 .menu-drop li.item-disabled:hover { background: transparent; }
+
+/* Submenús flyout (Análisis → Análisis lineales / NL-lite) */
+.menu-drop li.menu-sub { position: relative; }
+.menu-drop li.menu-sub > .sub-arrow { color: var(--text-muted); font-size: 11px; }
+.menu-flyout {
+  display: none;
+  position: absolute;
+  top: -5px;            /* alinea con el padding superior del dropdown padre */
+  left: 100%;
+  min-width: 260px;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  z-index: 210;
+  list-style: none;
+  padding: 4px 0;
+  margin: 0;
+}
+.menu-drop li.menu-sub:hover > .menu-flyout { display: block; }
+.menu-flyout li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 14px;
+  cursor: pointer;
+  gap: 16px;
+  white-space: nowrap;
+}
+.menu-flyout li:hover { background: var(--bg4); }
 .menu-drop kbd {
   font-family: var(--font-mono);
   font-size: 10px;
