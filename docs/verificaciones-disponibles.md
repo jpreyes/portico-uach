@@ -40,7 +40,10 @@ Documentos en `docs/verificaciones/<slug>.{md,pdf}`, modelos en `examples/verif_
 | **1-013** Beam on elastic foundation | resorte de línea | 🟡 aprox. discretizando + resortes nodales |
 | **1-008** Partial fixity end releases | rótulas de **fijación parcial** (resorte de extremo) | 🟡 PÓRTICO sólo tiene release total 0/1 |
 | **1-005** Displacement loading (settlement) | asentamiento/giro impuesto en apoyo | ⛔ no hay desplazamiento prescrito de apoyo |
-| 1-006 no-prismático · 1-009 pretensado tendón · 1-010 end offsets · 1-011 insertion point · 1-027 etapas constructivas · 1-030 moving loads | features no soportadas | ⛔ |
+| **1-009** Prestressing tendon load | pretensado por tendón (cargas equivalentes) | ✅ **HECHO** (`tendon.js`, dif ≤0.011 %) |
+| **1-027** Staged construction | etapas constructivas (activación + acumulación) | ✅ **HECHO** (`staged.js` → verif **1-031**, 0.000 %) |
+| **1-030** Moving loads / influence lines | cargas móviles, líneas de influencia, envolventes | ✅ **HECHO** (`moving_load.js`, 0.000 %) |
+| 1-006 no-prismático · 1-010 end offsets · 1-011 insertion point | features no soportadas | ⛔ |
 
 ## 2. Análisis modal (frecuencias, formas, masa participante)
 

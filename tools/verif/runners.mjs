@@ -6,6 +6,9 @@ import { StaticSolver } from '../../js/solver/static_solver.js';
 import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from '../../js/solver/assembler.js';
 import { assembleKg } from '../../js/solver/geometric.js';
 import { solveNonlinear } from '../../js/solver/nl_lite.js';
+import { StagedSolver } from '../../js/solver/staged.js';
+import { applyTendon } from '../../js/solver/tendon.js';
+import { buildLane, influenceLine, movingLoadEnvelope, responseReaction } from '../../js/solver/moving_load.js';
 
 let _num = false;
 export async function ensureNumeric() {
@@ -119,12 +122,52 @@ export async function runModalKg(model, refLcId, nModes = 3) {
   return new ModalResults(model, ni, freeDOF, modes, M, nDOF);
 }
 
+// ── Etapas constructivas (#59) — StagedSolver con stages del caso ──────────────
+export async function runStaged(model, spec) {
+  await ensureNumeric();
+  apply2D(model);
+  return new StagedSolver().solve(model, spec.stages);
+}
+
+// ── Pretensado por tendones (#60) — aplica el tendón y corre el estático ────────
+export async function runTendon(model, spec) {
+  await ensureNumeric();
+  apply2D(model);
+  const lcId = spec.lcId ?? 1;
+  applyTendon(model, lcId, spec.tendon);
+  return new StaticSolver().solve(model, lcId, !!spec.selfWeight);
+}
+
+// ── Cargas móviles / líneas de influencia (#61) — API de barrido sobre la pista ─
+// Devuelve un adaptador con líneas de influencia y envolventes para que el caso
+// extraiga los valores a comparar (sin getNodeDisp → la figura sale sin deformada).
+export async function runMoving(model, spec) {
+  await ensureNumeric();
+  apply2D(model);
+  const lane = buildLane(model, spec.lane);
+  const midMoment = (leftElem, rightElem) => (res) => {
+    const a = res.getElemAtXi(leftElem, 1.0).Mz, b = res.getElemAtXi(rightElem, 0.0).Mz;
+    return Math.abs(a) <= Math.abs(b) ? a : b;   // lado no cargado = exacto
+  };
+  return {
+    lane,
+    ilReaction: (nodeId, comp = 'Fz', opts) => influenceLine(model, lane, responseReaction(nodeId, comp), opts),
+    ilMidMoment: (leftElem, rightElem, opts) => influenceLine(model, lane, (r) => Math.abs(midMoment(leftElem, rightElem)(r)), opts),
+    influence: (response, opts) => influenceLine(model, lane, response, opts),
+    envelope: (train, responses, opts) => movingLoadEnvelope(model, lane, train, responses, opts),
+    midMoment,
+  };
+}
+
 // Despacho por tipo de análisis (se irá ampliando: buckling, espectro, …).
 export async function runAnalysis(model, spec) {
   switch (spec.analysis) {
     case 'modal': return { type: 'modal', res: await runModal(model, spec.nModes || 6) };
     case 'modalKg': return { type: 'modal', res: await runModalKg(model, spec.refLcId ?? 1, spec.nModes || 3) };
     case 'nllite': return { type: 'nllite', res: await runNLLite(model, spec.lcId ?? null, spec) };
+    case 'staged': return { type: 'staged', res: await runStaged(model, spec) };
+    case 'tendon': return { type: 'static', res: await runTendon(model, spec) };
+    case 'moving': return { type: 'moving', res: await runMoving(model, spec) };
     case 'static': {
       // Multi-caso: si spec.lcIds (array) → corre cada caso y devuelve resById.
       if (Array.isArray(spec.lcIds) && spec.lcIds.length) {
