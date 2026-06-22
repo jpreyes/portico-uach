@@ -29,8 +29,8 @@
       window.dispatchEvent(new Event('pwa-installed'));
     });
   </script>
-  <link rel="stylesheet" href="style.css?v=112">
-  <link rel="stylesheet" href="ui-v2.css?v=112">
+  <link rel="stylesheet" href="style.css?v=113">
+  <link rel="stylesheet" href="ui-v2.css?v=113">
   <script type="importmap">
   {
     "imports": {
@@ -821,15 +821,9 @@
       <span>Modelado 3D</span><span>Análisis estático</span><span>Formas modales</span>
       <span>Espectro de respuesta</span><span>Combinaciones</span><span>Diafragmas rígidos</span>
     </div>
-    <div class="hero-assistant" style="max-width:620px;margin:6px auto 14px;text-align:left">
-      <label class="hero-assistant-label" style="display:block;font-size:12px;color:var(--text-muted,#9aa);margin-bottom:4px">✦ Empieza con el asistente: describe tu estructura y se modela sola</label>
-      <textarea id="landing-nl" rows="5"
-        placeholder="Ej.: edificio de 4 niveles de 3 m, 3 vanos de 6 m en X y 2 de 5 m en Y, hormigón H30, vigas 25x50, pilares 35x35, salas de clases, en Valdivia, con sismo zona 2 suelo D"
-        style="width:100%;box-sizing:border-box;resize:vertical;min-height:120px;border-radius:8px;border:1px solid var(--border,#334);background:var(--bg-elev,#141b27);color:var(--text,#e6edf3);padding:11px 13px;font-size:14px;line-height:1.45;font-family:inherit"></textarea>
-      <button id="btn-landing-gen" type="button" style="margin-top:7px;width:100%">✦ Generar modelo con el asistente</button>
-    </div>
     <div class="hero-actions">
       <button id="btn-enter">Entrar al laboratorio (vacío) <span class="arrow">→</span></button>
+      <button id="btn-asistente" type="button">✦ Generar modelo con el asistente <span class="arrow">→</span></button>
       <button id="btn-manual" type="button">📖 Manual de uso</button>
       <button id="btn-install" type="button">⤓ Instalar app</button>
     </div>
@@ -863,30 +857,24 @@
     // Si el manual (ayuda) está abierto sobre la portada, que él maneje las teclas
     const help = document.getElementById('help-overlay');
     if (help && !help.classList.contains('hidden')) return;
-    // No secuestrar el teclado mientras se escribe en el cuadro del asistente
-    if (e.target && e.target.id === 'landing-nl') return;
     e.stopPropagation();
     if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); enter(); }
   }
   document.getElementById('btn-enter').addEventListener('click', enter);
   document.addEventListener('keydown', onKey, true);
 
-  // ── Generar con el asistente desde la portada ──
-  function generarDesdeLanding() {
-    const ta = document.getElementById('landing-nl');
-    const txt = (ta?.value || '').trim();
-    if (!txt) { ta?.focus(); return; }
-    enter();   // entra al laboratorio (oculta la portada)
+  // ── "Generar modelo con el asistente": entra al laboratorio y abre el panel
+  //    del Asistente (super-pestaña derecha). ──
+  function abrirAsistente() {
+    enter();   // oculta la portada
     const go = () => {
-      if (window.app && typeof window.app.asistenteDesdeTexto === 'function') window.app.asistenteDesdeTexto(txt);
+      const p = window.app && window.app.panel;
+      if (p && typeof p._switchVTab === 'function') p._switchVTab('asistente');
       else setTimeout(go, 120);   // espera a que la app termine de inicializar
     };
     go();
   }
-  document.getElementById('btn-landing-gen')?.addEventListener('click', generarDesdeLanding);
-  document.getElementById('landing-nl')?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); generarDesdeLanding(); }
-  });
+  document.getElementById('btn-asistente')?.addEventListener('click', abrirAsistente);
 
   // ── Botón "Manual de uso" — abre la Ayuda sin entrar al laboratorio ──
   document.getElementById('btn-manual')?.addEventListener('click', () => {
@@ -944,7 +932,7 @@
 
 <!-- numeric.js para solver (Fase 2+) -->
 <script src="lib/numeric.js"></script>
-<script type="module" src="js/app.js?v=112"></script>
+<script type="module" src="js/app.js?v=113"></script>
 
 <!-- PWA: registrar el service worker (offline). Solo en contexto seguro
      (https o localhost); el navegador deja navigator.serviceWorker undefined

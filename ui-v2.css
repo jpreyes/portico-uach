@@ -123,16 +123,15 @@ button:focus-visible, select:focus-visible, input:focus-visible {
 .landing-card .inst-logo { height: 34px; }
 .landing-card .inst-names strong { font-size: 12px; }
 .landing-card .inst-names span { font-size: 9.5px; }
-.landing-card .landing-hero { padding: 0 22px; max-width: 100%; margin: 4px 0 0; }
-.landing-card #hero-frame { width: min(150px, 46%); margin-bottom: 2px; }
-.landing-card .hero-title { font-size: clamp(38px, 9vw, 52px); }
+.landing-card .landing-hero { padding: 0 22px; max-width: 100%; margin: 2px 0 0; }
+.landing-card #hero-frame { width: min(210px, 62%); margin-bottom: 4px; }   /* logo PÓRTICO prominente */
+.landing-card .hero-title { font-size: clamp(40px, 9vw, 56px); }
 .landing-card .hero-tag { margin-top: 6px; font-size: 13px; }
 .landing-card .hero-desc { display: none; }      /* descripción larga: fuera para mantenerla pequeña */
 .landing-card .hero-chips { display: none; }       /* chips: fuera por espacio */
-.landing-card .hero-assistant { max-width: 100% !important; margin: 12px auto 10px !important; }
-.landing-card #landing-nl { min-height: 78px !important; font-size: 13px !important; }
-.landing-card .hero-actions { margin-top: 14px; gap: 9px; }
-.landing-card #btn-enter { font-size: 14px; padding: 12px 22px; border-radius: 12px; }
+/* Acciones apiladas: las dos primarias a lo ancho de la tarjeta */
+.landing-card .hero-actions { margin-top: 16px; gap: 9px; flex-direction: column; width: 100%; }
+.landing-card #btn-enter, .landing-card #btn-asistente { width: 100%; font-size: 14px; padding: 13px 22px; border-radius: 12px; }
 .landing-card #btn-install, .landing-card #btn-manual { font-size: 13px; padding: 11px 18px; border-radius: 12px; }
 .landing-card .hero-kbd { margin-top: 9px; }
 .landing-card .landing-credit { padding: 14px 22px 18px; font-size: 11px; line-height: 1.6; max-width: 100%; }
@@ -315,9 +314,10 @@ button:focus-visible, select:focus-visible, input:focus-visible {
   animation: fade-up 1s 0.75s ease both;
 }
 
-#btn-enter {
+#btn-enter, #btn-asistente {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
   font-family: var(--font-display);
   font-size: 15px;
@@ -333,13 +333,13 @@ button:focus-visible, select:focus-visible, input:focus-visible {
   transition: transform 0.18s ease, box-shadow 0.18s ease;
   animation: fade-up 1s 0.75s ease both;
 }
-#btn-enter:hover {
+#btn-enter:hover, #btn-asistente:hover {
   transform: translateY(-2px) scale(1.02);
   box-shadow: 0 14px 42px rgba(56, 189, 248, 0.45);
 }
-#btn-enter:active { transform: translateY(0) scale(0.99); }
-#btn-enter .arrow { transition: transform 0.18s ease; }
-#btn-enter:hover .arrow { transform: translateX(4px); }
+#btn-enter:active, #btn-asistente:active { transform: translateY(0) scale(0.99); }
+#btn-enter .arrow, #btn-asistente .arrow { transition: transform 0.18s ease; }
+#btn-enter:hover .arrow, #btn-asistente:hover .arrow { transform: translateX(4px); }
 
 /* Botón secundario "Instalar app" (PWA) */
 #btn-install, #btn-manual {
