@@ -10,6 +10,7 @@ import path from 'path';
 import { Model } from '../../js/model/model.js';
 import { Serializer } from '../../js/model/serializer.js';
 import { coonsGridFromCorners, blockCells } from '../../js/model/mesh_map.js';
+import { meshPolygonIntoModel } from '../../js/model/mesh_free.js';
 
 const ROOT = process.cwd();
 const E = 2.1e11, nu = 0.3, t = 0.01, exx = 1e-4;
@@ -33,3 +34,17 @@ for (const cell of blockCells(TNX, TNY, false)) m.addArea(cell.map(g => nid[g]),
 
 fs.writeFileSync(path.join(ROOT, 'examples', 'verif_3-001_patch_test_malla.s3d'), new Serializer().toJSON(m), 'utf8');
 console.log('✓ verif_3-001_patch_test_malla.s3d  ·', m.nodes.size, 'nodos,', m.areas.size, 'QUAD');
+
+// ── 3-005: patch test en MALLA LIBRE de una planta en L (cóncava) ─────────────
+const mL = new Model(); mL.mode = '3D'; mL.materials.clear(); mL.sections.clear();
+const matL = mL.addMaterial({ name: 'Acero', E, G: E / 2.6, nu, rho: 0 });
+const Lshape = [[0, 0, 0], [2, 0, 0], [2, 1, 0], [1, 1, 0], [1, 2, 0], [0, 2, 0]];
+const mp = meshPolygonIntoModel(mL, Lshape, { h: 1.0, recombine: true, smooth: 3, thickness: t, behavior: 'membrane', matId: matL.id });
+for (const id of mp.nodeIds) {
+  const n = mL.nodes.get(id), bnd = mp.boundaryNodeIds.has(id);
+  mL.updateNode(id, { restraints: { uz: 1, rx: 1, ry: 1, rz: 1, ux: bnd ? 1 : 0, uy: bnd ? 1 : 0 } });
+  if (bnd) mL.updateNode(id, { prescDisp: { ux: exx * n.x, uy: -nu * exx * n.y } });
+}
+fs.writeFileSync(path.join(ROOT, 'examples', 'verif_3-005_malla_libre_L.s3d'), new Serializer().toJSON(mL), 'utf8');
+const nq = [...mL.areas.values()].filter(a => a.nodes.length === 4).length;
+console.log('✓ verif_3-005_malla_libre_L.s3d  ·', mL.nodes.size, 'nodos,', mL.areas.size, 'celdas (', nq, 'QUAD,', mL.areas.size - nq, 'CST)');
