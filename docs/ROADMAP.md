@@ -118,6 +118,12 @@ similaridad. `[#]` referencia el pedido original. Estado: ⬜ pendiente · 🟡 
 - ⬜ **Gradiente térmico a través del espesor en áreas** `[#57]`: además del ΔT uniforme actual, un **gradiente** ΔT a través del espesor de la placa/cáscara (momento térmico). Habilita **2-014**.
 - ⬜ **Continuo plano: tensión plana y deformación plana** `[#58]`: opción de **plane-stress** (viga modelada como membrana, **3-002/3-003**) y **plane-strain** (**3-004** cilindro de pared gruesa) en el elemento de membrana. Hoy la membrana es tensión plana implícita; falta el modo deformación plana y validar la viga recta/curva.
 - ⬜ **Otras parciales** (en `capacidades-portico.md`): fijación parcial de extremo (resorte de extremo, **1-008**), resorte de **línea**/viga sobre fundación (**1-013**), **pandeo de cáscara** (**2-016/2-017**), **gran rotación con flexión** (viga corotacional, **1-029**). Prioridad menor.
+
+### Para análisis de PUENTES *(features mayores; hoy ⛔)*
+- ⬜ **Etapas constructivas** (staged construction) `[#59]`: análisis por **etapas** con activación/desactivación de elementos y acumulación de estado (peso propio por fase, cierres, dovelas). Clave para puentes construidos por voladizos/empuje. *(Cambio mayor: estado por etapa, no sólo un análisis único.)*
+- ⬜ **Pretensado por tendones** `[#60]`: tendones con **trazado** (parábola/poligonal), fuerza de tesado y **pérdidas**; cargas equivalentes del pretensado sobre la viga. Habilita **1-009** y el pretensado de tableros. *(Encaja con `#57`/`#55`.)*
+- ⬜ **Cargas móviles / líneas de influencia** `[#61]`: tren de cargas que recorre la estructura, **envolventes** de esfuerzos/reacciones y **líneas de influencia**. Habilita **1-030** (CSiBridge) y el diseño de tableros a tránsito. *(Cambio mayor: barrido de posiciones + envolventes.)*
+- ⬜ **Apoyos con desplazamiento prescrito** → cubierto por `[#54]` (asentamientos diferenciales de pilas/estribos, típicos en puentes).
 - 🔗 **Ya en el backlog**: time-history modal con **elementos de área** `[#51]` (en G12) · **mesheador automático tipo Gmsh** `[#52]` (en G13) — ambos también cierran brechas de capacidad.
 
 ---

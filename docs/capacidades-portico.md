@@ -52,16 +52,20 @@ Estado: ✅ completo · 🟡 parcial · ⛔ no disponible.
 
 ## ⛔ Capacidades no disponibles (según los ejemplos de verificación)
 
+> **Para análisis de PUENTES** — brechas planificadas en **G14**: `[#54]` desplazamiento prescrito
+> de apoyo (asentamientos diferenciales) · `[#59]` etapas constructivas · `[#60]` pretensado por
+> tendones · `[#61]` cargas móviles / líneas de influencia.
+
 **Modelado de barra / sección**
-- **Desplazamiento prescrito de apoyo / asentamiento** impuesto (1-005).
+- **Desplazamiento prescrito de apoyo / asentamiento** impuesto (1-005) — planificado `[#54]`.
 - **Secciones no prismáticas** (variación A/I a lo largo) (1-006).
-- **Pretensado por tendones** (perfil parabólico, fuerza de tesado) (1-009).
+- **Pretensado por tendones** (perfil parabólico, fuerza de tesado) (1-009) — planificado `[#60]`.
 - **End offsets / brazos rígidos** de extremo (1-010).
 - **Insertion point / cardinal point** (excentricidad de inserción) (1-011).
 
 **Procesos / cargas avanzadas**
-- **Construcción por etapas** (staged construction) (1-027).
-- **Cargas móviles** (moving loads / líneas de influencia) (1-030, CSiBridge).
+- **Construcción por etapas** (staged construction) (1-027) — planificado `[#59]`.
+- **Cargas móviles** (moving loads / líneas de influencia) (1-030, CSiBridge) — planificado `[#61]`.
 
 **Elementos LINK** (6-xxx) — PÓRTICO sólo tiene resortes lineales nodales:
 - Amortiguadores (lineales y no lineales, exponente de velocidad) (6-005/6-006/6-007).
