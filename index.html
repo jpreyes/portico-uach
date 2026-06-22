@@ -29,8 +29,8 @@
       window.dispatchEvent(new Event('pwa-installed'));
     });
   </script>
-  <link rel="stylesheet" href="style.css?v=115">
-  <link rel="stylesheet" href="ui-v2.css?v=115">
+  <link rel="stylesheet" href="style.css?v=116">
+  <link rel="stylesheet" href="ui-v2.css?v=116">
   <script type="importmap">
   {
     "imports": {
@@ -863,18 +863,24 @@
   document.getElementById('btn-enter').addEventListener('click', enter);
   document.addEventListener('keydown', onKey, true);
 
-  // ── "Generar modelo con el asistente": entra al laboratorio y abre el panel
-  //    del Asistente (super-pestaña derecha). ──
-  // El flag lo honra la app al terminar de inicializar (tras recuperar la sesión
-  // / cargar el modelo, que dejan la pestaña en «Modelo»); el cambio inmediato es
-  // la vía rápida cuando la app ya está lista.
+  // ── "Generar modelo con el asistente": entra al laboratorio y abre el diálogo
+  //    "Asistente — generar modelo desde ficha". ──
+  // Si la app ya terminó de inicializar (_ready), abrimos el diálogo nosotros; si
+  // aún está inicializando (p.ej. mostrando "¿recuperar sesión?"), dejamos el flag
+  // y la app abre el diálogo al terminar (evita chocar con el modal de arranque).
   function abrirAsistente() {
     window.__porticoGoAsistente = true;
     enter();   // oculta la portada
     const go = () => {
-      const p = window.app && window.app.panel;
-      if (p && typeof p._switchVTab === 'function') p._switchVTab('asistente');
-      else setTimeout(go, 120);   // espera a que la app termine de inicializar
+      const app = window.app;
+      if (app && app._ready) {
+        if (window.__porticoGoAsistente && typeof app.asistenteDialog === 'function') {
+          window.__porticoGoAsistente = false;
+          app.asistenteDialog();
+        }
+      } else {
+        setTimeout(go, 120);   // init en curso → la app lo abrirá al terminar
+      }
     };
     go();
   }
@@ -936,7 +942,7 @@
 
 <!-- numeric.js para solver (Fase 2+) -->
 <script src="lib/numeric.js"></script>
-<script type="module" src="js/app.js?v=115"></script>
+<script type="module" src="js/app.js?v=116"></script>
 
 <!-- PWA: registrar el service worker (offline). Solo en contexto seguro
      (https o localhost); el navegador deja navigator.serviceWorker undefined
