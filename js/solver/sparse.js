@@ -13,9 +13,10 @@
 import {
   localAxes, stiffnessMatrix, massMatrix,
   transformMatrix, globalStiffness, applyReleases
-} from './timoshenko.js?v=126';
-import { applyDiaphragmConstraintsW, applyDiaphragmMassW } from './diaphragm.js?v=126';
-import { assembleAreasInto, assembleAreasMassInto } from './membrane.js?v=126';
+} from './timoshenko.js?v=127';
+import { applyDiaphragmConstraintsW, applyDiaphragmMassW } from './diaphragm.js?v=127';
+import { applyLinkConstraintsW } from './links.js?v=127';
+import { assembleAreasInto, assembleAreasMassInto } from './membrane.js?v=127';
 
 // ── Matriz simétrica dispersa (acumulador por filas) ──────────────────────────
 export class SparseSym {
@@ -88,6 +89,9 @@ export function assembleSparseGlobal(model, nodeIndex, { withMass = false } = {}
 
   // Restricciones de diafragma rígido (penalización) — lógica compartida
   applyDiaphragmConstraintsW(S.writer(), model, nodeIndex, nDOF);
+
+  // Links/couplings (tablero↔viga, offsets) — penalización
+  applyLinkConstraintsW(S.writer(), model, nodeIndex, nDOF);
 
   if (withMass) {
     assembleAreasMassInto(M.writer(), model, nodeIndex);   // masa de áreas (ρ·t·A)

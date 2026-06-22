@@ -1,7 +1,7 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // Serializer — JSON (.s3d) and CSV import/export
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model } from './model.js?v=126';
+import { Model } from './model.js?v=127';
 
 export class Serializer {
 
@@ -18,6 +18,7 @@ export class Serializer {
       materials:  [...model.materials.values()],
       sections:   [...model.sections.values()],
       diaphragms:   [...model.diaphragms.values()],
+      links:        [...model.links.values()],
       loadCases:    [...model.loadCases.values()],
       combinations: [...model.combinations.values()],
       grids:        model.grids || { x: [], y: [], z: [] },
@@ -38,7 +39,7 @@ export class Serializer {
     const m = new Model();
     // Clear defaults, we'll load from file
     m.materials.clear(); m.sections.clear();
-    m._cnt = { nodes:0, elements:0, areas:0, materials:0, sections:0, diaphragms:0, loadCases:0, combinations:0 };
+    m._cnt = { nodes:0, elements:0, areas:0, materials:0, sections:0, diaphragms:0, loadCases:0, combinations:0, links:0 };
 
     m.units = obj.units || 'kN-m';
     m.mode  = obj.mode === '2D' ? '2D' : '3D';
@@ -60,6 +61,11 @@ export class Serializer {
       m.areas.set(d.id, d);
     }
     for (const d of (obj.diaphragms|| []))  { m.diaphragms.set(d.id, d); }
+    for (const d of (obj.links || [])) {
+      if (!d.dofs) d.dofs = { ux: 1, uy: 1, uz: 1, rx: 1, ry: 1, rz: 1 };
+      if (d.rigid === undefined) d.rigid = true;
+      m.links.set(d.id, d);
+    }
     for (const d of (obj.loadCases    || [])) {
       if (d.type !== 'spectrum') { d.type = 'static'; d.specDir = null; }
       m.loadCases.set(d.id, d);
@@ -81,6 +87,7 @@ export class Serializer {
       m._cnt.sections   = maxId(m.sections);
       m._cnt.diaphragms = maxId(m.diaphragms);
       m._cnt.loadCases  = maxId(m.loadCases);
+      m._cnt.links      = maxId(m.links);
     }
 
     // If empty after loading, add defaults

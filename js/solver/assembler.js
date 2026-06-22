@@ -5,9 +5,10 @@ import {
   localAxes, stiffnessMatrix, massMatrix,
   transformMatrix, globalStiffness,
   applyReleases, fixedEndForces, condenseFEF
-} from './timoshenko.js?v=126';
-import { applyDiaphragmConstraints, applyDiaphragmMass } from './diaphragm.js?v=126';
-import { assembleAreasInto, assembleAreasMassInto, areaThermalContribs } from './membrane.js?v=126';
+} from './timoshenko.js?v=127';
+import { applyDiaphragmConstraints, applyDiaphragmMass } from './diaphragm.js?v=127';
+import { applyLinkConstraints } from './links.js?v=127';
+import { assembleAreasInto, assembleAreasMassInto, areaThermalContribs } from './membrane.js?v=127';
 
 // ── Node index (contiguous 0-based numbering) ─────────────────────────────
 export function buildNodeIndex(model) {
@@ -86,6 +87,9 @@ export function assembleK(model, nodeIndex) {
 
   // Apply rigid diaphragm constraints (penalty method)
   applyDiaphragmConstraints(K, model, nodeIndex, nDOF);
+
+  // Apply link/coupling constraints (tablero↔viga, offsets) — penalty method
+  applyLinkConstraints(K, model, nodeIndex, nDOF);
 
   // Apply diaphragm concentrated masses (for modal analysis)
   applyDiaphragmMass(M, model, nodeIndex, nDOF);

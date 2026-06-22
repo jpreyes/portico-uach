@@ -14,9 +14,10 @@ export class Model {
     this.diaphragms   = new Map();
     this.loadCases    = new Map();
     this.combinations = new Map();
+    this.links        = new Map();   // links/couplings entre nodos (tablero↔viga, offsets)
 
     this._cnt = { nodes: 0, elements: 0, areas: 0, materials: 0,
-                  sections: 0, diaphragms: 0, loadCases: 0, combinations: 0 };
+                  sections: 0, diaphragms: 0, loadCases: 0, combinations: 0, links: 0 };
 
     this.units = 'kN-m';
 
@@ -101,6 +102,7 @@ export class Model {
       if (el.n1 === id || el.n2 === id) { this.elements.delete(eid); this._purgeElemLoads(eid); }
     }
     this._purgeNodeLoads(id);   // cargas nodales que apuntaban al nodo borrado
+    for (const [lid, lk] of this.links) if (lk.master === id || lk.slave === id) this.links.delete(lid);
     this.nodes.delete(id);
     return true;
   }
@@ -275,6 +277,34 @@ export class Model {
 
   removeDiaphragm(id) { return this.diaphragms.delete(id); }
 
+  // ── Links / couplings ───────────────────────────────────────────────────────
+  // Liga un nodo ESCLAVO a un nodo MAESTRO (sin elemento entre ellos).
+  //  rigid=true  → link rígido (sigue al maestro como sólido, con brazo/offset):
+  //                u_s = u_m + θ_m×r, θ_s = θ_m.  Transmite fuerza+momento.
+  //  rigid=false → coupling simple: iguala los GDL marcados (sin brazo).
+  //  dofs = {ux,uy,uz,rx,ry,rz} (1=ligado) — acota qué GDL del esclavo se ligan.
+  addLink(props = {}) {
+    const id = this._next('links');
+    const link = {
+      id, name: props.name || `Link ${id}`,
+      master: props.master ?? null, slave: props.slave ?? null,
+      rigid: props.rigid !== false,   // por defecto rígido
+      dofs: { ux: 1, uy: 1, uz: 1, rx: 1, ry: 1, rz: 1, ...(props.dofs || {}) },
+    };
+    this.links.set(id, link);
+    return link;
+  }
+  updateLink(id, props) {
+    const l = this.links.get(id); if (!l) return null;
+    if (props.master !== undefined) l.master = +props.master;
+    if (props.slave  !== undefined) l.slave  = +props.slave;
+    if (props.rigid  !== undefined) l.rigid  = !!props.rigid;
+    if (props.dofs) Object.assign(l.dofs, props.dofs);
+    if (props.name  !== undefined) l.name = props.name;
+    return l;
+  }
+  removeLink(id) { return this.links.delete(id); }
+
   // ── Load Cases ─────────────────────────────────────────────────────────────
   // selfWeight: si true, el análisis de este caso incluye el peso propio de
   // todos los elementos (típico del caso CM / carga muerta).
@@ -357,11 +387,13 @@ export class Model {
     this.diaphragms.clear();
     this.loadCases.clear();
     this.combinations.clear();
+    this.links.clear();
     this._cnt.nodes = 0;
     this._cnt.elements = 0;
     this._cnt.diaphragms = 0;
     this._cnt.loadCases = 0;
     this._cnt.combinations = 0;
+    this._cnt.links = 0;
   }
 
   // Full reset including materials and sections
