@@ -29,8 +29,8 @@
       window.dispatchEvent(new Event('pwa-installed'));
     });
   </script>
-  <link rel="stylesheet" href="style.css?v=108">
-  <link rel="stylesheet" href="ui-v2.css?v=108">
+  <link rel="stylesheet" href="style.css?v=109">
+  <link rel="stylesheet" href="ui-v2.css?v=109">
   <script type="importmap">
   {
     "imports": {
@@ -482,6 +482,7 @@
             <button class="rtab active" data-rtab="modal">Modal</button>
             <button class="rtab" data-rtab="estatico">Estático</button>
             <button class="rtab" data-rtab="combos">Combos</button>
+            <button class="rtab" data-rtab="plastico">Rótulas</button>
           </div>
           <div id="res-content">
             <div id="rtab-modal" class="rtab-content active">
@@ -496,6 +497,10 @@
               <button class="btn-add" id="btn-combos-norma" style="margin-bottom:8px;background:rgba(210,153,34,0.16);border-color:var(--warn);color:var(--warn)" title="Casos D/L y combinaciones LRFD + servicio de la NCh3171">⚙ Crear casos y combos de norma (NCh3171)</button>
               <div id="combo-list"></div>
               <button class="btn-add" id="btn-add-combo">＋ Agregar Combinación</button>
+            </div>
+            <div id="rtab-plastico" class="rtab-content">
+              <p class="panel-hint" id="res-plastic-hint">Ejecute <b>Rótulas plásticas</b> (Análisis → NL-lite) para ver la secuencia de formación de rótulas y el factor de colapso.</p>
+              <div id="res-plastic-body"></div>
             </div>
           </div>
         </div>
@@ -936,7 +941,7 @@
 
 <!-- numeric.js para solver (Fase 2+) -->
 <script src="lib/numeric.js"></script>
-<script type="module" src="js/app.js?v=108"></script>
+<script type="module" src="js/app.js?v=109"></script>
 
 <!-- PWA: registrar el service worker (offline). Solo en contexto seguro
      (https o localhost); el navegador deja navigator.serviceWorker undefined

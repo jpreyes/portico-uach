@@ -1,8 +1,8 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // PropertiesPanel — right-side panel: node/element properties + mat/sec tabs
 // ──────────────────────────────────────────────────────────────────────────────
-import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=108';
-import { localAxes } from '../solver/timoshenko.js?v=108';
+import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=109';
+import { localAxes } from '../solver/timoshenko.js?v=109';
 
 export class PropertiesPanel {
   constructor(panelEl, app) {
@@ -37,6 +37,7 @@ export class PropertiesPanel {
       modal:    document.getElementById('rtab-modal'),
       estatico: document.getElementById('rtab-estatico'),
       combos:   document.getElementById('rtab-combos'),
+      plastico: document.getElementById('rtab-plastico'),
     };
     this._currentRTab = 'modal';
 
@@ -160,6 +161,42 @@ export class PropertiesPanel {
     if (rtab === 'modal')    this.renderModalResults();
     if (rtab === 'estatico') this.renderStaticResults();
     if (rtab === 'combos')   this.renderCombinations();
+    if (rtab === 'plastico') this.renderPlasticResults();
+  }
+
+  // ── Rótulas plásticas (pushover plástico evento-a-evento) ──────────────────
+  // Lee app._plasticResult y pinta la secuencia de rótulas + factor de colapso.
+  // Vive en la pestaña de Resultados → respeta el tema (claro/oscuro) por usar
+  // las clases/variables del panel, a diferencia de la antigua ventana flotante.
+  renderPlasticResults() {
+    const body = document.getElementById('res-plastic-body');
+    const hint = document.getElementById('res-plastic-hint');
+    const pr = this.app._plasticResult;
+    if (!body) return;
+    if (!pr) { if (hint) hint.style.display = ''; body.innerHTML = ''; return; }
+    if (hint) hint.style.display = 'none';
+
+    const { events, lambda, collapsed, Mp } = pr;
+    const mut = 'color:var(--text-muted)';
+    const cap = (e) => (pr.capByElem && pr.capByElem.get(e.elemId)) ?? Mp;
+    const rows = events.map((e, i) =>
+      `<tr><td>${i + 1}</td><td>#${e.elemId}</td><td>${e.nodeId}</td><td>${e.axis}</td>` +
+      `<td>${e.lambda.toFixed(3)}</td><td>${cap(e).toFixed(0)}</td><td>${e.dctrl.toExponential(1)}</td></tr>`).join('');
+
+    const box = 'padding:8px 10px;border-radius:6px;background:var(--bg4);margin-bottom:4px';
+    const estado = collapsed
+      ? `<div style="${box};border-left:3px solid var(--success,#34d399)"><b>Colapso · λc = ${lambda.toFixed(3)}</b><br>
+           <span style="${mut}">Carga de colapso = ${lambda.toFixed(3)} × carga de referencia.</span></div>`
+      : `<div style="${box};border-left:3px solid var(--warn,#fbbf24)"><b>Sin mecanismo</b><br>
+           <span style="${mut}">${events.length} rótulas; la carga no completa un mecanismo (λ = ${lambda.toFixed(3)}).</span></div>`;
+
+    body.innerHTML = `
+      ${estado}
+      <table class="res-table" style="width:100%;border-collapse:collapse;font-size:11px;margin-top:8px">
+        <thead><tr style="${mut}">
+          <th>#</th><th>Elem</th><th>Nodo</th><th>Eje</th><th>λ</th><th>Mp</th><th>δctrl</th>
+        </tr></thead><tbody>${rows}</tbody></table>
+      <p class="panel-hint" style="margin-top:8px">Secuencia de formación de rótulas (λ = factor de carga). Mp = capacidad de cada rótula [kN·m]. δctrl = desplazamiento máximo.</p>`;
   }
 
   // ── Public API ─────────────────────────────────────────────────────────────

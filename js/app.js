@@ -1,27 +1,27 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=108';
-import { Serializer }      from './model/serializer.js?v=108';
-import { Viewport }        from './ui/viewport.js?v=108';
-import { PropertiesPanel } from './ui/properties.js?v=108';
-import { MenuBar }         from './ui/menu.js?v=108';
-import { UndoStack }       from './utils/undo.js?v=108';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=108';
-import { Results }                         from './solver/postprocess.js?v=108';
-import { ModalSolver }                     from './solver/modal_solver.js?v=108';
-import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=108';
-import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=108';
-import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=108';
-import { assembleKg } from './solver/geometric.js?v=108';
-import { makeFactor } from './solver/linsolve.js?v=108';
-import { formFind } from './solver/formfind.js?v=108';
-import { ModalResults }                    from './solver/modal_results.js?v=108';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=108';
-import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=108';
-import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=108';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=108';
-import { bilinearGrid, blockCells, cornerGridIndices } from './model/mesher.js?v=108';
+import { Model }           from './model/model.js?v=109';
+import { Serializer }      from './model/serializer.js?v=109';
+import { Viewport }        from './ui/viewport.js?v=109';
+import { PropertiesPanel } from './ui/properties.js?v=109';
+import { MenuBar }         from './ui/menu.js?v=109';
+import { UndoStack }       from './utils/undo.js?v=109';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=109';
+import { Results }                         from './solver/postprocess.js?v=109';
+import { ModalSolver }                     from './solver/modal_solver.js?v=109';
+import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=109';
+import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=109';
+import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=109';
+import { assembleKg } from './solver/geometric.js?v=109';
+import { makeFactor } from './solver/linsolve.js?v=109';
+import { formFind } from './solver/formfind.js?v=109';
+import { ModalResults }                    from './solver/modal_results.js?v=109';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=109';
+import { autoDetectDiaphragms, computeFloorCR } from './solver/diaphragm.js?v=109';
+import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=109';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=109';
+import { bilinearGrid, blockCells, cornerGridIndices } from './model/mesher.js?v=109';
 
 class App {
   constructor() {
@@ -1465,7 +1465,7 @@ class App {
   _staticWorkerSolve(K, nDOF, freeDOF, Flist, dense = false) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=108', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=109', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -1494,7 +1494,7 @@ class App {
   _staticWorkerSolveSparse(csr, cf, nDOF, freeDOF, Flist) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=108', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=109', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -1747,7 +1747,7 @@ class App {
       // ── Run Stodola in a Web Worker (non-blocking) ───────────────────────────
       const denseModal = !!this._config?.analisis?.matrizDensa;
       const modes = await new Promise((resolve, reject) => {
-        const worker = new Worker(new URL('./solver/modal_worker.js?v=108', import.meta.url), { type: 'module' });
+        const worker = new Worker(new URL('./solver/modal_worker.js?v=109', import.meta.url), { type: 'module' });
         worker.postMessage({ Kff_flat, Mff_flat, nF, nModes, dense: denseModal, method: modalMethod },
           [Kff_flat.buffer, Mff_flat.buffer]); // transfer — zero copy
         worker.onmessage = (ev) => {
@@ -2176,7 +2176,7 @@ class App {
     if (!el) {
       el = document.createElement('div');
       el.id = 'nl-overlay';
-      el.style.cssText = 'position:fixed;right:16px;bottom:84px;z-index:50;background:var(--panel,#0f1830);border:1px solid var(--border,#26324d);border-radius:8px;padding:10px 12px;width:260px;box-shadow:0 8px 24px rgba(0,0,0,.4);font-size:12px;color:var(--text,#dbe4f5)';
+      el.style.cssText = 'position:fixed;right:16px;bottom:84px;z-index:50;background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:10px 12px;width:260px;box-shadow:0 8px 24px rgba(0,0,0,.4);font-size:12px;color:var(--text)';
       document.body.appendChild(el);
     }
     el.innerHTML = `
@@ -2315,7 +2315,7 @@ class App {
 
       // Iteración de subespacio en el Worker (no bloquea la UI)
       const rawModes = await new Promise((resolve, reject) => {
-        const worker = new Worker(new URL('./solver/buckling_worker.js?v=108', import.meta.url), { type: 'module' });
+        const worker = new Worker(new URL('./solver/buckling_worker.js?v=109', import.meta.url), { type: 'module' });
         worker.postMessage({ Kff_flat, Kgff_flat, nF, nModes, dense },
           [Kff_flat.buffer, Kgff_flat.buffer]);   // transfer — zero copy
         worker.onmessage = (ev) => { worker.terminate(); ev.data.error ? reject(new Error(ev.data.error)) : resolve(ev.data.modes); };
@@ -2381,10 +2381,10 @@ class App {
     const modes = this._buckResult.modes;
     let el = document.getElementById('buck-overlay');
     if (!el) { el = document.createElement('div'); el.id = 'buck-overlay'; document.body.appendChild(el); }
-    el.style.cssText = 'position:fixed;right:16px;bottom:84px;z-index:50;background:var(--panel,#0f1830);border:1px solid var(--border,#26324d);border-radius:8px;padding:10px 12px;width:268px;box-shadow:0 8px 24px rgba(0,0,0,.4);font-size:12px;color:var(--text,#dbe4f5)';
+    el.style.cssText = 'position:fixed;right:16px;bottom:84px;z-index:50;background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:10px 12px;width:268px;box-shadow:0 8px 24px rgba(0,0,0,.4);font-size:12px;color:var(--text)';
     el.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <b style="color:var(--accent,#38bdf8)">Pandeo lineal</b>
+        <b style="color:var(--accent)">Pandeo lineal</b>
         <button id="buck-close" title="Cerrar" style="background:none;border:none;color:var(--text-muted,#94a3b8);cursor:pointer;font-size:16px;line-height:1">✕</button>
       </div>
       <div style="margin-bottom:6px">Modo:
@@ -2643,11 +2643,22 @@ class App {
     const model = this.model;
     if (model.nodes.size === 0 || model.elements.size === 0) { this.toast('Modelo vacío', 'warn'); return; }
 
-    const MpStr = await this._promptModal('Rótulas plásticas (material elasto-plástico)',
-      'Momento plástico Mp [kN·m], uniforme (capacidad de cada rótula):', '100');
-    if (MpStr == null) return;
-    const Mp = parseFloat(MpStr);
-    if (!(Mp > 0)) { this.toast('Mp debe ser un número > 0', 'warn'); return; }
+    // Capacidad Mp por elemento (#27b): por defecto uniforme; con elementos
+    // seleccionados se puede dar un Mp distinto a la selección y, opcionalmente,
+    // dejar que SÓLO la selección rotule (el resto permanece elástico).
+    const selEls = this._selElems();
+    const popts = await this._plasticDialog(selEls.length > 0);
+    if (!popts) return;
+    const { mpDefault, mpSel, soloSel } = popts;
+    const Mp = mpDefault;
+    const selSet = new Set(selEls);
+    const capByElem = new Map();
+    for (const el of model.elements.values()) {
+      let cap = mpDefault;
+      if (selEls.length && selSet.has(el.id)) cap = mpSel;
+      else if (selEls.length && soloSel) cap = Infinity;   // no rotula → permanece elástico
+      capByElem.set(el.id, cap);
+    }
 
     const nodeIndex = buildNodeIndex(model);
     const nDOF = nodeIndex.size * 6;
@@ -2711,8 +2722,9 @@ class App {
       for (const r of rates) {
         if (Math.abs(r.mr) < 1e-9) continue;
         const M0 = Macc.get(r.key) || 0;
+        const cap = capByElem.get(r.elemId) ?? Mp;   // Infinity → nunca rotula
         let best = Infinity;
-        for (const tgt of [Mp, -Mp]) { const dl = (tgt - M0) / r.mr; if (dl > 1e-9 && dl < best) best = dl; }
+        for (const tgt of [cap, -cap]) { const dl = (tgt - M0) / r.mr; if (dl > 1e-9 && dl < best) best = dl; }
         if (isFinite(best)) { cand.push({ r, dl: best }); if (best < dlam) dlam = best; }
       }
       if (!cand.length || !isFinite(dlam)) break;   // no hay más fluencia (carga insuficiente para colapsar)
@@ -2735,7 +2747,7 @@ class App {
     }
 
     if (!events.length) { this.toast('Ningún extremo alcanza Mp con esta carga (Mp demasiado alto o carga muy baja).', 'warn'); return; }
-    this._plasticResult = { events, lambda, collapsed, u: Float64Array.from(u), nodeIndex, Mp, nCasos };
+    this._plasticResult = { events, lambda, collapsed, u: Float64Array.from(u), nodeIndex, Mp, capByElem, nCasos };
 
     // Mostrar mecanismo de colapso (deformada) + secuencia de rótulas
     const uByNode = new Map();
@@ -2743,27 +2755,55 @@ class App {
     this.viewport.showNLDeformed(uByNode, new Map(), 1,
       collapsed ? `Colapso plástico · λc = ${lambda.toFixed(3)} · ${events.length} rótulas · mecanismo` : `Plástico · λ = ${lambda.toFixed(3)} · ${events.length} rótulas (sin mecanismo)`);
     this.toast(collapsed ? `Colapso plástico: λc = ${lambda.toFixed(3)} × carga de referencia · ${events.length} rótulas` : `Plástico: ${events.length} rótulas, sin mecanismo (λ=${lambda.toFixed(3)})`, collapsed ? 'ok' : 'warn');
-    this._plasticOpenOverlay();
+    // Resultados en la pestaña «Rótulas» (respeta el tema claro/oscuro) — #27a.
+    this.panel._switchVTab('resultados');
+    this.panel._switchRTab('plastico');
   }
 
-  _plasticOpenOverlay() {
-    const { events, lambda, collapsed, Mp } = this._plasticResult;
-    let el = document.getElementById('plastic-overlay');
-    if (!el) { el = document.createElement('div'); el.id = 'plastic-overlay'; document.body.appendChild(el); }
-    el.style.cssText = 'position:fixed;right:16px;bottom:84px;z-index:50;background:var(--panel,#0f1830);border:1px solid var(--border,#26324d);border-radius:8px;padding:10px 12px;width:280px;max-height:60vh;overflow:auto;box-shadow:0 8px 24px rgba(0,0,0,.4);font-size:12px;color:var(--text,#dbe4f5)';
-    const rows = events.map((e, i) => `<tr><td>${i + 1}</td><td>#${e.elemId}</td><td>${e.nodeId}</td><td>${e.axis}</td><td>${e.lambda.toFixed(3)}</td><td>${e.dctrl.toExponential(1)}</td></tr>`).join('');
-    el.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <b style="color:var(--accent,#38bdf8)">Rótulas plásticas</b>
-        <button id="plastic-close" title="Cerrar" style="background:none;border:none;color:var(--text-muted,#94a3b8);cursor:pointer;font-size:16px;line-height:1">✕</button>
-      </div>
-      <div style="margin-bottom:6px">${collapsed
-        ? `<b style="color:#34d399">Colapso · λc = ${lambda.toFixed(3)}</b><br><span style="color:var(--text-muted,#94a3b8)">Carga de colapso = ${lambda.toFixed(3)} × carga de referencia. Mp = ${Mp} kN·m.</span>`
-        : `<b style="color:#fbbf24">Sin mecanismo</b><br><span style="color:var(--text-muted,#94a3b8)">${events.length} rótulas; la carga no completa un mecanismo.</span>`}</div>
-      <table style="width:100%;border-collapse:collapse;font-size:10.5px"><thead><tr style="color:var(--text-muted,#94a3b8)">
-        <th>#</th><th>Elem</th><th>Nodo</th><th>Eje</th><th>λ</th><th>δctrl</th></tr></thead><tbody>${rows}</tbody></table>
-      <p style="color:var(--text-muted,#94a3b8);font-size:10px;margin-top:6px">Secuencia de formación de rótulas (λ = factor de carga). δctrl = desplazamiento máximo (curva carga-desplazamiento).</p>`;
-    el.querySelector('#plastic-close').addEventListener('click', () => { el.remove(); this.viewport.clearResults(); });
+  /** Diálogo HTML — capacidad Mp (uniforme y/o por selección) para las rótulas. */
+  _plasticDialog(hasSel) {
+    return new Promise(resolve => {
+      const overlay = document.getElementById('modal-overlay');
+      document.getElementById('modal-title').textContent = 'Rótulas plásticas (material elasto-plástico)';
+      document.getElementById('modal-cancel').style.display = '';
+      const selBlock = hasSel ? `
+        <div class="prop-row cols1" style="margin-top:8px">
+          <div class="prop-field">
+            <label>Mp para los elementos SELECCIONADOS [kN·m]</label>
+            <input type="text" id="pl-mp-sel" value="100" style="width:100%;margin-top:4px">
+          </div>
+        </div>
+        <div class="prop-row cols1" style="margin-top:6px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+            <input type="checkbox" id="pl-solo-sel"> Sólo la selección puede rotular (el resto permanece elástico)
+          </label>
+        </div>` : '';
+      document.getElementById('modal-body').innerHTML = `
+        <div class="prop-row cols1">
+          <div class="prop-field">
+            <label>Momento plástico Mp [kN·m] (capacidad ${hasSel ? 'del resto de elementos' : 'de cada rótula'})</label>
+            <input type="text" id="pl-mp-def" value="100" style="width:100%;margin-top:4px">
+          </div>
+        </div>
+        ${selBlock}
+        <div class="prop-row cols1" style="margin-top:8px">
+          <span style="color:var(--text-muted);font-size:11px;line-height:1.5">Análisis incremental evento-a-evento: cada extremo forma rótula al alcanzar su Mp; el colapso ocurre al formarse un mecanismo.${hasSel ? '' : ' Seleccione elementos antes para asignar capacidades por separado.'}</span>
+        </div>`;
+      overlay.classList.remove('hidden');
+      setTimeout(() => { const el = document.getElementById('pl-mp-def'); el?.focus(); el?.select(); }, 50);
+      overlay._resolve = () => {
+        const mpDefault = parseFloat(document.getElementById('pl-mp-def')?.value);
+        if (!(mpDefault > 0)) { this.toast('Mp debe ser un número > 0', 'warn'); resolve(null); return; }
+        let mpSel = mpDefault, soloSel = false;
+        if (hasSel) {
+          mpSel = parseFloat(document.getElementById('pl-mp-sel')?.value);
+          if (!(mpSel > 0)) { this.toast('Mp de la selección debe ser > 0', 'warn'); resolve(null); return; }
+          soloSel = !!document.getElementById('pl-solo-sel')?.checked;
+        }
+        resolve({ mpDefault, mpSel, soloSel });
+      };
+      overlay._reject = () => resolve(null);
+    });
   }
 
   // ── NL-lite: arma el problema no lineal (barras/cables) desde el modelo ────
@@ -2872,7 +2912,7 @@ class App {
     </svg>`;
     let el = document.getElementById('dc-overlay');
     if (!el) { el = document.createElement('div'); el.id = 'dc-overlay'; document.body.appendChild(el); }
-    el.style.cssText = 'position:fixed;right:16px;bottom:84px;z-index:50;background:var(--panel,#0f1830);border:1px solid var(--border,#26324d);border-radius:8px;padding:10px 12px;width:288px;box-shadow:0 8px 24px rgba(0,0,0,.4);font-size:12px;color:var(--text,#dbe4f5)';
+    el.style.cssText = 'position:fixed;right:16px;bottom:84px;z-index:50;background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:10px 12px;width:288px;box-shadow:0 8px 24px rgba(0,0,0,.4);font-size:12px;color:var(--text)';
     el.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
         <b style="color:var(--accent,#38bdf8)">Curva carga–desplazamiento</b>
@@ -3762,7 +3802,7 @@ class App {
               selectedNodes: sel.filter(s => s.type === 'node').map(s => s.id) };
     }
     this.snapshot();
-    const { aplicarOperaciones } = await import('./model/model_ops.js?v=108');
+    const { aplicarOperaciones } = await import('./model/model_ops.js?v=109');
     const res = aplicarOperaciones(this.model, ops, ctx);
     // los resultados previos dejan de ser válidos tras modificar la geometría/cargas
     this.viewport.clearResults?.();
@@ -3810,7 +3850,7 @@ class App {
     this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=108');
+      const { generarModelo } = await import('../asistente/generador.js?v=109');
       const modelo = generarModelo(ficha, libs);
 
       if (modo === 'sobreponer') {
@@ -4686,7 +4726,7 @@ class App {
   // Verificación de diseño (flexión/corte/axial) por elemento, usando los
   // resultados actuales y los parámetros editables de asistente/diseno_params.json.
   async _calcularDiseno() {
-    const ver = '?v=108';
+    const ver = '?v=109';
     let params = null;
     try { params = await fetch('asistente/diseno_params.json' + ver).then(r => r.json()); }
     catch (e) { console.error('No se pudo cargar diseno_params.json:', e); return null; }
