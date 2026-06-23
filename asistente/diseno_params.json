@@ -1,7 +1,7 @@
 {
   "_meta": {
-    "version": "1.0",
-    "descripcion": "Parámetros de diseño editables por material. Edite estos valores para ajustar el criterio de verificación (resistencias, factores phi/seguridad, límites). Las resistencias van en MPa; el módulo convierte a kN·m internamente. NO requiere servidor: se evalúa en el navegador.",
+    "version": "2.0",
+    "descripcion": "RESPALDO legado del diseño. Desde v136 las resistencias son propiedades del MATERIAL (mat.design.{family,Fy,fc,...}) y la geometría de diseño viene de la FORMA de la sección (sec.design.shape); los códigos (AISC 360 LRFD/ASD, Eurocódigo 3, ACI 318, NCh1198) son módulos conectables. Este JSON sólo se usa como FALLBACK para materiales sin design.family (clasificados por nombre) y para los límites de aviso/falla. Ver docs/diseno.md y docs/api.md. Las resistencias van en MPa.",
     "normas": {
       "acero": "AISC 360-16 (LRFD) — NCh427/1",
       "hormigon": "ACI 318-19 — NCh430",
