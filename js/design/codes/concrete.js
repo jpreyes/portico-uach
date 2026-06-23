@@ -9,7 +9,7 @@
 // Unidades: kN, m, kN/m². √f'c usa f'c en MPa (kN/m² ÷ 1000).
 // ──────────────────────────────────────────────────────────────────────────────
 
-import { finalize } from './aisc360.js?v=149';
+import { finalize } from './aisc360.js?v=150';
 
 const ratObj = (D, C, extra = {}) => ({
   demanda: +(+D).toFixed(4), capacidad: +(+C).toFixed(4),
@@ -102,6 +102,21 @@ function pmRatio(diagram, Pu, Mu) {
   return Number.isFinite(best) ? best : Infinity;
 }
 
+// Capacidad de momento del diagrama a un axial dado Pu (M sobre la envolvente al
+// nivel P=Pu; 0 si Pu supera el tope de compresión). Para el método del contorno
+// de carga biaxial (#65).
+function pmMomentAt(diag, Pu) {
+  const pts = diag.pts; let M = 0;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const a = pts[i], b = pts[i + 1];
+    if ((a.P - Pu) * (b.P - Pu) <= 0 && a.P !== b.P) {
+      const t = (Pu - a.P) / (b.P - a.P);
+      M = Math.max(M, a.M + t * (b.M - a.M));
+    }
+  }
+  return M;
+}
+
 function checkConcrete({ demands, mat, sec, member, options = {} }, codeLabel) {
   const fc = mat.fc, fy = mat.fyRebar;
   const reb = sec.rebar || (sec.design && sec.design.rebar) || {};
@@ -157,16 +172,31 @@ function checkConcrete({ demands, mat, sec, member, options = {} }, codeLabel) {
   const bendStrong = F.Mz >= F.My;                          // Mz → canto h, ancho b
   const bb = bendStrong ? b : h, hh = bendStrong ? h : b;
   const Mu = Math.max(F.My, F.Mz);
+  const biaxial = F.My > 1e-9 && F.Mz > 1e-9;
   let interaccion, diagrama = null;
   try {
     // Capas en la geometría de flexión (bb,hh); barras explícitas o ρ.
     const rl = rebarLayers(reb, hh, bb, cover, rho);
     const diag = pmDiagram(bb, hh, fc, fy, rl.layers, rl.Ast);
-    const r = pmRatio(diag, Pu, Mu);
-    diagrama = { pts: diag.pts, Pu, Mu, axis: bendStrong ? 'Mz' : 'My', nBars: rl.nBars };
-    interaccion = ratObj(r, 1, { adim: true, modo: Pu >= 0 ? 'flexocompresión' : 'flexotracción',
-      armado: nBars ? `${nBars} barras` : `ρ=${rho}`,
-      formula: 'Diagrama P–M (compatibilidad de deformaciones + bloque de Whitney' + (nBars ? ', barras explícitas' : ', ρ') + ')' });
+    if (biaxial) {
+      // Método del CONTORNO DE CARGA (#65): (Mz/Mnz)^α + (My/Mny)^α ≤ 1, con Mnz,
+      // Mny = capacidad uniaxial al axial Pu en cada eje; α (def. 1, conservador).
+      const diagZ = pmDiagram(b, h, fc, fy, rebarLayers(reb, h, b, cover, rho).layers, rl.Ast);
+      const diagY = pmDiagram(h, b, fc, fy, rebarLayers(reb, b, h, cover, rho).layers, rl.Ast);
+      const Mnz = pmMomentAt(diagZ, Pu), Mny = pmMomentAt(diagY, Pu);
+      const al = options.biaxialAlpha ?? 1.0;
+      const r = (Mnz > 1e-12 ? Math.pow(F.Mz / Mnz, al) : Infinity) + (Mny > 1e-12 ? Math.pow(F.My / Mny, al) : Infinity);
+      diagrama = { pts: diag.pts, Pu, Mz: F.Mz, My: F.My, Mnz, Mny, biaxial: true, nBars: rl.nBars };
+      interaccion = ratObj(r, 1, { adim: true, modo: 'flexocompresión biaxial',
+        armado: nBars ? `${nBars} barras` : `ρ=${rho}`,
+        formula: `(Mz/Mnz)^${al}+(My/Mny)^${al} ≤ 1 (contorno de carga, Mnz/Mny al axial Pu)` });
+    } else {
+      const r = pmRatio(diag, Pu, Mu);
+      diagrama = { pts: diag.pts, Pu, Mu, axis: bendStrong ? 'Mz' : 'My', nBars: rl.nBars };
+      interaccion = ratObj(r, 1, { adim: true, modo: Pu >= 0 ? 'flexocompresión' : 'flexotracción',
+        armado: nBars ? `${nBars} barras` : `ρ=${rho}`,
+        formula: 'Diagrama P–M (compatibilidad de deformaciones + bloque de Whitney' + (nBars ? ', barras explícitas' : ', ρ') + ')' });
+    }
   } catch (e) {
     const H = (Pc > 1e-12 ? Nabs / Pc : 0) + (Mn > 1e-12 ? Mmax / Mn : 0);
     interaccion = ratObj(H, 1, { adim: true, formula: 'Pu/φPn + Mu/φMn (lineal, respaldo)' });
