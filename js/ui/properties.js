@@ -1,8 +1,8 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // PropertiesPanel — right-side panel: node/element properties + mat/sec tabs
 // ──────────────────────────────────────────────────────────────────────────────
-import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=128';
-import { localAxes } from '../solver/timoshenko.js?v=128';
+import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=129';
+import { localAxes } from '../solver/timoshenko.js?v=129';
 
 export class PropertiesPanel {
   constructor(panelEl, app) {
@@ -180,8 +180,16 @@ export class PropertiesPanel {
     const mut = 'color:var(--text-muted)';
     const cap = (e) => (pr.capByElem && pr.capByElem.get(e.elemId)) ?? Mp;
     const rows = events.map((e, i) =>
-      `<tr><td>${i + 1}</td><td>#${e.elemId}</td><td>${e.nodeId}</td><td>${e.axis}</td>` +
+      `<tr><td>${i + 1}${e.cascade ? '↯' : ''}</td><td>#${e.elemId}</td><td>${e.nodeId}</td><td>${e.axis}</td>` +
       `<td>${e.lambda.toFixed(3)}</td><td>${cap(e).toFixed(0)}</td><td>${e.dctrl.toExponential(1)}</td></tr>`).join('');
+    // curva constitutiva M–θ del modelo de rótula usado
+    const fragil = pr.hingeMode === 'fragil';
+    const curve = this.app._hingeBackboneSVG ? this.app._hingeBackboneSVG(fragil ? 'fragil' : 'perfecto', (pr.residual ?? 1) * 100, 220, 130) : '';
+    const modeBox = `<div style="padding:6px 10px;border-radius:6px;background:var(--bg4);margin-top:8px">
+        <b>Rótula:</b> ${fragil ? `frágil (caída a ${((pr.residual ?? 0) * 100).toFixed(2)}% de Mp)` : 'elasto-perfectamente-plástica (meseta ∞)'}
+        <div style="text-align:center;margin-top:6px">${curve}</div>
+        <div style="${mut};font-size:10px;text-align:center">Curva constitutiva momento–giro${fragil ? ' · ↯ = rótula en cascada por la caída' : ''}</div>
+      </div>`;
 
     const box = 'padding:8px 10px;border-radius:6px;background:var(--bg4);margin-bottom:4px';
     const estado = collapsed
@@ -192,6 +200,7 @@ export class PropertiesPanel {
 
     body.innerHTML = `
       ${estado}
+      ${modeBox}
       <table class="res-table" style="width:100%;border-collapse:collapse;font-size:11px;margin-top:8px">
         <thead><tr style="${mut}">
           <th>#</th><th>Elem</th><th>Nodo</th><th>Eje</th><th>λ</th><th>Mp</th><th>δctrl</th>
