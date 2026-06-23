@@ -12,11 +12,12 @@
 // ──────────────────────────────────────────────────────────────────────────────
 import {
   localAxes, stiffnessMatrix, massMatrix,
-  transformMatrix, globalStiffness, applyReleases
-} from './timoshenko.js?v=158';
-import { applyDiaphragmConstraintsW, applyDiaphragmMassW } from './diaphragm.js?v=158';
-import { applyLinkConstraintsW } from './links.js?v=158';
-import { assembleAreasInto, assembleAreasMassInto } from './membrane.js?v=158';
+  transformMatrix, globalStiffness, applyReleases,
+  elemLocalK, elemLocalM
+} from './timoshenko.js?v=159';
+import { applyDiaphragmConstraintsW, applyDiaphragmMassW } from './diaphragm.js?v=159';
+import { applyLinkConstraintsW } from './links.js?v=159';
+import { assembleAreasInto, assembleAreasMassInto } from './membrane.js?v=159';
 
 // ── Matriz simétrica dispersa (acumulador por filas) ──────────────────────────
 export class SparseSym {
@@ -55,7 +56,7 @@ export function assembleSparseGlobal(model, nodeIndex, { withMass = false } = {}
     if (!n1 || !n2 || !mat || !sec) continue;
 
     const { ex, ey, ez, L } = localAxes(n1, n2);
-    let Ke = stiffnessMatrix(L, mat, sec);
+    let Ke = elemLocalK(elem, mat, sec, L);   // incluye cacho rígido (#87)
     const hasRelease = elem.releases?.some(r => r !== 0);
     if (hasRelease) Ke = applyReleases(Ke, elem.releases.map(r => r !== 0));
 
@@ -67,7 +68,7 @@ export function assembleSparseGlobal(model, nodeIndex, { withMass = false } = {}
         S.add(ed[i], ed[j], KG[i][j]);
 
     if (withMass) {
-      const MG = globalStiffness(massMatrix(L, mat, sec), T);
+      const MG = globalStiffness(elemLocalM(elem, mat, sec, L), T);
       for (let i = 0; i < 12; i++)
         for (let j = 0; j < 12; j++)
           M.add(ed[i], ed[j], MG[i][j]);

@@ -1,8 +1,8 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // PropertiesPanel — right-side panel: node/element properties + mat/sec tabs
 // ──────────────────────────────────────────────────────────────────────────────
-import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=158';
-import { localAxes } from '../solver/timoshenko.js?v=158';
+import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=159';
+import { localAxes } from '../solver/timoshenko.js?v=159';
 
 export class PropertiesPanel {
   constructor(panelEl, app) {
@@ -158,7 +158,7 @@ export class PropertiesPanel {
   // madera). Cambiarlo fija model.designSettings.codeByFamily y re-verifica.
   async _designCodeSelectorHTML() {
     try {
-      const mod = this._designMod || (this._designMod = await import('../design/diseno.js?v=158'));
+      const mod = this._designMod || (this._designMod = await import('../design/diseno.js?v=159'));
       const fams = new Set();
       for (const m of this.app.model.materials.values()) {
         const fam = (m.design?.family) || mod.clasificarMaterial(m.name);
@@ -1466,6 +1466,17 @@ export class PropertiesPanel {
       </div>
 
       <div class="prop-section">
+        <div class="prop-title" title="Cacho rígido / zona rígida de extremo (end length offset, como SAP2000/ETABS): tramo rígido en cada extremo de la barra. Acorta la luz flexible → más rigidez. En metros; 0 = sin cacho.">Cacho rígido (zona rígida de extremo)</div>
+        <div class="prop-row">
+          <div class="prop-field"><label title="Longitud del tramo rígido en el extremo del nodo 1 (m).">Cacho i — nodo ${elem.n1} (m)</label>
+            <input type="number" id="e-rig-i" value="${(elem.rigidEnd?.i ?? 0)}" min="0" step="0.05"></div>
+          <div class="prop-field"><label title="Longitud del tramo rígido en el extremo del nodo 2 (m).">Cacho j — nodo ${elem.n2} (m)</label>
+            <input type="number" id="e-rig-j" value="${(elem.rigidEnd?.j ?? 0)}" min="0" step="0.05"></div>
+        </div>
+        <p class="rel-warn" style="color:var(--text-muted)">Condensa un brazo rígido en cada extremo dentro de K/M (la luz flexible = L − cacho_i − cacho_j). Afecta el análisis lineal (F5). Útil para el ancho del nudo viga-columna.</p>
+      </div>
+
+      <div class="prop-section">
         <div class="prop-title">Herramientas Didácticas</div>
         <button class="btn-add" id="btn-elem-matrices" style="width:100%"
           title="Ver Ke local, T, Ke global y Me de este elemento — para comparar con el cálculo manual del curso">
@@ -1520,7 +1531,8 @@ export class PropertiesPanel {
       const cable    = sel.querySelector('#e-cable')?.checked || false;
       const compressionOnly = sel.querySelector('#e-componly')?.checked || false;
       const L0factor = parseFloat(sel.querySelector('#e-l0f')?.value) || 1;
-      this.app.model.updateElement(elem.id, { n1, n2, matId, secId, releases, cable, compressionOnly, L0factor });
+      const rigidEnd = { i: parseFloat(sel.querySelector('#e-rig-i')?.value) || 0, j: parseFloat(sel.querySelector('#e-rig-j')?.value) || 0 };
+      this.app.model.updateElement(elem.id, { n1, n2, matId, secId, releases, cable, compressionOnly, L0factor, rigidEnd });
       this.app.viewport.refreshElem(this.app.model.elements.get(elem.id));
       this.app.markDirty();
     };
@@ -1779,7 +1791,7 @@ export class PropertiesPanel {
       <select id="mat-catalog"><option value="">— catálogo —</option></select></div>
       <button id="mat-catalog-add" class="btn-secondary" style="white-space:nowrap;font-size:11px">＋ Insertar</button>`;
     container.appendChild(pick);
-    import('../design/materials_catalog.js?v=158').then(({ MATERIAL_FAMILIES, getMaterialDef }) => {
+    import('../design/materials_catalog.js?v=159').then(({ MATERIAL_FAMILIES, getMaterialDef }) => {
       const sel = pick.querySelector('#mat-catalog');
       sel.innerHTML = '<option value="">— catálogo —</option>' +
         Object.entries(MATERIAL_FAMILIES).map(([fam, names]) => `<optgroup label="${fam}">` + names.map(n => `<option value="${n}">${n}</option>`).join('') + '</optgroup>').join('');
@@ -2211,7 +2223,7 @@ export class PropertiesPanel {
     if (!shapeSel) return;
     // Catálogo de perfiles tabulados (#66): poblar y aplicar al elegir.
     const catSel = card.querySelector('.sd-catalog');
-    if (catSel) import('../design/profiles.js?v=158').then(({ catalogFamilies, catalogNames, profileToSection }) => {
+    if (catSel) import('../design/profiles.js?v=159').then(({ catalogFamilies, catalogNames, profileToSection }) => {
       let html = '<option value="">— elegir perfil comercial —</option>';
       for (const fam of catalogFamilies()) html += `<optgroup label="${fam}">` + catalogNames(fam).map(n => `<option value="${n}" ${sec.design?.profile === n ? 'selected' : ''}>${n}</option>`).join('') + '</optgroup>';
       catSel.innerHTML = html;
@@ -2262,7 +2274,7 @@ export class PropertiesPanel {
       const s = this.app.model.sections.get(sec.id);
       if (!s.design?.shape || s.design.shape === 'generic') { this.app.toast('Elija una forma con dimensiones primero', 'warn'); return; }
       try {
-        const { fromShape } = await import('../design/section_props.js?v=158');
+        const { fromShape } = await import('../design/section_props.js?v=159');
         const g = fromShape(s.design.shape, s.design);
         if (!g) { this.app.toast('Faltan dimensiones de la forma', 'warn'); return; }
         this.app.snapshot();

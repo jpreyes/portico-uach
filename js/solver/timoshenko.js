@@ -191,6 +191,49 @@ export function globalStiffness(Ke_local, T) {
   );
 }
 
+// ── Cacho rígido / zona rígida de extremo (end length offset, #87) ─────────
+// Una barra de longitud L puede tener tramos RÍGIDOS de longitud `oi` (extremo i)
+// y `oj` (extremo j); la parte flexible mide Lf = L − oi − oj. La rigidez/masa se
+// calculan para la parte flexible y se transforman a los GDL de los nodos reales
+// por un brazo rígido (cinemática de sólido): u(i') = u(i) + θ(i)×r, con r el
+// vector del nodo al extremo flexible (a lo largo del eje local x).
+// Es el «cacho» viga-columna de SAP2000/ETABS — acorta la luz flexible.
+
+// Devuelve { oi, oj, Lf } acotados (la luz flexible nunca colapsa), o null si no hay cacho.
+export function rigidEndOffsets(elem, L) {
+  const re = elem && elem.rigidEnd; if (!re) return null;
+  let oi = Math.max(0, +re.i || 0), oj = Math.max(0, +re.j || 0);
+  if (oi < 1e-9 && oj < 1e-9) return null;
+  const cap = 0.95 * L;                       // deja al menos 5% de luz flexible
+  if (oi + oj > cap) { const s = cap / (oi + oj); oi *= s; oj *= s; }
+  return { oi, oj, Lf: L - oi - oj };
+}
+
+// Transformación de brazo rígido (12×12): GDL extremos flexibles = T · GDL nodos.
+// r_i = (+oi,0,0) → uy'+=oi·rz, uz'+=−oi·ry ; r_j = (−oj,0,0) → uy'+=−oj·rz, uz'+=oj·ry.
+export function rigidEndTransform(oi, oj) {
+  const T = Array.from({ length: 12 }, (_, i) => { const r = Array(12).fill(0); r[i] = 1; return r; });
+  T[1][5] = oi;  T[2][4] = -oi;     // extremo i
+  T[7][11] = -oj; T[8][10] = oj;    // extremo j
+  return T;
+}
+
+// Rigidez LOCAL del elemento incluyendo el cacho rígido (antes de releases).
+// Sin cacho devuelve la rigidez normal de longitud L.
+export function elemLocalK(elem, mat, sec, L) {
+  const ro = rigidEndOffsets(elem, L);
+  if (!ro) return stiffnessMatrix(L, mat, sec);
+  return globalStiffness(stiffnessMatrix(ro.Lf, mat, sec), rigidEndTransform(ro.oi, ro.oj));
+}
+
+// Masa LOCAL del elemento con cacho rígido (masa consistente de la parte flexible
+// referida a los nodos; la masa de las zonas rígidas se desprecia — aproximación).
+export function elemLocalM(elem, mat, sec, L) {
+  const ro = rigidEndOffsets(elem, L);
+  if (!ro) return massMatrix(L, mat, sec);
+  return globalStiffness(massMatrix(ro.Lf, mat, sec), rigidEndTransform(ro.oi, ro.oj));
+}
+
 // ── Static condensation for end releases ──────────────────────────────────
 /**
  * Apply static condensation to element Ke for released DOFs.

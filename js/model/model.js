@@ -155,6 +155,13 @@ export class Model {
       if (el.compressionOnly) el.cable = false;    // excluyentes
     }
     if (props.L0factor !== undefined) el.L0factor = +props.L0factor || 1;
+    // Cacho rígido / zona rígida de extremo (#87): longitudes (m) por extremo.
+    if (props.rigidEnd !== undefined) {
+      const re = props.rigidEnd;
+      const oi = Math.max(0, +(re?.i) || 0), oj = Math.max(0, +(re?.j) || 0);
+      if (oi <= 0 && oj <= 0) delete el.rigidEnd;
+      else el.rigidEnd = { i: oi, j: oj };
+    }
     return el;
   }
 

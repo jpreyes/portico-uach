@@ -4,11 +4,12 @@
 import {
   localAxes, stiffnessMatrix, massMatrix,
   transformMatrix, globalStiffness,
-  applyReleases, fixedEndForces, condenseFEF
-} from './timoshenko.js?v=158';
-import { applyDiaphragmConstraints, applyDiaphragmMass } from './diaphragm.js?v=158';
-import { applyLinkConstraints } from './links.js?v=158';
-import { assembleAreasInto, assembleAreasMassInto, areaThermalContribs } from './membrane.js?v=158';
+  applyReleases, fixedEndForces, condenseFEF,
+  elemLocalK, elemLocalM
+} from './timoshenko.js?v=159';
+import { applyDiaphragmConstraints, applyDiaphragmMass } from './diaphragm.js?v=159';
+import { applyLinkConstraints } from './links.js?v=159';
+import { assembleAreasInto, assembleAreasMassInto, areaThermalContribs } from './membrane.js?v=159';
 
 // ── Node index (contiguous 0-based numbering) ─────────────────────────────
 export function buildNodeIndex(model) {
@@ -43,8 +44,8 @@ export function assembleK(model, nodeIndex) {
     if (!n1 || !n2 || !mat || !sec) continue;
 
     const { ex, ey, ez, L } = localAxes(n1, n2);
-    let Ke = stiffnessMatrix(L, mat, sec);
-    const Me = massMatrix(L, mat, sec);
+    let Ke = elemLocalK(elem, mat, sec, L);   // incluye cacho rígido (#87) si lo tiene
+    const Me = elemLocalM(elem, mat, sec, L);
 
     // Apply end releases (hinges)
     const hasRelease = elem.releases?.some(r => r !== 0);
