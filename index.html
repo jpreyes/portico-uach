@@ -29,8 +29,8 @@
       window.dispatchEvent(new Event('pwa-installed'));
     });
   </script>
-  <link rel="stylesheet" href="style.css?v=166">
-  <link rel="stylesheet" href="ui-v2.css?v=166">
+  <link rel="stylesheet" href="style.css?v=168">
+  <link rel="stylesheet" href="ui-v2.css?v=168">
   <script type="importmap">
   {
     "imports": {
@@ -217,6 +217,10 @@
       <button class="tool active" data-mode="select" title="Seleccionar  S">
         <svg viewBox="0 0 24 24"><polygon points="5,2 5,18 9,14 12,21 14,20 11,13 17,13" fill="currentColor"/></svg>
         <span>Sel.</span>
+      </button>
+      <button class="tool" data-mode="boxselect" title="Selección por cuadro: arrastra con la izquierda para dibujar un recuadro y seleccionar nodos y elementos dentro (sin tener que apretar Alt). Ctrl al soltar añade a la selección.">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="16" rx="1.5" stroke-dasharray="3 2.5"/><circle cx="9" cy="9" r="1.4" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1.4" fill="currentColor" stroke="none"/></svg>
+        <span>Cuadro</span>
       </button>
       <button class="tool" data-mode="pan" title="Mover vista — PAN  (arrastrar con la izquierda)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
@@ -1019,7 +1023,7 @@
 
 <!-- numeric.js para solver (Fase 2+) -->
 <script src="lib/numeric.js"></script>
-<script type="module" src="js/app.js?v=166"></script>
+<script type="module" src="js/app.js?v=168"></script>
 
 <!-- PWA: registrar el service worker (offline). Solo en contexto seguro
      (https o localhost); el navegador deja navigator.serviceWorker undefined

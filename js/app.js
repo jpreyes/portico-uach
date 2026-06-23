@@ -1,42 +1,42 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=166';
-import { Serializer }      from './model/serializer.js?v=166';
-import { Viewport }        from './ui/viewport.js?v=166';
-import { PropertiesPanel } from './ui/properties.js?v=166';
-import { MenuBar }         from './ui/menu.js?v=166';
-import { UndoStack }       from './utils/undo.js?v=166';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=166';
-import { Results }                         from './solver/postprocess.js?v=166';
-import { areaStress, areaBendingStress, vonMises } from './solver/membrane.js?v=166';
-import { ModalSolver }                     from './solver/modal_solver.js?v=166';
-import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=166';
-import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=166';
-import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=166';
-import { assembleKg } from './solver/geometric.js?v=166';
-import { makeFactor } from './solver/linsolve.js?v=166';
-import { formFind } from './solver/formfind.js?v=166';
-import { ModalResults }                    from './solver/modal_results.js?v=166';
-import { modalTimeHistory }                from './solver/timehistory.js?v=166';
-import { parseAccelerogram, accStats, scaleToPGA, DEMO_PRESETS, G as GACC } from './solver/accelerograms.js?v=166';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=166';
-import { StagedSolver }                    from './solver/staged.js?v=166';
-import { tendonEquivalentLoads, applyTendon, tendonEcc } from './solver/tendon.js?v=166';
-import { buildLane, influenceLine, movingLoadEnvelope, responseReaction, responseSection } from './solver/moving_load.js?v=166';
-import { newmarkNonlinear, shearBuilding, rayleighDamping } from './solver/nl_timehistory.js?v=166';
-import { checkDrift } from './design/serviceability.js?v=166';
-import { seleccionarPerfil, steelCandidates, predimensionar, candidatesForFamily } from './design/autodesign.js?v=166';
-import { jointSCWB } from './design/seismic.js?v=166';
-import { resolveMaterial } from './design/material_props.js?v=166';
-import { resolveSectionProps } from './design/section_props.js?v=166';
-import { autoDetectDiaphragms, computeFloorCR, applyDiaphragmConstraints } from './solver/diaphragm.js?v=166';
-import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=166';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=166';
-import { blockCells, cornerGridIndices } from './model/mesher.js?v=166';
-import { coonsGridFromCorners } from './model/mesh_map.js?v=166';
-import { meshPolygonIntoModel } from './model/mesh_free.js?v=166';
-import { smoothAreasInModel } from './model/mesh_quality.js?v=166';
+import { Model }           from './model/model.js?v=168';
+import { Serializer }      from './model/serializer.js?v=168';
+import { Viewport }        from './ui/viewport.js?v=168';
+import { PropertiesPanel } from './ui/properties.js?v=168';
+import { MenuBar }         from './ui/menu.js?v=168';
+import { UndoStack }       from './utils/undo.js?v=168';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=168';
+import { Results }                         from './solver/postprocess.js?v=168';
+import { areaStress, areaBendingStress, vonMises } from './solver/membrane.js?v=168';
+import { ModalSolver }                     from './solver/modal_solver.js?v=168';
+import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=168';
+import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=168';
+import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=168';
+import { assembleKg } from './solver/geometric.js?v=168';
+import { makeFactor } from './solver/linsolve.js?v=168';
+import { formFind } from './solver/formfind.js?v=168';
+import { ModalResults }                    from './solver/modal_results.js?v=168';
+import { modalTimeHistory }                from './solver/timehistory.js?v=168';
+import { parseAccelerogram, accStats, scaleToPGA, DEMO_PRESETS, G as GACC } from './solver/accelerograms.js?v=168';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=168';
+import { StagedSolver }                    from './solver/staged.js?v=168';
+import { tendonEquivalentLoads, applyTendon, tendonEcc } from './solver/tendon.js?v=168';
+import { buildLane, influenceLine, movingLoadEnvelope, responseReaction, responseSection } from './solver/moving_load.js?v=168';
+import { newmarkNonlinear, shearBuilding, rayleighDamping } from './solver/nl_timehistory.js?v=168';
+import { checkDrift } from './design/serviceability.js?v=168';
+import { seleccionarPerfil, steelCandidates, predimensionar, candidatesForFamily } from './design/autodesign.js?v=168';
+import { jointSCWB } from './design/seismic.js?v=168';
+import { resolveMaterial } from './design/material_props.js?v=168';
+import { resolveSectionProps } from './design/section_props.js?v=168';
+import { autoDetectDiaphragms, computeFloorCR, applyDiaphragmConstraints } from './solver/diaphragm.js?v=168';
+import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=168';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=168';
+import { blockCells, cornerGridIndices } from './model/mesher.js?v=168';
+import { coonsGridFromCorners } from './model/mesh_map.js?v=168';
+import { meshPolygonIntoModel } from './model/mesh_free.js?v=168';
+import { smoothAreasInModel } from './model/mesh_quality.js?v=168';
 
 class App {
   constructor() {
@@ -1772,7 +1772,7 @@ class App {
   _staticWorkerSolve(K, nDOF, freeDOF, Flist, dense = false) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=166', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=168', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -1801,7 +1801,7 @@ class App {
   _staticWorkerSolveSparse(csr, cf, nDOF, freeDOF, Flist) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=166', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=168', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -2177,7 +2177,7 @@ class App {
       // ── Run Stodola in a Web Worker (non-blocking) ───────────────────────────
       const denseModal = !!this._config?.analisis?.matrizDensa;
       const modes = await new Promise((resolve, reject) => {
-        const worker = new Worker(new URL('./solver/modal_worker.js?v=166', import.meta.url), { type: 'module' });
+        const worker = new Worker(new URL('./solver/modal_worker.js?v=168', import.meta.url), { type: 'module' });
         worker.postMessage({ Kff_flat, Mff_flat, nF, nModes, dense: denseModal, method: modalMethod },
           [Kff_flat.buffer, Mff_flat.buffer]); // transfer — zero copy
         worker.onmessage = (ev) => {
@@ -2482,6 +2482,16 @@ class App {
     this._lastSpectrum = params.rawText;
     this._lastSpectrumParams = params;
 
+    // «Aceptar» en el diálogo: sólo crea/actualiza el caso de carga, sin solver.
+    if (!opts.silent && params.action === 'accept') {
+      const specLc = this._saveSpectrumCase(params);
+      this._lastSpectrumParams.targetLcId = specLc.id;
+      this._renderLcSelector();
+      this.panel?.renderCombinations?.();
+      this.toast(`Caso «${specLc.name}» guardado sin calcular. Use «Calcular» (o F7) para correrlo.`, 'ok');
+      return;
+    }
+
     const btn = document.getElementById('btn-run');
     if (btn) btn.classList.add('running');
     document.getElementById('sb-mode').textContent = 'Espectro…';
@@ -2497,35 +2507,12 @@ class App {
         this._updateResultsIndicator();
 
         // ── Asignar el resultado a su CASO DE CARGA espectral ──
-        // Si no existe un caso espectral para esta dirección, se crea: así el
-        // espectro queda en el sistema de casos (selector, combos, archivo).
-        // Caso objetivo: si el usuario eligió un caso guardado en el diálogo, se
-        // EDITA ese (incluso si cambió la dirección). Si pidió «nuevo», se crea uno
-        // (nombre único). En lote/silencioso se reusa por dirección (sin duplicar).
-        let specLc = params.targetLcId ? this.model.loadCases.get(params.targetLcId) : null;
-        if (specLc && specLc.type === 'spectrum') {
-          if (specLc.specDir !== params.direction) {   // actualizar dir + nombre por defecto
-            specLc.specDir = params.direction;
-            if (/^Sismo [XY] \(esp\)/.test(specLc.name)) specLc.name = `Sismo ${params.direction} (esp)`;
-          }
-        } else if (!params.createNew) {
-          specLc = [...this.model.loadCases.values()]
-            .find(l => l.type === 'spectrum' && l.specDir === params.direction);
-        }
-        if (!specLc) {
-          // Nombre único: «Sismo X (esp)», «Sismo X (esp) 2», … si ya existe.
-          let name = `Sismo ${params.direction} (esp)`, k = 1;
-          const taken = new Set([...this.model.loadCases.values()].map(l => l.name));
-          while (taken.has(name)) { k++; name = `Sismo ${params.direction} (esp) ${k}`; }
-          specLc = this.model.addLoadCase(name, false, 'spectrum', params.direction);
-          this.markDirty();
-        }
+        // Crea o actualiza el caso espectral (selector, combos, archivo) sin solver
+        // — misma lógica que «Crear»/«Aceptar» del diálogo. En lote/silencioso se
+        // reusa por dirección (sin duplicar).
+        const specLc = this._saveSpectrumCase(params);
         // Fija el caso como objetivo para reusos posteriores (lote / reabrir diálogo).
         if (this._lastSpectrumParams) this._lastSpectrumParams.targetLcId = specLc.id;
-        specLc.spec = {   // parámetros usados (se guardan en el .s3d)
-          method: params.method, zeta: params.zeta,
-          saFactor: params.saFactor, rawText: params.rawText,
-        };
         this._resultsByCase ??= new Map();
         this._resultsByCase.set(specLc.id, this._results);
         this._activeResultKey = specLc.id;
@@ -2603,7 +2590,7 @@ class App {
       // Modal por iteración de subespacio en worker (no bloquea la UI).
       const dense = !!this._config?.analisis?.matrizDensa;
       const rawModes = await new Promise((resolve, reject) => {
-        const w = new Worker(new URL('./solver/modal_worker.js?v=166', import.meta.url), { type: 'module' });
+        const w = new Worker(new URL('./solver/modal_worker.js?v=168', import.meta.url), { type: 'module' });
         w.postMessage({ Kff_flat: Kff, Mff_flat: Mff, nF, nModes, dense, method: 'subspace' }, [Kff.buffer, Mff.buffer]);
         w.onmessage = ev => { w.terminate(); ev.data.error ? reject(new Error(ev.data.error)) : resolve(ev.data.modes); };
         w.onerror = ev => { w.terminate(); reject(new Error(ev.message || 'Error en worker modal')); };
@@ -2672,7 +2659,7 @@ class App {
   _thSolveInWorker(modes, ag, dt, zeta) {
     return new Promise((resolve, reject) => {
       let w;
-      try { w = new Worker(new URL('./solver/timehistory_worker.js?v=166', import.meta.url), { type: 'module' }); }
+      try { w = new Worker(new URL('./solver/timehistory_worker.js?v=168', import.meta.url), { type: 'module' }); }
       catch (e) {
         try { const r = modalTimeHistory({ modes: modes.map(m => ({ ...m, phi: new Float64Array(0) })), ag, dt, zeta }); resolve({ q: r.q, peakModal: r.peakModal }); }
         catch (err) { reject(err); }
@@ -2926,6 +2913,7 @@ class App {
       <div style="display:flex;align-items:center;gap:6px;margin:6px 0">
         <button id="th-play" class="btn-secondary" style="font-size:14px;padding:2px 8px">▶</button>
         <input type="range" id="th-step" min="0" max="${n - 1}" value="${R._pkStep}" style="flex:1">
+        <select id="th-speed" title="Velocidad de animación" style="font-size:11px"><option value="0.5">×0.5</option><option value="1" selected>×1</option><option value="2">×2</option><option value="4">×4</option></select>
       </div>
       <div id="th-readout" style="color:var(--text-muted,#94a3b8);font-size:11px;line-height:1.5;margin-bottom:6px"></div>
       <div style="display:flex;align-items:center;gap:6px;justify-content:space-between">
@@ -2956,8 +2944,9 @@ class App {
     playBtn.addEventListener('click', () => {
       if (this._thPlayTimer) { this._thStopPlay(); playBtn.textContent = '▶'; return; }
       playBtn.textContent = '⏸';
-      const stride = Math.max(1, Math.floor(n / 240));
-      this._thPlayTimer = setInterval(() => { let v = +stepInp.value + stride; if (v > n - 1) v = 0; stepInp.value = v; redraw(); }, 60);
+      const speedEl = el.querySelector('#th-speed');
+      const base = Math.max(1, Math.floor(n / 240));
+      this._thPlayTimer = setInterval(() => { const stride = Math.max(1, Math.round(base * (parseFloat(speedEl?.value) || 1))); let v = +stepInp.value + stride; if (v > n - 1) v = 0; stepInp.value = v; redraw(); }, 60);
     });
     redraw();
   }
@@ -3635,6 +3624,7 @@ class App {
           <div class="prop-row" style="align-items:center;gap:8px;margin-top:8px">
             <button id="nlth-play">▶</button>
             <input type="range" id="nlth-step" min="0" max="${R.nSteps - 1}" value="${R.peakStep}" style="flex:1">
+            <select id="nlth-speed" title="Velocidad de animación" style="font-size:11px"><option value="0.5">×0.5</option><option value="1" selected>×1</option><option value="2">×2</option><option value="4">×4</option></select>
             <button id="nlth-max" title="Ir al pico">Máx</button>
             <button id="nlth-csv">⬇ CSV</button>
           </div>
@@ -3723,8 +3713,10 @@ class App {
     const R = this._nlthResult; if (!R) return;
     const btn = document.getElementById('nlth-play'); if (btn) btn.textContent = '⏸';
     const stepInp = document.getElementById('nlth-step');
-    const skip = Math.max(1, Math.floor(R.nSteps / 240));
+    const speedEl = document.getElementById('nlth-speed');
+    const base = Math.max(1, Math.floor(R.nSteps / 240));
     this._nlthTimer = setInterval(() => {
+      const skip = Math.max(1, Math.round(base * (parseFloat(speedEl?.value) || 1)));
       let s = (+stepInp.value || 0) + skip; if (s >= R.nSteps) s = 0;
       stepInp.value = s; this._nlthShowStep(s);
     }, 40);
@@ -3792,10 +3784,12 @@ class App {
       const secNow = this.model.sections.get(g.secId);
       const sharedOut = [...this.model.elements.values()].some(e => e.secId === g.secId && !g.els.includes(e.id));
       return { secId: g.secId, secName: secNow?.name || `sec ${g.secId}`, nEls: g.els.length, fam: g.fam,
+        role: secNow?.role || 'generico',
         dem: g.dem, mat: g.mat, code: codeByFam[g.fam], Lb: g.Lb, sharedOut, prefer: secNow?.design?.profile,
         actual: secNow?.design?.profile || `A=${(secNow?.A * 1e4 || 0).toFixed(1)} cm²` };
     });
     this._adScope = scope;
+    this._adRoleFilter = this._adRoleFilter || 'all';
     this._adLimits = {};
     this._adPrefs = this._adPrefs || { dcTarget: 0.85, steelFamilies: ['IPE', 'HEA', 'HEB'] };   // preferencias (#73)
     this._adCompute();
@@ -3807,13 +3801,15 @@ class App {
   _adCompute() {
     const { maxWidth, maxHeight } = this._adLimits || {};
     const P = this._adPrefs || { dcTarget: 0.85, steelFamilies: ['IPE', 'HEA', 'HEB'] };
-    const rows = (this._adGroups || []).map(g => {
+    // Filtro por tipo (pilar/viga/genérico): recorrer sólo las secciones marcadas.
+    const roleF = this._adRoleFilter || 'all';
+    const rows = (this._adGroups || []).filter(g => roleF === 'all' || (g.role || 'generico') === roleF).map(g => {
       // Familias de acero permitidas (#73): restringe el catálogo de acero/aluminio.
       const candidates = candidatesForFamily(g.fam, { steelFamilies: P.steelFamilies?.length ? P.steelFamilies : ['IPE', 'HEA', 'HEB'] });
       const sel2 = seleccionarPerfil({ demands: g.dem, candidates, mat: g.mat, code: g.code,
         member: { L: g.dem.L, Lb: g.Lb || g.dem.L },
         prefs: { prefer: g.prefer, dcTarget: P.dcTarget ?? 0.85, maxWidth, maxHeight } });
-      return { secId: g.secId, secName: g.secName, nEls: g.nEls, fam: g.fam, actual: g.actual,
+      return { secId: g.secId, secName: g.secName, nEls: g.nEls, fam: g.fam, role: g.role, actual: g.actual,
         best: sel2.best, note: sel2.note, sharedOut: g.sharedOut, dem: g.dem };
     });
     this._autoDesignRows = rows;
@@ -3826,9 +3822,10 @@ class App {
     const body = rows.map((r, i) => {
       const b = r.best;
       const dcCol = b ? (b.dc > 1 ? '#ef4444' : b.dc > 0.9 ? '#f59e0b' : '#22c55e') : '#ef4444';
+      const roleIco = { pilar: '🟦', viga: '🟩' }[r.role] || '·';
       return `<tr>
         <td><input type="checkbox" class="ad-chk" data-i="${i}" ${b ? 'checked' : ''} ${b ? '' : 'disabled'}></td>
-        <td>${r.secName}<br><span style="color:var(--text-muted);font-size:10px">${r.nEls} elem${r.sharedOut ? ' ⚠ compartida' : ''}</span></td>
+        <td>${r.secName}<br><span style="color:var(--text-muted);font-size:10px">${roleIco} ${r.nEls} elem${r.sharedOut ? ' ⚠ compartida' : ''}</span></td>
         <td style="font-size:10px">${r.actual}</td>
         <td><b>${b ? b.name : '—'}</b></td>
         <td style="color:${dcCol}"><b>${b ? fmt(b.dc) : '—'}</b></td>
@@ -3849,6 +3846,13 @@ class App {
             <label>alto máx <input class="ad-maxh" type="number" min="0" step="1" value="${limits?.maxHeight != null ? +(limits.maxHeight * 100).toFixed(1) : ''}" style="width:54px"> cm</label>
           </div>
           <div style="display:flex;gap:12px;align-items:center;margin:0 0 8px;font-size:11px;flex-wrap:wrap">
+            <label title="Recorrer sólo las secciones marcadas como pilar o viga (según el «Tipo de elemento» de la sección).">Diseñar
+              <select class="ad-role" style="font-size:11px">
+                <option value="all" ${(this._adRoleFilter || 'all') === 'all' ? 'selected' : ''}>Todas</option>
+                <option value="pilar" ${this._adRoleFilter === 'pilar' ? 'selected' : ''}>🟦 Sólo pilares</option>
+                <option value="viga" ${this._adRoleFilter === 'viga' ? 'selected' : ''}>🟩 Sólo vigas</option>
+                <option value="generico" ${this._adRoleFilter === 'generico' ? 'selected' : ''}>· Sólo genéricas</option>
+              </select></label>
             <label title="D/C objetivo: la selección prefiere candidatos con D/C cerca de este valor (sin pasar de 1).">D/C objetivo <input class="ad-dctgt" type="number" min="0.3" max="1" step="0.05" value="${(this._adPrefs?.dcTarget ?? 0.85)}" style="width:54px"></label>
             <span style="color:var(--text-muted)" title="Familias de acero permitidas como candidatas (sólo aplica a secciones de acero/aluminio).">Acero:</span>
             ${['IPE', 'HEA', 'HEB'].map(fa => `<label style="display:inline-flex;gap:3px;align-items:center"><input type="checkbox" class="ad-fam" value="${fa}" ${(this._adPrefs?.steelFamilies || ['IPE','HEA','HEB']).includes(fa) ? 'checked' : ''}>${fa}</label>`).join('')}
@@ -3887,6 +3891,11 @@ class App {
     };
     el.querySelector('.ad-dctgt').addEventListener('change', onPrefs);
     el.querySelectorAll('.ad-fam').forEach(c => c.addEventListener('change', onPrefs));
+    // Filtro por tipo de elemento (pilar/viga/genérico) → recalcula el alcance.
+    el.querySelector('.ad-role')?.addEventListener('change', (ev) => {
+      this._adRoleFilter = ev.target.value;
+      this._adCompute();
+    });
     if (!document.getElementById('ad-overlay-css')) {
       const s = document.createElement('style'); s.id = 'ad-overlay-css';
       s.textContent = `
@@ -4061,12 +4070,12 @@ class App {
     if (!ok) return;
     const p = this._predim; if (!p) return;
     if (document.getElementById('pd-assign').checked) {
-      const { profileToSection } = await import('./design/profiles.js?v=166');
+      const { profileToSection } = await import('./design/profiles.js?v=168');
       this.snapshot();
       // Perfil del catálogo → props directas; forma libre (H.A./madera) → calcular A,I,J.
       let secProps = p.profile ? profileToSection(p.profile) : { design: { shape: p.shape, dims: p.dims } };
       if (!p.profile) {
-        const { fromShape } = await import('./design/section_props.js?v=166');
+        const { fromShape } = await import('./design/section_props.js?v=168');
         const g = fromShape(p.shape, p.dims);
         if (g) secProps = { A: g.A, Iz: g.Iz, Iy: g.Iy, J: g.J, Avy: g.Avz_web, Avz: g.Avy_flange, design: { shape: p.shape, dims: p.dims } };
       }
@@ -4090,7 +4099,7 @@ class App {
     return new Promise((resolve, reject) => {
       let worker;
       try {
-        worker = new Worker(new URL('./solver/nl_worker.js?v=166', import.meta.url), { type: 'module' });
+        worker = new Worker(new URL('./solver/nl_worker.js?v=168', import.meta.url), { type: 'module' });
       } catch (e) {
         try { resolve(kind === 'dc' ? solveNonlinearDC(opts) : solveNonlinear(opts)); }
         catch (err) { reject(err); }
@@ -4347,7 +4356,7 @@ class App {
 
       // Iteración de subespacio en el Worker (no bloquea la UI)
       const rawModes = await new Promise((resolve, reject) => {
-        const worker = new Worker(new URL('./solver/buckling_worker.js?v=166', import.meta.url), { type: 'module' });
+        const worker = new Worker(new URL('./solver/buckling_worker.js?v=168', import.meta.url), { type: 'module' });
         worker.postMessage({ Kff_flat, Kgff_flat, nF, nModes, dense },
           [Kff_flat.buffer, Kgff_flat.buffer]);   // transfer — zero copy
         worker.onmessage = (ev) => { worker.terminate(); ev.data.error ? reject(new Error(ev.data.error)) : resolve(ev.data.modes); };
@@ -5000,6 +5009,7 @@ class App {
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
         <button id="pl-play" class="btn-secondary" style="font-size:14px;padding:2px 8px">▶</button>
         <input type="range" id="pl-step" min="1" max="${N}" value="${N}" style="flex:1">
+        <select id="pl-speed" title="Velocidad de animación" style="font-size:11px"><option value="0.5">×0.5</option><option value="1" selected>×1</option><option value="2">×2</option><option value="4">×4</option></select>
       </div>
       <div id="pl-readout" style="color:var(--text-muted,#94a3b8);font-size:11px;line-height:1.5;margin-bottom:4px"></div>
       <div style="color:var(--text-muted,#94a3b8);font-size:10.5px">Amarillo = primera · rojo = última. ${pr.collapsed ? `Mecanismo a la rótula ${N} (λc=${pr.lambda.toFixed(3)}).` : 'Sin mecanismo.'}</div>`;
@@ -5011,15 +5021,18 @@ class App {
     playBtn.addEventListener('click', () => {
       if (this._plasticPlayTimer) { this._plasticStopPlay(); playBtn.textContent = '▶'; return; }
       playBtn.textContent = '⏸';
-      this._plasticPlayTimer = setInterval(() => {
+      const speedEl = el.querySelector('#pl-speed');
+      const tick = () => {
         let v = +stepInp.value + 1; if (v > N) v = 1;
         stepInp.value = v; redraw();
-      }, 450);
+        this._plasticPlayTimer = setTimeout(tick, 450 / (parseFloat(speedEl?.value) || 1));
+      };
+      this._plasticPlayTimer = setTimeout(tick, 450 / (parseFloat(speedEl?.value) || 1));
     });
     redraw();
   }
 
-  _plasticStopPlay() { if (this._plasticPlayTimer) { clearInterval(this._plasticPlayTimer); this._plasticPlayTimer = null; } }
+  _plasticStopPlay() { if (this._plasticPlayTimer) { clearTimeout(this._plasticPlayTimer); this._plasticPlayTimer = null; } }
 
   // ── Patrón de carga para rótulas/pushover (#45) ─────────────────────────────
   // Opciones para el selector: todos los casos, un caso concreto o una combinación.
@@ -5358,6 +5371,7 @@ class App {
       <div style="display:flex;align-items:center;gap:6px;margin:6px 0">
         <button id="dc-play" class="btn-secondary" style="font-size:14px;padding:2px 8px">▶</button>
         <input type="range" id="dc-step" min="0" max="${path.length - 1}" value="${path.length - 1}" style="flex:1">
+        <select id="dc-speed" title="Velocidad de animación" style="font-size:11px"><option value="0.5">×0.5</option><option value="1" selected>×1</option><option value="2">×2</option><option value="4">×4</option></select>
       </div>
       <div id="dc-readout" style="color:var(--text-muted,#94a3b8);font-size:11px;line-height:1.5"></div>`;
     const stepInp = el.querySelector('#dc-step'), playBtn = el.querySelector('#dc-play');
@@ -5367,7 +5381,8 @@ class App {
     playBtn.addEventListener('click', () => {
       if (this._dcPlayTimer) { this._dcStopPlay(); playBtn.textContent = '▶'; return; }
       playBtn.textContent = '⏸';
-      this._dcPlayTimer = setInterval(() => { let v = +stepInp.value + 1; if (v > path.length - 1) v = 0; stepInp.value = v; redraw(); }, 120);
+      const speedEl = el.querySelector('#dc-speed');
+      this._dcPlayTimer = setInterval(() => { const stride = Math.max(1, Math.round(parseFloat(speedEl?.value) || 1)); let v = +stepInp.value + stride; if (v > path.length - 1) v = 0; stepInp.value = v; redraw(); }, 120);
     });
     redraw();
   }
@@ -5425,10 +5440,13 @@ class App {
 <div class="prop-row" style="margin-bottom:10px">
   <div class="prop-field">
     <label>Caso de espectro <span style="color:var(--text-muted);font-weight:400">(elige uno guardado para editar sus parámetros, o crea uno nuevo)</span></label>
-    <select id="sp-case">
-      <option value="__new">➕ Nuevo caso de espectro…</option>
-      ${specCases.map(l => `<option value="${l.id}" ${curLc && l.id === curLc.id ? 'selected' : ''}>${(l.name || ('Caso ' + l.id)).replace(/[<>&]/g, '')} (${l.specDir || 'X'})</option>`).join('')}
-    </select>
+    <div style="display:flex;gap:6px;align-items:stretch">
+      <select id="sp-case" style="flex:1">
+        <option value="__new">➕ Nuevo caso de espectro…</option>
+        ${specCases.map(l => `<option value="${l.id}" ${curLc && l.id === curLc.id ? 'selected' : ''}>${(l.name || ('Caso ' + l.id)).replace(/[<>&]/g, '')} (${l.specDir || 'X'})</option>`).join('')}
+      </select>
+      <button type="button" id="sp-addcase" class="btn-secondary" title="Crear otro caso de espectro con estos parámetros (sin salir de la ventana)" style="white-space:nowrap;padding:0 10px">＋ caso</button>
+    </div>
   </div>
 </div>
 <div class="prop-row cols3" style="margin-bottom:10px">
@@ -5553,20 +5571,37 @@ class App {
       });
       drawGraph();
 
-      overlay.classList.remove('hidden');
+      // El footer global Aceptar/Cancelar se reemplaza por los botones propios de
+      // esta ventana (Salir · Crear · Aceptar · Calcular), inyectados en el MISMO
+      // #modal-footer para que queden siempre visibles (el cuerpo hace scroll). Los
+      // botones globales se ocultan y se restauran al cerrar.
+      const footer  = document.getElementById('modal-footer');
+      const okBtn     = document.getElementById('modal-ok');
+      const cancelBtn = document.getElementById('modal-cancel');
+      const prevJustify = footer ? footer.style.justifyContent : '';
+      if (okBtn) okBtn.style.display = 'none';
+      if (cancelBtn) cancelBtn.style.display = 'none';
+      const actions = document.createElement('div');
+      actions.id = 'sp-actions';
+      actions.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%';
+      actions.innerHTML = `
+        <button type="button" id="sp-exit" class="btn-secondary" title="Cerrar la ventana sin más cambios">Salir</button>
+        <div style="display:flex;gap:8px">
+          <button type="button" id="sp-create" class="btn-secondary" title="Crear un caso de espectro nuevo con estos parámetros y seguir en esta ventana">➕ Crear caso</button>
+          <button type="button" id="sp-accept" class="btn-secondary" title="Guardar los parámetros en el caso seleccionado y cerrar — NO ejecuta el análisis">Aceptar</button>
+          <button type="button" id="sp-calc" class="btn-primary" title="Guardar y ejecutar el análisis espectral">Calcular</button>
+        </div>`;
+      if (footer) { footer.style.justifyContent = 'space-between'; footer.appendChild(actions); }
 
-      overlay._resolve = () => {
-        const dir     = $('sp-dir').value;
-        const method  = $('sp-method').value;
-        const zeta    = parseFloat($('sp-zeta').value) || 0.05;
-        const factor  = parseFloat($('sp-unit').value) || 9.81;
+      // Reúne los parámetros del formulario. `forceNew` ⇒ crear caso nuevo (ignora
+      // el seleccionado). Devuelve null y avisa si el espectro es inválido.
+      const gather = (forceNew = false) => {
         const rawText = $('sp-spectrum').value;
         const spectrum = _parseSpectrum(rawText);
         if (spectrum.length < 2) {
           this.toast('El espectro necesita al menos 2 puntos (T,Sa)', 'error');
-          resolve(null); return;
+          return null;
         }
-        // Parámetros NCh433/DS61 con que se construyó la curva (para la memoria de cálculo).
         const su = SUELOS[$('sp-suelo').value];
         const TstarV = parseFloat($('sp-Tstar').value);
         const RoV = parseFloat($('sp-Ro').value) || 11;
@@ -5578,13 +5613,85 @@ class App {
           Tstar: TstarV > 0 ? TstarV : null, Rstar: RstarV,
           unidadSa: $('sp-unit').options[$('sp-unit').selectedIndex]?.text || '',
         };
-        // Caso objetivo: el guardado seleccionado (editar) o null (crear nuevo).
         const caseSel = $('sp-case')?.value;
-        const targetLcId = (caseSel && caseSel !== '__new') ? +caseSel : null;
-        resolve({ spectrum, saFactor: factor, direction: dir, zeta, method, rawText, nch433, targetLcId, createNew: targetLcId == null });
+        const targetLcId = (forceNew || !caseSel || caseSel === '__new') ? null : +caseSel;
+        return {
+          spectrum, saFactor: parseFloat($('sp-unit').value) || 9.81,
+          direction: $('sp-dir').value, zeta: parseFloat($('sp-zeta').value) || 0.05,
+          method: $('sp-method').value, rawText, nch433,
+          targetLcId, createNew: targetLcId == null,
+        };
       };
-      overlay._reject = () => resolve(null);
+
+      // Reconstruye el selector de casos del diálogo y deja seleccionado `selId`.
+      const refreshCaseSelect = (selId) => {
+        const sel = $('sp-case'); if (!sel) return;
+        const cases = [...this.model.loadCases.values()].filter(l => l.type === 'spectrum');
+        sel.innerHTML = '<option value="__new">➕ Nuevo caso de espectro…</option>' +
+          cases.map(l => `<option value="${l.id}" ${l.id === selId ? 'selected' : ''}>${(l.name || ('Caso ' + l.id)).replace(/[<>&]/g, '')} (${l.specDir || 'X'})</option>`).join('');
+        if (selId != null) sel.value = String(selId);
+      };
+
+      const close = (val) => {
+        actions.remove();
+        if (okBtn) okBtn.style.display = '';
+        if (cancelBtn) cancelBtn.style.display = '';
+        if (footer) footer.style.justifyContent = prevJustify;
+        overlay.classList.add('hidden');
+        overlay._resolve = () => {}; overlay._reject = () => {};
+        resolve(val);
+      };
+
+      // «Crear» / «＋ caso»: crea un caso de espectro nuevo SIN salir ni calcular,
+      // lo agrega al selector y lo deja seleccionado para seguir editando.
+      const createCase = () => {
+        const p = gather(true); if (!p) return;
+        const lc = this._saveSpectrumCase(p);
+        this._lastSpectrum = p.rawText; this._lastSpectrumParams = p;
+        refreshCaseSelect(lc.id);
+        this._renderLcSelector();
+        this.panel?.renderCombinations?.();
+        this.toast(`Caso «${lc.name}» creado (sin calcular). Cambie parámetros y «Crear» otro, o «Calcular».`, 'ok');
+      };
+
+      $('sp-create')?.addEventListener('click', createCase);
+      $('sp-addcase')?.addEventListener('click', createCase);
+      $('sp-exit')?.addEventListener('click', () => close(null));
+      $('sp-accept')?.addEventListener('click', () => { const p = gather(); if (p) close({ ...p, action: 'accept' }); });
+      $('sp-calc')?.addEventListener('click',   () => { const p = gather(); if (p) close({ ...p, action: 'calculate' }); });
+
+      overlay.classList.remove('hidden');
+      overlay._resolve = () => {};            // el footer global está oculto
+      overlay._reject  = () => close(null);   // Escape global → salir limpio
     });
+  }
+
+  // Crea o actualiza el caso de carga espectral a partir de los parámetros del
+  // diálogo, SIN ejecutar el solver. Compartido por «Crear», «Aceptar» y «Calcular».
+  _saveSpectrumCase(params) {
+    let specLc = params.targetLcId ? this.model.loadCases.get(params.targetLcId) : null;
+    if (specLc && specLc.type === 'spectrum') {
+      if (specLc.specDir !== params.direction) {   // actualizar dir + nombre por defecto
+        specLc.specDir = params.direction;
+        if (/^Sismo [XY] \(esp\)/.test(specLc.name)) specLc.name = `Sismo ${params.direction} (esp)`;
+      }
+    } else if (!params.createNew) {
+      specLc = [...this.model.loadCases.values()]
+        .find(l => l.type === 'spectrum' && l.specDir === params.direction);
+    }
+    if (!specLc) {
+      // Nombre único: «Sismo X (esp)», «Sismo X (esp) 2», … si ya existe.
+      let name = `Sismo ${params.direction} (esp)`, k = 1;
+      const taken = new Set([...this.model.loadCases.values()].map(l => l.name));
+      while (taken.has(name)) { k++; name = `Sismo ${params.direction} (esp) ${k}`; }
+      specLc = this.model.addLoadCase(name, false, 'spectrum', params.direction);
+    }
+    specLc.spec = {   // parámetros usados (se guardan en el .s3d)
+      method: params.method, zeta: params.zeta,
+      saFactor: params.saFactor, rawText: params.rawText,
+    };
+    this.markDirty();
+    return specLc;
   }
 
   // ── P1-2: Refresh stale CR values after loading a .s3d file ──────────────
@@ -6319,7 +6426,7 @@ class App {
               selectedNodes: sel.filter(s => s.type === 'node').map(s => s.id) };
     }
     this.snapshot();
-    const { aplicarOperaciones } = await import('./model/model_ops.js?v=166');
+    const { aplicarOperaciones } = await import('./model/model_ops.js?v=168');
     const res = aplicarOperaciones(this.model, ops, ctx);
     // los resultados previos dejan de ser válidos tras modificar la geometría/cargas
     this.viewport.clearResults?.();
@@ -6367,7 +6474,7 @@ class App {
     this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=166');
+      const { generarModelo } = await import('../asistente/generador.js?v=168');
       const modelo = generarModelo(ficha, libs);
 
       if (modo === 'sobreponer') {
@@ -7506,7 +7613,7 @@ class App {
     const deflex = this._calcularDeflexionesVigas(diseno?.params);
     const drift  = this._calcularDrift();
     try {
-      const { Docx } = await import('./io/docx.js?v=166');
+      const { Docx } = await import('./io/docx.js?v=168');
       const blob = this._memoriaDocx(Docx, imgs, diseno, deflex, drift).blob();
       this._downloadBlob(blob, 'memoria_calculo.docx');
       this.toast('Memoria Word (.docx) descargada', 'ok');
@@ -7677,7 +7784,7 @@ class App {
   // Verificación de diseño (flexión/corte/axial) por elemento, usando los
   // resultados actuales y los parámetros editables de asistente/diseno_params.json.
   async _calcularDiseno() {
-    const ver = '?v=166';
+    const ver = '?v=168';
     let params = null;
     try { params = await fetch('asistente/diseno_params.json' + ver).then(r => r.json()); }
     catch (e) { console.error('No se pudo cargar diseno_params.json:', e); return null; }

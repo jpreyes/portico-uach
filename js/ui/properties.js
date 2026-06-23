@@ -1,8 +1,8 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // PropertiesPanel — right-side panel: node/element properties + mat/sec tabs
 // ──────────────────────────────────────────────────────────────────────────────
-import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=166';
-import { localAxes } from '../solver/timoshenko.js?v=166';
+import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=168';
+import { localAxes } from '../solver/timoshenko.js?v=168';
 
 export class PropertiesPanel {
   constructor(panelEl, app) {
@@ -160,7 +160,7 @@ export class PropertiesPanel {
   // madera). Cambiarlo fija model.designSettings.codeByFamily y re-verifica.
   async _designCodeSelectorHTML() {
     try {
-      const mod = this._designMod || (this._designMod = await import('../design/diseno.js?v=166'));
+      const mod = this._designMod || (this._designMod = await import('../design/diseno.js?v=168'));
       const fams = new Set();
       for (const m of this.app.model.materials.values()) {
         const fam = (m.design?.family) || mod.clasificarMaterial(m.name);
@@ -1793,7 +1793,7 @@ export class PropertiesPanel {
       <select id="mat-catalog"><option value="">— catálogo —</option></select></div>
       <button id="mat-catalog-add" class="btn-secondary" style="white-space:nowrap;font-size:11px">＋ Insertar</button>`;
     container.appendChild(pick);
-    import('../design/materials_catalog.js?v=166').then(({ MATERIAL_FAMILIES, getMaterialDef }) => {
+    import('../design/materials_catalog.js?v=168').then(({ MATERIAL_FAMILIES, getMaterialDef }) => {
       const sel = pick.querySelector('#mat-catalog');
       sel.innerHTML = '<option value="">— catálogo —</option>' +
         Object.entries(MATERIAL_FAMILIES).map(([fam, names]) => `<optgroup label="${fam}">` + names.map(n => `<option value="${n}">${n}</option>`).join('') + '</optgroup>').join('');
@@ -2090,6 +2090,14 @@ export class PropertiesPanel {
         <div class="prop-row cols1">
           <div class="prop-field"><label>Nombre</label><input type="text" data-f="name" value="${sec.name}"></div>
         </div>
+        <div class="prop-row cols1">
+          <div class="prop-field"><label title="Clasifica la sección para el diseño: permite recorrer y diseñar sólo los pilares (o sólo las vigas). «Genérico» = sin filtrar.">Tipo de elemento (diseño)</label>
+            <select data-f="role">
+              <option value="generico" ${(sec.role || 'generico') === 'generico' ? 'selected' : ''}>Genérico</option>
+              <option value="pilar" ${sec.role === 'pilar' ? 'selected' : ''}>🟦 Pilar / columna</option>
+              <option value="viga" ${sec.role === 'viga' ? 'selected' : ''}>🟩 Viga</option>
+            </select></div>
+        </div>
         <div class="prop-row">
           ${fld('A (m²)', 'A')}
           ${fld('J (m⁴)', 'J')}
@@ -2225,7 +2233,7 @@ export class PropertiesPanel {
     if (!shapeSel) return;
     // Catálogo de perfiles tabulados (#66): poblar y aplicar al elegir.
     const catSel = card.querySelector('.sd-catalog');
-    if (catSel) import('../design/profiles.js?v=166').then(({ catalogFamilies, catalogNames, profileToSection }) => {
+    if (catSel) import('../design/profiles.js?v=168').then(({ catalogFamilies, catalogNames, profileToSection }) => {
       let html = '<option value="">— elegir perfil comercial —</option>';
       for (const fam of catalogFamilies()) html += `<optgroup label="${fam}">` + catalogNames(fam).map(n => `<option value="${n}" ${sec.design?.profile === n ? 'selected' : ''}>${n}</option>`).join('') + '</optgroup>';
       catSel.innerHTML = html;
@@ -2276,7 +2284,7 @@ export class PropertiesPanel {
       const s = this.app.model.sections.get(sec.id);
       if (!s.design?.shape || s.design.shape === 'generic') { this.app.toast('Elija una forma con dimensiones primero', 'warn'); return; }
       try {
-        const { fromShape } = await import('../design/section_props.js?v=166');
+        const { fromShape } = await import('../design/section_props.js?v=168');
         const g = fromShape(s.design.shape, s.design);
         if (!g) { this.app.toast('Faltan dimensiones de la forma', 'warn'); return; }
         this.app.snapshot();

@@ -1260,9 +1260,10 @@ export class Viewport {
     if (e.button !== 0) return;
     this._ptrDownPos = [e.clientX, e.clientY];
 
-    // Selección por cuadro (rubber-band, #80): Alt + arrastrar en modo selección.
+    // Selección por cuadro (rubber-band, #80): Alt + arrastrar en modo selección,
+    // o cualquier arrastre en el modo dedicado «Cuadro» (#89, sin modificador).
     // Tiene prioridad sobre el arrastre de nodo (Alt desactiva el drag).
-    if (this.mode === 'select' && !this._inResultsMode && e.altKey) {
+    if (!this._inResultsMode && (this.mode === 'boxselect' || (this.mode === 'select' && e.altKey))) {
       const r = this._renderer.domElement.getBoundingClientRect();
       this._rubber = { x0: e.clientX, y0: e.clientY, x1: e.clientX, y1: e.clientY,
                        rect: r, add: e.ctrlKey || e.metaKey };
@@ -2094,6 +2095,7 @@ export class Viewport {
     // Status bar mode
     const names = {
       select:     'Seleccionar',
+      boxselect:  'Selección por cuadro',
       pan:        'Mover vista (PAN)',
       addnode:    'Agregar Nodo',
       addelem:    'Agregar Elemento',
@@ -2104,6 +2106,7 @@ export class Viewport {
     document.getElementById('sb-mode').textContent = `Modo: ${names[mode] || mode}`;
     // Hint overlay
     const hints = {
+      boxselect:  'Arrastra con la izquierda para dibujar un recuadro  ·  selecciona nodos y elementos dentro  ·  Ctrl al soltar añade  ·  Esc cancela',
       pan:        'Arrastra con el botón izquierdo para mover la vista',
       addnode:    'Clic en la grilla para crear nodo',
       addelem:    'Clic en un nodo o en la grilla (crea nodo) → destino  ·  Imán: pega a nodo cercano  ·  Esc cancela',
