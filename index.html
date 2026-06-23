@@ -29,8 +29,8 @@
       window.dispatchEvent(new Event('pwa-installed'));
     });
   </script>
-  <link rel="stylesheet" href="style.css?v=162">
-  <link rel="stylesheet" href="ui-v2.css?v=162">
+  <link rel="stylesheet" href="style.css?v=163">
+  <link rel="stylesheet" href="ui-v2.css?v=163">
   <script type="importmap">
   {
     "imports": {
@@ -168,7 +168,7 @@
           <li data-action="global-matrices">Ver Matrices Globales K · M…</li>
           <li data-action="diag-estabilidad">Diagnosticar estabilidad (nodos sueltos)…</li>
           <li class="sep"></li>
-          <li data-action="clear-results">Limpiar Resultados</li>
+          <li data-action="clear-results" title="DESCARTA todos los resultados calculados (estático, modal, espectro, NL, diseño) y revierte la malla auto-discretizada. Para sólo volver a ver el modelo sin borrar nada, usa «Vista modelo» en la barra.">🗑 Limpiar Resultados (descartar)</li>
         </ul>
       </div>
 
@@ -290,11 +290,12 @@
         </svg>
         <span>Análisis</span>
       </button>
-      <button class="tool tool-action" id="btn-clear-results" title="Limpiar Resultados" style="display:none">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      <button class="tool tool-action" id="btn-clear-results" title="Volver a la vista normal del modelo (sale de la deformada/diagramas/contornos CONSERVANDO los resultados). Para descartar los resultados: menú Análisis → Limpiar Resultados." style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M12 3 L21 7.5 V16.5 L12 21 L3 16.5 V7.5 Z"/>
+          <path d="M3 7.5 L12 12 L21 7.5 M12 12 V21"/>
         </svg>
-        <span>Limpiar</span>
+        <span>Vista modelo</span>
       </button>
     </aside>
 
@@ -1017,7 +1018,7 @@
 
 <!-- numeric.js para solver (Fase 2+) -->
 <script src="lib/numeric.js"></script>
-<script type="module" src="js/app.js?v=162"></script>
+<script type="module" src="js/app.js?v=163"></script>
 
 <!-- PWA: registrar el service worker (offline). Solo en contexto seguro
      (https o localhost); el navegador deja navigator.serviceWorker undefined
