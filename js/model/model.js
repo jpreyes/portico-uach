@@ -162,6 +162,15 @@ export class Model {
       if (oi <= 0 && oj <= 0) delete el.rigidEnd;
       else el.rigidEnd = { i: oi, j: oj };
     }
+    // Resorte de extremo / fijación parcial (1-008): { [gdl 0..11]: k>0 } (kN·m/rad o kN/m).
+    if (props.endSprings !== undefined) {
+      const es = {};
+      for (const k of Object.keys(props.endSprings || {})) {
+        const v = +props.endSprings[k];
+        if (v > 0 && isFinite(v)) es[+k] = v;
+      }
+      if (Object.keys(es).length) el.endSprings = es; else delete el.endSprings;
+    }
     return el;
   }
 

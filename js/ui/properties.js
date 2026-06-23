@@ -1,8 +1,8 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // PropertiesPanel — right-side panel: node/element properties + mat/sec tabs
 // ──────────────────────────────────────────────────────────────────────────────
-import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=172';
-import { localAxes } from '../solver/timoshenko.js?v=172';
+import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=173';
+import { localAxes } from '../solver/timoshenko.js?v=173';
 
 export class PropertiesPanel {
   constructor(panelEl, app) {
@@ -167,7 +167,7 @@ export class PropertiesPanel {
   // madera). Cambiarlo fija model.designSettings.codeByFamily y re-verifica.
   async _designCodeSelectorHTML() {
     try {
-      const mod = this._designMod || (this._designMod = await import('../design/diseno.js?v=172'));
+      const mod = this._designMod || (this._designMod = await import('../design/diseno.js?v=173'));
       const fams = new Set();
       for (const m of this.app.model.materials.values()) {
         const fam = (m.design?.family) || mod.clasificarMaterial(m.name);
@@ -1492,6 +1492,23 @@ export class PropertiesPanel {
       </div>
 
       <div class="prop-section">
+        <div class="prop-title" title="Resorte de extremo / fijación parcial (conexión semi-rígida, como «partial fixity» de SAP2000): rigidez ROTACIONAL kN·m/rad entre la barra y el nodo. Vacío = rígido; el solver lo condensa (k→∞ rígido, k→0 rótula). Afecta el análisis lineal (F5). My/Mz como en las liberaciones de arriba.">Resorte de extremo (fijación parcial)</div>
+        <div class="prop-row">
+          <div class="prop-field"><label title="Resorte rotacional My (flexión plano local x–z) en el extremo i.">My·i (kN·m/rad)</label>
+            <input type="number" id="e-spr-myi" value="${elem.endSprings?.[4] ?? ''}" min="0" step="100" placeholder="rígido"></div>
+          <div class="prop-field"><label title="Resorte rotacional Mz (flexión plano local x–y) en el extremo i.">Mz·i (kN·m/rad)</label>
+            <input type="number" id="e-spr-mzi" value="${elem.endSprings?.[5] ?? ''}" min="0" step="100" placeholder="rígido"></div>
+        </div>
+        <div class="prop-row">
+          <div class="prop-field"><label title="Resorte rotacional My (flexión plano local x–z) en el extremo j.">My·j (kN·m/rad)</label>
+            <input type="number" id="e-spr-myj" value="${elem.endSprings?.[10] ?? ''}" min="0" step="100" placeholder="rígido"></div>
+          <div class="prop-field"><label title="Resorte rotacional Mz (flexión plano local x–y) en el extremo j.">Mz·j (kN·m/rad)</label>
+            <input type="number" id="e-spr-mzj" value="${elem.endSprings?.[11] ?? ''}" min="0" step="100" placeholder="rígido"></div>
+        </div>
+        <p class="rel-warn" style="color:var(--text-muted)">Conexión semi-rígida miembro↔nodo (vacío = rígido). Condensado en K (análisis lineal F5). Combinable con liberaciones (no en el mismo GDL).</p>
+      </div>
+
+      <div class="prop-section">
         <div class="prop-title">Herramientas Didácticas</div>
         <button class="btn-add" id="btn-elem-matrices" style="width:100%"
           title="Ver Ke local, T, Ke global y Me de este elemento — para comparar con el cálculo manual del curso">
@@ -1547,7 +1564,11 @@ export class PropertiesPanel {
       const compressionOnly = sel.querySelector('#e-componly')?.checked || false;
       const L0factor = parseFloat(sel.querySelector('#e-l0f')?.value) || 1;
       const rigidEnd = { i: parseFloat(sel.querySelector('#e-rig-i')?.value) || 0, j: parseFloat(sel.querySelector('#e-rig-j')?.value) || 0 };
-      this.app.model.updateElement(elem.id, { n1, n2, matId, secId, releases, cable, compressionOnly, L0factor, rigidEnd });
+      // Resorte de extremo / fijación parcial (1-008): My/Mz por extremo → GDL 4/5/10/11.
+      const endSprings = {};
+      const addSpr = (id, dof) => { const v = parseFloat(sel.querySelector(id)?.value); if (v > 0 && isFinite(v)) endSprings[dof] = v; };
+      addSpr('#e-spr-myi', 4); addSpr('#e-spr-mzi', 5); addSpr('#e-spr-myj', 10); addSpr('#e-spr-mzj', 11);
+      this.app.model.updateElement(elem.id, { n1, n2, matId, secId, releases, cable, compressionOnly, L0factor, rigidEnd, endSprings });
       this.app.viewport.refreshElem(this.app.model.elements.get(elem.id));
       this.app.markDirty();
     };
@@ -1806,7 +1827,7 @@ export class PropertiesPanel {
       <select id="mat-catalog"><option value="">— catálogo —</option></select></div>
       <button id="mat-catalog-add" class="btn-secondary" style="white-space:nowrap;font-size:11px">＋ Insertar</button>`;
     container.appendChild(pick);
-    import('../design/materials_catalog.js?v=172').then(({ MATERIAL_FAMILIES, getMaterialDef }) => {
+    import('../design/materials_catalog.js?v=173').then(({ MATERIAL_FAMILIES, getMaterialDef }) => {
       const sel = pick.querySelector('#mat-catalog');
       sel.innerHTML = '<option value="">— catálogo —</option>' +
         Object.entries(MATERIAL_FAMILIES).map(([fam, names]) => `<optgroup label="${fam}">` + names.map(n => `<option value="${n}">${n}</option>`).join('') + '</optgroup>').join('');
@@ -2270,7 +2291,7 @@ export class PropertiesPanel {
     if (!shapeSel) return;
     // Catálogo de perfiles tabulados (#66): poblar y aplicar al elegir.
     const catSel = card.querySelector('.sd-catalog');
-    if (catSel) import('../design/profiles.js?v=172').then(({ catalogFamilies, catalogNames, profileToSection }) => {
+    if (catSel) import('../design/profiles.js?v=173').then(({ catalogFamilies, catalogNames, profileToSection }) => {
       let html = '<option value="">— elegir perfil comercial —</option>';
       for (const fam of catalogFamilies()) html += `<optgroup label="${fam}">` + catalogNames(fam).map(n => `<option value="${n}" ${sec.design?.profile === n ? 'selected' : ''}>${n}</option>`).join('') + '</optgroup>';
       catSel.innerHTML = html;
@@ -2321,7 +2342,7 @@ export class PropertiesPanel {
       const s = this.app.model.sections.get(sec.id);
       if (!s.design?.shape || s.design.shape === 'generic') { this.app.toast('Elija una forma con dimensiones primero', 'warn'); return; }
       try {
-        const { fromShape } = await import('../design/section_props.js?v=172');
+        const { fromShape } = await import('../design/section_props.js?v=173');
         const g = fromShape(s.design.shape, s.design);
         if (!g) { this.app.toast('Faltan dimensiones de la forma', 'warn'); return; }
         this.app.snapshot();

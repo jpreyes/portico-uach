@@ -222,8 +222,11 @@ export function rigidEndTransform(oi, oj) {
 // Sin cacho devuelve la rigidez normal de longitud L.
 export function elemLocalK(elem, mat, sec, L) {
   const ro = rigidEndOffsets(elem, L);
-  if (!ro) return stiffnessMatrix(L, mat, sec);
-  return globalStiffness(stiffnessMatrix(ro.Lf, mat, sec), rigidEndTransform(ro.oi, ro.oj));
+  let Ke = ro ? globalStiffness(stiffnessMatrix(ro.Lf, mat, sec), rigidEndTransform(ro.oi, ro.oj))
+              : stiffnessMatrix(L, mat, sec);
+  // Resortes de extremo / fijación parcial (1-008): conexión semi-rígida miembro↔nodo.
+  if (elem.endSprings) Ke = applyEndSprings(Ke, elem.endSprings);
+  return Ke;
 }
 
 // Masa LOCAL del elemento con cacho rígido (masa consistente de la parte flexible
@@ -362,6 +365,41 @@ function invertSmall(M) {
     }
   }
   return A.map(row => row.slice(n));
+}
+
+// ── Resortes de extremo / fijación parcial (semi-rígida) — 1-008 ─────────────
+/**
+ * Aplica resortes de extremo a la rigidez local del elemento (conexión semi-rígida
+ * miembro↔nodo). `springs` = { [gdl 0..11]: k } con k>0 finito (kN·m/rad para giros,
+ * kN/m para traslaciones). Cada extremo con resorte se trata como un GDL INTERNO del
+ * miembro acoplado al GDL del nodo por el resorte; se condensa por estática (Guyan):
+ *   k→∞ ⇒ conexión rígida (Ke original) · k→0 ⇒ liberación total (rótula).
+ * Riguroso para Timoshenko (opera sobre el Ke real, no una fórmula Euler).
+ */
+export function applyEndSprings(Ke, springs) {
+  if (!springs) return Ke;
+  const sd = Object.keys(springs).map(Number).filter(i => springs[i] > 0 && isFinite(springs[i]));
+  if (!sd.length) return Ke;
+  const m = sd.length, N = 12 + m;
+  const beamIdx = i => { const p = sd.indexOf(i); return p >= 0 ? 12 + p : i; };
+  const K = Array.from({ length: N }, () => Array(N).fill(0));
+  for (let a = 0; a < 12; a++) for (let b = 0; b < 12; b++) {
+    const v = Ke[a][b]; if (v) K[beamIdx(a)][beamIdx(b)] += v;
+  }
+  // Resorte k entre el GDL del nodo `i` y el GDL interno del miembro `12+p`.
+  sd.forEach((i, p) => { const k = springs[i], P = 12 + p; K[i][i] += k; K[P][P] += k; K[i][P] -= k; K[P][i] -= k; });
+  // Condensar los GDL internos (12..N-1): Keff = Knn − Kni·Kii⁻¹·Kin.
+  const node = Array.from({ length: 12 }, (_, i) => i);
+  const intl = sd.map((_, p) => 12 + p);
+  const Knn = node.map(i => node.map(j => K[i][j]));
+  const Kni = node.map(i => intl.map(j => K[i][j]));
+  const Kii = intl.map(i => intl.map(j => K[i][j]));
+  const KiiInv = invertSmall(Kii);
+  if (!KiiInv) return Ke;
+  const KniInv = node.map((_, i) => intl.map((_, j) =>
+    Kni[i].reduce((s, v, k) => s + v * KiiInv[k][j], 0)));
+  return Knn.map((row, i) => row.map((v, j) =>
+    v - KniInv[i].reduce((s, c, k) => s + c * Kni[j][k], 0)));   // Kin[k][j]=Kni[j][k] (simétrica)
 }
 
 // ── Fixed-end forces for distributed loads ────────────────────────────────
