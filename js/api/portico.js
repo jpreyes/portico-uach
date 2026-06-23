@@ -22,20 +22,21 @@
 // Unidades del modelo: kN, m (las resistencias de diseño se dan en MPa).
 // ──────────────────────────────────────────────────────────────────────────────
 
-import { Model } from '../model/model.js?v=151';
-import { Serializer } from '../model/serializer.js?v=151';
-import { StaticSolver } from '../solver/static_solver.js?v=151';
-import { ModalSolver } from '../solver/modal_solver.js?v=151';
-import { ModalResults } from '../solver/modal_results.js?v=151';
-import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from '../solver/assembler.js?v=151';
-import { assembleKg } from '../solver/geometric.js?v=151';
-import { makeFactor } from '../solver/linsolve.js?v=151';
-import { solveBuckling } from '../solver/buckling.js?v=151';
-import { StagedSolver } from '../solver/staged.js?v=151';
-import { verificarElemento, listDesignCodes, getDesignCode, registerDesignCode } from '../design/diseno.js?v=151';
-import { checkDeflection, checkDrift } from '../design/serviceability.js?v=151';
-import { resolveMaterial } from '../design/material_props.js?v=151';
-import { resolveSectionProps } from '../design/section_props.js?v=151';
+import { Model } from '../model/model.js?v=152';
+import { Serializer } from '../model/serializer.js?v=152';
+import { StaticSolver } from '../solver/static_solver.js?v=152';
+import { ModalSolver } from '../solver/modal_solver.js?v=152';
+import { ModalResults } from '../solver/modal_results.js?v=152';
+import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from '../solver/assembler.js?v=152';
+import { assembleKg } from '../solver/geometric.js?v=152';
+import { makeFactor } from '../solver/linsolve.js?v=152';
+import { solveBuckling } from '../solver/buckling.js?v=152';
+import { StagedSolver } from '../solver/staged.js?v=152';
+import { verificarElemento, listDesignCodes, getDesignCode, registerDesignCode } from '../design/diseno.js?v=152';
+import { checkDeflection, checkDrift } from '../design/serviceability.js?v=152';
+import { polygonProps, compositeProps } from '../design/polygon_props.js?v=152';
+import { resolveMaterial } from '../design/material_props.js?v=152';
+import { resolveSectionProps } from '../design/section_props.js?v=152';
 
 // ── numeric.js disponible como global (navegador) o cargado bajo demanda (Node) ──
 let _numReady = false;
@@ -210,6 +211,10 @@ export class Portico {
   // ── Estados límite de SERVICIO (#68): flecha y deriva por norma ──────────────
   checkDeflection(opts) { return checkDeflection(opts); }
   checkDrift(opts) { return checkDrift(opts); }
+
+  // ── Sección poligonal / compuesta (#70) ─────────────────────────────────────
+  static polygonProps(o) { return polygonProps(o); }
+  static compositeProps(o) { return compositeProps(o); }
 
   // ── Catálogo de códigos de diseño ───────────────────────────────────────────
   static listDesignCodes(family) { return listDesignCodes(family).map(c => ({ id: c.id, family: c.family, label: c.label })); }
