@@ -15,7 +15,7 @@
 // Limitación de esta fase: polígono SIMPLE (sin agujeros). Las regiones con huecos se
 // arman por multi-parche (mesh_map) o quedan para la fase de paving.
 // ──────────────────────────────────────────────────────────────────────────────
-import { quadMinScaledJacobian } from './mesh_map.js?v=128';
+import { quadMinScaledJacobian, weldPoints } from './mesh_map.js?v=128';
 import { triQuality, boundaryNodes, laplacianSmooth } from './mesh_quality.js?v=128';
 
 const EPS = 1e-9;
@@ -42,7 +42,14 @@ export function earClip(V, polyIdx) {
       const a = idx[(i - 1 + n) % n], b = idx[i], c = idx[(i + 1) % n];
       if (triArea(V[a], V[b], V[c]) <= EPS) continue;        // reflejo o colineal → no es oreja
       let contains = false;
-      for (let j = 0; j < n; j++) { const p = idx[j]; if (p === a || p === b || p === c) continue; if (pointInTri(V[p], V[a], V[b], V[c])) { contains = true; break; } }
+      const coincide = (P, Q) => Math.abs(P[0] - Q[0]) < 1e-9 && Math.abs(P[1] - Q[1]) < 1e-9;
+      for (let j = 0; j < n; j++) {
+        const p = idx[j]; if (p === a || p === b || p === c) continue;
+        const P = V[p];
+        // saltar puntos COINCIDENTES con un vértice de la oreja (puentes de agujeros)
+        if (coincide(P, V[a]) || coincide(P, V[b]) || coincide(P, V[c])) continue;
+        if (pointInTri(P, V[a], V[b], V[c])) { contains = true; break; }
+      }
       if (contains) continue;
       tris.push([a, b, c]); idx.splice(i, 1); ear = i; break;
     }
@@ -123,18 +130,59 @@ export function recombineToQuads(V, tris, minJac = 0.30) {
   return cells;
 }
 
+// ── Agujeros: fusión de huecos en el contorno (bridging estilo earcut) ──────────
+// Conecta cada agujero al contorno exterior con un "puente" de ancho cero → un único
+// polígono simple que ear-clipping puede triangular. Outer CCW, agujeros CW.
+function bridgeHole(ring, hole) {
+  let mi = 0; for (let i = 1; i < hole.length; i++) if (hole[i][0] > hole[mi][0]) mi = i;   // vértice del agujero más a la derecha
+  const M = hole[mi];
+  // arista del contorno que cruza el rayo +x desde M; se elige el vértice a su derecha
+  let qx = -Infinity, bi = -1;
+  for (let i = 0; i < ring.length; i++) {
+    const a = ring[i], b = ring[(i + 1) % ring.length];
+    if (a[1] === b[1]) continue;
+    if (M[1] <= Math.max(a[1], b[1]) && M[1] >= Math.min(a[1], b[1])) {
+      const x = a[0] + (M[1] - a[1]) / (b[1] - a[1]) * (b[0] - a[0]);
+      if (x >= M[0] - EPS && x > qx) { qx = x; bi = (a[0] >= b[0]) ? i : (i + 1) % ring.length; }
+    }
+  }
+  if (bi < 0) return ring.concat(hole);   // fallback (no debería)
+  const holeSeq = []; for (let k = 0; k <= hole.length; k++) holeSeq.push(hole[(mi + k) % hole.length]);   // m … m
+  const merged = [];
+  for (let i = 0; i <= bi; i++) merged.push(ring[i]);
+  for (const pt of holeSeq) merged.push(pt);
+  merged.push(ring[bi]);                  // vuelve al vértice puente
+  for (let i = bi + 1; i < ring.length; i++) merged.push(ring[i]);
+  return merged;
+}
+function eliminateHoles(outer, holes) {
+  let ring = signedArea2(outer) < 0 ? outer.slice().reverse() : outer.slice();   // exterior CCW
+  const H = holes.map(h => signedArea2(h) > 0 ? h.slice().reverse() : h.slice()); // agujeros CW
+  H.sort((a, b) => Math.max(...b.map(p => p[0])) - Math.max(...a.map(p => p[0])));
+  for (const hole of H) ring = bridgeHole(ring, hole);
+  return ring;
+}
+
 // ── Orquestador: polígono 2D → malla {V, cells, boundary} ───────────────────────
 /**
  * @param {Array} outer  vértices del contorno [[x,y]…] (sin repetir el primero)
- * @param {object} opts  { h, levels, recombine=true, minQuad=0.30, smooth=3 }
+ * @param {object} opts  { h, levels, recombine=true, minQuad=0.30, smooth=3, holes:[[[x,y]…]…] }
  *   h       = tamaño de elemento objetivo (deriva los niveles de refinamiento)
  *   levels  = niveles de refinamiento uniforme explícitos (alternativa a h)
+ *   holes   = lista de agujeros (cada uno un anillo [[x,y]…]); se fusionan por puentes.
  * @returns { V:[[x,y]…], cells:[[i,j,k]|[i,j,k,l]…], boundary:Set, stats }
  */
 export function triangulatePolygon(outer, opts = {}) {
-  if (opts.holes && opts.holes.length) throw new Error('mesh_free: agujeros aún no soportados (use multi-parche)');
-  const V = outer.map(p => [p[0], p[1]]);
-  let tris = earClip(V, outer.map((_, i) => i));
+  const hasHoles = opts.holes && opts.holes.length;
+  const ring = hasHoles ? eliminateHoles(outer, opts.holes) : outer;
+  let V = ring.map(p => [p[0], p[1]]);
+  let tris = earClip(V, ring.map((_, i) => i));
+  if (hasHoles) {
+    // soldar los vértices duplicados de los puentes y descartar triángulos degenerados
+    const w = weldPoints(V.map(p => [p[0], p[1], 0]), 1e-7);
+    V = w.unique.map(p => [p[0], p[1]]);
+    tris = tris.map(t => t.map(i => w.remap[i])).filter(t => t[0] !== t[1] && t[1] !== t[2] && t[0] !== t[2] && Math.abs(triArea(V[t[0]], V[t[1]], V[t[2]])) > EPS);
+  }
   tris = delaunayFlips(V, tris);
   // niveles de refinamiento desde h
   let levels = opts.levels;
@@ -178,7 +226,9 @@ export function meshPolygonIntoModel(model, outer3, opts = {}) {
   const { o, e1, e2 } = planeFrame(outer3);
   const to2D = (p) => { const d = [p[0] - o[0], p[1] - o[1], p[2] - o[2]]; return [d[0] * e1[0] + d[1] * e1[1] + d[2] * e1[2], d[0] * e2[0] + d[1] * e2[1] + d[2] * e2[2]]; };
   const to3D = (uv) => [o[0] + uv[0] * e1[0] + uv[1] * e2[0], o[1] + uv[0] * e1[1] + uv[1] * e2[1], o[2] + uv[0] * e1[2] + uv[1] * e2[2]];
-  const { V, cells, boundary } = triangulatePolygon(outer3.map(to2D), opts);
+  const opts2 = { ...opts };
+  if (opts.holes && opts.holes.length) opts2.holes = opts.holes.map(h => h.map(to2D));   // proyecta los agujeros al plano
+  const { V, cells, boundary } = triangulatePolygon(outer3.map(to2D), opts2);
 
   const tol = opts.weldTol ?? 1e-6;
   const matId = opts.matId ?? [...model.materials.keys()][0];
