@@ -368,6 +368,7 @@ export class Viewport {
     this._nodeMeshes.clear();
     this._elemLines.clear();
     this._areaMeshes.clear();
+    this._scwbMarked = null;   // marcadores SCWB (#68) — se rehacen al re-chequear
     this._suppGroups.clear();
     this._selected.clear();
     this._hovered = null;
@@ -1541,6 +1542,37 @@ export class Viewport {
       for (const id of ids) { const m = this._nodeMeshes.get(id); if (m) { c.add(m.position); k++; } }
       if (k) { c.multiplyScalar(1 / k); this._controls.target.copy(c); this._controls.update(); }
     }
+  }
+
+  // Centra la cámara en un nodo concreto (sin cambiar el zoom).
+  centerOnNode(id) {
+    const m = this._nodeMeshes.get(id);
+    if (m) { this._controls.target.copy(m.position); this._controls.update(); }
+  }
+
+  // ── Nudos columna fuerte–viga débil (SCWB, #68) ─────────────────────────────
+  // Colorea los nodos de los nudos chequeados: ROJO = no cumple, VERDE = cumple,
+  // y agranda los que no cumplen. Guarda el estado para restaurarlo con clearSCWB.
+  showSCWB(res) {
+    this.clearSCWB();
+    this._scwbMarked = [];
+    let worst = null, worstR = -1;
+    for (const r of res) {
+      const m = this._nodeMeshes.get(r.node); if (!m) continue;
+      this._scwbMarked.push(r.node);
+      m.material.color.set(r.cumple ? 0x22c55e : 0xff2d55);
+      m.scale.setScalar(r.cumple ? 1.3 : 1.9);
+      if (!r.cumple && r.ratio > worstR) { worstR = r.ratio; worst = m; }
+    }
+    if (worst) { this._controls.target.copy(worst.position); this._controls.update(); }
+  }
+  clearSCWB() {
+    if (!this._scwbMarked) return;
+    for (const id of this._scwbMarked) {
+      const m = this._nodeMeshes.get(id);
+      if (m) { m.scale.setScalar(1); this._refreshColor('node', id); }
+    }
+    this._scwbMarked = null;
   }
 
   // ── Visibilidad de elementos (estado de vista, no del modelo) ───────────────

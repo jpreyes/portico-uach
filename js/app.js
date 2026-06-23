@@ -1,39 +1,42 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=156';
-import { Serializer }      from './model/serializer.js?v=156';
-import { Viewport }        from './ui/viewport.js?v=156';
-import { PropertiesPanel } from './ui/properties.js?v=156';
-import { MenuBar }         from './ui/menu.js?v=156';
-import { UndoStack }       from './utils/undo.js?v=156';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=156';
-import { Results }                         from './solver/postprocess.js?v=156';
-import { areaStress, areaBendingStress, vonMises } from './solver/membrane.js?v=156';
-import { ModalSolver }                     from './solver/modal_solver.js?v=156';
-import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=156';
-import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=156';
-import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=156';
-import { assembleKg } from './solver/geometric.js?v=156';
-import { makeFactor } from './solver/linsolve.js?v=156';
-import { formFind } from './solver/formfind.js?v=156';
-import { ModalResults }                    from './solver/modal_results.js?v=156';
-import { modalTimeHistory }                from './solver/timehistory.js?v=156';
-import { parseAccelerogram, accStats, scaleToPGA, DEMO_PRESETS, G as GACC } from './solver/accelerograms.js?v=156';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=156';
-import { StagedSolver }                    from './solver/staged.js?v=156';
-import { tendonEquivalentLoads, applyTendon, tendonEcc } from './solver/tendon.js?v=156';
-import { buildLane, influenceLine, movingLoadEnvelope, responseReaction, responseSection } from './solver/moving_load.js?v=156';
-import { newmarkNonlinear, shearBuilding, rayleighDamping } from './solver/nl_timehistory.js?v=156';
-import { checkDrift } from './design/serviceability.js?v=156';
-import { seleccionarPerfil, steelCandidates, predimensionar, candidatesForFamily } from './design/autodesign.js?v=156';
-import { autoDetectDiaphragms, computeFloorCR, applyDiaphragmConstraints } from './solver/diaphragm.js?v=156';
-import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=156';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=156';
-import { blockCells, cornerGridIndices } from './model/mesher.js?v=156';
-import { coonsGridFromCorners } from './model/mesh_map.js?v=156';
-import { meshPolygonIntoModel } from './model/mesh_free.js?v=156';
-import { smoothAreasInModel } from './model/mesh_quality.js?v=156';
+import { Model }           from './model/model.js?v=157';
+import { Serializer }      from './model/serializer.js?v=157';
+import { Viewport }        from './ui/viewport.js?v=157';
+import { PropertiesPanel } from './ui/properties.js?v=157';
+import { MenuBar }         from './ui/menu.js?v=157';
+import { UndoStack }       from './utils/undo.js?v=157';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=157';
+import { Results }                         from './solver/postprocess.js?v=157';
+import { areaStress, areaBendingStress, vonMises } from './solver/membrane.js?v=157';
+import { ModalSolver }                     from './solver/modal_solver.js?v=157';
+import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=157';
+import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=157';
+import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=157';
+import { assembleKg } from './solver/geometric.js?v=157';
+import { makeFactor } from './solver/linsolve.js?v=157';
+import { formFind } from './solver/formfind.js?v=157';
+import { ModalResults }                    from './solver/modal_results.js?v=157';
+import { modalTimeHistory }                from './solver/timehistory.js?v=157';
+import { parseAccelerogram, accStats, scaleToPGA, DEMO_PRESETS, G as GACC } from './solver/accelerograms.js?v=157';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=157';
+import { StagedSolver }                    from './solver/staged.js?v=157';
+import { tendonEquivalentLoads, applyTendon, tendonEcc } from './solver/tendon.js?v=157';
+import { buildLane, influenceLine, movingLoadEnvelope, responseReaction, responseSection } from './solver/moving_load.js?v=157';
+import { newmarkNonlinear, shearBuilding, rayleighDamping } from './solver/nl_timehistory.js?v=157';
+import { checkDrift } from './design/serviceability.js?v=157';
+import { seleccionarPerfil, steelCandidates, predimensionar, candidatesForFamily } from './design/autodesign.js?v=157';
+import { jointSCWB } from './design/seismic.js?v=157';
+import { resolveMaterial } from './design/material_props.js?v=157';
+import { resolveSectionProps } from './design/section_props.js?v=157';
+import { autoDetectDiaphragms, computeFloorCR, applyDiaphragmConstraints } from './solver/diaphragm.js?v=157';
+import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=157';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=157';
+import { blockCells, cornerGridIndices } from './model/mesher.js?v=157';
+import { coonsGridFromCorners } from './model/mesh_map.js?v=157';
+import { meshPolygonIntoModel } from './model/mesh_free.js?v=157';
+import { smoothAreasInModel } from './model/mesh_quality.js?v=157';
 
 class App {
   constructor() {
@@ -1761,7 +1764,7 @@ class App {
   _staticWorkerSolve(K, nDOF, freeDOF, Flist, dense = false) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=156', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=157', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -1790,7 +1793,7 @@ class App {
   _staticWorkerSolveSparse(csr, cf, nDOF, freeDOF, Flist) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=156', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=157', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -2110,7 +2113,7 @@ class App {
       // ── Run Stodola in a Web Worker (non-blocking) ───────────────────────────
       const denseModal = !!this._config?.analisis?.matrizDensa;
       const modes = await new Promise((resolve, reject) => {
-        const worker = new Worker(new URL('./solver/modal_worker.js?v=156', import.meta.url), { type: 'module' });
+        const worker = new Worker(new URL('./solver/modal_worker.js?v=157', import.meta.url), { type: 'module' });
         worker.postMessage({ Kff_flat, Mff_flat, nF, nModes, dense: denseModal, method: modalMethod },
           [Kff_flat.buffer, Mff_flat.buffer]); // transfer — zero copy
         worker.onmessage = (ev) => {
@@ -2512,7 +2515,7 @@ class App {
       // Modal por iteración de subespacio en worker (no bloquea la UI).
       const dense = !!this._config?.analisis?.matrizDensa;
       const rawModes = await new Promise((resolve, reject) => {
-        const w = new Worker(new URL('./solver/modal_worker.js?v=156', import.meta.url), { type: 'module' });
+        const w = new Worker(new URL('./solver/modal_worker.js?v=157', import.meta.url), { type: 'module' });
         w.postMessage({ Kff_flat: Kff, Mff_flat: Mff, nF, nModes, dense, method: 'subspace' }, [Kff.buffer, Mff.buffer]);
         w.onmessage = ev => { w.terminate(); ev.data.error ? reject(new Error(ev.data.error)) : resolve(ev.data.modes); };
         w.onerror = ev => { w.terminate(); reject(new Error(ev.message || 'Error en worker modal')); };
@@ -2581,7 +2584,7 @@ class App {
   _thSolveInWorker(modes, ag, dt, zeta) {
     return new Promise((resolve, reject) => {
       let w;
-      try { w = new Worker(new URL('./solver/timehistory_worker.js?v=156', import.meta.url), { type: 'module' }); }
+      try { w = new Worker(new URL('./solver/timehistory_worker.js?v=157', import.meta.url), { type: 'module' }); }
       catch (e) {
         try { const r = modalTimeHistory({ modes: modes.map(m => ({ ...m, phi: new Float64Array(0) })), ag, dt, zeta }); resolve({ q: r.q, peakModal: r.peakModal }); }
         catch (err) { reject(err); }
@@ -3816,6 +3819,69 @@ class App {
     this.panel.renderDiseno?.();
   }
 
+  // ── Nudos «columna fuerte – viga débil» (SCWB, #68) ─────────────────────────
+  // Recorre los nudos (ΣMnc ≥ γ·ΣMnb, Mn ≈ Fy·Zz por defecto), los resalta en el
+  // viewport (rojo = no cumple, verde = cumple) y abre un overlay con la tabla.
+  runSCWB(gamma) {
+    const model = this.model;
+    if (!model.elements.size) { this.toast('No hay barras para chequear nudos SCWB', 'warn'); return; }
+    gamma = gamma ?? this._scwbGamma ?? 1.2;
+    const MnOf = (eid) => {
+      const el = model.elements.get(eid); if (!el) return 0;
+      const M = resolveMaterial(model.materials.get(el.matId) || {});
+      const S = resolveSectionProps(model.sections.get(el.secId) || {});
+      return (M.Fy || M.fc || 0) * (S.Zz || S.Sz || 0);   // kN·m (kPa·m³)
+    };
+    const res = jointSCWB(model, MnOf, { gamma });
+    if (!res.length) { this.toast('No hay nudos viga-columna (se necesita ≥1 columna y ≥1 viga concurrentes; se clasifica por verticalidad)', 'warn'); return; }
+    this._scwbRes = res; this._scwbGamma = gamma;
+    this.viewport.showSCWB(res);
+    this._scwbOverlay(res, gamma);
+    const nBad = res.filter(r => !r.cumple).length;
+    this.toast(`Nudos SCWB: ${res.length} nudo(s) viga-columna · ${nBad} NO cumple(n) · γ=${gamma}`, nBad ? 'warn' : 'ok');
+  }
+
+  _scwbOverlay(res, gamma) {
+    document.getElementById('scwb-overlay')?.remove();
+    const el = document.createElement('div'); el.id = 'scwb-overlay';
+    el.style.cssText = 'position:fixed;right:16px;bottom:84px;z-index:50;background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:10px 12px;width:300px;box-shadow:0 8px 24px rgba(0,0,0,.4);font-size:12px;color:var(--text)';
+    const nBad = res.filter(r => !r.cumple).length;
+    const rows = res.map(r => `
+      <tr class="scwb-row" data-node="${r.node}" style="cursor:pointer">
+        <td style="text-align:center">${r.node}</td>
+        <td style="text-align:right;font-family:var(--font-mono);font-size:10px">${r.sumMnc.toFixed(0)}</td>
+        <td style="text-align:right;font-family:var(--font-mono);font-size:10px">${r.sumMnb.toFixed(0)}</td>
+        <td style="text-align:center;color:${r.cumple ? 'var(--teal,#2dd4bf)' : '#ef4444'}"><b>${isFinite(r.ratio) ? r.ratio.toFixed(2) : '∞'}</b></td>
+        <td style="text-align:center">${r.cumple ? '✓' : '✗'}</td>
+      </tr>`).join('');
+    el.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <b style="color:var(--accent,#38bdf8)">🏛️ Nudos columna fuerte–viga débil</b>
+        <button id="scwb-close" title="Cerrar" style="background:none;border:none;color:var(--text-muted,#94a3b8);cursor:pointer;font-size:16px;line-height:1">✕</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:11px;color:var(--text-muted)">
+        <span>γ = ΣMnc ≥ γ·ΣMnb</span>
+        <input type="number" id="scwb-gamma" value="${gamma}" min="1" max="2" step="0.05" style="width:56px">
+        <span style="margin-left:auto"><b style="color:${nBad ? '#ef4444' : 'var(--teal,#2dd4bf)'}">${nBad}</b>/${res.length} ✗</span>
+      </div>
+      <div style="max-height:42vh;overflow:auto;border:1px solid var(--border);border-radius:5px">
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          <thead><tr style="position:sticky;top:0;background:var(--bg4)">
+            <th style="padding:3px">Nudo</th><th>ΣMnc</th><th>ΣMnb</th><th>D/C</th><th></th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <p style="font-size:10px;color:var(--text-muted);margin:6px 0 0">Mn ≈ Fy·Zz por barra. Clasificación columna/viga por verticalidad. Clic en una fila para centrar el nudo. Rojo = no cumple.</p>`;
+    document.body.appendChild(el);
+    el.querySelector('#scwb-close').addEventListener('click', () => { el.remove(); this.viewport.clearSCWB(); });
+    el.querySelector('#scwb-gamma').addEventListener('change', (e) => {
+      const g = parseFloat(e.target.value); if (g > 0) this.runSCWB(g);
+    });
+    el.querySelectorAll('.scwb-row').forEach(tr => tr.addEventListener('click', () => {
+      this.viewport.centerOnNode?.(+tr.dataset.node);
+    }));
+  }
+
   // ── Predimensionar (#71): diálogo ANTES del análisis ────────────────────────
   async predimensionarDialog() {
     const overlay = document.getElementById('modal-overlay');
@@ -3855,12 +3921,12 @@ class App {
     if (!ok) return;
     const p = this._predim; if (!p) return;
     if (document.getElementById('pd-assign').checked) {
-      const { profileToSection } = await import('./design/profiles.js?v=156');
+      const { profileToSection } = await import('./design/profiles.js?v=157');
       this.snapshot();
       // Perfil del catálogo → props directas; forma libre (H.A./madera) → calcular A,I,J.
       let secProps = p.profile ? profileToSection(p.profile) : { design: { shape: p.shape, dims: p.dims } };
       if (!p.profile) {
-        const { fromShape } = await import('./design/section_props.js?v=156');
+        const { fromShape } = await import('./design/section_props.js?v=157');
         const g = fromShape(p.shape, p.dims);
         if (g) secProps = { A: g.A, Iz: g.Iz, Iy: g.Iy, J: g.J, Avy: g.Avz_web, Avz: g.Avy_flange, design: { shape: p.shape, dims: p.dims } };
       }
@@ -3884,7 +3950,7 @@ class App {
     return new Promise((resolve, reject) => {
       let worker;
       try {
-        worker = new Worker(new URL('./solver/nl_worker.js?v=156', import.meta.url), { type: 'module' });
+        worker = new Worker(new URL('./solver/nl_worker.js?v=157', import.meta.url), { type: 'module' });
       } catch (e) {
         try { resolve(kind === 'dc' ? solveNonlinearDC(opts) : solveNonlinear(opts)); }
         catch (err) { reject(err); }
@@ -4141,7 +4207,7 @@ class App {
 
       // Iteración de subespacio en el Worker (no bloquea la UI)
       const rawModes = await new Promise((resolve, reject) => {
-        const worker = new Worker(new URL('./solver/buckling_worker.js?v=156', import.meta.url), { type: 'module' });
+        const worker = new Worker(new URL('./solver/buckling_worker.js?v=157', import.meta.url), { type: 'module' });
         worker.postMessage({ Kff_flat, Kgff_flat, nF, nModes, dense },
           [Kff_flat.buffer, Kgff_flat.buffer]);   // transfer — zero copy
         worker.onmessage = (ev) => { worker.terminate(); ev.data.error ? reject(new Error(ev.data.error)) : resolve(ev.data.modes); };
@@ -6057,7 +6123,7 @@ class App {
               selectedNodes: sel.filter(s => s.type === 'node').map(s => s.id) };
     }
     this.snapshot();
-    const { aplicarOperaciones } = await import('./model/model_ops.js?v=156');
+    const { aplicarOperaciones } = await import('./model/model_ops.js?v=157');
     const res = aplicarOperaciones(this.model, ops, ctx);
     // los resultados previos dejan de ser válidos tras modificar la geometría/cargas
     this.viewport.clearResults?.();
@@ -6105,7 +6171,7 @@ class App {
     this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=156');
+      const { generarModelo } = await import('../asistente/generador.js?v=157');
       const modelo = generarModelo(ficha, libs);
 
       if (modo === 'sobreponer') {
@@ -7244,7 +7310,7 @@ class App {
     const deflex = this._calcularDeflexionesVigas(diseno?.params);
     const drift  = this._calcularDrift();
     try {
-      const { Docx } = await import('./io/docx.js?v=156');
+      const { Docx } = await import('./io/docx.js?v=157');
       const blob = this._memoriaDocx(Docx, imgs, diseno, deflex, drift).blob();
       this._downloadBlob(blob, 'memoria_calculo.docx');
       this.toast('Memoria Word (.docx) descargada', 'ok');
@@ -7415,7 +7481,7 @@ class App {
   // Verificación de diseño (flexión/corte/axial) por elemento, usando los
   // resultados actuales y los parámetros editables de asistente/diseno_params.json.
   async _calcularDiseno() {
-    const ver = '?v=156';
+    const ver = '?v=157';
     let params = null;
     try { params = await fetch('asistente/diseno_params.json' + ver).then(r => r.json()); }
     catch (e) { console.error('No se pudo cargar diseno_params.json:', e); return null; }
