@@ -14,9 +14,9 @@
 //    peso, preferir secciones repetidas (continuidad).
 // ──────────────────────────────────────────────────────────────────────────────
 
-import { verificarElemento } from './diseno.js?v=153';
-import { profileToSection, catalogNames } from './profiles.js?v=153';
-import { fromShape } from './section_props.js?v=153';
+import { verificarElemento } from './diseno.js?v=154';
+import { profileToSection, catalogNames } from './profiles.js?v=154';
+import { fromShape } from './section_props.js?v=154';
 
 // Peso por metro (kg/m) = A·ρ. ρ puede venir en t/m³ (convención del modelo, p.ej.
 // acero 7.85) o en kg/m³ (7850); se normaliza a kg/m³. Sin ρ → 7850 (acero).
@@ -34,17 +34,25 @@ function weightPerM(sec, mat) {
  *   mat      material de diseño (con design.family/Fy/… y opc. rho)
  *   code     codeId forzado (o null → default por familia)
  *   member   { Lb, K, Cb, Cmy… } parámetros de pandeo/LTB
- *   prefs    { dcMax=1.0, dcTarget=0.85, prefer=<name> (continuidad) }
+ *   prefs    { dcMax=1.0, dcTarget=0.85, prefer=<name> (continuidad),
+ *              maxWidth, maxHeight (m): límites de dimensión transversal (#84) }
  * @returns { best, feasible:[…], all:[…] }  cada item {name, dc, ok, weight, gobierna, sec}
  */
 export function seleccionarPerfil({ demands, candidates, mat, code, member, prefs = {} }) {
   const dcMax = prefs.dcMax ?? 1.0;
   const dcTarget = prefs.dcTarget ?? 0.85;
+  const maxW = prefs.maxWidth, maxH = prefs.maxHeight;   // límites de dimensión (m), opc.
   const all = [];
+  let dimExcluded = 0;   // candidatos descartados por exceder el límite de dimensiones (#84)
   for (const cand of candidates) {
     const name = typeof cand === 'string' ? cand : cand.name;
     const sec = (typeof cand === 'string' || !cand.sec) ? profileToSection(name) : cand.sec;
     if (!sec) continue;
+    // Límite de dimensiones (#84): excluir ANTES de verificar los que no caben (p.ej.
+    // sólo vigas de ancho ≤ 20 cm para un encofrado/muro de espesor fijo).
+    const wh = sectionWH(sec);
+    if ((maxW != null && wh.w != null && wh.w > maxW + 1e-9) ||
+        (maxH != null && wh.h != null && wh.h > maxH + 1e-9)) { dimExcluded++; continue; }
     let r;
     try { r = verificarElemento({ fuerzas: demands, sec, mat, codeId: code, member }); }
     catch (e) { continue; }
@@ -61,8 +69,28 @@ export function seleccionarPerfil({ demands, candidates, mat, code, member, pref
     return s;
   };
   const ranked = feasible.slice().sort((a, b) => score(a) - score(b));
-  return { best: ranked[0] || null, feasible: ranked, all,
-    note: ranked.length ? '' : 'Ningún candidato cumple D/C≤1; amplíe el conjunto de candidatos o revise las cargas.' };
+  // Nota: distinguir "ninguno por dimensiones" de "ninguno por resistencia" (#84).
+  const lim = [maxW != null ? `ancho ≤ ${(maxW * 100).toFixed(0)} cm` : null,
+               maxH != null ? `alto ≤ ${(maxH * 100).toFixed(0)} cm` : null].filter(Boolean).join(' · ');
+  let note = '';
+  if (!ranked.length) {
+    if (!all.length && dimExcluded) note = `Ningún candidato respeta el límite de dimensiones (${lim}); afloje el límite o agregue candidatos más esbeltos.`;
+    else { note = 'Ningún candidato cumple D/C≤1; amplíe el conjunto de candidatos o revise las cargas.';
+           if (dimExcluded) note += ` (${dimExcluded} candidato(s) excluido(s) por el límite ${lim}.)`; }
+  }
+  return { best: ranked[0] || null, feasible: ranked, all, dimExcluded, note };
+}
+
+// Dimensiones transversales (ancho w, alto h) de una sección de diseño, en metros,
+// a partir de su forma+dims; usado por el límite de dimensiones del auto-diseño (#84).
+function sectionWH(sec) {
+  const d = sec?.design?.dims || {};
+  const shape = sec?.design?.shape;
+  if (shape === 'I') return { w: d.bf, h: d.d };
+  if (shape === 'pipe' || shape === 'circle') { const D = d.D ?? d.d; return { w: D, h: D }; }
+  if (shape === 'box') return { w: d.b, h: d.h };
+  // rect, C/L/T y resto: usar b/h de las dims o del propio sec.
+  return { w: d.b ?? sec?.b, h: d.h ?? sec?.h };
 }
 
 // Conjunto de candidatos de acero del catálogo por familias.

@@ -61,6 +61,7 @@ export class MenuBar {
       case 'open':        a.openFile();       break;
       case 'save':        a.saveFile();       break;
       case 'saveas':      a.saveFileAs();     break;
+      case 'manage-autosaves': a.manageAutosavesDialog(); break;
       case 'importcsv':   a.importCSV();      break;
       case 'exportcsv':   a.exportCSV();      break;
       case 'template':    a.downloadTemplate(); break;
@@ -103,6 +104,7 @@ export class MenuBar {
       case 'run-formfind':   a.runFormFinding();             break;
       case 'run-plastic':    a.runPlastic();                 break;
       case 'run-pushover-dc': a.runPushoverDC();             break;
+      case 'run-nlth':       a.runNLTimeHistory();           break;
       case 'run-staged':     a.runStaged();                  break;
       case 'run-tendon':     a.runTendon();                  break;
       case 'run-moving':     a.runMovingLoad();              break;

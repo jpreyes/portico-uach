@@ -180,15 +180,15 @@ similaridad. `[#]` referencia el pedido original. Estado: ⬜ pendiente · 🟡 
 - ⬜ **Conversión geométrica y de propiedades** `[#76]`: `ifcToPortico.js` + `ifcGeometrySimplifier.js` — eje inicial/final de cada barra, crear nodos, **snap** por tolerancia (inicial 0.01 m), unidades→m, ejes globales Z vertical; curvas/complejas → segmentos rectos o advertencia. **Materiales**: leer IFC o crear genérico con aviso (no bloquear). **Secciones**: reconocer rect/círculo/perfiles simples o aproximar por *bounding box* o genérica con aviso (no bloquear). `ifcWarnings.js` centraliza advertencias.
 - ⬜ **Ventana flotante + side-by-side + confirmación** `[#77]`: `ifcImportDialog.js` (resumen del archivo, conteos por tipo, tabla con importar sí/no · tipo · nombre · nivel · material · sección · estado · advertencias; filtros) + `ifcSideBySidePreview.js` (IFC seleccionado a la izquierda vs PÓRTICO convertido a la derecha, cámaras sincronizadas, colores por estado). Robusto (no falla con no-soportados), **no modifica el modelo hasta confirmar**, integrado al **undo/redo**. Entrada en **Archivo → «Importar IFC…»**.
 
-## G20 · UX de edición, mallado y arranque ⬜ *(detectado en uso real)*
+## G20 · UX de edición, mallado y arranque 🟡 *(detectado en uso real; #81/#83/#84 hechos)*
 *Fricciones y oportunidades observadas usando el mallador y la edición de nodos; varias son quick-wins de interacción.*
 - ⬜ **Mallado: invertir el flujo (botón primero, luego nodos)** `[#78]`: hoy se seleccionan los nodos del contorno y *después* se aprieta «Mallar», lo que es confuso (costó mucho mallar). Cambiar a: **primero** se activa el modo «Mallar región» (botón) y **luego** se van seleccionando/clickeando los nodos del contorno, con guía visual del polígono en curso y Enter/Esc para confirmar/cancelar (igual que el modo Área/Elemento). Aplica a «Mallar región libre» y «Mallar panel (4 esquinas)».
 - ⬜ **Arrastrar nodos con el mouse — convertir el «bug» en funcionalidad** `[#79]`: hoy, al correr un análisis con un nodo seleccionado, el nodo se *mueve* pero queda como **nodo fantasma huérfano** (bola nodal sin conectividad) que ya **no se puede seleccionar** ni devolver a su posición original, y no es claro si entra en la matriz de rigidez → **bug a corregir** (no dejar nodos sueltos no seleccionables; permitir revertir/seleccionar siempre; aclarar su efecto en K). Reconvertirlo en una **funcionalidad de arrastre**: **Ctrl+clic** sobre el nodo lo selecciona, se **suelta** el mouse y luego se **mueve** moviendo el mouse (clic para fijar). Opción de **mover o no** (candado), y **elegir el plano** de arrastre: hoy sólo se mueve en **X–Y** (Z fijo); permitir también **X–Z** y **Y–Z**. *(El usuario lo valora como «buenísima funcionalidad, hay que mejorarla».)*
 - ⬜ **Selección por cuadro (rubber-band)** `[#80]`: permitir **selección por rectángulo** arrastrando con el mouse mientras se mantiene **Alt** (o modificador similar) + clic, además de la selección puntual actual. Selecciona nodos/elementos dentro del recuadro.
-- ⬜ **Nodos de malla más pequeños** `[#81]`: los nodos generados por el mallado se ven **demasiado grandes**; dibujar los nodos de malla con un radio algo **menor** que los nodos «de modelo» (o escalar por densidad de malla) para no saturar la vista.
-- ⬜ **Limpiar temporales + pestaña «Temporales»** `[#82]`: poder **limpiar** los autoguardados temporales que se acumulan al inicio (`portico_autosave_*`, `[#43]`); integrarlos con la **gestión multi-modelo** (`G7`) en una **pestaña «Temporales»** que liste y permita eliminar/reanudar cada uno.
-- ⬜ **Auto-cierre de la ventana de inicio / recuperación** `[#83]`: tras un tiempo razonable (≈**5–10 s**, ajustar según buenas prácticas de UX) sin interacción, la **portada/landing** y el **diálogo de «recuperar autoguardado»** deben **cerrarse solos** y pasar directamente a un **modelo nuevo** vacío, para no bloquear el arranque.
-- ⬜ **Limitar dimensiones en el diseño (p.ej. ancho máx.)** `[#84]`: en el diseño/auto-diseño, permitir **restringir dimensiones** —p.ej. sólo vigas de ancho **≤ ~20 cm** (o un rango)— de modo que la auto-selección sólo proponga candidatos dentro del límite, e **indicar claramente cuándo no es posible** cumplir con esa restricción (sin inventar, coherente con la regla central de G17). Útil para anchos de muro/encofrado fijos.
+- ✅ **Nodos de malla más pequeños** `[#81]`: los nodos «de malla» (usados por áreas pero por **ninguna barra**) se dibujan con radio **0.55·NODE_R** (vs los nodos de modelo a NODE_R) para no saturar la vista; `viewport._recomputeMeshNodeSet(model)` clasifica por conectividad en cada `renderModel` (sin flag ni persistencia; sobrevive a guardar/cargar). Verificado en navegador: nodo de barra r=0.12, nodo sólo-área r=0.066.
+- 🟡 **Limpiar temporales + pestaña «Temporales»** `[#82]` *(limpiar/listar hecho; falta integrar con G7)*: **Archivo → «🧹 Autoguardados temporales…»** (`manageAutosavesDialog`) lista los slots `portico_autosave_*` (marca la sesión actual), permite **eliminar** cada uno, **reanudar** uno (con confirmación, descarta el trabajo actual) o **«Limpiar todos»**; helper compartido `_deleteAutosave(key, legacy)`. Verificado en navegador. *(Pendiente: integrarlo como **pestaña «Temporales»** dentro de la gestión multi-modelo `G7`.)*
+- ✅ **Auto-cierre de la ventana de inicio / recuperación** `[#83]`: tras **~8 s sin interacción**, la **portada/landing** (IIFE en `index.html`) y el **diálogo de «recuperar autoguardado»** (`_autosaveRecoveryDialog`) se **cierran solos** y pasan a un **modelo nuevo** vacío; cualquier interacción (pointer/teclado/wheel/touch) reinicia el contador, y si el **manual** está abierto encima se pospone. No bloquea el arranque.
+- ✅ **Limitar dimensiones en el diseño (ancho/alto máx.)** `[#84]`: `seleccionarPerfil` acepta `prefs.maxWidth`/`maxHeight` (m) y **excluye** los candidatos que no caben **antes** de verificar (helper `sectionWH` por forma: I→bf/d, box→b/h, pipe→D, rect/otros→b/h); el overlay de auto-diseño tiene inputs **«ancho máx / alto máx (cm)»** que recalculan en vivo. Distingue claramente «**ninguno por dimensiones**» de «ninguno por resistencia» y reporta cuántos se excluyeron (sin inventar, coherente con la regla central de G17). Verificado en navegador: ancho≤12 cm → IPE360 descartado y nota con N excluidos; ancho≤4 cm → sin solución por dimensiones.
 
 ---
 
@@ -237,16 +237,16 @@ esfuerzo creciente (incluye los **pendientes normativos** de G16):*
 ---
 
 ## ✅/⬜ FALTANTES — lista única ordenada por FACILIDAD de implementación
-*Todo lo que queda ⬜/🟡 a la fecha (v153), de lo MÁS FÁCIL a lo más difícil (esfuerzo, no complejidad teórica). El detalle de cada uno está en su grupo arriba; aquí sólo lo que FALTA.*
+*Todo lo que queda ⬜/🟡 a la fecha (v154), de lo MÁS FÁCIL a lo más difícil (esfuerzo, no complejidad teórica). El detalle de cada uno está en su grupo arriba; aquí sólo lo que FALTA.*
 
-**🟢 Triviales (constante/CSS/timeout, < ½ día)**
-1. **Nodos de malla más pequeños** `[#81]` (G20) — reducir el radio de dibujo de los nodos de malla en `viewport`.
-2. **Auto-cierre de portada / recuperación** `[#83]` (G20) — `setTimeout` (~5–10 s sin interacción) → cerrar landing + diálogo de autoguardado y abrir modelo nuevo.
+**🟢 Triviales (constante/CSS/timeout, < ½ día)** — ✅ **ambos hechos (v154)**
+1. ✅ **Nodos de malla más pequeños** `[#81]` (G20) — hecho (radio 0.55·NODE_R para nodos sólo-área; ver G20).
+2. ✅ **Auto-cierre de portada / recuperación** `[#83]` (G20) — hecho (~8 s sin interacción → modelo nuevo; ver G20).
 
 **🟢 Fáciles (cambio acotado, reusa lo existente)**
-3. **Limpiar temporales + pestaña «Temporales»** `[#82]` (G20) — limpiar/listar `portico_autosave_*`; integrar con multi-modelo.
-4. **Limitar dimensiones en el diseño (ancho máx.)** `[#84]` (G20) — filtrar candidatos del auto-diseño por dimensión y avisar cuando ninguno cumpla (reusa `autodesign.js`).
-5. **Materializar más casos de verificación** `[#19]` (G9) — **sin código nuevo**: construir `.s3d` + manifiesto (1-001, 1-007, 1-002, etc.). Laborioso pero mecánico.
+3. 🟡 **Limpiar temporales + pestaña «Temporales»** `[#82]` (G20) — **limpiar/listar hecho** (Archivo → «Autoguardados temporales…»); falta integrarlo como pestaña dentro de multi-modelo (G7).
+4. ✅ **Limitar dimensiones en el diseño (ancho/alto máx.)** `[#84]` (G20) — hecho (`prefs.maxWidth/maxHeight` + inputs en el overlay; ver G20).
+5. **Materializar más casos de verificación** `[#19]` (G9) — **sin código nuevo**: construir `.s3d` + manifiesto (1-001, 1-007, 1-002, etc.). Laborioso pero mecánico. **← SIGUIENTE fácil.**
 6. **Refinos finos de diseño** (G16): armado multicapa explícito en P-M biaxial + parábola-rectángulo EC2 `[#65]`; centro de cortante del canal `[#67]`; flecha relativa a la cuerda por elemento en la tabla `[#68]`.
 
 **🟡 Medios (UI de viewport o motor acotado)**

@@ -1,38 +1,38 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=153';
-import { Serializer }      from './model/serializer.js?v=153';
-import { Viewport }        from './ui/viewport.js?v=153';
-import { PropertiesPanel } from './ui/properties.js?v=153';
-import { MenuBar }         from './ui/menu.js?v=153';
-import { UndoStack }       from './utils/undo.js?v=153';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=153';
-import { Results }                         from './solver/postprocess.js?v=153';
-import { ModalSolver }                     from './solver/modal_solver.js?v=153';
-import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=153';
-import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=153';
-import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=153';
-import { assembleKg } from './solver/geometric.js?v=153';
-import { makeFactor } from './solver/linsolve.js?v=153';
-import { formFind } from './solver/formfind.js?v=153';
-import { ModalResults }                    from './solver/modal_results.js?v=153';
-import { modalTimeHistory }                from './solver/timehistory.js?v=153';
-import { parseAccelerogram, accStats, scaleToPGA, DEMO_PRESETS, G as GACC } from './solver/accelerograms.js?v=153';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=153';
-import { StagedSolver }                    from './solver/staged.js?v=153';
-import { tendonEquivalentLoads, applyTendon, tendonEcc } from './solver/tendon.js?v=153';
-import { buildLane, influenceLine, movingLoadEnvelope, responseReaction, responseSection } from './solver/moving_load.js?v=153';
-import { newmarkNonlinear, shearBuilding, rayleighDamping } from './solver/nl_timehistory.js?v=153';
-import { checkDrift } from './design/serviceability.js?v=153';
-import { seleccionarPerfil, steelCandidates, predimensionar, candidatesForFamily } from './design/autodesign.js?v=153';
-import { autoDetectDiaphragms, computeFloorCR, applyDiaphragmConstraints } from './solver/diaphragm.js?v=153';
-import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=153';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=153';
-import { blockCells, cornerGridIndices } from './model/mesher.js?v=153';
-import { coonsGridFromCorners } from './model/mesh_map.js?v=153';
-import { meshPolygonIntoModel } from './model/mesh_free.js?v=153';
-import { smoothAreasInModel } from './model/mesh_quality.js?v=153';
+import { Model }           from './model/model.js?v=154';
+import { Serializer }      from './model/serializer.js?v=154';
+import { Viewport }        from './ui/viewport.js?v=154';
+import { PropertiesPanel } from './ui/properties.js?v=154';
+import { MenuBar }         from './ui/menu.js?v=154';
+import { UndoStack }       from './utils/undo.js?v=154';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=154';
+import { Results }                         from './solver/postprocess.js?v=154';
+import { ModalSolver }                     from './solver/modal_solver.js?v=154';
+import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=154';
+import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=154';
+import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=154';
+import { assembleKg } from './solver/geometric.js?v=154';
+import { makeFactor } from './solver/linsolve.js?v=154';
+import { formFind } from './solver/formfind.js?v=154';
+import { ModalResults }                    from './solver/modal_results.js?v=154';
+import { modalTimeHistory }                from './solver/timehistory.js?v=154';
+import { parseAccelerogram, accStats, scaleToPGA, DEMO_PRESETS, G as GACC } from './solver/accelerograms.js?v=154';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=154';
+import { StagedSolver }                    from './solver/staged.js?v=154';
+import { tendonEquivalentLoads, applyTendon, tendonEcc } from './solver/tendon.js?v=154';
+import { buildLane, influenceLine, movingLoadEnvelope, responseReaction, responseSection } from './solver/moving_load.js?v=154';
+import { newmarkNonlinear, shearBuilding, rayleighDamping } from './solver/nl_timehistory.js?v=154';
+import { checkDrift } from './design/serviceability.js?v=154';
+import { seleccionarPerfil, steelCandidates, predimensionar, candidatesForFamily } from './design/autodesign.js?v=154';
+import { autoDetectDiaphragms, computeFloorCR, applyDiaphragmConstraints } from './solver/diaphragm.js?v=154';
+import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=154';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=154';
+import { blockCells, cornerGridIndices } from './model/mesher.js?v=154';
+import { coonsGridFromCorners } from './model/mesh_map.js?v=154';
+import { meshPolygonIntoModel } from './model/mesh_free.js?v=154';
+import { smoothAreasInModel } from './model/mesh_quality.js?v=154';
 
 class App {
   constructor() {
@@ -1760,7 +1760,7 @@ class App {
   _staticWorkerSolve(K, nDOF, freeDOF, Flist, dense = false) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=153', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=154', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -1789,7 +1789,7 @@ class App {
   _staticWorkerSolveSparse(csr, cf, nDOF, freeDOF, Flist) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=153', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=154', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -2109,7 +2109,7 @@ class App {
       // ── Run Stodola in a Web Worker (non-blocking) ───────────────────────────
       const denseModal = !!this._config?.analisis?.matrizDensa;
       const modes = await new Promise((resolve, reject) => {
-        const worker = new Worker(new URL('./solver/modal_worker.js?v=153', import.meta.url), { type: 'module' });
+        const worker = new Worker(new URL('./solver/modal_worker.js?v=154', import.meta.url), { type: 'module' });
         worker.postMessage({ Kff_flat, Mff_flat, nF, nModes, dense: denseModal, method: modalMethod },
           [Kff_flat.buffer, Mff_flat.buffer]); // transfer — zero copy
         worker.onmessage = (ev) => {
@@ -2511,7 +2511,7 @@ class App {
       // Modal por iteración de subespacio en worker (no bloquea la UI).
       const dense = !!this._config?.analisis?.matrizDensa;
       const rawModes = await new Promise((resolve, reject) => {
-        const w = new Worker(new URL('./solver/modal_worker.js?v=153', import.meta.url), { type: 'module' });
+        const w = new Worker(new URL('./solver/modal_worker.js?v=154', import.meta.url), { type: 'module' });
         w.postMessage({ Kff_flat: Kff, Mff_flat: Mff, nF, nModes, dense, method: 'subspace' }, [Kff.buffer, Mff.buffer]);
         w.onmessage = ev => { w.terminate(); ev.data.error ? reject(new Error(ev.data.error)) : resolve(ev.data.modes); };
         w.onerror = ev => { w.terminate(); reject(new Error(ev.message || 'Error en worker modal')); };
@@ -2580,7 +2580,7 @@ class App {
   _thSolveInWorker(modes, ag, dt, zeta) {
     return new Promise((resolve, reject) => {
       let w;
-      try { w = new Worker(new URL('./solver/timehistory_worker.js?v=153', import.meta.url), { type: 'module' }); }
+      try { w = new Worker(new URL('./solver/timehistory_worker.js?v=154', import.meta.url), { type: 'module' }); }
       catch (e) {
         try { const r = modalTimeHistory({ modes: modes.map(m => ({ ...m, phi: new Float64Array(0) })), ag, dt, zeta }); resolve({ q: r.q, peakModal: r.peakModal }); }
         catch (err) { reject(err); }
@@ -3651,23 +3651,36 @@ class App {
     if (!groups.size) { this.toast('No hay elementos en el alcance con resultados de diseño.', 'warn'); return; }
 
     const codeByFam = this.model.designSettings?.codeByFamily || {};
-    const rows = [];
-    for (const g of groups.values()) {
+    // Contexto por grupo (para recalcular sin rehacer demandas al cambiar el límite #84).
+    this._adGroups = [...groups.values()].map(g => {
       const secNow = this.model.sections.get(g.secId);
-      const candidates = candidatesForFamily(g.fam);
-      const code = codeByFam[g.fam];     // null → default por familia
       const sharedOut = [...this.model.elements.values()].some(e => e.secId === g.secId && !g.els.includes(e.id));
-      const sel2 = seleccionarPerfil({ demands: g.dem, candidates, mat: g.mat, code,
-        member: { L: g.dem.L, Lb: g.Lb || g.dem.L }, prefs: { prefer: secNow?.design?.profile, dcTarget: 0.85 } });
-      rows.push({ secId: g.secId, secName: secNow?.name || `sec ${g.secId}`, nEls: g.els.length, fam: g.fam,
-        actual: secNow?.design?.profile || `A=${(secNow?.A * 1e4 || 0).toFixed(1)} cm²`,
-        best: sel2.best, note: sel2.note, sharedOut, dem: g.dem });
-    }
-    this._autoDesignRows = rows;
-    this._autoDesignOverlay(rows, scope);
+      return { secId: g.secId, secName: secNow?.name || `sec ${g.secId}`, nEls: g.els.length, fam: g.fam,
+        dem: g.dem, mat: g.mat, code: codeByFam[g.fam], Lb: g.Lb, sharedOut, prefer: secNow?.design?.profile,
+        actual: secNow?.design?.profile || `A=${(secNow?.A * 1e4 || 0).toFixed(1)} cm²` };
+    });
+    this._adScope = scope;
+    this._adLimits = {};
+    this._adCompute();
   }
 
-  _autoDesignOverlay(rows, scope) {
+  // Recalcula las propuestas del auto-diseño con los límites de dimensión actuales
+  // (#84) y reabre el overlay de vista previa. Reusa el contexto guardado por grupo.
+  _adCompute() {
+    const { maxWidth, maxHeight } = this._adLimits || {};
+    const rows = (this._adGroups || []).map(g => {
+      const candidates = candidatesForFamily(g.fam);
+      const sel2 = seleccionarPerfil({ demands: g.dem, candidates, mat: g.mat, code: g.code,
+        member: { L: g.dem.L, Lb: g.Lb || g.dem.L },
+        prefs: { prefer: g.prefer, dcTarget: 0.85, maxWidth, maxHeight } });
+      return { secId: g.secId, secName: g.secName, nEls: g.nEls, fam: g.fam, actual: g.actual,
+        best: sel2.best, note: sel2.note, sharedOut: g.sharedOut, dem: g.dem };
+    });
+    this._autoDesignRows = rows;
+    this._autoDesignOverlay(rows, this._adScope, this._adLimits);
+  }
+
+  _autoDesignOverlay(rows, scope, limits = {}) {
     document.getElementById('ad-overlay')?.remove();
     const fmt = v => (v == null || !isFinite(v)) ? '—' : (+v).toFixed(2);
     const body = rows.map((r, i) => {
@@ -3690,6 +3703,11 @@ class App {
         <div class="ad-head"><b>🧮 Diseñar (auto-selección desde catálogo) · ${scope}</b><button class="ad-x">✕</button></div>
         <div class="ad-body">
           <p style="font-size:11px;color:var(--text-muted);margin:0 0 8px">Por sección, la candidata más liviana que cumple <b>D/C≤1</b> (objetivo 0.75–0.90): acero del catálogo (IPE/HEA/HEB), H.A. (escuadrías + ρ) o madera (escuadrías). Vista previa NO destructiva; nada cambia hasta «Aplicar».</p>
+          <div style="display:flex;gap:12px;align-items:center;margin:0 0 8px;font-size:11px;flex-wrap:wrap">
+            <span style="color:var(--text-muted)">Límite de dimensiones (opcional):</span>
+            <label>ancho máx <input class="ad-maxw" type="number" min="0" step="1" value="${limits?.maxWidth != null ? +(limits.maxWidth * 100).toFixed(1) : ''}" style="width:54px"> cm</label>
+            <label>alto máx <input class="ad-maxh" type="number" min="0" step="1" value="${limits?.maxHeight != null ? +(limits.maxHeight * 100).toFixed(1) : ''}" style="width:54px"> cm</label>
+          </div>
           <div style="max-height:46vh;overflow:auto;border:1px solid var(--border);border-radius:6px">
             <table class="ad-tbl" style="width:100%;border-collapse:collapse;font-size:11.5px">
               <thead><tr style="position:sticky;top:0;background:var(--bg4)"><th></th><th style="text-align:left">Sección</th><th>Actual</th><th>Propuesta</th><th>D/C</th><th>kg/m</th><th>Gob.</th></tr></thead>
@@ -3705,6 +3723,16 @@ class App {
     document.getElementById('viewport-wrap')?.appendChild(el) || document.body.appendChild(el);
     el.querySelector('.ad-x').addEventListener('click', () => el.remove());
     el.querySelector('.ad-apply').addEventListener('click', () => this._autoDesignApply());
+    // Límite de dimensiones (#84): al cambiar, recalcula las propuestas (en 'change'
+    // para no rehacer en cada tecla). Vacío/0 = sin límite en ese eje.
+    const onLim = () => {
+      const w = parseFloat(el.querySelector('.ad-maxw').value);
+      const h = parseFloat(el.querySelector('.ad-maxh').value);
+      this._adLimits = { maxWidth: w > 0 ? w / 100 : undefined, maxHeight: h > 0 ? h / 100 : undefined };
+      this._adCompute();
+    };
+    el.querySelector('.ad-maxw').addEventListener('change', onLim);
+    el.querySelector('.ad-maxh').addEventListener('change', onLim);
     if (!document.getElementById('ad-overlay-css')) {
       const s = document.createElement('style'); s.id = 'ad-overlay-css';
       s.textContent = `
@@ -3782,12 +3810,12 @@ class App {
     if (!ok) return;
     const p = this._predim; if (!p) return;
     if (document.getElementById('pd-assign').checked) {
-      const { profileToSection } = await import('./design/profiles.js?v=153');
+      const { profileToSection } = await import('./design/profiles.js?v=154');
       this.snapshot();
       // Perfil del catálogo → props directas; forma libre (H.A./madera) → calcular A,I,J.
       let secProps = p.profile ? profileToSection(p.profile) : { design: { shape: p.shape, dims: p.dims } };
       if (!p.profile) {
-        const { fromShape } = await import('./design/section_props.js?v=153');
+        const { fromShape } = await import('./design/section_props.js?v=154');
         const g = fromShape(p.shape, p.dims);
         if (g) secProps = { A: g.A, Iz: g.Iz, Iy: g.Iy, J: g.J, Avy: g.Avz_web, Avz: g.Avy_flange, design: { shape: p.shape, dims: p.dims } };
       }
@@ -3811,7 +3839,7 @@ class App {
     return new Promise((resolve, reject) => {
       let worker;
       try {
-        worker = new Worker(new URL('./solver/nl_worker.js?v=153', import.meta.url), { type: 'module' });
+        worker = new Worker(new URL('./solver/nl_worker.js?v=154', import.meta.url), { type: 'module' });
       } catch (e) {
         try { resolve(kind === 'dc' ? solveNonlinearDC(opts) : solveNonlinear(opts)); }
         catch (err) { reject(err); }
@@ -4068,7 +4096,7 @@ class App {
 
       // Iteración de subespacio en el Worker (no bloquea la UI)
       const rawModes = await new Promise((resolve, reject) => {
-        const worker = new Worker(new URL('./solver/buckling_worker.js?v=153', import.meta.url), { type: 'module' });
+        const worker = new Worker(new URL('./solver/buckling_worker.js?v=154', import.meta.url), { type: 'module' });
         worker.postMessage({ Kff_flat, Kgff_flat, nF, nModes, dense },
           [Kff_flat.buffer, Kgff_flat.buffer]);   // transfer — zero copy
         worker.onmessage = (ev) => { worker.terminate(); ev.data.error ? reject(new Error(ev.data.error)) : resolve(ev.data.modes); };
@@ -5984,7 +6012,7 @@ class App {
               selectedNodes: sel.filter(s => s.type === 'node').map(s => s.id) };
     }
     this.snapshot();
-    const { aplicarOperaciones } = await import('./model/model_ops.js?v=153');
+    const { aplicarOperaciones } = await import('./model/model_ops.js?v=154');
     const res = aplicarOperaciones(this.model, ops, ctx);
     // los resultados previos dejan de ser válidos tras modificar la geometría/cargas
     this.viewport.clearResults?.();
@@ -6032,7 +6060,7 @@ class App {
     this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=153');
+      const { generarModelo } = await import('../asistente/generador.js?v=154');
       const modelo = generarModelo(ficha, libs);
 
       if (modo === 'sobreponer') {
@@ -6944,7 +6972,14 @@ class App {
           </div>
         </div>`;
       document.body.appendChild(el);
-      const done = (val) => { el.remove(); resolve(val); };
+      // Auto-cierre por inactividad (#83): si nadie interactúa con el diálogo en
+      // ~8 s, se resuelve como "empezar nuevo" (modelo vacío) para no bloquear el
+      // arranque. Cualquier interacción dentro del diálogo reinicia el contador.
+      let idleT = null;
+      const resetIdle = () => { clearTimeout(idleT); idleT = setTimeout(() => done(null), 8000); };
+      const done = (val) => { clearTimeout(idleT); el.remove(); resolve(val); };
+      ['pointerdown', 'pointermove', 'keydown', 'wheel'].forEach(ev => el.addEventListener(ev, resetIdle, true));
+      resetIdle();
       el.querySelectorAll('.asr-load').forEach(b => b.addEventListener('click', () => {
         const x = list[+b.dataset.i];
         try { const o = JSON.parse(localStorage.getItem(x.key)); done({ json: o.json, name: x.name }); }
@@ -6960,6 +6995,77 @@ class App {
       }));
       el.querySelector('#asr-new').addEventListener('click', () => done(null));
     });
+  }
+
+  // Elimina un slot de autoguardado (y lo saca del índice si no es la clave legada).
+  _deleteAutosave(key, legacy) {
+    try { localStorage.removeItem(key); } catch {}
+    if (!legacy) {
+      try {
+        const idx = JSON.parse(localStorage.getItem('portico_autosaves') || '[]').filter(y => y.key !== key);
+        localStorage.setItem('portico_autosaves', JSON.stringify(idx));
+      } catch {}
+    }
+  }
+
+  // Gestión de autoguardados temporales (#82): lista los slots `portico_autosave_*`
+  // acumulados, permite eliminar cada uno, limpiarlos TODOS, o reanudar uno
+  // (descartando el trabajo actual). Accesible en cualquier momento (Archivo →
+  // «Autoguardados temporales…»), no sólo al arrancar.
+  manageAutosavesDialog() {
+    document.getElementById('autosave-manage')?.remove();
+    const el = document.createElement('div');
+    el.id = 'autosave-manage';
+    el.style.cssText = 'position:fixed;inset:0;z-index:100002;display:flex;align-items:center;justify-content:center;background:rgba(6,10,18,.6);backdrop-filter:blur(2px)';
+    const close = () => el.remove();
+    const paint = () => {
+      const list = this._autosaveList();
+      const cur = 'portico_autosave_' + this._sessionId;
+      const fmt = ts => ts ? new Date(ts).toLocaleString('es-CL') : '—';
+      const esc = s => (s || 'Sin título').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+      const rows = list.map((x, i) => `
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border,#334);border-radius:7px;margin-bottom:6px">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(x.name)}${x.key === cur ? ' <span style="color:var(--accent,#38bdf8);font-weight:400">· sesión actual</span>' : ''}</div>
+            <div style="font-size:11px;color:var(--text-muted,#9aa)">${fmt(x.ts)} · ${x.n} nodos · ${x.e} elem.</div>
+          </div>
+          <button class="asm-load" data-i="${i}" style="font-size:12px;padding:5px 10px">Reanudar</button>
+          <button class="asm-del" data-i="${i}" title="Eliminar" style="background:none;border:none;color:var(--text-muted,#9aa);cursor:pointer;font-size:15px">🗑</button>
+        </div>`).join('') || '<div style="font-size:12px;color:var(--text-muted,#9aa);padding:6px 0">No hay autoguardados temporales.</div>';
+      el.innerHTML = `
+        <div style="width:min(500px,92%);background:var(--bg-elev,#141b27);border:1px solid var(--border,#334);border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.5);color:var(--text,#e6edf3);padding:16px 18px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <div style="font-size:15px;font-weight:700">🧹 Autoguardados temporales</div>
+            <button id="asm-x" style="background:none;border:none;color:var(--text-muted,#9aa);cursor:pointer;font-size:16px">✕</button>
+          </div>
+          <div style="font-size:12px;color:var(--text-muted,#9aa);margin-bottom:12px">Copias automáticas recientes (${list.length}). Reanude una (descarta el trabajo actual no guardado), elimine las que no use, o límpielas todas.</div>
+          <div>${rows}</div>
+          <div style="display:flex;justify-content:space-between;gap:8px;margin-top:10px">
+            <button id="asm-clear" style="font-size:12px;padding:6px 12px" ${list.length ? '' : 'disabled'}>🧹 Limpiar todos</button>
+            <button id="asm-close" class="btn-primary" style="font-size:12px;padding:6px 12px">Cerrar</button>
+          </div>
+        </div>`;
+      el.querySelector('#asm-x').addEventListener('click', close);
+      el.querySelector('#asm-close').addEventListener('click', close);
+      el.querySelectorAll('.asm-del').forEach(b => b.addEventListener('click', () => {
+        const x = list[+b.dataset.i]; this._deleteAutosave(x.key, x.legacy); paint();
+      }));
+      el.querySelectorAll('.asm-load').forEach(b => b.addEventListener('click', async () => {
+        const x = list[+b.dataset.i];
+        const ok = await this._confirm(`¿Reanudar "${x.name || 'Sin título'}"? Se descartará el trabajo actual no guardado.`);
+        if (!ok) return;
+        try { const o = JSON.parse(localStorage.getItem(x.key)); close(); this._loadJSON(o.json, x.name || 'autoguardado', true); this.toast('Autoguardado reanudado', 'ok'); }
+        catch { this.toast('No se pudo leer el autoguardado', 'error'); }
+      }));
+      el.querySelector('#asm-clear').addEventListener('click', async () => {
+        const ok = await this._confirm('¿Eliminar TODOS los autoguardados temporales? (No afecta el modelo abierto.)');
+        if (!ok) return;
+        for (const x of list) this._deleteAutosave(x.key, x.legacy);
+        this.toast('Autoguardados temporales eliminados', 'ok'); paint();
+      });
+    };
+    document.body.appendChild(el);
+    paint();
   }
 
   // Al arrancar: ofrecer recuperar alguna sesión autoguardada; si no, modelo nuevo.
@@ -7093,7 +7199,7 @@ class App {
     const deflex = this._calcularDeflexionesVigas(diseno?.params);
     const drift  = this._calcularDrift();
     try {
-      const { Docx } = await import('./io/docx.js?v=153');
+      const { Docx } = await import('./io/docx.js?v=154');
       const blob = this._memoriaDocx(Docx, imgs, diseno, deflex, drift).blob();
       this._downloadBlob(blob, 'memoria_calculo.docx');
       this.toast('Memoria Word (.docx) descargada', 'ok');
@@ -7264,7 +7370,7 @@ class App {
   // Verificación de diseño (flexión/corte/axial) por elemento, usando los
   // resultados actuales y los parámetros editables de asistente/diseno_params.json.
   async _calcularDiseno() {
-    const ver = '?v=153';
+    const ver = '?v=154';
     let params = null;
     try { params = await fetch('asistente/diseno_params.json' + ver).then(r => r.json()); }
     catch (e) { console.error('No se pudo cargar diseno_params.json:', e); return null; }

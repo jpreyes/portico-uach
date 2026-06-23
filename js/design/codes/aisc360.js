@@ -72,11 +72,37 @@ function checkAISC(method, { demands, mat, sec, member, options = {} }) {
       const Fcr = (Cb * Math.PI ** 2 * E / (Lb / rts) ** 2) * Math.sqrt(1 + 0.078 * term * (Lb / rts) ** 2);
       Mnz = Math.min(Fcr * Sz, Mpz); ltb = `Lb>Lr=${Lr.toFixed(2)}m (pandeo elástico)`;
     }
+  } else if (shape === 'tee' && Sz > 0) {
+    // F9 — Tees y doble-ángulo (flexión en el plano de simetría). El alma suele
+    // estar traccionada (ala comprimida arriba): member.teeStem='compression' la invierte.
+    const stemTension = member.teeStem !== 'compression';
+    const My = Fy * Sz;                                           // momento de fluencia
+    const Myield = stemTension ? Math.min(Fy * Zz, 1.6 * My) : My;   // F9.1
+    let Mcr = Infinity;                                           // F9.2 LTB
+    if (Lb > 0 && Iy > 0 && J > 0) {
+      const B = (stemTension ? 1 : -1) * 2.3 * (h / Lb) * Math.sqrt(Iy / J);
+      Mcr = (1.95 * E / Lb) * Math.sqrt(Iy * J) * (B + Math.sqrt(1 + B * B));
+    }
+    Mnz = Math.min(Myield, Mcr);
+    ltb = `F9 tee (alma ${stemTension ? 'traccionada' : 'comprimida'}), Mcr=${isFinite(Mcr) ? Mcr.toFixed(1) : '∞'}`;
+  } else if (shape === 'angle' && Sz > 0) {
+    // F10 — Ángulo simple, flexión sobre el eje geométrico (conservador, pata en
+    // compresión). F10.1 fluencia Mn≤1.5·My; F10.2 LTB con Me=0.46·E·b⁴·t·Cb/Lb².
+    const My = Fy * Sz, legB = Math.max(h, b), t = lambdaFlange > 0 ? legB / lambdaFlange : 0;
+    const Myield = 1.5 * My;
+    let Mn10 = Myield;
+    if (Lb > 0 && t > 0) {
+      const Me = 0.46 * E * legB ** 4 * t * Cb / (Lb * Lb);
+      Mn10 = Me <= My ? (0.92 - 0.17 * Me / My) * Me : Math.min((1.58 - 0.83 * Math.sqrt(My / Me)) * My, Myield);
+    }
+    Mnz = Math.min(Myield, Mn10);
+    ltb = 'F10 ángulo (eje geométrico, conservador)';
   }
   const Mcz = facB(Mnz), Mcy = facB(Mpy);
   const rbz = Mcz > 1e-12 ? F.Mz / Mcz : 0, rby = Mcy > 1e-12 ? F.My / Mcy : 0;
+  const fForm = shape === 'tee' ? 'Mn por F9 (tee)' : shape === 'angle' ? 'Mn por F10 (ángulo)' : 'Mn=Mp con LTB (F2)';
   const flexion = rbz >= rby
-    ? ratObj(F.Mz, Mcz, { eje: 'fuerte (Mz)', ltb, formula: 'Mn=Mp con LTB (F2)' })
+    ? ratObj(F.Mz, Mcz, { eje: 'fuerte (Mz)', ltb, formula: fForm })
     : ratObj(F.My, Mcy, { eje: 'débil (My)', formula: 'Mn=Mp≤1.6FySy (F6)' });
 
   // ── G2 corte ────────────────────────────────────────────────────────────────

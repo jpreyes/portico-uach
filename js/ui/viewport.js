@@ -354,6 +354,7 @@ export class Viewport {
     this._previewLine.visible   = false;
     this._previewSphere.visible = false;
 
+    this._recomputeMeshNodeSet(model);   // clasifica nodos de malla (#81) antes de dibujar
     for (const n of model.nodes.values())    this.addNodeMesh(n);
     for (const e of model.elements.values()) this.addElemLine(e);
     for (const a of (model.areas?.values() || [])) this.addAreaMesh(a);
@@ -366,11 +367,28 @@ export class Viewport {
     if (this._showIds) { this._showIds = false; this.toggleIds(); }
   }
 
+  // Conjunto de nodos "de malla" (#81): usados por áreas pero por ninguna barra.
+  // Se recalcula en cada renderModel; los nodos creados después (edición puntual)
+  // no son de malla, y el siguiente render los reclasifica si pasan a serlo.
+  _recomputeMeshNodeSet(model) {
+    const beam = new Set();
+    for (const e of model.elements.values()) { beam.add(e.n1); beam.add(e.n2); }
+    const mesh = new Set();
+    for (const a of (model.areas?.values() || [])) {
+      for (const nid of (a.nodes || [])) if (!beam.has(nid)) mesh.add(nid);
+    }
+    this._meshNodeIds = mesh;
+  }
+
   addNodeMesh(node) {
     if (this._nodeMeshes.has(node.id)) {
       this._scene.remove(this._nodeMeshes.get(node.id));
     }
-    const geo  = new THREE.SphereGeometry(NODE_R, NODE_SEG, NODE_SEG);
+    // Nodos generados por el mallado (#81): se dibujan algo más pequeños que los
+    // nodos "de modelo" para no saturar la vista. Un nodo es "de malla" si lo usan
+    // áreas pero NINGUNA barra (los de esquina compartidos con barras quedan grandes).
+    const r = (this._meshNodeIds && this._meshNodeIds.has(node.id)) ? NODE_R * 0.55 : NODE_R;
+    const geo  = new THREE.SphereGeometry(r, NODE_SEG, NODE_SEG);
     const mat  = new THREE.MeshBasicMaterial({ color: this._nodeColor(node) });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.position.copy(this.m2t(node.x, node.y, node.z));

@@ -102,3 +102,27 @@ export function polygonProps({ outline, holes = [] }) {
     h: ymax - ymin, b: xmax - xmin, xmin, xmax, ymin, ymax,
   };
 }
+
+// ── Sección COMPUESTA por el método de la SECCIÓN TRANSFORMADA (#70) ─────────────
+// Varios materiales (p.ej. acero + madera) → propiedades equivalentes referidas al
+// material BASE: cada parte se transforma por la razón modular n=E/Ebase. Devuelve
+// área e inercias transformadas (la rigidez es EI = Ebase·Iz_tr).
+//   parts: [{ outline:[[x,y]…], holes?, E }]  (E en unidades coherentes).
+export function compositeProps({ parts, Ebase }) {
+  if (!parts || !parts.length) throw new Error('sección compuesta sin partes');
+  const Eb = Ebase || parts[0].E;
+  const sub = parts.map(p => ({ g: polygonProps({ outline: p.outline, holes: p.holes || [] }), n: p.E / Eb, E: p.E }));
+  let A = 0, Qx = 0, Qy = 0;
+  for (const { g, n } of sub) { A += n * g.A; Qx += n * g.A * g.cx; Qy += n * g.A * g.cy; }
+  const cx = Qx / A, cy = Qy / A;                          // centroide transformado
+  let Iz = 0, Iy = 0;
+  for (const { g, n } of sub) {
+    Iz += n * (g.Iz + g.A * (g.cy - cy) ** 2);             // eje neutro de la compuesta
+    Iy += n * (g.Iy + g.A * (g.cx - cx) ** 2);
+  }
+  // Envolvente real (sin transformar) para módulos de sección equivalentes.
+  let ymin = Infinity, ymax = -Infinity, xmin = Infinity, xmax = -Infinity, Areal = 0;
+  for (const { g } of sub) { ymin = Math.min(ymin, g.ymin); ymax = Math.max(ymax, g.ymax); xmin = Math.min(xmin, g.xmin); xmax = Math.max(xmax, g.xmax); Areal += g.A; }
+  return { Ebase: Eb, A_tr: A, A_real: Areal, cx, cy, Iz_tr: Iz, Iy_tr: Iy,
+    EIz: Eb * Iz, EIy: Eb * Iy, Sz_tr: Iz / Math.max(ymax - cy, cy - ymin), parts: sub.length };
+}

@@ -29,8 +29,8 @@
       window.dispatchEvent(new Event('pwa-installed'));
     });
   </script>
-  <link rel="stylesheet" href="style.css?v=153">
-  <link rel="stylesheet" href="ui-v2.css?v=153">
+  <link rel="stylesheet" href="style.css?v=154">
+  <link rel="stylesheet" href="ui-v2.css?v=154">
   <script type="importmap">
   {
     "imports": {
@@ -63,6 +63,7 @@
           <li data-action="open">Abrir… <kbd>Ctrl+O</kbd></li>
           <li data-action="save">Guardar <kbd>Ctrl+S</kbd></li>
           <li data-action="saveas">Guardar Como…</li>
+          <li data-action="manage-autosaves">🧹 Autoguardados temporales…</li>
           <li class="sep"></li>
           <li data-action="importcsv">Importar CSV…</li>
           <li data-action="exportcsv">Exportar CSV</li>
@@ -878,6 +879,7 @@
   function enter() {
     landing.classList.add('exit');
     document.removeEventListener('keydown', onKey, true);
+    if (typeof stopIdle === 'function') stopIdle();   // detiene el auto-cierre (#83)
     setTimeout(function () { landing.remove(); }, 700);
   }
   function onKey(e) {
@@ -889,6 +891,29 @@
   }
   document.getElementById('btn-enter').addEventListener('click', enter);
   document.addEventListener('keydown', onKey, true);
+
+  // ── Auto-cierre por inactividad (#83) ──
+  // Si nadie interactúa con la portada en ~8 s, se entra solo al laboratorio
+  // (modelo nuevo vacío) para no bloquear el arranque. Cualquier interacción
+  // reinicia el contador; si el manual está abierto encima, se pospone.
+  var idleEvents = ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart'];
+  var idleT = null;
+  function stopIdle() {
+    clearTimeout(idleT);
+    idleEvents.forEach(function (ev) { document.removeEventListener(ev, resetIdle, true); });
+  }
+  function idleEnter() {
+    var help = document.getElementById('help-overlay');
+    if (help && !help.classList.contains('hidden')) { resetIdle(); return; }   // leyendo el manual
+    enter();
+  }
+  function resetIdle() {
+    if (landing.classList.contains('exit')) return;   // ya saliendo
+    clearTimeout(idleT);
+    idleT = setTimeout(idleEnter, 8000);
+  }
+  idleEvents.forEach(function (ev) { document.addEventListener(ev, resetIdle, { passive: true, capture: true }); });
+  resetIdle();
 
   // ── "Generar modelo con el asistente": entra al laboratorio y abre el diálogo
   //    "Asistente — generar modelo desde ficha". ──
@@ -969,7 +994,7 @@
 
 <!-- numeric.js para solver (Fase 2+) -->
 <script src="lib/numeric.js"></script>
-<script type="module" src="js/app.js?v=153"></script>
+<script type="module" src="js/app.js?v=154"></script>
 
 <!-- PWA: registrar el service worker (offline). Solo en contexto seguro
      (https o localhost); el navegador deja navigator.serviceWorker undefined
