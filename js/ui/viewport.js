@@ -1956,7 +1956,7 @@ export class Viewport {
     if (!nm || !ns) return null;
 
     const grp = new THREE.Group();
-    const COL = lk.rigid ? 0xffb300 : 0x9c27b0;  // ámbar=rígido, púrpura=coupling
+    const COL = lk.rigid ? 0x111111 : 0x9c27b0;  // negro=rígido (no confundir con cargas), púrpura=coupling
     const pm = this.m2t(nm.x, nm.y, nm.z);
     const ps = this.m2t(ns.x, ns.y, ns.z);
 
