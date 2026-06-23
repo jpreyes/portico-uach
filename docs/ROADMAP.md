@@ -228,3 +228,40 @@ esfuerzo creciente (incluye los **pendientes normativos** de G16):*
 - ✅ **D3 — `[#55]` modal con Kg**: caso/combo de referencia + toggle «incluir P-Δ (Kg)» en el diálogo modal (como SAP2000).
 - ✅ **D4 — `[#57]` gradiente térmico en área**: temperatura por cara (roja +z / azul −z, como Abaqus).
 - ✅ **D5 — `[#58]` tensión/deformación plana**: propiedad del área (`area.planeStrain`).
+
+---
+
+## ✅/⬜ FALTANTES — lista única ordenada por FACILIDAD de implementación
+*Todo lo que queda ⬜/🟡 a la fecha (v153), de lo MÁS FÁCIL a lo más difícil (esfuerzo, no complejidad teórica). El detalle de cada uno está en su grupo arriba; aquí sólo lo que FALTA.*
+
+**🟢 Triviales (constante/CSS/timeout, < ½ día)**
+1. **Nodos de malla más pequeños** `[#81]` (G20) — reducir el radio de dibujo de los nodos de malla en `viewport`.
+2. **Auto-cierre de portada / recuperación** `[#83]` (G20) — `setTimeout` (~5–10 s sin interacción) → cerrar landing + diálogo de autoguardado y abrir modelo nuevo.
+
+**🟢 Fáciles (cambio acotado, reusa lo existente)**
+3. **Limpiar temporales + pestaña «Temporales»** `[#82]` (G20) — limpiar/listar `portico_autosave_*`; integrar con multi-modelo.
+4. **Limitar dimensiones en el diseño (ancho máx.)** `[#84]` (G20) — filtrar candidatos del auto-diseño por dimensión y avisar cuando ninguno cumpla (reusa `autodesign.js`).
+5. **Materializar más casos de verificación** `[#19]` (G9) — **sin código nuevo**: construir `.s3d` + manifiesto (1-001, 1-007, 1-002, etc.). Laborioso pero mecánico.
+6. **Refinos finos de diseño** (G16): armado multicapa explícito en P-M biaxial + parábola-rectángulo EC2 `[#65]`; centro de cortante del canal `[#67]`; flecha relativa a la cuerda por elemento en la tabla `[#68]`.
+
+**🟡 Medios (UI de viewport o motor acotado)**
+7. **Mallado: invertir el flujo (botón → luego nodos)** `[#78]` (G20) — refactor del modo mallar como el modo Área.
+8. **Selección por cuadro (rubber-band con Alt)** `[#80]` (G20) — interacción de selección por rectángulo.
+9. **Arrastrar nodos con el mouse + corregir bug de nodos fantasma** `[#79]` (G20) — Ctrl+clic-arrastrar, elegir plano XY/XZ/YZ, no dejar nodos huérfanos no seleccionables.
+10. **Time-history modal con elementos de ÁREA** `[#51]` (G12) — verificar muro/losa end-to-end + historia de tensiones σ(t) de área.
+11. **Time-history NO LINEAL — rótulas concentradas en extremos de barra** `[#48b]` (G12) — hoy es edificio de corte; falta el modelo completo con rótulas por elemento.
+12. **UX de los análisis avanzados + `.md` por funcionalidad** `[#20]` (G9) — ejemplos guiados (pandeo, form-finding, pushover) y docs.
+13. **UX de la pestaña Diseño (avanzada)** `[#73]` (G17) — selector de material permitido, panel de preferencias, reporte de diseño.
+14. **Editor gráfico de vértices del polígono** `[#70]` (G17) — dibujar/editar el contorno con el mouse (hoy es por textarea de coordenadas).
+15. **UI de nudos columna fuerte-viga débil** `[#68]` (G16) — resaltar en el viewport los nudos que no cumplen SCWB.
+
+**🟠 Mayores (motor/feature nuevos)**
+16. **IA: torre de transmisión (celosías 3D)** `[#53]` (G13) — vocabulario de ficha + generador paramétrico en el asistente.
+17. **Otras capacidades parciales** `[#G14]` — resorte de extremo (1-008), viga sobre fundación (1-013), pandeo de cáscara (2-016/2-017), viga corotacional gran rotación (1-029).
+18. **Documentación integral de toda funcionalidad** `[#21]` (G9) — qué hace, teoría mínima, cómo ejecutarla, ejemplo, por cada feature.
+19. **Mesheador — paving/calidad avanzada** `[#52]` (G13) — fases 1-3 hechas; quedan refinamientos (recombinación quad avanzada, métricas).
+
+**🔴 Grandes (módulos/arquitectura)**
+20. **Interoperabilidad SAP2000 / ETABS (`.s2k`/`.e2k`)** `[#74]` (G18) — modelo neutro + import/export, verificable headless.
+21. **Proyecto multi-modelo en una sola memoria** `[#17]` (G7) — serializer multi-modelo + estado de modelo activo + generador de memoria que los recorre (incluye la pestaña «Temporales» del `[#82]`).
+22. **Importador IFC (web-ifc)** `[#75]`/`[#76]`/`[#77]` (G19) — el más grande: loader + clasificador + conversión + ventana side-by-side con confirmación.
