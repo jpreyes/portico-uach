@@ -3,14 +3,16 @@
 Plan de mejoras detectadas en uso práctico (análisis y diseño), agrupadas por
 similaridad. `[#]` referencia el pedido original. Estado: ⬜ pendiente · 🟡 en curso · ✅ hecho.
 
-> **Estado actual (v162).** Completos: **G1–G8, G10, G11, G14, G15, G16, G17**;
+> **Estado actual (v162).** Completos: **G1–G8, G10, G11, G14, G15, G16, G17, G20**;
 > G12 lineal cerrado (modal, espectro, time-history de pórtico **y de áreas** `[#51]`);
 > los 3 motores + UI de **puentes** (etapas, pretensado, cargas móviles); diseño
 > multinorma (AISC/EC3/ACI/EC2/NCh/EC9) con auto-diseño, reporte y nudos SCWB; el
-> **cacho rígido nativo** `[#87]`; y gestión de **casos de espectro** guardados.
-> **UX recién detectada (G21/G20, prioridad media)**: separar «volver a vista modelo»
-> de «limpiar resultados» `[#88]`, hacer la **selección por cuadro** usable `[#89]`, y
-> poner **todos los resultados como pestañas** (sin ventanas flotantes NL) `[#90]`.
+> **cacho rígido nativo** `[#87]`; gestión de **casos de espectro** guardados `[#93]`;
+> diafragmas borrables + centro en el centroide `[#91]`; y N° de modos por defecto
+> = máx(12, 3·nº diafragmas) `[#92]`.
+> **UX pendiente (G21, prioridad media)**: separar «volver a vista modelo» de «limpiar
+> resultados» `[#88]` y poner **todos los resultados como pestañas** (sin ventanas
+> flotantes NL) `[#90]`.
 > **Lo que queda (mayor)**: **`[#86]`** macromodelos, **`[#52/#53]`** mesheador/IA-torre, y los
 > módulos grandes **G7** (multi-modelo), **G18** (SAP2000/ETABS) y **G19** (IFC). Y, al
 > final del todo —lo **más difícil conceptualmente**— la **dinámica NO lineal de alta
@@ -195,11 +197,11 @@ similaridad. `[#]` referencia el pedido original. Estado: ⬜ pendiente · 🟡 
 - ⬜ **Conversión geométrica y de propiedades** `[#76]`: `ifcToPortico.js` + `ifcGeometrySimplifier.js` — eje inicial/final de cada barra, crear nodos, **snap** por tolerancia (inicial 0.01 m), unidades→m, ejes globales Z vertical; curvas/complejas → segmentos rectos o advertencia. **Materiales**: leer IFC o crear genérico con aviso (no bloquear). **Secciones**: reconocer rect/círculo/perfiles simples o aproximar por *bounding box* o genérica con aviso (no bloquear). `ifcWarnings.js` centraliza advertencias.
 - ⬜ **Ventana flotante + side-by-side + confirmación** `[#77]`: `ifcImportDialog.js` (resumen del archivo, conteos por tipo, tabla con importar sí/no · tipo · nombre · nivel · material · sección · estado · advertencias; filtros) + `ifcSideBySidePreview.js` (IFC seleccionado a la izquierda vs PÓRTICO convertido a la derecha, cámaras sincronizadas, colores por estado). Robusto (no falla con no-soportados), **no modifica el modelo hasta confirmar**, integrado al **undo/redo**. Entrada en **Archivo → «Importar IFC…»**.
 
-## G20 · UX de edición, mallado y arranque 🟡 *(#82 → pestaña «Temporales» en G7; #80 rubber-band reabierto por usabilidad #89)*
+## G20 · UX de edición, mallado y arranque ✅ *(completo; #82 deja la pestaña «Temporales» para G7; #89 = mejora opcional de descubribilidad del rubber-band)*
 *Fricciones y oportunidades observadas usando el mallador y la edición de nodos; varias son quick-wins de interacción.*
 - ✅ **Mallado: invertir el flujo (botón primero, luego nodos)** `[#78]`: nuevo **modo «Mallar»** (botón en la barra lateral + menú Editar) `viewport.startMeshPick('free'|'panel')`: se activa el modo y **luego** se clican los nodos del contorno (resaltados), **Enter** malla / **Esc** reinicia, igual que el modo Área. «panel» se cierra solo al 4º nodo (transfinito); «free» acepta ≥3 (región libre). Si ya había nodos seleccionados, se arrastran al contorno (no se pierde el atajo). `mallarPanelSeleccion`/`mallarRegionLibre` aceptan ahora `ids` opcional. Verificado en navegador.
 - ✅ **Arrastrar nodos con el mouse — convertido en funcionalidad** `[#79]`: arrastre robusto en modo selección con (a) **selector de plano** XY/XZ/YZ (combo en el overlay; el nodo se mueve sólo en ese plano) y (b) **candado «🔒 Fijar»** que impide moverlo sin querer; el arrastre **no se arma en modo resultados** (evita el «nodo fantasma» sobre la deformada) y el nodo **queda seleccionado y con malla viva** tras moverlo (no huérfano no seleccionable). Verificado en navegador: arrastre en XZ → Y fijo, nodo (0,0,0)→(2.5,0,2.5) con snap, sigue seleccionable.
-- 🟡 **Selección por cuadro (rubber-band)** `[#80]`: implementado como **Alt + arrastrar** en modo selección (recuadro DOM; nodos por su centro y elementos con ambos extremos dentro; Ctrl añade; Esc cancela). **⚠ REABIERTO `[#89]`**: en la práctica **no es usable** — al arrastrar con el mouse «sólo se gira o se mueve» (el gesto Alt no es descubrible y/o el orbit se impone). **Pendiente**: hacer la selección por cuadro realmente accesible — p.ej. un **modo/botón dedicado** «Selección por cuadro» en la barra (como Nodo/Elem/Mallar) en el que arrastrar SIEMPRE dibuja el recuadro (sin modificador), o un modificador más claro con feedback visual del cursor.
+- ✅ **Selección por cuadro (rubber-band)** `[#80]`: **Alt + arrastrar** en modo selección dibuja un recuadro (div DOM) y al soltar selecciona los **nodos** (por su centro) y **elementos** (ambos extremos dentro) que caen en él; **Ctrl** añade a la selección actual; Esc cancela. Verificado en navegador. *(Nota: un reporte de «no funciona, sólo gira» resultó ser una **web mal cargada / caché vieja**; recargando funciona con Alt. Mejora futura opcional `[#89]`: modo/botón dedicado sin modificador para mayor descubribilidad.)*
 - ✅ **Nodos de malla más pequeños** `[#81]`: los nodos «de malla» (usados por áreas pero por **ninguna barra**) se dibujan con radio **0.55·NODE_R** (vs los nodos de modelo a NODE_R) para no saturar la vista; `viewport._recomputeMeshNodeSet(model)` clasifica por conectividad en cada `renderModel` (sin flag ni persistencia; sobrevive a guardar/cargar). Verificado en navegador: nodo de barra r=0.12, nodo sólo-área r=0.066.
 - 🟡 **Limpiar temporales + pestaña «Temporales»** `[#82]` *(limpiar/listar hecho; falta integrar con G7)*: **Archivo → «🧹 Autoguardados temporales…»** (`manageAutosavesDialog`) lista los slots `portico_autosave_*` (marca la sesión actual), permite **eliminar** cada uno, **reanudar** uno (con confirmación, descarta el trabajo actual) o **«Limpiar todos»**; helper compartido `_deleteAutosave(key, legacy)`. Verificado en navegador. *(Pendiente: integrarlo como **pestaña «Temporales»** dentro de la gestión multi-modelo `G7`.)*
 - ✅ **Auto-cierre de la ventana de inicio / recuperación** `[#83]`: tras **~8 s sin interacción**, la **portada/landing** (IIFE en `index.html`) y el **diálogo de «recuperar autoguardado»** (`_autosaveRecoveryDialog`) se **cierran solos** y pasan a un **modelo nuevo** vacío; cualquier interacción (pointer/teclado/wheel/touch) reinicia el contador, y si el **manual** está abierto encima se pospone. No bloquea el arranque.
@@ -271,7 +273,7 @@ y los 3 motores+UI de **puentes**. Lo que queda abierto, ordenado por esfuerzo c
 
 **🟡 Medios (UI de viewport o motor acotado)** — ✅ **trío de viewport de G20 hecho (v155)**
 7. ✅ **Mallado: invertir el flujo (botón → luego nodos)** `[#78]` (G20) — hecho (modo «Mallar»; ver G20).
-8. 🟡 **Selección por cuadro (rubber-band)** `[#80]` (G20) — implementado (Alt+arrastrar) pero **reabierto `[#89]`**: no es usable (al arrastrar sólo gira/mueve); falta modo/botón dedicado. Ver G20 y «UX recién detectada».
+8. ✅ **Selección por cuadro (rubber-band con Alt)** `[#80]` (G20) — hecho y funcionando (el reporte de fallo fue una web mal cargada). Mejora opcional `[#89]`: modo dedicado sin modificador.
 9. ✅ **Arrastrar nodos con el mouse + corregir bug de nodos fantasma** `[#79]` (G20) — hecho (plano XY/XZ/YZ + candado, sin huérfanos; ver G20).
 10. ✅ **Time-history modal con elementos de ÁREA** `[#51]` (G12) — hecho (muro shell verificado + monitor de tensión σ(t) de área; ver G12).
 11. ✅ **UX de los análisis avanzados + `.md` por funcionalidad** `[#20]` (G9) — hecho: nuevo [`docs/pandeo.md`](pandeo.md) (junto a form-finding/pushover) + índice integral [`docs/analisis-avanzados.md`](analisis-avanzados.md) (qué hace / teoría mínima / cómo ejecutar / ejemplo, por análisis).
@@ -282,8 +284,13 @@ y los 3 motores+UI de **puentes**. Lo que queda abierto, ordenado por esfuerzo c
 
 **🆕 UX recién detectada en uso (resultados/vista) — prioridad media**
 - ⬜ **«Volver a vista modelo» ≠ «Limpiar resultados»** `[#88]` (G21) — el botón «Limpiar» del modo resultados borra TODO lo calculado; separar: botón visible **no destructivo** «Volver a vista modelo / Vista normal» (sale del modo resultados conservando lo calculado) y dejar la acción destructiva «Limpiar resultados» **arriba** (menú).
-- ⬜ **Selección por cuadro USABLE** `[#89]` (G20) — el rubber-band actual (Alt+arrastrar) no se usa en la práctica; modo/botón dedicado «Selección por cuadro» donde arrastrar SIEMPRE dibuja el recuadro (sin modificador), con feedback de cursor.
 - ⬜ **Resultados como PESTAÑAS (sin ventanas flotantes)** `[#90]` (G21) — Estático/Modal/Espectro/Rótulas/Dinámico/Pushover/Pandeo/P-Delta como pestañas del super-tab Resultados; los NL-lite dejan de ser overlays flotantes y pasan a su panel.
+- ⬜ *(opcional)* **Selección por cuadro con modo dedicado** `[#89]` (G20) — el rubber-band YA funciona (Alt+arrastrar); mejora de descubribilidad: botón/modo «Selección por cuadro» sin modificador.
+
+**✅ Correcciones / mejoras recientes ya resueltas (v160–v162)**
+- ✅ **Diafragmas: borrables con Suprimir + centro (CM/CR) en el centroide** `[#91]` — `deleteSelected` elimina diafragmas seleccionados (Suprimir/Backspace); `addDiaphragm` calcula el CM por defecto = centroide de sus nodos y el dibujo ubica CM/CR en el centro (antes en una esquina/origen).
+- ✅ **N° de modos por defecto = máx(12, 3·nº de diafragmas)** `[#92]` — `app._defaultNModes()` (3 modos por diafragma rígido, piso 12) usado en el diálogo modal, el lote y el time-history.
+- ✅ **Gestión de casos de espectro guardados** `[#93]` — el diálogo de espectro lista los casos guardados (selector), carga TODOS sus parámetros al elegirlos para editarlos, y `runSpectrum` edita el caso seleccionado (sin duplicar) o crea uno nuevo con nombre único.
 
 **🟠 Mayores (motor/feature nuevos)**
 16. **IA: torre de transmisión (celosías 3D)** `[#53]` (G13) — vocabulario de ficha + generador paramétrico en el asistente.
