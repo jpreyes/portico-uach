@@ -1,42 +1,42 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=170';
-import { Serializer }      from './model/serializer.js?v=170';
-import { Viewport }        from './ui/viewport.js?v=170';
-import { PropertiesPanel } from './ui/properties.js?v=170';
-import { MenuBar }         from './ui/menu.js?v=170';
-import { UndoStack }       from './utils/undo.js?v=170';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=170';
-import { Results }                         from './solver/postprocess.js?v=170';
-import { areaStress, areaBendingStress, vonMises } from './solver/membrane.js?v=170';
-import { ModalSolver }                     from './solver/modal_solver.js?v=170';
-import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=170';
-import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=170';
-import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=170';
-import { assembleKg } from './solver/geometric.js?v=170';
-import { makeFactor } from './solver/linsolve.js?v=170';
-import { formFind } from './solver/formfind.js?v=170';
-import { ModalResults }                    from './solver/modal_results.js?v=170';
-import { modalTimeHistory }                from './solver/timehistory.js?v=170';
-import { parseAccelerogram, accStats, scaleToPGA, DEMO_PRESETS, G as GACC } from './solver/accelerograms.js?v=170';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=170';
-import { StagedSolver }                    from './solver/staged.js?v=170';
-import { tendonEquivalentLoads, applyTendon, tendonEcc } from './solver/tendon.js?v=170';
-import { buildLane, influenceLine, movingLoadEnvelope, responseReaction, responseSection } from './solver/moving_load.js?v=170';
-import { newmarkNonlinear, shearBuilding, rayleighDamping } from './solver/nl_timehistory.js?v=170';
-import { checkDrift } from './design/serviceability.js?v=170';
-import { seleccionarPerfil, steelCandidates, predimensionar, candidatesForFamily } from './design/autodesign.js?v=170';
-import { jointSCWB } from './design/seismic.js?v=170';
-import { resolveMaterial } from './design/material_props.js?v=170';
-import { resolveSectionProps } from './design/section_props.js?v=170';
-import { autoDetectDiaphragms, computeFloorCR, applyDiaphragmConstraints } from './solver/diaphragm.js?v=170';
-import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=170';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=170';
-import { blockCells, cornerGridIndices } from './model/mesher.js?v=170';
-import { coonsGridFromCorners } from './model/mesh_map.js?v=170';
-import { meshPolygonIntoModel } from './model/mesh_free.js?v=170';
-import { smoothAreasInModel } from './model/mesh_quality.js?v=170';
+import { Model }           from './model/model.js?v=171';
+import { Serializer }      from './model/serializer.js?v=171';
+import { Viewport }        from './ui/viewport.js?v=171';
+import { PropertiesPanel } from './ui/properties.js?v=171';
+import { MenuBar }         from './ui/menu.js?v=171';
+import { UndoStack }       from './utils/undo.js?v=171';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=171';
+import { Results }                         from './solver/postprocess.js?v=171';
+import { areaStress, areaBendingStress, vonMises } from './solver/membrane.js?v=171';
+import { ModalSolver }                     from './solver/modal_solver.js?v=171';
+import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=171';
+import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=171';
+import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=171';
+import { assembleKg } from './solver/geometric.js?v=171';
+import { makeFactor } from './solver/linsolve.js?v=171';
+import { formFind } from './solver/formfind.js?v=171';
+import { ModalResults }                    from './solver/modal_results.js?v=171';
+import { modalTimeHistory }                from './solver/timehistory.js?v=171';
+import { parseAccelerogram, accStats, scaleToPGA, DEMO_PRESETS, G as GACC } from './solver/accelerograms.js?v=171';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=171';
+import { StagedSolver }                    from './solver/staged.js?v=171';
+import { tendonEquivalentLoads, applyTendon, tendonEcc } from './solver/tendon.js?v=171';
+import { buildLane, influenceLine, movingLoadEnvelope, responseReaction, responseSection } from './solver/moving_load.js?v=171';
+import { newmarkNonlinear, shearBuilding, rayleighDamping } from './solver/nl_timehistory.js?v=171';
+import { checkDrift } from './design/serviceability.js?v=171';
+import { seleccionarPerfil, steelCandidates, predimensionar, candidatesForFamily } from './design/autodesign.js?v=171';
+import { jointSCWB } from './design/seismic.js?v=171';
+import { resolveMaterial } from './design/material_props.js?v=171';
+import { resolveSectionProps } from './design/section_props.js?v=171';
+import { autoDetectDiaphragms, computeFloorCR, applyDiaphragmConstraints } from './solver/diaphragm.js?v=171';
+import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=171';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=171';
+import { blockCells, cornerGridIndices } from './model/mesher.js?v=171';
+import { coonsGridFromCorners } from './model/mesh_map.js?v=171';
+import { meshPolygonIntoModel } from './model/mesh_free.js?v=171';
+import { smoothAreasInModel } from './model/mesh_quality.js?v=171';
 
 class App {
   constructor() {
@@ -1772,7 +1772,7 @@ class App {
   _staticWorkerSolve(K, nDOF, freeDOF, Flist, dense = false) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=170', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=171', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -1801,7 +1801,7 @@ class App {
   _staticWorkerSolveSparse(csr, cf, nDOF, freeDOF, Flist) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=170', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=171', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -2040,12 +2040,17 @@ class App {
     this._movingResult = null;
     this._nlthResult = null;
     this._nlthStopPlay?.();
-    document.getElementById('nlth-overlay')?.remove();
     this._plasticStopPlay?.();
     this._thStopPlay?.();
+    this._dcStopPlay?.();
+    this._nlStopPlay?.();
     document.getElementById('pl-overlay')?.remove();
     this._thRenderPanel?.();   // #90: la pestaña «Dinámico» se vacía (muestra el hint)
-    document.getElementById('ml-overlay')?.remove();
+    this._dcRenderPanel?.();   // #90: ídem pestaña «Pushover»
+    this._buckRenderPanel?.(); // #90: ídem pestaña «Pandeo»
+    this._nlRenderPanel?.();   // #90: ídem pestaña «No lineal»
+    this._nlthRenderPanel?.(); // #90: ídem pestaña «Dinámico NL»
+    this._movingRenderPanel?.(); // #90: ídem pestaña «Cargas móviles»
     this.viewport.clearResults();
     // Apagar la visualización de reacciones
     this._showReactions = false;
@@ -2177,7 +2182,7 @@ class App {
       // ── Run Stodola in a Web Worker (non-blocking) ───────────────────────────
       const denseModal = !!this._config?.analisis?.matrizDensa;
       const modes = await new Promise((resolve, reject) => {
-        const worker = new Worker(new URL('./solver/modal_worker.js?v=170', import.meta.url), { type: 'module' });
+        const worker = new Worker(new URL('./solver/modal_worker.js?v=171', import.meta.url), { type: 'module' });
         worker.postMessage({ Kff_flat, Mff_flat, nF, nModes, dense: denseModal, method: modalMethod },
           [Kff_flat.buffer, Mff_flat.buffer]); // transfer — zero copy
         worker.onmessage = (ev) => {
@@ -2590,7 +2595,7 @@ class App {
       // Modal por iteración de subespacio en worker (no bloquea la UI).
       const dense = !!this._config?.analisis?.matrizDensa;
       const rawModes = await new Promise((resolve, reject) => {
-        const w = new Worker(new URL('./solver/modal_worker.js?v=170', import.meta.url), { type: 'module' });
+        const w = new Worker(new URL('./solver/modal_worker.js?v=171', import.meta.url), { type: 'module' });
         w.postMessage({ Kff_flat: Kff, Mff_flat: Mff, nF, nModes, dense, method: 'subspace' }, [Kff.buffer, Mff.buffer]);
         w.onmessage = ev => { w.terminate(); ev.data.error ? reject(new Error(ev.data.error)) : resolve(ev.data.modes); };
         w.onerror = ev => { w.terminate(); reject(new Error(ev.message || 'Error en worker modal')); };
@@ -2659,7 +2664,7 @@ class App {
   _thSolveInWorker(modes, ag, dt, zeta) {
     return new Promise((resolve, reject) => {
       let w;
-      try { w = new Worker(new URL('./solver/timehistory_worker.js?v=170', import.meta.url), { type: 'module' }); }
+      try { w = new Worker(new URL('./solver/timehistory_worker.js?v=171', import.meta.url), { type: 'module' }); }
       catch (e) {
         try { const r = modalTimeHistory({ modes: modes.map(m => ({ ...m, phi: new Float64Array(0) })), ag, dt, zeta }); resolve({ q: r.q, peakModal: r.peakModal }); }
         catch (err) { reject(err); }
@@ -3353,9 +3358,21 @@ class App {
     return cfg;
   }
 
-  // Panel flotante: gráfico SVG de la línea de influencia / envolvente + CSV.
+  // #90: Cargas móviles → pestaña «Cargas móviles» en Resultados.
   _movingPlotOverlay(R) {
-    document.getElementById('ml-overlay')?.remove();
+    this._movingResult = R;
+    this.panel._switchVTab('resultados');
+    this.panel._switchRTab('ml');   // → _movingRenderPanel()
+  }
+
+  // Construye el gráfico de línea de influencia / envolvente en #ml-panel.
+  _movingRenderPanel() {
+    const el = document.getElementById('ml-panel');
+    const hint = document.getElementById('res-ml-hint');
+    if (!el) return;
+    const R = this._movingResult;
+    if (!R) { if (hint) hint.style.display = ''; el.innerHTML = ''; return; }
+    if (hint) hint.style.display = 'none';
     const W = 460, H = 200, ml = 44, mr = 14, mt = 14, mb = 28;
     const n = R.xs.length;
     const xmin = R.xs[0], xmax = R.xs[n - 1] || 1;
@@ -3368,47 +3385,24 @@ class App {
     const y0 = sy(0).toFixed(1);
     const mk = (x, y, col) => `<circle cx="${sx(x).toFixed(1)}" cy="${sy(y).toFixed(1)}" r="3.5" fill="${col}"/>`;
     const title = R.mode === 'il' ? 'Línea de influencia (carga unitaria ↓)' : `Envolvente del tren (largo ${R.trainLen?.toFixed(1)} m)`;
-    const el = document.createElement('div');
-    el.id = 'ml-overlay';
     el.innerHTML = `
-      <div class="ml-card">
-        <div class="ml-head"><b>Cargas móviles — ${title}</b><button class="ml-x" title="Cerrar">✕</button></div>
-        <div class="ml-body">
-          <div style="font-size:12px;margin-bottom:6px">${R.label} <span style="color:var(--text-muted)">(${R.unit})</span></div>
-          <svg viewBox="0 0 ${W} ${H}" style="width:100%;background:var(--bg3,#0b1220);border-radius:6px">
-            <line x1="${ml}" y1="${y0}" x2="${W - mr}" y2="${y0}" stroke="var(--border,#26324d)" stroke-width="1"/>
-            <line x1="${ml}" y1="${mt}" x2="${ml}" y2="${H - mb}" stroke="var(--border,#26324d)" stroke-width="1"/>
-            <polyline points="${poly}" fill="none" stroke="var(--accent,#38bdf8)" stroke-width="1.6"/>
-            ${mk(R.sMax, R.max, '#ef4444')}${mk(R.sMin, R.min, '#22c55e')}
-            <text x="${ml}" y="${H - 8}" fill="var(--text-muted,#9aa)" font-size="10">pos. ${xmin.toFixed(1)} m</text>
-            <text x="${W - mr}" y="${H - 8}" fill="var(--text-muted,#9aa)" font-size="10" text-anchor="end">${xmax.toFixed(1)} m</text>
-          </svg>
-          <div style="font-size:11.5px;margin-top:8px;line-height:1.7">
-            <span style="color:#ef4444">●</span> máx = <b>${R.max.toExponential(3)} ${R.unit}</b> en pos. ${R.sMax.toFixed(2)} m<br>
-            <span style="color:#22c55e">●</span> mín = <b>${R.min.toExponential(3)} ${R.unit}</b> en pos. ${R.sMin.toFixed(2)} m<br>
-            <span style="color:var(--text-muted)">Pista L = ${R.lane.L.toFixed(2)} m · ${n} posiciones</span>
-          </div>
-        </div>
-        <div class="ml-foot"><button class="ml-csv">⬇ CSV</button></div>
-      </div>`;
-    document.getElementById('viewport-wrap')?.appendChild(el) || document.body.appendChild(el);
-    el.querySelector('.ml-x').addEventListener('click', () => el.remove());
+      <div style="font-size:12px;font-weight:600;margin-bottom:4px;color:var(--accent,#38bdf8)">${title}</div>
+      <div style="font-size:12px;margin-bottom:6px">${R.label} <span style="color:var(--text-muted)">(${R.unit})</span></div>
+      <svg viewBox="0 0 ${W} ${H}" style="width:100%;background:var(--bg3,#0b1220);border-radius:6px">
+        <line x1="${ml}" y1="${y0}" x2="${W - mr}" y2="${y0}" stroke="var(--border,#26324d)" stroke-width="1"/>
+        <line x1="${ml}" y1="${mt}" x2="${ml}" y2="${H - mb}" stroke="var(--border,#26324d)" stroke-width="1"/>
+        <polyline points="${poly}" fill="none" stroke="var(--accent,#38bdf8)" stroke-width="1.6"/>
+        ${mk(R.sMax, R.max, '#ef4444')}${mk(R.sMin, R.min, '#22c55e')}
+        <text x="${ml}" y="${H - 8}" fill="var(--text-muted,#9aa)" font-size="10">pos. ${xmin.toFixed(1)} m</text>
+        <text x="${W - mr}" y="${H - 8}" fill="var(--text-muted,#9aa)" font-size="10" text-anchor="end">${xmax.toFixed(1)} m</text>
+      </svg>
+      <div style="font-size:11.5px;margin-top:8px;line-height:1.7">
+        <span style="color:#ef4444">●</span> máx = <b>${R.max.toExponential(3)} ${R.unit}</b> en pos. ${R.sMax.toFixed(2)} m<br>
+        <span style="color:#22c55e">●</span> mín = <b>${R.min.toExponential(3)} ${R.unit}</b> en pos. ${R.sMin.toFixed(2)} m<br>
+        <span style="color:var(--text-muted)">Pista L = ${R.lane.L.toFixed(2)} m · ${n} posiciones</span>
+      </div>
+      <div style="margin-top:8px"><button class="ml-csv btn-secondary" style="font-size:11px;padding:4px 10px">⬇ CSV</button></div>`;
     el.querySelector('.ml-csv').addEventListener('click', () => this._movingExportCSV(R));
-    if (!document.getElementById('ml-overlay-css')) {
-      const s = document.createElement('style'); s.id = 'ml-overlay-css';
-      s.textContent = `
-        #ml-overlay{position:absolute;right:16px;bottom:16px;z-index:55}
-        #ml-overlay .ml-card{width:min(500px,46vw);background:var(--bg-elev,#141b27);border:1px solid var(--border,#334);
-          border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.5);color:var(--text,#e6edf3)}
-        #ml-overlay .ml-head{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;
-          border-bottom:1px solid var(--border,#334);font-size:13px}
-        #ml-overlay .ml-x{background:none;border:none;color:var(--text-muted,#9aa);cursor:pointer;font-size:14px}
-        #ml-overlay .ml-body{padding:10px 12px}
-        #ml-overlay .ml-foot{padding:6px 12px 10px;display:flex;justify-content:flex-end}
-        #ml-overlay .ml-csv{font-size:11px;padding:5px 11px;border-radius:5px;cursor:pointer;border:1px solid var(--border,#334);
-          background:var(--bg4,#1e2735);color:var(--text,#e6edf3)}`;
-      document.head.appendChild(s);
-    }
   }
 
   _movingExportCSV(R) {
@@ -3641,58 +3635,49 @@ class App {
     return { dir: dirV, zeta, alpha, ag, dt, agName, stories: st };
   }
 
-  // Overlay: historia del piso monitor + diagrama «stick» animado del edificio.
+  // #90: Time-history no lineal (edificio de corte) → pestaña «Dinámico NL».
   _nlthOpenOverlay() {
-    const R = this._nlthResult; if (!R) return;
+    if (!this._nlthResult) return;
+    this.panel._switchVTab('resultados');
+    this.panel._switchRTab('nlth');   // → _nlthRenderPanel()
+  }
+
+  // Construye el contenido de la pestaña «Dinámico NL» en #nlth-panel: historia del
+  // piso monitor + diagrama «stick» animado. Mismos IDs → _nlthBuildPlot/_nlthShowStep igual.
+  _nlthRenderPanel() {
+    const el = document.getElementById('nlth-panel');
+    const hint = document.getElementById('res-nlth-hint');
+    if (!el) return;
+    const R = this._nlthResult;
+    if (!R) { if (hint) hint.style.display = ''; el.innerHTML = ''; return; }
+    if (hint) hint.style.display = 'none';
     this._nlthStopPlay?.();
-    document.getElementById('nlth-overlay')?.remove();
-    const n = R.stories.length;
     const stOpts = R.stories.map((s, i) => `<option value="${i}" ${i === R.monDof ? 'selected' : ''}>${s.label}${R.yielded[i] ? ' ⚠' : ''}</option>`).join('');
-    const el = document.createElement('div');
-    el.id = 'nlth-overlay';
     el.innerHTML = `
-      <div class="nlth-card">
-        <div class="nlth-head"><b>Time-history no lineal — edificio de corte</b><button class="nlth-x" title="Cerrar">✕</button></div>
-        <div class="nlth-body">
-          <div style="display:flex;gap:10px">
-            <div style="flex:0 0 130px"><div id="nlth-stick"></div></div>
-            <div style="flex:1;min-width:0">
-              <div class="prop-row" style="margin:0 0 6px">
-                <div class="prop-field"><label style="font-size:10px">Monitor</label><select id="nlth-mon">${stOpts}</select></div>
-                <div class="prop-field"><label style="font-size:10px">Escala</label><input type="number" id="nlth-scale" value="1" min="0.1" step="0.5" style="width:64px"></div>
-              </div>
-              <div id="nlth-plot"></div>
-              <div id="nlth-readout" style="font-size:11px;margin-top:6px;line-height:1.6"></div>
-            </div>
+      <div style="display:flex;gap:8px">
+        <div style="flex:0 0 96px"><div id="nlth-stick"></div></div>
+        <div style="flex:1;min-width:0">
+          <div class="prop-row" style="margin:0 0 6px">
+            <div class="prop-field"><label style="font-size:10px">Monitor</label><select id="nlth-mon">${stOpts}</select></div>
+            <div class="prop-field"><label style="font-size:10px">Escala</label><input type="number" id="nlth-scale" value="1" min="0.1" step="0.5" style="width:56px"></div>
           </div>
-          <div class="prop-row" style="align-items:center;gap:8px;margin-top:8px">
-            <button id="nlth-play">▶</button>
-            <input type="range" id="nlth-step" min="0" max="${R.nSteps - 1}" value="${R.peakStep}" style="flex:1">
-            <select id="nlth-speed" title="Velocidad de animación" style="font-size:11px"><option value="0.5">×0.5</option><option value="1" selected>×1</option><option value="2">×2</option><option value="4">×4</option></select>
-            <button id="nlth-max" title="Ir al pico">Máx</button>
-            <button id="nlth-csv">⬇ CSV</button>
-          </div>
+          <div id="nlth-plot"></div>
         </div>
+      </div>
+      <div id="nlth-readout" style="font-size:11px;margin-top:6px;line-height:1.6"></div>
+      <div class="prop-row" style="align-items:center;gap:6px;margin-top:8px">
+        <button id="nlth-play" class="btn-secondary" style="font-size:14px;padding:2px 8px">▶</button>
+        <input type="range" id="nlth-step" min="0" max="${R.nSteps - 1}" value="${R.peakStep}" style="flex:1">
+        <select id="nlth-speed" title="Velocidad de animación" style="font-size:11px"><option value="0.5">×0.5</option><option value="1" selected>×1</option><option value="2">×2</option><option value="4">×4</option></select>
+        <button id="nlth-max" class="btn-secondary" title="Ir al pico" style="font-size:11px;padding:2px 6px">Máx</button>
+        <button id="nlth-csv" class="btn-secondary" style="font-size:11px;padding:2px 6px">⬇ CSV</button>
       </div>`;
-    document.getElementById('viewport-wrap')?.appendChild(el) || document.body.appendChild(el);
-    el.querySelector('.nlth-x').addEventListener('click', () => { this._nlthStopPlay?.(); el.remove(); });
     document.getElementById('nlth-mon').addEventListener('change', e => { R.monDof = +e.target.value; this._nlthBuildPlot(); this._nlthShowStep(+document.getElementById('nlth-step').value); });
     document.getElementById('nlth-scale').addEventListener('change', () => this._nlthShowStep(+document.getElementById('nlth-step').value));
     document.getElementById('nlth-step').addEventListener('input', e => { this._nlthStopPlay?.(); this._nlthShowStep(+e.target.value); });
     document.getElementById('nlth-max').addEventListener('click', () => { document.getElementById('nlth-step').value = R.peakStep; this._nlthShowStep(R.peakStep); });
     document.getElementById('nlth-csv').addEventListener('click', () => this._nlthExportCSV());
     document.getElementById('nlth-play').addEventListener('click', () => this._nlthTogglePlay());
-    if (!document.getElementById('nlth-overlay-css')) {
-      const s = document.createElement('style'); s.id = 'nlth-overlay-css';
-      s.textContent = `
-        #nlth-overlay{position:absolute;right:16px;bottom:16px;z-index:55}
-        #nlth-overlay .nlth-card{width:min(560px,52vw);background:var(--bg-elev,#141b27);border:1px solid var(--border,#334);border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.5);color:var(--text,#e6edf3)}
-        #nlth-overlay .nlth-head{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--border,#334);font-size:13px}
-        #nlth-overlay .nlth-x{background:none;border:none;color:var(--text-muted,#9aa);cursor:pointer;font-size:14px}
-        #nlth-overlay .nlth-body{padding:10px 12px}
-        #nlth-overlay button{font-size:11px;padding:4px 9px;border-radius:5px;cursor:pointer;border:1px solid var(--border,#334);background:var(--bg4,#1e2735);color:var(--text,#e6edf3)}`;
-      document.head.appendChild(s);
-    }
     this._nlthBuildPlot();
     this._nlthShowStep(R.peakStep);
   }
@@ -4114,12 +4099,12 @@ class App {
     if (!ok) return;
     const p = this._predim; if (!p) return;
     if (document.getElementById('pd-assign').checked) {
-      const { profileToSection } = await import('./design/profiles.js?v=170');
+      const { profileToSection } = await import('./design/profiles.js?v=171');
       this.snapshot();
       // Perfil del catálogo → props directas; forma libre (H.A./madera) → calcular A,I,J.
       let secProps = p.profile ? profileToSection(p.profile) : { design: { shape: p.shape, dims: p.dims } };
       if (!p.profile) {
-        const { fromShape } = await import('./design/section_props.js?v=170');
+        const { fromShape } = await import('./design/section_props.js?v=171');
         const g = fromShape(p.shape, p.dims);
         if (g) secProps = { A: g.A, Iz: g.Iz, Iy: g.Iy, J: g.J, Avy: g.Avz_web, Avz: g.Avy_flange, design: { shape: p.shape, dims: p.dims } };
       }
@@ -4143,7 +4128,7 @@ class App {
     return new Promise((resolve, reject) => {
       let worker;
       try {
-        worker = new Worker(new URL('./solver/nl_worker.js?v=170', import.meta.url), { type: 'module' });
+        worker = new Worker(new URL('./solver/nl_worker.js?v=171', import.meta.url), { type: 'module' });
       } catch (e) {
         try { resolve(kind === 'dc' ? solveNonlinearDC(opts) : solveNonlinear(opts)); }
         catch (err) { reject(err); }
@@ -4253,20 +4238,24 @@ class App {
   }
 
   // Panel flotante con control paso a paso de la deformada no lineal.
+  // #90: No lineal / P-Delta → pestaña «No lineal» en Resultados.
   _nlOpenOverlay() {
+    if (!this._nlResult) return;
+    this.panel._switchVTab('resultados');
+    this.panel._switchRTab('nl');   // → _nlRenderPanel()
+  }
+
+  // Construye el contenido de la pestaña «No lineal» en #nl-panel (mismos IDs que la
+  // antigua ventana flotante → _nlShowStep sigue igual).
+  _nlRenderPanel() {
+    const el = document.getElementById('nl-panel');
+    const hint = document.getElementById('res-nl-hint');
+    if (!el) return;
+    if (!this._nlResult) { if (hint) hint.style.display = ''; el.innerHTML = ''; return; }
+    if (hint) hint.style.display = 'none';
+    this._nlStopPlay();
     const steps = this._nlResult.res.steps;
-    let el = document.getElementById('nl-overlay');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'nl-overlay';
-      el.style.cssText = 'position:fixed;right:16px;bottom:84px;z-index:50;background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:10px 12px;width:260px;box-shadow:0 8px 24px rgba(0,0,0,.4);font-size:12px;color:var(--text)';
-      document.body.appendChild(el);
-    }
     el.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <b style="color:var(--accent,#38bdf8)">Deformada no lineal</b>
-        <button id="nl-close" title="Cerrar" style="background:none;border:none;color:var(--text-muted,#94a3b8);cursor:pointer;font-size:16px;line-height:1">✕</button>
-      </div>
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
         <button id="nl-play" class="btn-secondary" style="font-size:14px;padding:2px 8px">▶</button>
         <input type="range" id="nl-step" min="1" max="${steps.length}" value="${steps.length}" style="flex:1">
@@ -4282,7 +4271,6 @@ class App {
     const redraw = () => this._nlShowStep(+stepInp.value - 1);
     stepInp.addEventListener('input', redraw);
     scaleInp.addEventListener('input', redraw);
-    el.querySelector('#nl-close').addEventListener('click', () => { this._nlStopPlay(); el.remove(); this.viewport.clearResults(); });
     playBtn.addEventListener('click', () => {
       if (this._nlPlayTimer) { this._nlStopPlay(); playBtn.textContent = '▶'; return; }
       playBtn.textContent = '⏸';
@@ -4400,7 +4388,7 @@ class App {
 
       // Iteración de subespacio en el Worker (no bloquea la UI)
       const rawModes = await new Promise((resolve, reject) => {
-        const worker = new Worker(new URL('./solver/buckling_worker.js?v=170', import.meta.url), { type: 'module' });
+        const worker = new Worker(new URL('./solver/buckling_worker.js?v=171', import.meta.url), { type: 'module' });
         worker.postMessage({ Kff_flat, Kgff_flat, nF, nModes, dense },
           [Kff_flat.buffer, Kgff_flat.buffer]);   // transfer — zero copy
         worker.onmessage = (ev) => { worker.terminate(); ev.data.error ? reject(new Error(ev.data.error)) : resolve(ev.data.modes); };
@@ -4463,16 +4451,23 @@ class App {
     });
   }
 
+  // #90: Pandeo lineal → pestaña «Pandeo» en Resultados.
   _buckOpenOverlay() {
+    if (!this._buckResult) return;
+    this.panel._switchVTab('resultados');
+    this.panel._switchRTab('buck');   // → _buckRenderPanel()
+  }
+
+  // Construye el contenido de la pestaña «Pandeo» en #buck-panel (mismos IDs que la
+  // antigua ventana flotante → _buckShowMode sigue igual).
+  _buckRenderPanel() {
+    const el = document.getElementById('buck-panel');
+    const hint = document.getElementById('res-buck-hint');
+    if (!el) return;
+    if (!this._buckResult) { if (hint) hint.style.display = ''; el.innerHTML = ''; return; }
+    if (hint) hint.style.display = 'none';
     const modes = this._buckResult.modes;
-    let el = document.getElementById('buck-overlay');
-    if (!el) { el = document.createElement('div'); el.id = 'buck-overlay'; document.body.appendChild(el); }
-    el.style.cssText = 'position:fixed;right:16px;bottom:84px;z-index:50;background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:10px 12px;width:268px;max-height:70vh;overflow:auto;box-shadow:0 8px 24px rgba(0,0,0,.4);font-size:12px;color:var(--text)';
     el.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <b style="color:var(--accent)">Pandeo lineal</b>
-        <button id="buck-close" title="Cerrar" style="background:none;border:none;color:var(--text-muted,#94a3b8);cursor:pointer;font-size:16px;line-height:1">✕</button>
-      </div>
       <div style="margin-bottom:6px">Modo:
         <select id="buck-mode">${modes.map((m, i) => `<option value="${i}">#${i + 1} — λcr = ${m.lambda.toFixed(3)}</option>`).join('')}</select>
       </div>
@@ -4486,7 +4481,6 @@ class App {
     const redraw = () => this._buckShowMode(+sel.value);
     sel.addEventListener('change', redraw);
     scl.addEventListener('input', redraw);
-    el.querySelector('#buck-close').addEventListener('click', () => { el.remove(); this.viewport.clearResults(); });
     redraw();
   }
 
@@ -5387,7 +5381,22 @@ class App {
     this._updateResultsIndicator();
   }
 
+  // #90: Pushover (control de desplazamiento) → pestaña «Pushover» en Resultados.
   _dcOpenOverlay() {
+    if (!this._dcResult) return;
+    this.panel._switchVTab('resultados');
+    this.panel._switchRTab('dc');   // → _dcRenderPanel()
+  }
+
+  // Construye el contenido de la pestaña «Pushover» en #dc-panel (mismos IDs que la
+  // antigua ventana flotante → _dcShowStep sigue igual).
+  _dcRenderPanel() {
+    const el = document.getElementById('dc-panel');
+    const hint = document.getElementById('res-dc-hint');
+    if (!el) return;
+    if (!this._dcResult) { if (hint) hint.style.display = ''; el.innerHTML = ''; return; }
+    if (hint) hint.style.display = 'none';
+    this._dcStopPlay();
     const { res } = this._dcResult;
     const path = res.path;
     // curva λ vs desplazamiento de control (SVG)
@@ -5403,14 +5412,7 @@ class App {
       <polyline points="${poly}" fill="none" stroke="var(--accent,#38bdf8)" stroke-width="1.5"/>
       <circle cx="${sx(path[k].disp).toFixed(1)}" cy="${sy(path[k].lambda).toFixed(1)}" r="3.5" fill="#f59e0b"/>
     </svg>`;
-    let el = document.getElementById('dc-overlay');
-    if (!el) { el = document.createElement('div'); el.id = 'dc-overlay'; document.body.appendChild(el); }
-    el.style.cssText = 'position:fixed;right:16px;bottom:84px;z-index:50;background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:10px 12px;width:288px;box-shadow:0 8px 24px rgba(0,0,0,.4);font-size:12px;color:var(--text)';
     el.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <b style="color:var(--accent,#38bdf8)">Curva carga–desplazamiento</b>
-        <button id="dc-close" title="Cerrar" style="background:none;border:none;color:var(--text-muted,#94a3b8);cursor:pointer;font-size:16px;line-height:1">✕</button>
-      </div>
       <div id="dc-plot"></div>
       <div style="display:flex;align-items:center;gap:6px;margin:6px 0">
         <button id="dc-play" class="btn-secondary" style="font-size:14px;padding:2px 8px">▶</button>
@@ -5421,7 +5423,6 @@ class App {
     const stepInp = el.querySelector('#dc-step'), playBtn = el.querySelector('#dc-play');
     const redraw = () => this._dcShowStep(+stepInp.value);
     stepInp.addEventListener('input', redraw);
-    el.querySelector('#dc-close').addEventListener('click', () => { this._dcStopPlay(); el.remove(); this.viewport.clearResults(); });
     playBtn.addEventListener('click', () => {
       if (this._dcPlayTimer) { this._dcStopPlay(); playBtn.textContent = '▶'; return; }
       playBtn.textContent = '⏸';
@@ -6269,9 +6270,14 @@ class App {
       this._nlthResult = null;
       this._thStopPlay?.();
       this._nlthStopPlay?.();
+      this._dcStopPlay?.();
+      this._nlStopPlay?.();
       this._thRenderPanel?.();   // #90: vaciar la pestaña «Dinámico» al cargar otro modelo
-      document.getElementById('ml-overlay')?.remove();
-      document.getElementById('nlth-overlay')?.remove();
+      this._dcRenderPanel?.();   // #90: ídem «Pushover»
+      this._buckRenderPanel?.(); // #90: ídem «Pandeo»
+      this._nlRenderPanel?.();   // #90: ídem «No lineal»
+      this._movingRenderPanel?.(); // #90: ídem «Cargas móviles»
+      this._nlthRenderPanel?.(); // #90: ídem «Dinámico NL»
       if (!keepResults) { this._modalResults = null; this._spectrumResults.clear(); }
       this._results = null;
       this._resultsByCase = null;
@@ -6470,7 +6476,7 @@ class App {
               selectedNodes: sel.filter(s => s.type === 'node').map(s => s.id) };
     }
     this.snapshot();
-    const { aplicarOperaciones } = await import('./model/model_ops.js?v=170');
+    const { aplicarOperaciones } = await import('./model/model_ops.js?v=171');
     const res = aplicarOperaciones(this.model, ops, ctx);
     // los resultados previos dejan de ser válidos tras modificar la geometría/cargas
     this.viewport.clearResults?.();
@@ -6518,7 +6524,7 @@ class App {
     this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=170');
+      const { generarModelo } = await import('../asistente/generador.js?v=171');
       const modelo = generarModelo(ficha, libs);
 
       if (modo === 'sobreponer') {
@@ -7657,7 +7663,7 @@ class App {
     const deflex = this._calcularDeflexionesVigas(diseno?.params);
     const drift  = this._calcularDrift();
     try {
-      const { Docx } = await import('./io/docx.js?v=170');
+      const { Docx } = await import('./io/docx.js?v=171');
       const blob = this._memoriaDocx(Docx, imgs, diseno, deflex, drift).blob();
       this._downloadBlob(blob, 'memoria_calculo.docx');
       this.toast('Memoria Word (.docx) descargada', 'ok');
@@ -7828,7 +7834,7 @@ class App {
   // Verificación de diseño (flexión/corte/axial) por elemento, usando los
   // resultados actuales y los parámetros editables de asistente/diseno_params.json.
   async _calcularDiseno() {
-    const ver = '?v=170';
+    const ver = '?v=171';
     let params = null;
     try { params = await fetch('asistente/diseno_params.json' + ver).then(r => r.json()); }
     catch (e) { console.error('No se pudo cargar diseno_params.json:', e); return null; }

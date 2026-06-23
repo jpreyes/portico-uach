@@ -29,8 +29,8 @@
       window.dispatchEvent(new Event('pwa-installed'));
     });
   </script>
-  <link rel="stylesheet" href="style.css?v=170">
-  <link rel="stylesheet" href="ui-v2.css?v=170">
+  <link rel="stylesheet" href="style.css?v=171">
+  <link rel="stylesheet" href="ui-v2.css?v=171">
   <script type="importmap">
   {
     "imports": {
@@ -541,6 +541,11 @@
             <button class="rtab" data-rtab="combos">Combos</button>
             <button class="rtab" data-rtab="plastico">Rótulas</button>
             <button class="rtab" data-rtab="th">Dinámico</button>
+            <button class="rtab" data-rtab="dc">Pushover</button>
+            <button class="rtab" data-rtab="buck">Pandeo</button>
+            <button class="rtab" data-rtab="nl">No lineal</button>
+            <button class="rtab" data-rtab="ml">Cargas móviles</button>
+            <button class="rtab" data-rtab="nlth">Dinámico NL</button>
           </div>
           <div id="res-content">
             <div id="rtab-modal" class="rtab-content active">
@@ -563,6 +568,26 @@
             <div id="rtab-th" class="rtab-content">
               <p class="panel-hint" id="res-th-hint">Ejecute <b>Dinámico (time-history)</b> (Análisis → NL-lite → Dinámico lineal) para ver la respuesta en el tiempo.</p>
               <div id="th-panel"></div>
+            </div>
+            <div id="rtab-dc" class="rtab-content">
+              <p class="panel-hint" id="res-dc-hint">Ejecute <b>Pushover (control de desplazamiento)</b> (Análisis → NL-lite) para ver la curva carga–desplazamiento.</p>
+              <div id="dc-panel"></div>
+            </div>
+            <div id="rtab-buck" class="rtab-content">
+              <p class="panel-hint" id="res-buck-hint">Ejecute <b>Pandeo lineal</b> (Análisis → NL-lite) para ver los modos de pandeo y λcr.</p>
+              <div id="buck-panel"></div>
+            </div>
+            <div id="rtab-nl" class="rtab-content">
+              <p class="panel-hint" id="res-nl-hint">Ejecute <b>No lineal</b> o <b>P-Delta</b> (Análisis → NL-lite) para ver la deformada no lineal paso a paso.</p>
+              <div id="nl-panel"></div>
+            </div>
+            <div id="rtab-ml" class="rtab-content">
+              <p class="panel-hint" id="res-ml-hint">Ejecute <b>Cargas móviles</b> (Análisis → Puentes) para ver la línea de influencia / envolvente.</p>
+              <div id="ml-panel"></div>
+            </div>
+            <div id="rtab-nlth" class="rtab-content">
+              <p class="panel-hint" id="res-nlth-hint">Ejecute <b>Dinámico NO lineal</b> (Análisis → NL-lite) para ver la respuesta del edificio de corte paso a paso.</p>
+              <div id="nlth-panel"></div>
             </div>
           </div>
         </div>
@@ -1028,7 +1053,7 @@
 
 <!-- numeric.js para solver (Fase 2+) -->
 <script src="lib/numeric.js"></script>
-<script type="module" src="js/app.js?v=170"></script>
+<script type="module" src="js/app.js?v=171"></script>
 
 <!-- PWA: registrar el service worker (offline). Solo en contexto seguro
      (https o localhost); el navegador deja navigator.serviceWorker undefined
