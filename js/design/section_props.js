@@ -32,6 +32,45 @@ function rectJ(a, b) {
   return L * W ** 3 * (1 / 3 - 0.21 * (W / L) * (1 - (W / L) ** 4 / 12));
 }
 
+// ── Propiedades de un COMPUESTO DE RECTÁNGULOS (para C, L, T, …) ─────────────────
+// rects: [{x0,x1,y0,y1}] (m). Calcula A, centroide (cx,cy), inercias centroidales
+// Iz=∫(y−cy)²dA (eje fuerte horizontal) e Iy=∫(x−cx)²dA, módulos elásticos a la
+// fibra más alejada y módulos PLÁSTICOS Zz/Zy (eje neutro plástico = línea que parte
+// el área en mitades, hallado por bisección + integral analítica del momento |·|).
+function rectsProps(rects) {
+  let A = 0, Sx = 0, Sy = 0;
+  for (const r of rects) { const a = (r.x1 - r.x0) * (r.y1 - r.y0); A += a; Sx += a * (r.x0 + r.x1) / 2; Sy += a * (r.y0 + r.y1) / 2; }
+  const cx = Sx / A, cy = Sy / A;
+  let Iz = 0, Iy = 0, xmin = Infinity, xmax = -Infinity, ymin = Infinity, ymax = -Infinity;
+  for (const r of rects) {
+    const w = r.x1 - r.x0, h = r.y1 - r.y0, a = w * h;
+    const rx = (r.x0 + r.x1) / 2 - cx, ry = (r.y0 + r.y1) / 2 - cy;
+    Iz += w * h ** 3 / 12 + a * ry * ry;        // bending about z (horizontal): integra y²
+    Iy += h * w ** 3 / 12 + a * rx * rx;        // bending about y (vertical):   integra x²
+    xmin = Math.min(xmin, r.x0); xmax = Math.max(xmax, r.x1);
+    ymin = Math.min(ymin, r.y0); ymax = Math.max(ymax, r.y1);
+  }
+  // Área a un lado de un corte horizontal y=yc / vertical x=xc.
+  const areaBelowY = yc => { let s = 0; for (const r of rects) { const lo = Math.min(Math.max(yc, r.y0), r.y1); s += (r.x1 - r.x0) * (lo - r.y0); } return s; };
+  const areaLeftX = xc => { let s = 0; for (const r of rects) { const lo = Math.min(Math.max(xc, r.x0), r.x1); s += (r.y1 - r.y0) * (lo - r.x0); } return s; };
+  const bisect = (f, lo, hi, target) => { for (let i = 0; i < 60; i++) { const m = (lo + hi) / 2; (f(m) < target ? lo = m : hi = m); } return (lo + hi) / 2; };
+  const yp = bisect(areaBelowY, ymin, ymax, A / 2);
+  const xp = bisect(areaLeftX, xmin, xmax, A / 2);
+  // ∫|y−yp| dA y ∫|x−xp| dA (momento plástico = módulo plástico).
+  const seg = (a, b, p, w) => {                 // ∫_a^b |t−p|·w dt
+    if (p <= a) return w * ((b * b - a * a) / 2 - p * (b - a));
+    if (p >= b) return w * (p * (b - a) - (b * b - a * a) / 2);
+    const left = w * (p * (p - a) - (p * p - a * a) / 2);
+    const right = w * ((b * b - p * p) / 2 - p * (b - p));
+    return left + right;
+  };
+  let Zz = 0, Zy = 0;
+  for (const r of rects) { Zz += seg(r.y0, r.y1, yp, r.x1 - r.x0); Zy += seg(r.x0, r.x1, xp, r.y1 - r.y0); }
+  const Sz = Iz / Math.max(ymax - cy, cy - ymin);
+  const SyV = Iy / Math.max(xmax - cx, cx - xmin);
+  return { A, cx, cy, Iz, Iy, Sz, Sy: SyV, Zz, Zy, xmin, xmax, ymin, ymax, h: ymax - ymin, b: xmax - xmin };
+}
+
 // Calcula las propiedades geométricas a partir de la forma y dimensiones.
 // Devuelve null si la forma no es reconocible con dimensiones (→ usar genérica).
 function fromShape(shape, d) {
@@ -102,6 +141,51 @@ function fromShape(shape, d) {
       Zz: b * h ** 2 / 4 - bi * hi ** 2 / 4, Zy: h * b ** 2 / 4 - hi * bi ** 2 / 4,
       J, Cw: 0, Avz_web: 2 * h * t, Avy_flange: 2 * b * t,
       lambdaFlange: (b - 2 * t) / t, lambdaWeb: (h - 2 * t) / t, h, b, dmin: Math.min(b, h),
+    };
+  }
+  if (s === 'channel' || s === 'u' || s === 'upn' || s === 'c-shape') {
+    const { d: H, bf, tf, tw } = d;
+    if (!(H > 0 && bf > 0 && tf > 0 && tw > 0 && tw < bf && 2 * tf < H)) return null;
+    const p = rectsProps([
+      { x0: 0, x1: tw, y0: 0, y1: H },                       // alma (back en x=0)
+      { x0: tw, x1: bf, y0: H - tf, y1: H },                 // ala superior
+      { x0: tw, x1: bf, y0: 0, y1: tf },                     // ala inferior
+    ]);
+    const hm = H - tf;                                        // entre c.g. de alas
+    const Cw = (hm ** 2 * bf ** 3 * tf / 12) * ((3 * bf * tf + 2 * hm * tw) / (6 * bf * tf + hm * tw));
+    const J = (2 * bf * tf ** 3 + H * tw ** 3) / 3;
+    return {
+      shape: 'channel', A: p.A, Iz: p.Iz, Iy: p.Iy, Sz: p.Sz, Sy: p.Sy, Zz: p.Zz, Zy: p.Zy,
+      J, Cw, ho: hm, Avz_web: (H - 2 * tf) * tw, Avy_flange: 2 * bf * tf,
+      lambdaFlange: bf / tf, lambdaWeb: (H - 2 * tf) / tw, h: H, b: bf, dmin: Math.min(H, bf),
+    };
+  }
+  if (s === 'angle' || s === 'l' || s === 'l-shape') {
+    const { d: H, b: B, t } = d;                              // H = ala vertical, B = ala horizontal
+    if (!(H > 0 && B > 0 && t > 0 && t < Math.min(H, B))) return null;
+    const p = rectsProps([
+      { x0: 0, x1: t, y0: 0, y1: H },                         // ala vertical
+      { x0: t, x1: B, y0: 0, y1: t },                         // ala horizontal (sin esquina)
+    ]);
+    const J = (H * t ** 3 + (B - t) * t ** 3) / 3;            // perfil abierto delgado
+    return {
+      shape: 'angle', A: p.A, Iz: p.Iz, Iy: p.Iy, Sz: p.Sz, Sy: p.Sy, Zz: p.Zz, Zy: p.Zy,
+      J, Cw: 0, Avz_web: H * t, Avy_flange: B * t,            // angular: alabeo despreciable
+      lambdaFlange: Math.max(H, B) / t, lambdaWeb: Math.max(H, B) / t, h: H, b: B, dmin: Math.min(H, B),
+    };
+  }
+  if (s === 'tee' || s === 't' || s === 't-shape') {
+    const { d: H, bf, tf, tw } = d;
+    if (!(H > 0 && bf > 0 && tf > 0 && tw > 0 && tw < bf && tf < H)) return null;
+    const p = rectsProps([
+      { x0: (bf - tw) / 2, x1: (bf + tw) / 2, y0: 0, y1: H - tf },   // alma (vástago)
+      { x0: 0, x1: bf, y0: H - tf, y1: H },                          // ala (cabeza)
+    ]);
+    const J = (bf * tf ** 3 + (H - tf) * tw ** 3) / 3;
+    return {
+      shape: 'tee', A: p.A, Iz: p.Iz, Iy: p.Iy, Sz: p.Sz, Sy: p.Sy, Zz: p.Zz, Zy: p.Zy,
+      J, Cw: 0, ho: H - tf / 2, Avz_web: (H - tf) * tw, Avy_flange: bf * tf,
+      lambdaFlange: bf / (2 * tf), lambdaWeb: (H - tf) / tw, h: H, b: bf, dmin: Math.min(H, bf),
     };
   }
   return null;

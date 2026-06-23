@@ -1,8 +1,8 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // PropertiesPanel — right-side panel: node/element properties + mat/sec tabs
 // ──────────────────────────────────────────────────────────────────────────────
-import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=138';
-import { localAxes } from '../solver/timoshenko.js?v=138';
+import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=139';
+import { localAxes } from '../solver/timoshenko.js?v=139';
 
 export class PropertiesPanel {
   constructor(panelEl, app) {
@@ -146,7 +146,7 @@ export class PropertiesPanel {
   // madera). Cambiarlo fija model.designSettings.codeByFamily y re-verifica.
   async _designCodeSelectorHTML() {
     try {
-      const mod = this._designMod || (this._designMod = await import('../design/diseno.js?v=138'));
+      const mod = this._designMod || (this._designMod = await import('../design/diseno.js?v=139'));
       const fams = new Set();
       for (const m of this.app.model.materials.values()) {
         const fam = (m.design?.family) || mod.clasificarMaterial(m.name);
@@ -2118,6 +2118,9 @@ export class PropertiesPanel {
     if (shape === 'circle') return `<div class="prop-row">${f('D', 'D diámetro')}</div>`;
     if (shape === 'pipe')   return `<div class="prop-row">${f('D', 'D exterior')}${f('t', 't espesor')}</div>`;
     if (shape === 'box')    return `<div class="prop-row">${f('b', 'b ancho')}${f('h', 'h canto')}</div><div class="prop-row">${f('t', 't espesor')}</div>`;
+    if (shape === 'channel') return `<div class="prop-row">${f('d', 'd canto')}${f('bf', 'bf ala')}</div><div class="prop-row">${f('tf', 'tf ala')}${f('tw', 'tw alma')}</div>`;
+    if (shape === 'angle')  return `<div class="prop-row">${f('d', 'd ala vert.')}${f('b', 'b ala horiz.')}</div><div class="prop-row">${f('t', 't espesor')}</div>`;
+    if (shape === 'tee')    return `<div class="prop-row">${f('d', 'd canto')}${f('bf', 'bf ala')}</div><div class="prop-row">${f('tf', 'tf ala')}${f('tw', 'tw alma')}</div>`;
     return `<p class="panel-hint">Genérica: el diseño usa un rectángulo equivalente a partir de A, I.</p>`;
   }
 
@@ -2131,7 +2134,7 @@ export class PropertiesPanel {
         <div class="prop-row cols1">
           <div class="prop-field"><label>Forma</label>
             <select class="sd-shape">
-              ${opt('generic', 'Genérica (A, I)')}${opt('I', 'Doble T (I)')}${opt('rect', 'Rectángulo macizo')}${opt('circle', 'Círculo macizo')}${opt('pipe', 'Tubo circular')}${opt('box', 'Tubo rectangular')}
+              ${opt('generic', 'Genérica (A, I)')}${opt('I', 'Doble T (I)')}${opt('rect', 'Rectángulo macizo')}${opt('circle', 'Círculo macizo')}${opt('pipe', 'Tubo circular')}${opt('box', 'Tubo rectangular')}${opt('channel', 'Canal (C/U)')}${opt('angle', 'Angular (L)')}${opt('tee', 'Tee (T)')}
             </select></div>
         </div>
         <div class="sd-dims">${this._secDimHTML(sh, sec.design || {})}</div>
@@ -2171,7 +2174,7 @@ export class PropertiesPanel {
       const s = this.app.model.sections.get(sec.id);
       if (!s.design?.shape || s.design.shape === 'generic') { this.app.toast('Elija una forma con dimensiones primero', 'warn'); return; }
       try {
-        const { fromShape } = await import('../design/section_props.js?v=138');
+        const { fromShape } = await import('../design/section_props.js?v=139');
         const g = fromShape(s.design.shape, s.design);
         if (!g) { this.app.toast('Faltan dimensiones de la forma', 'warn'); return; }
         this.app.snapshot();
