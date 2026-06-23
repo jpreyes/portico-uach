@@ -48,6 +48,7 @@ export class Viewport {
     this._areaMeshes  = new Map();  // areaId  → THREE.Group (relleno + borde)
     this._suppGroups  = new Map();  // nodeId  → THREE.Group
     this._diaGroups   = new Map();  // diaphragmId → THREE.Group
+    this._linkGroups  = new Map();  // linkId   → THREE.Group
 
     this._selected = new Set();     // 'node:id' | 'elem:id'
     this._hiddenElems = new Set();  // elemId(s) ocultos (estado de vista)
@@ -357,6 +358,7 @@ export class Viewport {
     for (const e of model.elements.values()) this.addElemLine(e);
     for (const a of (model.areas?.values() || [])) this.addAreaMesh(a);
     this.refreshDiaphragms();
+    this.refreshLinks();
     this.refreshGridAxes();
     this.refreshElevationOptions();
     if (this._elevation) this._applyElevationFilter();
@@ -1936,6 +1938,68 @@ export class Viewport {
         this._diaGroups.set(d.id, grp);
       }
     }
+  }
+
+  // ── Link / coupling visualization ───────────────────────────────────────────
+  refreshLinks() {
+    for (const grp of this._linkGroups.values()) this._scene.remove(grp);
+    this._linkGroups.clear();
+    for (const lk of (this.app.model.links?.values() || [])) {
+      const grp = this._buildLinkViz(lk);
+      if (grp) { this._scene.add(grp); this._linkGroups.set(lk.id, grp); }
+    }
+  }
+
+  _buildLinkViz(lk) {
+    const nm = this.app.model.nodes.get(lk.master);
+    const ns = this.app.model.nodes.get(lk.slave);
+    if (!nm || !ns) return null;
+
+    const grp = new THREE.Group();
+    const COL = lk.rigid ? 0xffb300 : 0x9c27b0;  // ámbar=rígido, púrpura=coupling
+    const pm = this.m2t(nm.x, nm.y, nm.z);
+    const ps = this.m2t(ns.x, ns.y, ns.z);
+
+    // Línea maestro→esclavo: sólida si rígido, punteada si coupling parcial.
+    const geo = new THREE.BufferGeometry().setFromPoints([pm, ps]);
+    let line;
+    if (lk.rigid) {
+      line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: COL }));
+    } else {
+      line = new THREE.Line(geo, new THREE.LineDashedMaterial(
+        { color: COL, dashSize: 0.15, gapSize: 0.1 }));
+      line.computeLineDistances();
+    }
+    line.userData = { type: 'link', id: lk.id };
+    line.renderOrder = 3;
+    grp.add(line);
+
+    // Marcador cuadrado en el nodo maestro (origen del offset rígido).
+    const s = 0.12;
+    const sq = [
+      this.m2t(nm.x - s, nm.y - s, nm.z), this.m2t(nm.x + s, nm.y - s, nm.z),
+      this.m2t(nm.x + s, nm.y + s, nm.z), this.m2t(nm.x - s, nm.y + s, nm.z),
+      this.m2t(nm.x - s, nm.y - s, nm.z),
+    ];
+    grp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(sq),
+      new THREE.LineBasicMaterial({ color: COL })));
+
+    // Flecha (cono) hacia el esclavo para marcar la dirección del acople.
+    const dir = ps.clone().sub(pm);
+    const len = dir.length();
+    if (len > 1e-6) {
+      dir.normalize();
+      const cone = new THREE.Mesh(
+        new THREE.ConeGeometry(0.08, 0.22, 8),
+        new THREE.MeshBasicMaterial({ color: COL }));
+      const mid = pm.clone().addScaledVector(dir, len * 0.55);
+      cone.position.copy(mid);
+      cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+      grp.add(cone);
+    }
+
+    grp.userData = { type: 'link', id: lk.id };
+    return grp;
   }
 
   // Andrew's monotone chain — returns convex hull of [{x,y}] in CCW order
