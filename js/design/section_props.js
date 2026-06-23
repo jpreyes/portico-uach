@@ -25,6 +25,8 @@
 // análisis y el diseño sean consistentes.
 // ──────────────────────────────────────────────────────────────────────────────
 
+import { polygonProps } from './polygon_props.js?v=147';
+
 // Torsión de St. Venant de un rectángulo macizo (lado largo a, corto b).
 function rectJ(a, b) {
   if (b <= 0) return 0;
@@ -188,6 +190,21 @@ function fromShape(shape, d) {
       lambdaFlange: bf / (2 * tf), lambdaWeb: (H - tf) / tw, h: H, b: bf, dmin: Math.min(H, bf),
     };
   }
+  if (s === 'polygon' || s === 'poly') {
+    const outline = d.outline, holes = d.holes || [];
+    if (!Array.isArray(outline) || outline.length < 3) return null;
+    let p; try { p = polygonProps({ outline, holes }); } catch (e) { return null; }
+    // J de torsión: estimación de sección compacta J ≈ A⁴/(40·Ip) (≈ exacta en
+    // círculo). Av ≈ 5/6·A (sólida). Cw despreciable. Iyz/principales se exponen.
+    const Ip = p.Iz + p.Iy;
+    const J = Ip > 0 ? p.A ** 4 / (40 * Ip) : 0;
+    return {
+      shape: 'polygon', A: p.A, Iz: p.Iz, Iy: p.Iy, Sz: p.Sz, Sy: p.Sy, Zz: p.Zz, Zy: p.Zy,
+      J, Cw: 0, Avz_web: 5 / 6 * p.A, Avy_flange: 5 / 6 * p.A,
+      lambdaFlange: 0, lambdaWeb: 0, h: p.h, b: p.b, dmin: Math.min(p.h, p.b),
+      Iyz: p.Iyz, I1: p.I1, I2: p.I2, theta: p.theta, cx: p.cx, cy: p.cy, perimeter: p.perimeter,
+    };
+  }
   return null;
 }
 
@@ -235,6 +252,8 @@ export function resolveSectionProps(sec, opts = {}) {
     lambdaFlange: g.lambdaFlange, lambdaWeb: g.lambdaWeb,
     h: g.h, b: g.b, dmin: g.dmin, ho: g.ho || 0,
   };
+  // Propiedades extra de secciones poligonales (producto de inercia, principales).
+  for (const k of ['Iyz', 'I1', 'I2', 'theta', 'cx', 'cy', 'perimeter']) if (g[k] !== undefined) out[k] = g[k];
   out.rmin = Math.min(out.rz, out.ry);
   // Overrides explícitos del usuario (design.Zz, design.Cw, etc.)
   for (const k of ['Sz', 'Sy', 'Zz', 'Zy', 'Cw', 'Avy', 'Avz', 'rz', 'ry', 'lambdaFlange', 'lambdaWeb']) {

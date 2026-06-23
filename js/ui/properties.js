@@ -1,8 +1,8 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // PropertiesPanel — right-side panel: node/element properties + mat/sec tabs
 // ──────────────────────────────────────────────────────────────────────────────
-import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=146';
-import { localAxes } from '../solver/timoshenko.js?v=146';
+import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=147';
+import { localAxes } from '../solver/timoshenko.js?v=147';
 
 export class PropertiesPanel {
   constructor(panelEl, app) {
@@ -152,7 +152,7 @@ export class PropertiesPanel {
   // madera). Cambiarlo fija model.designSettings.codeByFamily y re-verifica.
   async _designCodeSelectorHTML() {
     try {
-      const mod = this._designMod || (this._designMod = await import('../design/diseno.js?v=146'));
+      const mod = this._designMod || (this._designMod = await import('../design/diseno.js?v=147'));
       const fams = new Set();
       for (const m of this.app.model.materials.values()) {
         const fam = (m.design?.family) || mod.clasificarMaterial(m.name);
@@ -1773,7 +1773,7 @@ export class PropertiesPanel {
       <select id="mat-catalog"><option value="">— catálogo —</option></select></div>
       <button id="mat-catalog-add" class="btn-secondary" style="white-space:nowrap;font-size:11px">＋ Insertar</button>`;
     container.appendChild(pick);
-    import('../design/materials_catalog.js?v=146').then(({ MATERIAL_FAMILIES, getMaterialDef }) => {
+    import('../design/materials_catalog.js?v=147').then(({ MATERIAL_FAMILIES, getMaterialDef }) => {
       const sel = pick.querySelector('#mat-catalog');
       sel.innerHTML = '<option value="">— catálogo —</option>' +
         Object.entries(MATERIAL_FAMILIES).map(([fam, names]) => `<optgroup label="${fam}">` + names.map(n => `<option value="${n}">${n}</option>`).join('') + '</optgroup>').join('');
@@ -2148,6 +2148,15 @@ export class PropertiesPanel {
     if (shape === 'channel') return `<div class="prop-row">${f('d', 'd canto')}${f('bf', 'bf ala')}</div><div class="prop-row">${f('tf', 'tf ala')}${f('tw', 'tw alma')}</div>`;
     if (shape === 'angle')  return `<div class="prop-row">${f('d', 'd ala vert.')}${f('b', 'b ala horiz.')}</div><div class="prop-row">${f('t', 't espesor')}</div>`;
     if (shape === 'tee')    return `<div class="prop-row">${f('d', 'd canto')}${f('bf', 'bf ala')}</div><div class="prop-row">${f('tf', 'tf ala')}${f('tw', 'tw alma')}</div>`;
+    if (shape === 'polygon') {
+      const pts = a => (a || []).map(p => `${p[0]}, ${p[1]}`).join('\n');
+      const holes = (d.holes || []).map(h => pts(h)).join('\n\n');
+      return `<div class="prop-row cols1"><div class="prop-field"><label>Vértices del contorno «x, y» por línea (m)</label>
+          <textarea data-sd-poly="outline" rows="5" style="width:100%;font-family:var(--font-mono);font-size:11px" placeholder="0, 0\n0.3, 0\n0.3, 0.5\n0, 0.5">${pts(d.outline)}</textarea></div></div>
+        <div class="prop-row cols1"><div class="prop-field"><label>Huecos (lazos separados por línea en blanco, opcional)</label>
+          <textarea data-sd-poly="holes" rows="3" style="width:100%;font-family:var(--font-mono);font-size:11px">${holes}</textarea></div></div>
+        <p class="panel-hint" style="font-size:10px">Calcula A, Iz, Iy, Iyz, ejes principales, S y Z plástico. Pulse «Calcular A, I, J».</p>`;
+    }
     return `<p class="panel-hint">Genérica: el diseño usa un rectángulo equivalente a partir de A, I.</p>`;
   }
 
@@ -2165,7 +2174,7 @@ export class PropertiesPanel {
         <div class="prop-row cols1">
           <div class="prop-field"><label>Forma</label>
             <select class="sd-shape">
-              ${opt('generic', 'Genérica (A, I)')}${opt('I', 'Doble T (I)')}${opt('rect', 'Rectángulo macizo')}${opt('circle', 'Círculo macizo')}${opt('pipe', 'Tubo circular')}${opt('box', 'Tubo rectangular')}${opt('channel', 'Canal (C/U)')}${opt('angle', 'Angular (L)')}${opt('tee', 'Tee (T)')}
+              ${opt('generic', 'Genérica (A, I)')}${opt('I', 'Doble T (I)')}${opt('rect', 'Rectángulo macizo')}${opt('circle', 'Círculo macizo')}${opt('pipe', 'Tubo circular')}${opt('box', 'Tubo rectangular')}${opt('channel', 'Canal (C/U)')}${opt('angle', 'Angular (L)')}${opt('tee', 'Tee (T)')}${opt('polygon', 'Polígono libre / con huecos')}
             </select></div>
         </div>
         <div class="sd-dims">${this._secDimHTML(sh, sec.design || {})}</div>
@@ -2183,7 +2192,7 @@ export class PropertiesPanel {
     if (!shapeSel) return;
     // Catálogo de perfiles tabulados (#66): poblar y aplicar al elegir.
     const catSel = card.querySelector('.sd-catalog');
-    if (catSel) import('../design/profiles.js?v=146').then(({ catalogFamilies, catalogNames, profileToSection }) => {
+    if (catSel) import('../design/profiles.js?v=147').then(({ catalogFamilies, catalogNames, profileToSection }) => {
       let html = '<option value="">— elegir perfil comercial —</option>';
       for (const fam of catalogFamilies()) html += `<optgroup label="${fam}">` + catalogNames(fam).map(n => `<option value="${n}" ${sec.design?.profile === n ? 'selected' : ''}>${n}</option>`).join('') + '</optgroup>';
       catSel.innerHTML = html;
@@ -2202,6 +2211,15 @@ export class PropertiesPanel {
       const design = { ...(sec.design || {}) };
       design.shape = shape;
       dimsBox.querySelectorAll('[data-sd]').forEach(i => { const v = parseFloat(i.value); if (i.value !== '' && !isNaN(v)) design[i.dataset.sd] = v; });
+      // Polígono libre / con huecos: parsea los vértices de los textareas.
+      if (shape === 'polygon') {
+        const parsePts = txt => txt.split(/\n/).map(l => l.trim()).filter(Boolean)
+          .map(l => l.split(/[,\s]+/).map(Number)).filter(p => p.length >= 2 && p.slice(0, 2).every(Number.isFinite)).map(p => [p[0], p[1]]);
+        const outEl = dimsBox.querySelector('[data-sd-poly="outline"]');
+        const holEl = dimsBox.querySelector('[data-sd-poly="holes"]');
+        if (outEl) design.outline = parsePts(outEl.value);
+        if (holEl) design.holes = holEl.value.split(/\n\s*\n/).map(blk => parsePts(blk)).filter(h => h.length >= 3);
+      }
       const reb = { ...(design.rebar || {}) };
       card.querySelectorAll('[data-rb]').forEach(i => { const v = parseFloat(i.value); if (i.value !== '' && !isNaN(v)) reb[i.dataset.rb] = v; });
       if (Object.keys(reb).length) design.rebar = reb;
@@ -2212,16 +2230,18 @@ export class PropertiesPanel {
     shapeSel.addEventListener('change', () => {
       dimsBox.innerHTML = this._secDimHTML(shapeSel.value, sec.design || {});
       dimsBox.querySelectorAll('[data-sd]').forEach(i => i.addEventListener('change', saveDesign));
+      dimsBox.querySelectorAll('[data-sd-poly]').forEach(i => i.addEventListener('change', saveDesign));
       saveDesign();
     });
     dimsBox.querySelectorAll('[data-sd]').forEach(i => i.addEventListener('change', saveDesign));
+    dimsBox.querySelectorAll('[data-sd-poly]').forEach(i => i.addEventListener('change', saveDesign));
     card.querySelectorAll('[data-rb]').forEach(i => i.addEventListener('change', saveDesign));
     card.querySelector('.sd-calc')?.addEventListener('click', async () => {
       saveDesign();
       const s = this.app.model.sections.get(sec.id);
       if (!s.design?.shape || s.design.shape === 'generic') { this.app.toast('Elija una forma con dimensiones primero', 'warn'); return; }
       try {
-        const { fromShape } = await import('../design/section_props.js?v=146');
+        const { fromShape } = await import('../design/section_props.js?v=147');
         const g = fromShape(s.design.shape, s.design);
         if (!g) { this.app.toast('Faltan dimensiones de la forma', 'warn'); return; }
         this.app.snapshot();
