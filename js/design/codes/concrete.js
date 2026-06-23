@@ -9,7 +9,7 @@
 // Unidades: kN, m, kN/m². √f'c usa f'c en MPa (kN/m² ÷ 1000).
 // ──────────────────────────────────────────────────────────────────────────────
 
-import { finalize } from './aisc360.js?v=147';
+import { finalize } from './aisc360.js?v=148';
 
 const ratObj = (D, C, extra = {}) => ({
   demanda: +(+D).toFixed(4), capacidad: +(+C).toFixed(4),
@@ -18,19 +18,41 @@ const ratObj = (D, C, extra = {}) => ({
 
 const ES_REBAR = 200e6;   // módulo del acero de refuerzo (kN/m²)
 
+// Área de una barra de diámetro φ (mm) → m².
+const barArea = dia => Math.PI * (dia / 1000) ** 2 / 4;
+
+// Capas de armadura {As, dy} (dy = distancia desde la fibra comprimida) y Ast total.
+// Soporta (a) capas explícitas reb.layers:[{n,dia,d}], (b) reb.{nTop,nBot,dia},
+// (c) cuantía ρ (2 capas simétricas As/2). h = canto en la dirección de flexión.
+function rebarLayers(reb, h, b, cover, rho) {
+  if (Array.isArray(reb.layers) && reb.layers.length) {
+    const layers = reb.layers.map(L => ({ As: L.As != null ? +L.As : (+L.n || 0) * barArea(+L.dia || 0), dy: +L.d }))
+      .filter(L => L.As > 0 && Number.isFinite(L.dy));
+    if (layers.length) return { layers, Ast: layers.reduce((s, L) => s + L.As, 0), nBars: reb.layers.reduce((s, L) => s + (+L.n || 0), 0) };
+  }
+  const dia = +reb.dia_mm || +reb.dia || 0;
+  if (dia > 0 && ((+reb.nTop || 0) + (+reb.nBot || 0)) > 0) {
+    const Ab = barArea(dia);
+    const layers = [];
+    if (+reb.nTop) layers.push({ As: reb.nTop * Ab, dy: cover });
+    if (+reb.nBot) layers.push({ As: reb.nBot * Ab, dy: h - cover });
+    return { layers, Ast: layers.reduce((s, L) => s + L.As, 0), nBars: (+reb.nTop || 0) + (+reb.nBot || 0) };
+  }
+  // Fallback ρ: 2 capas simétricas As/2.
+  const Ast = rho * b * h;
+  return { layers: [{ As: Ast / 2, dy: h - cover }, { As: Ast / 2, dy: cover }], Ast, nBars: null };
+}
+
 // ── Diagrama de interacción P–M REAL de una sección rectangular ──────────────────
-// (#65) Compatibilidad de deformaciones + bloque de Whitney (ACI 318-19): εcu=0.003,
-// a=β1·c, acero elastoplástico (±fy). Armado en 2 capas simétricas (As/2 a d y d′),
-// más capas intermedias si se piden. φ variable (0.65 comp.-controlada → 0.90
-// tracción-controlada). Devuelve los puntos (M,P) de φ·diagrama (P compresión +) y
-// un evaluador radial del D/C para una demanda (Pu compresión +, Mu).
-//   b,h: ancho y canto en la dirección de flexión (m); fc,fy en kN/m²; Ast total.
-function pmDiagram(b, h, cover, fc, fy, Ast, npts = 40) {
+// (#65/#70) Compatibilidad de deformaciones + bloque de Whitney (ACI 318-19):
+// εcu=0.003, a=β1·c, acero elastoplástico (±fy). `layers` = capas de armadura
+// {As, dy} (dy desde la fibra comprimida); `Ast` total. φ variable (0.65→0.90).
+// Devuelve los puntos (M,P) de φ·diagrama (P compresión +).
+//   b,h: ancho y canto en la dirección de flexión (m); fc,fy en kN/m².
+function pmDiagram(b, h, fc, fy, layers, Ast, npts = 40) {
   const ecu = 0.003, ey = fy / ES_REBAR;
   const fcMPa = fc / 1000;
   let beta1 = 0.85 - 0.05 * (fcMPa - 28) / 7; beta1 = Math.min(0.85, Math.max(0.65, beta1));
-  const d = h - cover, dp = cover;                       // capas: tracción (d), compresión (d′)
-  const layers = [{ As: Ast / 2, dy: d }, { As: Ast / 2, dy: dp }];   // dy = distancia desde fibra comprimida
   const Po = 0.85 * fc * (b * h - Ast) + fy * Ast;       // axial puro nominal
   const phiOf = et => et >= 0.005 ? 0.90 : et <= ey ? 0.65 : 0.65 + (et - ey) * 0.25 / (0.005 - ey);
   // c de muy grande (compresión pura) a pequeño (tracción): recorre el diagrama.
@@ -58,7 +80,7 @@ function pmDiagram(b, h, cover, fc, fy, Ast, npts = 40) {
   const Pmax = 0.80 * 0.65 * Po;                           // tope ACI 22.4.2
   // Recorta la rama de compresión al tope Pn,max.
   for (const p of pts) if (p.P > Pmax) p.P = Pmax;
-  return { pts, Pmax, Po, beta1, d };
+  return { pts, Pmax, Po, beta1 };
 }
 
 // D/C radial: intersección del rayo origen→(Mu,Pu) con la poligonal del diagrama.
@@ -82,12 +104,15 @@ function pmRatio(diagram, Pu, Mu) {
 
 function checkConcrete({ demands, mat, sec, member, options = {} }, codeLabel) {
   const fc = mat.fc, fy = mat.fyRebar;
-  const reb = (sec.design && sec.design.rebar) || {};
+  const reb = sec.rebar || (sec.design && sec.design.rebar) || {};
   const rho = reb.rho ?? options.cuantia_long_rho ?? 0.012;
   const cover = (reb.cover_mm ?? options.recubrimiento_mm ?? 40) / 1000;
   const phi = options.phi || {};
   const b = sec.b, h = sec.h, A = sec.A;
   const d = Math.max(h - cover, 0.5 * h);
+  // Armadura longitudinal: capas explícitas (barras) o cuantía ρ (#70).
+  const { layers: rebarL, Ast, nBars } = rebarLayers(reb, h, b, cover, rho);
+  const stir = reb.stirrups || (reb.estribo_dia_mm ? { dia: reb.estribo_dia_mm, s: reb.estribo_s_mm } : null);
 
   const F = {
     N: demands.N || 0, Nsign: Math.sign(demands.N || 0) || 1,
@@ -103,13 +128,20 @@ function checkConcrete({ demands, mat, sec, member, options = {} }, codeLabel) {
   const flexion = ratObj(Mmax, Mn, { rho, b: +b.toFixed(3), d: +d.toFixed(3),
     formula: 'φMn = φ·As·fy·(d−a/2), As=ρ·b·d' });
 
-  // Corte: φVc = φ·0.17·√f'c·b·d (ACI 22.5, f'c en MPa)
-  const Vc = (phi.corte ?? 0.75) * 0.17 * Math.sqrt(fc / 1000) * 1000 * b * d;
-  const corte = ratObj(Vmax, Vc, { formula: 'φVc = φ·0.17·√f′c·b·d (sin estribos)' });
+  // Corte: φVn = φ·(Vc + Vs). Vc = 0.17·√f'c·b·d (ACI 22.5, f'c en MPa). Con
+  // estribos (#70): Vs = Av·fy·d/s ≤ 0.66·√f'c·b·d (tope ACI 22.5.1.2).
+  const phiV = phi.corte ?? 0.75;
+  const Vc0 = 0.17 * Math.sqrt(fc / 1000) * 1000 * b * d;
+  let Vs0 = 0, corteFormula = 'φVc = φ·0.17·√f′c·b·d (sin estribos)';
+  if (stir && +stir.dia > 0 && +stir.s > 0) {
+    const Av = (+stir.legs || 2) * barArea(+stir.dia);
+    Vs0 = Math.min(Av * fy * d / (+stir.s / 1000), 0.66 * Math.sqrt(fc / 1000) * 1000 * b * d);
+    corteFormula = `φ(Vc+Vs), Vs=Av·fy·d/s (φ${(+stir.dia)}@${(+stir.s)}mm)`;
+  }
+  const corte = ratObj(Vmax, phiV * (Vc0 + Vs0), { formula: corteFormula });
 
   // Axial
   let axial, Pc;
-  const Ast = rho * A;
   if (F.Nsign < 0) {
     Pc = (phi.axial_compresion ?? 0.65) * 0.80 * (0.85 * fc * (A - Ast) + fy * Ast);
     axial = ratObj(Nabs, Pc, { modo: 'compresión', formula: 'φPn = φ·0.80·(0.85·f′c·(Ag−Ast)+fy·Ast)' });
@@ -127,11 +159,14 @@ function checkConcrete({ demands, mat, sec, member, options = {} }, codeLabel) {
   const Mu = Math.max(F.My, F.Mz);
   let interaccion, diagrama = null;
   try {
-    const diag = pmDiagram(bb, hh, cover, fc, fy, Ast);
+    // Capas en la geometría de flexión (bb,hh); barras explícitas o ρ.
+    const rl = rebarLayers(reb, hh, bb, cover, rho);
+    const diag = pmDiagram(bb, hh, fc, fy, rl.layers, rl.Ast);
     const r = pmRatio(diag, Pu, Mu);
-    diagrama = { pts: diag.pts, Pu, Mu, axis: bendStrong ? 'Mz' : 'My' };
+    diagrama = { pts: diag.pts, Pu, Mu, axis: bendStrong ? 'Mz' : 'My', nBars: rl.nBars };
     interaccion = ratObj(r, 1, { adim: true, modo: Pu >= 0 ? 'flexocompresión' : 'flexotracción',
-      formula: 'Diagrama P–M (compatibilidad de deformaciones + bloque de Whitney, φ variable)' });
+      armado: nBars ? `${nBars} barras` : `ρ=${rho}`,
+      formula: 'Diagrama P–M (compatibilidad de deformaciones + bloque de Whitney' + (nBars ? ', barras explícitas' : ', ρ') + ')' });
   } catch (e) {
     const H = (Pc > 1e-12 ? Nabs / Pc : 0) + (Mn > 1e-12 ? Mmax / Mn : 0);
     interaccion = ratObj(H, 1, { adim: true, formula: 'Pu/φPn + Mu/φMn (lineal, respaldo)' });

@@ -25,7 +25,7 @@
 // análisis y el diseño sean consistentes.
 // ──────────────────────────────────────────────────────────────────────────────
 
-import { polygonProps } from './polygon_props.js?v=147';
+import { polygonProps } from './polygon_props.js?v=148';
 
 // Torsión de St. Venant de un rectángulo macizo (lado largo a, corto b).
 function rectJ(a, b) {
@@ -254,6 +254,8 @@ export function resolveSectionProps(sec, opts = {}) {
   };
   // Propiedades extra de secciones poligonales (producto de inercia, principales).
   for (const k of ['Iyz', 'I1', 'I2', 'theta', 'cx', 'cy', 'perimeter']) if (g[k] !== undefined) out[k] = g[k];
+  // Armadura de H.A. (barras/estribos) se propaga para el diseño de hormigón (#70).
+  if (dz.rebar) out.rebar = dz.rebar;
   out.rmin = Math.min(out.rz, out.ry);
   // Overrides explícitos del usuario (design.Zz, design.Cw, etc.)
   for (const k of ['Sz', 'Sy', 'Zz', 'Zy', 'Cw', 'Avy', 'Avz', 'rz', 'ry', 'lambdaFlange', 'lambdaWeb']) {

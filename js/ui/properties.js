@@ -1,8 +1,8 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // PropertiesPanel — right-side panel: node/element properties + mat/sec tabs
 // ──────────────────────────────────────────────────────────────────────────────
-import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=147';
-import { localAxes } from '../solver/timoshenko.js?v=147';
+import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=148';
+import { localAxes } from '../solver/timoshenko.js?v=148';
 
 export class PropertiesPanel {
   constructor(panelEl, app) {
@@ -152,7 +152,7 @@ export class PropertiesPanel {
   // madera). Cambiarlo fija model.designSettings.codeByFamily y re-verifica.
   async _designCodeSelectorHTML() {
     try {
-      const mod = this._designMod || (this._designMod = await import('../design/diseno.js?v=147'));
+      const mod = this._designMod || (this._designMod = await import('../design/diseno.js?v=148'));
       const fams = new Set();
       for (const m of this.app.model.materials.values()) {
         const fam = (m.design?.family) || mod.clasificarMaterial(m.name);
@@ -1773,7 +1773,7 @@ export class PropertiesPanel {
       <select id="mat-catalog"><option value="">— catálogo —</option></select></div>
       <button id="mat-catalog-add" class="btn-secondary" style="white-space:nowrap;font-size:11px">＋ Insertar</button>`;
     container.appendChild(pick);
-    import('../design/materials_catalog.js?v=147').then(({ MATERIAL_FAMILIES, getMaterialDef }) => {
+    import('../design/materials_catalog.js?v=148').then(({ MATERIAL_FAMILIES, getMaterialDef }) => {
       const sel = pick.querySelector('#mat-catalog');
       sel.innerHTML = '<option value="">— catálogo —</option>' +
         Object.entries(MATERIAL_FAMILIES).map(([fam, names]) => `<optgroup label="${fam}">` + names.map(n => `<option value="${n}">${n}</option>`).join('') + '</optgroup>').join('');
@@ -2179,8 +2179,17 @@ export class PropertiesPanel {
         </div>
         <div class="sd-dims">${this._secDimHTML(sh, sec.design || {})}</div>
         <div class="prop-row">
-          <div class="prop-field"><label>ρ armadura (H.A.)</label><input type="number" data-rb="rho" value="${reb.rho ?? ''}" step="0.002" title="Cuantía longitudinal para diseño de hormigón armado"></div>
+          <div class="prop-field"><label>ρ armadura (H.A.)</label><input type="number" data-rb="rho" value="${reb.rho ?? ''}" step="0.002" title="Cuantía longitudinal (fallback si no se dan barras explícitas)"></div>
           <div class="prop-field"><label>recubr. (mm)</label><input type="number" data-rb="cover_mm" value="${reb.cover_mm ?? ''}" step="5"></div>
+        </div>
+        <div class="prop-row" title="Barras longitudinales explícitas para el diagrama P-M (#70). Tienen prioridad sobre ρ.">
+          <div class="prop-field"><label>n sup.</label><input type="number" data-rb="nTop" value="${reb.nTop ?? ''}" step="1" min="0"></div>
+          <div class="prop-field"><label>n inf.</label><input type="number" data-rb="nBot" value="${reb.nBot ?? ''}" step="1" min="0"></div>
+          <div class="prop-field"><label>φ barra (mm)</label><input type="number" data-rb="dia_mm" value="${reb.dia_mm ?? ''}" step="2"></div>
+        </div>
+        <div class="prop-row" title="Estribos para el corte: φVn = φ(Vc+Vs), Vs=Av·fy·d/s (#70).">
+          <div class="prop-field"><label>estribo φ (mm)</label><input type="number" data-rb="estribo_dia_mm" value="${reb.estribo_dia_mm ?? ''}" step="2"></div>
+          <div class="prop-field"><label>sep. s (mm)</label><input type="number" data-rb="estribo_s_mm" value="${reb.estribo_s_mm ?? ''}" step="10"></div>
         </div>
         <button class="btn-secondary sd-calc" style="width:100%;font-size:11px;margin-top:4px" title="Calcula A, Iz, Iy, J, Av desde las dimensiones y los escribe en la sección (para el análisis y el diseño).">↻ Calcular A, I, J desde la forma</button>
       </div>`;
@@ -2192,7 +2201,7 @@ export class PropertiesPanel {
     if (!shapeSel) return;
     // Catálogo de perfiles tabulados (#66): poblar y aplicar al elegir.
     const catSel = card.querySelector('.sd-catalog');
-    if (catSel) import('../design/profiles.js?v=147').then(({ catalogFamilies, catalogNames, profileToSection }) => {
+    if (catSel) import('../design/profiles.js?v=148').then(({ catalogFamilies, catalogNames, profileToSection }) => {
       let html = '<option value="">— elegir perfil comercial —</option>';
       for (const fam of catalogFamilies()) html += `<optgroup label="${fam}">` + catalogNames(fam).map(n => `<option value="${n}" ${sec.design?.profile === n ? 'selected' : ''}>${n}</option>`).join('') + '</optgroup>';
       catSel.innerHTML = html;
@@ -2241,7 +2250,7 @@ export class PropertiesPanel {
       const s = this.app.model.sections.get(sec.id);
       if (!s.design?.shape || s.design.shape === 'generic') { this.app.toast('Elija una forma con dimensiones primero', 'warn'); return; }
       try {
-        const { fromShape } = await import('../design/section_props.js?v=147');
+        const { fromShape } = await import('../design/section_props.js?v=148');
         const g = fromShape(s.design.shape, s.design);
         if (!g) { this.app.toast('Faltan dimensiones de la forma', 'warn'); return; }
         this.app.snapshot();
