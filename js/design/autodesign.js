@@ -14,8 +14,9 @@
 //    peso, preferir secciones repetidas (continuidad).
 // ──────────────────────────────────────────────────────────────────────────────
 
-import { verificarElemento } from './diseno.js?v=150';
-import { profileToSection, catalogNames } from './profiles.js?v=150';
+import { verificarElemento } from './diseno.js?v=151';
+import { profileToSection, catalogNames } from './profiles.js?v=151';
+import { fromShape } from './section_props.js?v=151';
 
 // Peso por metro (kg/m) = A·ρ. ρ puede venir en t/m³ (convención del modelo, p.ej.
 // acero 7.85) o en kg/m³ (7850); se normaliza a kg/m³. Sin ρ → 7850 (acero).
@@ -69,6 +70,38 @@ export function steelCandidates(families = ['IPE', 'HEA', 'HEB']) {
   const out = [];
   for (const f of families) for (const n of catalogNames(f)) out.push(n);
   return out;
+}
+
+// Candidato {name, sec} de sección rectangular con props del solver desde la forma.
+function rectCandidate(b, h, rebar, label) {
+  const g = fromShape('rect', { b, h });
+  return { name: label, sec: { A: g.A, Iz: g.Iz, Iy: g.Iy, J: g.J, b, h, Avy: g.Avz_web, Avz: g.Avy_flange,
+    design: { shape: 'rect', dims: { b, h }, ...(rebar ? { rebar } : {}) } } };
+}
+
+// Candidatos de HORMIGÓN: cuadradas y rectangulares (cm) con cuantía ρ y recubr.
+export function concreteCandidates({ rho = 0.012, cover_mm = 40, min = 0.20, max = 0.80, step = 0.05, rect = true } = {}) {
+  const out = []; const reb = { rho, cover_mm }; const r2 = v => Math.round(v * 100);
+  for (let a = min; a <= max + 1e-9; a += step) {
+    a = +a.toFixed(3);
+    out.push(rectCandidate(a, a, reb, `H.A. ${r2(a)}×${r2(a)}`));
+    if (rect) { const h = +(a * 1.5).toFixed(3); if (h <= max + 1e-9) out.push(rectCandidate(a, h, reb, `H.A. ${r2(a)}×${r2(h)}`)); }
+  }
+  return out;
+}
+
+// Candidatos de MADERA: escuadrías típicas (b×h, cm).
+export function timberCandidates({ bs = [0.05, 0.075, 0.10, 0.15], hs = [0.10, 0.15, 0.20, 0.25, 0.30, 0.40] } = {}) {
+  const out = []; const r2 = v => Math.round(v * 100);
+  for (const b of bs) for (const h of hs) if (h >= b) out.push(rectCandidate(b, h, null, `Mad ${r2(b)}×${r2(h)}`));
+  return out;
+}
+
+// Candidatos por familia de material (auto-diseño multinorma #72).
+export function candidatesForFamily(family, prefs = {}) {
+  if (family === 'concrete') return concreteCandidates(prefs.concrete || {});
+  if (family === 'timber') return timberCandidates(prefs.timber || {});
+  return steelCandidates(prefs.steelFamilies || ['IPE', 'HEA', 'HEB']);   // steel/aluminum
 }
 
 // ── Predimensionado (#71): reglas simples ANTES del análisis ────────────────────
