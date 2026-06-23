@@ -14,7 +14,7 @@
 // Convención de GDL local: [u1,v1, u2,v2, ...] (x,y en el plano del elemento).
 // ──────────────────────────────────────────────────────────────────────────────
 
-import { mitc4Plate, dktPlate, plateMoments, plateCurvatures, plateThermalLoad, plateD } from './plate.js?v=132';
+import { mitc4Plate, dktPlate, plateMoments, plateCurvatures, plateThermalLoad, plateD } from './plate.js?v=133';
 
 // Matriz constitutiva D (3×3) plana. planeStrain=false → tensión plana.
 export function Dmatrix(E, nu, planeStrain = false) {
@@ -76,6 +76,113 @@ export function cstElement(coords, D, t, e0 = [0, 0, 0]) {
 export function cstStress(B, D, u, e0 = [0, 0, 0]) {
   const eps = [0, 0, 0];
   for (let r = 0; r < 3; r++) { let s = 0; for (let c = 0; c < 6; c++) s += B[r][c] * u[c]; eps[r] = s - e0[r]; }
+  return [
+    D[0][0] * eps[0] + D[0][1] * eps[1] + D[0][2] * eps[2],
+    D[1][0] * eps[0] + D[1][1] * eps[1] + D[1][2] * eps[2],
+    D[2][0] * eps[0] + D[2][1] * eps[1] + D[2][2] * eps[2],
+  ];
+}
+
+// ── ALLMAN: triángulo de membrana con GDL de GIRO en el plano (drilling) ─────
+// Triángulo de 3 nodos con 3 GDL/nodo [u, v, ωz]. Se construye a partir del
+// triángulo de deformación lineal (LST, 6 nodos) sustituyendo los GDL de
+// traslación de medio-lado por las rotaciones de esquina (Allman 1984):
+//   u_mid = (u_i+u_j)/2 + (1/8)(y_i−y_j)(ω_j−ω_i)
+//   v_mid = (v_i+v_j)/2 + (1/8)(x_j−x_i)(ω_j−ω_i)
+// Es mucho menos rígido que el CST en flexión en-plano. El único modo de energía
+// nula no rígido (drilling uniforme ω₁=ω₂=ω₃) se elimina con un resorte diagonal
+// MÍNIMO en los GDL de giro (εd≪1), que apenas afecta la flexión real.
+// DOF local agrupado por nodo: [u1,v1,ω1, u2,v2,ω2, u3,v3,ω3].
+const ALLMAN_GAMMA = 1e-3;   // εd: resorte diagonal de drilling (fracción de la rigidez de giro)
+
+// B (3×12) del LST en coordenadas de área (ζ1,ζ2,ζ3). Cols [u1,v1,…,u6,v6]
+// (nodos 4,5,6 = medio-lado 1-2, 2-3, 3-1). Devuelve también det=2A.
+function bMatrixLST(coords, z1, z2, z3) {
+  const [[x1, y1], [x2, y2], [x3, y3]] = coords;
+  const b = [y2 - y3, y3 - y1, y1 - y2];   // b_i = y_j − y_k
+  const c = [x3 - x2, x1 - x3, x2 - x1];   // c_i = x_k − x_j
+  const det = (x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1);   // 2A
+  const z = [z1, z2, z3];
+  // ∂N/∂ζ_k para los 6 nodos del LST
+  const dNdz = [   // [nodo][k]
+    [4 * z[0] - 1, 0, 0], [0, 4 * z[1] - 1, 0], [0, 0, 4 * z[2] - 1],
+    [4 * z[1], 4 * z[0], 0], [0, 4 * z[2], 4 * z[1]], [4 * z[2], 0, 4 * z[0]],
+  ];
+  const B = [new Float64Array(12), new Float64Array(12), new Float64Array(12)];
+  for (let n = 0; n < 6; n++) {
+    let dNdx = 0, dNdy = 0;
+    for (let k = 0; k < 3; k++) { dNdx += dNdz[n][k] * b[k]; dNdy += dNdz[n][k] * c[k]; }
+    dNdx /= det; dNdy /= det;
+    B[0][2 * n] = dNdx;
+    B[1][2 * n + 1] = dNdy;
+    B[2][2 * n] = dNdy; B[2][2 * n + 1] = dNdx;
+  }
+  return { B, det };
+}
+
+// Matriz de transformación T (12×9): GDL del LST = T · [u,v,ω]×3 (Allman 1984).
+function allmanT(coords) {
+  const [[x1, y1], [x2, y2], [x3, y3]] = coords;
+  const T = Array.from({ length: 12 }, () => new Float64Array(9));
+  // esquinas (identidad): LST 0,1=nodo1 ; 2,3=nodo2 ; 4,5=nodo3
+  T[0][0] = 1; T[1][1] = 1; T[2][3] = 1; T[3][4] = 1; T[4][6] = 1; T[5][7] = 1;
+  // medio-lado 4 (1-2): u₄=½(u₁+u₂)+⅛(y₁−y₂)(ω₂−ω₁); v₄=½(v₁+v₂)+⅛(x₂−x₁)(ω₂−ω₁)
+  T[6][0] = 0.5; T[6][3] = 0.5; T[6][2] = -(y1 - y2) / 8; T[6][5] = (y1 - y2) / 8;
+  T[7][1] = 0.5; T[7][4] = 0.5; T[7][2] = -(x2 - x1) / 8; T[7][5] = (x2 - x1) / 8;
+  // medio-lado 5 (2-3): ⅛(y₂−y₃)(ω₃−ω₂), ⅛(x₃−x₂)(ω₃−ω₂)
+  T[8][3] = 0.5; T[8][6] = 0.5; T[8][5] = -(y2 - y3) / 8; T[8][8] = (y2 - y3) / 8;
+  T[9][4] = 0.5; T[9][7] = 0.5; T[9][5] = -(x3 - x2) / 8; T[9][8] = (x3 - x2) / 8;
+  // medio-lado 6 (3-1): ⅛(y₃−y₁)(ω₁−ω₃), ⅛(x₁−x₃)(ω₁−ω₃)
+  T[10][6] = 0.5; T[10][0] = 0.5; T[10][8] = -(y3 - y1) / 8; T[10][2] = (y3 - y1) / 8;
+  T[11][7] = 0.5; T[11][1] = 0.5; T[11][8] = -(x1 - x3) / 8; T[11][2] = (x1 - x3) / 8;
+  return T;
+}
+
+// Devuelve { Ke(9×9), fT(9), area, T(12×9), Bc(3×12 en el centroide) }.
+// DOF local [u1,v1,ω1, u2,v2,ω2, u3,v3,ω3]. e0 = ε₀ térmica.
+export function allmanElement(coords, D, t, e0 = [0, 0, 0], gamma = ALLMAN_GAMMA) {
+  const T = allmanT(coords);
+  const area = Math.abs(bMatrixLST(coords, 1 / 3, 1 / 3, 1 / 3).det) / 2;
+  // K_LST y f_LST (12) por integración de 3 puntos (medio-lado) — exacta para el LST.
+  const KL = new Float64Array(144), fL = new Float64Array(12);
+  const GPT = [[0.5, 0.5, 0], [0, 0.5, 0.5], [0.5, 0, 0.5]];
+  for (const [z1, z2, z3] of GPT) {
+    const { B } = bMatrixLST(coords, z1, z2, z3);
+    accumulateBDB(KL, fL, B, D, e0, t * area / 3, 12);
+  }
+  // Ke = Tᵀ·K_LST·T ; fT = Tᵀ·f_LST
+  const Ke = new Float64Array(81), fT = new Float64Array(9);
+  for (let i = 0; i < 9; i++) {
+    for (let p = 0; p < 12; p++) {
+      const tpi = T[p][i]; if (!tpi) continue;
+      fT[i] += tpi * fL[p];
+      for (let j = 0; j < 9; j++) {
+        let s = 0; for (let q = 0; q < 12; q++) s += KL[p * 12 + q] * T[q][j];
+        Ke[i * 9 + j] += tpi * s;
+      }
+    }
+  }
+  // ── Estabilización del modo espurio (drilling uniforme) ────────────────────
+  // El único modo de energía nula no rígido es ω₁=ω₂=ω₃ con traslaciones nulas.
+  // Lo elimino con un resorte diagonal MÍNIMO en los GDL de giro, escalado a la
+  // rigidez de giro genuina (εd≪1). Una penalización tipo Hughes-Brezzi sobre
+  // (ω−ω_continuo) acoplaría las traslaciones y rigidizaría la flexión real; este
+  // resorte diagonal apenas la afecta y mantiene K no singular. εd=1e-3 deja al
+  // Allman MUY por debajo de la rigidez del CST (verificado en test_allman.mjs).
+  let kdrill = 0;
+  for (const i of [2, 5, 8]) kdrill += Ke[i * 9 + i];
+  kdrill = gamma * kdrill / 3;
+  for (const i of [2, 5, 8]) Ke[i * 9 + i] += kdrill;
+  const Bc = bMatrixLST(coords, 1 / 3, 1 / 3, 1 / 3).B;
+  return { Ke, fT, area, T, Bc };
+}
+
+// Tensión del Allman en el CENTROIDE. d9 = [u1,v1,ω1,…] (local). e0 térmica.
+export function allmanStress(T, Bc, D, d9, e0 = [0, 0, 0]) {
+  const dL = new Float64Array(12);
+  for (let p = 0; p < 12; p++) { let s = 0; for (let i = 0; i < 9; i++) s += T[p][i] * d9[i]; dL[p] = s; }
+  const eps = [0, 0, 0];
+  for (let r = 0; r < 3; r++) { let s = 0; for (let cc = 0; cc < 12; cc++) s += Bc[r][cc] * dL[cc]; eps[r] = s - e0[r]; }
   return [
     D[0][0] * eps[0] + D[0][1] * eps[1] + D[0][2] * eps[2],
     D[1][0] * eps[0] + D[1][1] * eps[1] + D[1][2] * eps[2],
@@ -172,7 +279,11 @@ function _areaSetup(area, model, nodeIndex, e0) {
   const { ex, ey, ez, local } = areaLocalFrame(coords3d);
   const D = Dmatrix(mat.E, mat.nu, area.planeStrain);
   const nN = area.nodes.length;
-  const el = nN === 3 ? cstElement(local, D, area.thickness, e0) : quadElement(local, D, area.thickness, e0);
+  // Triángulo con GDL de giro (Allman) si el área lo pide y tiene membrana.
+  const useAllman = nN === 3 && area.drilling === true && (area.behavior ?? 'membrane') !== 'plate';
+  const el = useAllman ? { ...allmanElement(local, D, area.thickness, e0), allman: true }
+           : nN === 3 ? cstElement(local, D, area.thickness, e0)
+                      : quadElement(local, D, area.thickness, e0);
   const gdof = area.nodes.map(id => 6 * nodeIndex.get(id));   // base GDL global (traslaciones gdof+0..2)
   return { D, el, ex, ey, ez, gdof, nN, local, mat };
 }
@@ -198,7 +309,21 @@ export function assembleAreasInto(writer, model, nodeIndex, opts = {}) {
     const mem = hasMembrane(area), pla = hasPlate(area);
     let kref = 0;
 
-    if (mem) {                       // ── membrana (en-plano) ──────────────────
+    if (mem && el.allman) {          // ── membrana Allman (con drilling) ───────
+      // DOF local por nodo [u,v,ω] → global 6 GDL: u·ex, v·ey (traslación), ω·ez
+      // (rotación). Transform. nodal 6×3 Ta (cols [u,v,ω] → [tx,ty,tz,rx,ry,rz]).
+      const Ke = el.Ke, m = 9;
+      const Ta = [[ex[0], ey[0], 0], [ex[1], ey[1], 0], [ex[2], ey[2], 0],
+                  [0, 0, ez[0]], [0, 0, ez[1]], [0, 0, ez[2]]];
+      for (let a = 0; a < nN; a++) for (let b = 0; b < nN; b++)
+        for (let r = 0; r < 6; r++) for (let s = 0; s < 6; s++) {
+          let v = 0;
+          for (let p = 0; p < 3; p++) { const tap = Ta[r][p]; if (!tap) continue;
+            for (let q = 0; q < 3; q++) v += tap * Ke[(3 * a + p) * m + (3 * b + q)] * Ta[s][q]; }
+          if (v !== 0) writer.add(gdof[a] + r, gdof[b] + s, v);
+        }
+      for (let i = 0; i < m; i++) kref = Math.max(kref, Ke[i * m + i]);
+    } else if (mem) {                // ── membrana CST/QUAD (en-plano) ─────────
       const Ke = el.Ke, m = 2 * nN, R = [ex, ey];
       for (let a = 0; a < nN; a++) for (let b = 0; b < nN; b++)
         for (let r = 0; r < 3; r++) for (let s = 0; s < 3; s++) {
@@ -268,9 +393,17 @@ export function areaThermalContribs(area, model, nodeIndex, dT, gradT = 0) {
   const out = [];
   // ── Membrana (en-plano): dilatación media ──────────────────────────────────
   if (hasMembrane(area)) {
-    const fT = el.fT, R = [ex, ey];
-    for (let a = 0; a < nN; a++)
-      for (let r = 0; r < 3; r++) out.push({ dof: gdof[a] + r, val: R[0][r] * fT[2 * a] + R[1][r] * fT[2 * a + 1] });
+    if (el.allman) {   // fT por nodo [fu,fv,fω] → traslaciones (ex,ey) + giro (ez)
+      for (let a = 0; a < nN; a++) {
+        const fu = el.fT[3 * a], fv = el.fT[3 * a + 1], fw = el.fT[3 * a + 2];
+        for (let r = 0; r < 3; r++) out.push({ dof: gdof[a] + r, val: ex[r] * fu + ey[r] * fv });
+        for (let r = 0; r < 3; r++) if (fw) out.push({ dof: gdof[a] + 3 + r, val: ez[r] * fw });
+      }
+    } else {
+      const fT = el.fT, R = [ex, ey];
+      for (let a = 0; a < nN; a++)
+        for (let r = 0; r < 3; r++) out.push({ dof: gdof[a] + r, val: R[0][r] * fT[2 * a] + R[1][r] * fT[2 * a + 1] });
+    }
   }
   // ── Placa (flexión): momento térmico por el gradiente ──────────────────────
   if (gradT && hasPlate(area)) {
@@ -293,7 +426,17 @@ export function areaStress(area, model, nodeIndex, u, dT = 0) {
   const mat = model.materials.get(area.matId); if (!mat) return null;
   const e0 = thermalStrain(mat.alpha ?? 0, dT || 0, mat.nu, area.planeStrain);
   const S = _areaSetup(area, model, nodeIndex, e0); if (!S) return null;
-  const { D, ex, ey, gdof, nN, local } = S;
+  const { D, el, ex, ey, ez, gdof, nN, local } = S;
+  // Allman: incluye el giro nodal (ωz·ez) en la tensión del centroide.
+  if (el.allman) {
+    const d9 = [];
+    for (let a = 0; a < nN; a++) {
+      const U = [u[gdof[a]] || 0, u[gdof[a] + 1] || 0, u[gdof[a] + 2] || 0];
+      const Rr = [u[gdof[a] + 3] || 0, u[gdof[a] + 4] || 0, u[gdof[a] + 5] || 0];
+      d9.push(_dot(ex, U), _dot(ey, U), _dot(ez, Rr));
+    }
+    return allmanStress(el.T, el.Bc, D, d9, e0);
+  }
   // u local en-plano por nodo: ul = R·U_global
   const ul = [];
   for (let a = 0; a < nN; a++) {

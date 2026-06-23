@@ -175,6 +175,9 @@ export class Model {
       planeStrain: !!opts.planeStrain,
       // 'membrane' (solo en-plano) | 'plate' (solo flexión) | 'shell' (membrana+placa)
       behavior: opts.behavior ?? 'membrane',
+      // Triángulo de membrana con GDL de giro en-plano (Allman) — menos rígido
+      // que el CST en flexión. Sólo aplica a áreas de 3 nodos.
+      drilling: !!opts.drilling,
       kind: ns.length === 3 ? 'CST' : 'QUAD',
     };
     this.areas.set(id, area);
@@ -188,6 +191,7 @@ export class Model {
     if (props.thickness  !== undefined) a.thickness = +props.thickness;
     if (props.planeStrain !== undefined) a.planeStrain = !!props.planeStrain;
     if (props.behavior   !== undefined) a.behavior = props.behavior;
+    if (props.drilling   !== undefined) a.drilling = !!props.drilling;
     if (props.nodes) { a.nodes = props.nodes.map(Number); a.kind = a.nodes.length === 3 ? 'CST' : 'QUAD'; }
     return a;
   }

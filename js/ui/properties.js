@@ -1,8 +1,8 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // PropertiesPanel — right-side panel: node/element properties + mat/sec tabs
 // ──────────────────────────────────────────────────────────────────────────────
-import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=132';
-import { localAxes } from '../solver/timoshenko.js?v=132';
+import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=133';
+import { localAxes } from '../solver/timoshenko.js?v=133';
 
 export class PropertiesPanel {
   constructor(panelEl, app) {
@@ -376,6 +376,11 @@ export class PropertiesPanel {
           <div class="prop-field"><label>Material</label><select id="ar-mat"><option value="">—</option>${mats}</select></div>
           <button class="btn-secondary" id="ar-mat-apply" style="flex:0 0 auto;font-size:11px">Aplicar</button>
         </div>
+        <div class="prop-row" style="gap:6px;align-items:flex-end;margin-top:6px">
+          <div class="prop-field"><label>Giro en el plano (triáng. Allman)</label>
+            <select id="ar-drill"><option value="">—</option><option value="1">Activar</option><option value="0">Desactivar</option></select></div>
+          <button class="btn-secondary" id="ar-drill-apply" style="flex:0 0 auto;font-size:11px" title="Triángulo Allman: añade GDL de giro en-plano (supera el bloqueo del CST). Solo afecta áreas de 3 nodos.">Aplicar</button>
+        </div>
         <div class="prop-row" style="margin-top:8px">
           <button class="btn-danger" id="ar-del" style="width:100%;font-size:11px">Eliminar ${areas.length} área(s)</button>
         </div>
@@ -391,6 +396,9 @@ export class PropertiesPanel {
     });
     sel.querySelector('#ar-mat-apply')?.addEventListener('click', () => {
       const m = +sel.querySelector('#ar-mat').value; if (m) this.app.setAreasProps({ matId: m });
+    });
+    sel.querySelector('#ar-drill-apply')?.addEventListener('click', () => {
+      const v = sel.querySelector('#ar-drill').value; if (v !== '') this.app.setAreasProps({ drilling: v === '1' });
     });
     sel.querySelector('#ar-del')?.addEventListener('click', () => this.app.deleteSelected());
   }
@@ -684,6 +692,10 @@ export class PropertiesPanel {
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;margin-top:6px" title="Deformación plana (ε_z=0) en vez de tensión plana (σ_z=0). Solo afecta la parte de membrana.">
           <input type="checkbox" id="a-pstrain" ${area.planeStrain ? 'checked' : ''}> Deformación plana (membrana)
         </label>
+        ${area.nodes.length === 3 ? `
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;margin-top:6px" title="Triángulo Allman: añade un GDL de giro en el plano por nodo. Menos rígido que el CST en flexión en-plano (supera el bloqueo por corte).">
+          <input type="checkbox" id="a-drill" ${area.drilling ? 'checked' : ''}> Giro en el plano (Allman, ↓rigidez del CST)
+        </label>` : ''}
       </div>
 
       ${this._areaThermalHTML(area)}
@@ -788,12 +800,13 @@ export class PropertiesPanel {
         thickness: parseFloat(sel.querySelector('#a-t').value),
         behavior: sel.querySelector('#a-beh').value,
         planeStrain: sel.querySelector('#a-pstrain').checked,
+        ...(sel.querySelector('#a-drill') ? { drilling: sel.querySelector('#a-drill').checked } : {}),
       });
       this.app.viewport.addAreaMesh(this.app.model.areas.get(area.id));
       this.app.viewport._setAreaHL(area.id, 0xffc107);   // mantener resaltada
       this.app.markDirty();
     };
-    sel.querySelectorAll('#a-mat, #a-t, #a-beh, #a-pstrain').forEach(inp => inp.addEventListener('change', save));
+    sel.querySelectorAll('#a-mat, #a-t, #a-beh, #a-pstrain, #a-drill').forEach(inp => inp.addEventListener('change', save));
     // Carga térmica por cara (#57)
     const $ = q => sel.querySelector(q);
     $('#a-dt-go')?.addEventListener('click', () => {
