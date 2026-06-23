@@ -224,6 +224,13 @@ export function elemLocalK(elem, mat, sec, L) {
   const ro = rigidEndOffsets(elem, L);
   let Ke = ro ? globalStiffness(stiffnessMatrix(ro.Lf, mat, sec), rigidEndTransform(ro.oi, ro.oj))
               : stiffnessMatrix(L, mat, sec);
+  // Viga sobre fundación elástica / resorte de línea (1-013): suma la rigidez de
+  // balasto distribuida sobre la luz (kN/m por m). (Con cacho rígido se aplica sobre
+  // los GDL de nodo en L — aproximación; el combo cacho+fundación es poco usual.)
+  if (elem.foundation) {
+    const Kf = foundationMatrix(L, elem.foundation);
+    Ke = Ke.map((row, i) => row.map((v, j) => v + Kf[i][j]));
+  }
   // Resortes de extremo / fijación parcial (1-008): conexión semi-rígida miembro↔nodo.
   if (elem.endSprings) Ke = applyEndSprings(Ke, elem.endSprings);
   return Ke;
@@ -400,6 +407,35 @@ export function applyEndSprings(Ke, springs) {
     Kni[i].reduce((s, v, k) => s + v * KiiInv[k][j], 0)));
   return Knn.map((row, i) => row.map((v, j) =>
     v - KniInv[i].reduce((s, c, k) => s + c * Kni[j][k], 0)));   // Kin[k][j]=Kni[j][k] (simétrica)
+}
+
+// ── Viga sobre fundación elástica (Winkler) — 1-013 ─────────────────────────
+/**
+ * Matriz de rigidez de fundación (resorte de LÍNEA distribuido) en coords locales.
+ * `found` = { ky, kz } módulos de balasto por unidad de longitud (kN/m por m = kN/m²)
+ * en las direcciones transversales locales y / z. Matriz CONSISTENTE (Hermite cúbico),
+ * misma forma que la masa consistente: Cf = (kf·L/420)·[[156,22L,54,−13L],…]. El signo
+ * de los términos de giro se invierte en el plano x–z para coincidir con la convención
+ * del elemento (dw/dx = −θy). Se SUMA a la rigidez del elemento.
+ */
+export function foundationMatrix(L, found) {
+  const K = Array.from({ length: 12 }, () => Array(12).fill(0));
+  if (!found) return K;
+  const L2 = L * L;
+  const add = (dofs, kf, s) => {
+    if (!(kf > 0) || !isFinite(kf)) return;
+    const c = kf * L / 420;
+    const C = [
+      [156,      s*22*L,  54,      -s*13*L],
+      [s*22*L,   4*L2,    s*13*L,  -3*L2  ],
+      [54,       s*13*L,  156,     -s*22*L],
+      [-s*13*L, -3*L2,   -s*22*L,   4*L2  ],
+    ];
+    for (let i=0;i<4;i++) for (let j=0;j<4;j++) K[dofs[i]][dofs[j]] += c * C[i][j];
+  };
+  add([1, 5, 7, 11], found.ky, +1);   // transversal local y  (v, θz)
+  add([2, 4, 8, 10], found.kz, -1);   // transversal local z  (w, θy)
+  return K;
 }
 
 // ── Fixed-end forces for distributed loads ────────────────────────────────

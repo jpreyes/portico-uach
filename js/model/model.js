@@ -171,6 +171,15 @@ export class Model {
       }
       if (Object.keys(es).length) el.endSprings = es; else delete el.endSprings;
     }
+    // Viga sobre fundación elástica / resorte de línea (1-013): { ky, kz } kN/m por m.
+    if (props.foundation !== undefined) {
+      const f = props.foundation || {};
+      const ky = +f.ky || 0, kz = +f.kz || 0;
+      const fo = {};
+      if (ky > 0) fo.ky = ky;
+      if (kz > 0) fo.kz = kz;
+      if (Object.keys(fo).length) el.foundation = fo; else delete el.foundation;
+    }
     return el;
   }
 

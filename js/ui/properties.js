@@ -1,8 +1,8 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // PropertiesPanel — right-side panel: node/element properties + mat/sec tabs
 // ──────────────────────────────────────────────────────────────────────────────
-import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=173';
-import { localAxes } from '../solver/timoshenko.js?v=173';
+import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=174';
+import { localAxes } from '../solver/timoshenko.js?v=174';
 
 export class PropertiesPanel {
   constructor(panelEl, app) {
@@ -167,7 +167,7 @@ export class PropertiesPanel {
   // madera). Cambiarlo fija model.designSettings.codeByFamily y re-verifica.
   async _designCodeSelectorHTML() {
     try {
-      const mod = this._designMod || (this._designMod = await import('../design/diseno.js?v=173'));
+      const mod = this._designMod || (this._designMod = await import('../design/diseno.js?v=174'));
       const fams = new Set();
       for (const m of this.app.model.materials.values()) {
         const fam = (m.design?.family) || mod.clasificarMaterial(m.name);
@@ -1509,6 +1509,17 @@ export class PropertiesPanel {
       </div>
 
       <div class="prop-section">
+        <div class="prop-title" title="Viga sobre fundación elástica / resorte de LÍNEA (modelo de Winkler): módulo de balasto distribuido a lo largo de la barra, kN/m por metro (= kN/m²). Resiste la traslación transversal del miembro (suelo bajo una viga de fundación, pilote lateral…). Matriz consistente sumada a K. Afecta el análisis lineal (F5).">Fundación elástica (resorte de línea, Winkler)</div>
+        <div class="prop-row">
+          <div class="prop-field"><label title="Módulo de balasto en la dirección transversal local y (kN/m por m de longitud).">k·y (kN/m/m)</label>
+            <input type="number" id="e-found-ky" value="${elem.foundation?.ky ?? ''}" min="0" step="100" placeholder="0"></div>
+          <div class="prop-field"><label title="Módulo de balasto en la dirección transversal local z (kN/m por m de longitud).">k·z (kN/m/m)</label>
+            <input type="number" id="e-found-kz" value="${elem.foundation?.kz ?? ''}" min="0" step="100" placeholder="0"></div>
+        </div>
+        <p class="rel-warn" style="color:var(--text-muted)">Balasto = (módulo de subrasante k_s) × (ancho de contacto). Vacío/0 = sin fundación. Σreacción del suelo = k·δ por unidad de longitud.</p>
+      </div>
+
+      <div class="prop-section">
         <div class="prop-title">Herramientas Didácticas</div>
         <button class="btn-add" id="btn-elem-matrices" style="width:100%"
           title="Ver Ke local, T, Ke global y Me de este elemento — para comparar con el cálculo manual del curso">
@@ -1568,7 +1579,9 @@ export class PropertiesPanel {
       const endSprings = {};
       const addSpr = (id, dof) => { const v = parseFloat(sel.querySelector(id)?.value); if (v > 0 && isFinite(v)) endSprings[dof] = v; };
       addSpr('#e-spr-myi', 4); addSpr('#e-spr-mzi', 5); addSpr('#e-spr-myj', 10); addSpr('#e-spr-mzj', 11);
-      this.app.model.updateElement(elem.id, { n1, n2, matId, secId, releases, cable, compressionOnly, L0factor, rigidEnd, endSprings });
+      // Fundación elástica / resorte de línea (1-013): módulos de balasto local y/z.
+      const foundation = { ky: parseFloat(sel.querySelector('#e-found-ky')?.value) || 0, kz: parseFloat(sel.querySelector('#e-found-kz')?.value) || 0 };
+      this.app.model.updateElement(elem.id, { n1, n2, matId, secId, releases, cable, compressionOnly, L0factor, rigidEnd, endSprings, foundation });
       this.app.viewport.refreshElem(this.app.model.elements.get(elem.id));
       this.app.markDirty();
     };
@@ -1827,7 +1840,7 @@ export class PropertiesPanel {
       <select id="mat-catalog"><option value="">— catálogo —</option></select></div>
       <button id="mat-catalog-add" class="btn-secondary" style="white-space:nowrap;font-size:11px">＋ Insertar</button>`;
     container.appendChild(pick);
-    import('../design/materials_catalog.js?v=173').then(({ MATERIAL_FAMILIES, getMaterialDef }) => {
+    import('../design/materials_catalog.js?v=174').then(({ MATERIAL_FAMILIES, getMaterialDef }) => {
       const sel = pick.querySelector('#mat-catalog');
       sel.innerHTML = '<option value="">— catálogo —</option>' +
         Object.entries(MATERIAL_FAMILIES).map(([fam, names]) => `<optgroup label="${fam}">` + names.map(n => `<option value="${n}">${n}</option>`).join('') + '</optgroup>').join('');
@@ -2291,7 +2304,7 @@ export class PropertiesPanel {
     if (!shapeSel) return;
     // Catálogo de perfiles tabulados (#66): poblar y aplicar al elegir.
     const catSel = card.querySelector('.sd-catalog');
-    if (catSel) import('../design/profiles.js?v=173').then(({ catalogFamilies, catalogNames, profileToSection }) => {
+    if (catSel) import('../design/profiles.js?v=174').then(({ catalogFamilies, catalogNames, profileToSection }) => {
       let html = '<option value="">— elegir perfil comercial —</option>';
       for (const fam of catalogFamilies()) html += `<optgroup label="${fam}">` + catalogNames(fam).map(n => `<option value="${n}" ${sec.design?.profile === n ? 'selected' : ''}>${n}</option>`).join('') + '</optgroup>';
       catSel.innerHTML = html;
@@ -2342,7 +2355,7 @@ export class PropertiesPanel {
       const s = this.app.model.sections.get(sec.id);
       if (!s.design?.shape || s.design.shape === 'generic') { this.app.toast('Elija una forma con dimensiones primero', 'warn'); return; }
       try {
-        const { fromShape } = await import('../design/section_props.js?v=173');
+        const { fromShape } = await import('../design/section_props.js?v=174');
         const g = fromShape(s.design.shape, s.design);
         if (!g) { this.app.toast('Faltan dimensiones de la forma', 'warn'); return; }
         this.app.snapshot();

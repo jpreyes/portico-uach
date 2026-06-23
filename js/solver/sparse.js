@@ -14,10 +14,10 @@ import {
   localAxes, stiffnessMatrix, massMatrix,
   transformMatrix, globalStiffness, applyReleases,
   elemLocalK, elemLocalM
-} from './timoshenko.js?v=173';
-import { applyDiaphragmConstraintsW, applyDiaphragmMassW } from './diaphragm.js?v=173';
-import { applyLinkConstraintsW } from './links.js?v=173';
-import { assembleAreasInto, assembleAreasMassInto } from './membrane.js?v=173';
+} from './timoshenko.js?v=174';
+import { applyDiaphragmConstraintsW, applyDiaphragmMassW } from './diaphragm.js?v=174';
+import { applyLinkConstraintsW } from './links.js?v=174';
+import { assembleAreasInto, assembleAreasMassInto } from './membrane.js?v=174';
 
 // ── Matriz simétrica dispersa (acumulador por filas) ──────────────────────────
 export class SparseSym {
