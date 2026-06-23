@@ -1,32 +1,32 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=130';
-import { Serializer }      from './model/serializer.js?v=130';
-import { Viewport }        from './ui/viewport.js?v=130';
-import { PropertiesPanel } from './ui/properties.js?v=130';
-import { MenuBar }         from './ui/menu.js?v=130';
-import { UndoStack }       from './utils/undo.js?v=130';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=130';
-import { Results }                         from './solver/postprocess.js?v=130';
-import { ModalSolver }                     from './solver/modal_solver.js?v=130';
-import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=130';
-import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=130';
-import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=130';
-import { assembleKg } from './solver/geometric.js?v=130';
-import { makeFactor } from './solver/linsolve.js?v=130';
-import { formFind } from './solver/formfind.js?v=130';
-import { ModalResults }                    from './solver/modal_results.js?v=130';
-import { modalTimeHistory }                from './solver/timehistory.js?v=130';
-import { parseAccelerogram, accStats, scaleToPGA, DEMO_PRESETS, G as GACC } from './solver/accelerograms.js?v=130';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=130';
-import { autoDetectDiaphragms, computeFloorCR, applyDiaphragmConstraints } from './solver/diaphragm.js?v=130';
-import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=130';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=130';
-import { blockCells, cornerGridIndices } from './model/mesher.js?v=130';
-import { coonsGridFromCorners } from './model/mesh_map.js?v=130';
-import { meshPolygonIntoModel } from './model/mesh_free.js?v=130';
-import { smoothAreasInModel } from './model/mesh_quality.js?v=130';
+import { Model }           from './model/model.js?v=131';
+import { Serializer }      from './model/serializer.js?v=131';
+import { Viewport }        from './ui/viewport.js?v=131';
+import { PropertiesPanel } from './ui/properties.js?v=131';
+import { MenuBar }         from './ui/menu.js?v=131';
+import { UndoStack }       from './utils/undo.js?v=131';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=131';
+import { Results }                         from './solver/postprocess.js?v=131';
+import { ModalSolver }                     from './solver/modal_solver.js?v=131';
+import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=131';
+import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=131';
+import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=131';
+import { assembleKg } from './solver/geometric.js?v=131';
+import { makeFactor } from './solver/linsolve.js?v=131';
+import { formFind } from './solver/formfind.js?v=131';
+import { ModalResults }                    from './solver/modal_results.js?v=131';
+import { modalTimeHistory }                from './solver/timehistory.js?v=131';
+import { parseAccelerogram, accStats, scaleToPGA, DEMO_PRESETS, G as GACC } from './solver/accelerograms.js?v=131';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=131';
+import { autoDetectDiaphragms, computeFloorCR, applyDiaphragmConstraints } from './solver/diaphragm.js?v=131';
+import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=131';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=131';
+import { blockCells, cornerGridIndices } from './model/mesher.js?v=131';
+import { coonsGridFromCorners } from './model/mesh_map.js?v=131';
+import { meshPolygonIntoModel } from './model/mesh_free.js?v=131';
+import { smoothAreasInModel } from './model/mesh_quality.js?v=131';
 
 class App {
   constructor() {
@@ -1734,7 +1734,7 @@ class App {
   _staticWorkerSolve(K, nDOF, freeDOF, Flist, dense = false) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=130', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=131', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -1763,7 +1763,7 @@ class App {
   _staticWorkerSolveSparse(csr, cf, nDOF, freeDOF, Flist) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=130', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=131', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -2077,7 +2077,7 @@ class App {
       // ── Run Stodola in a Web Worker (non-blocking) ───────────────────────────
       const denseModal = !!this._config?.analisis?.matrizDensa;
       const modes = await new Promise((resolve, reject) => {
-        const worker = new Worker(new URL('./solver/modal_worker.js?v=130', import.meta.url), { type: 'module' });
+        const worker = new Worker(new URL('./solver/modal_worker.js?v=131', import.meta.url), { type: 'module' });
         worker.postMessage({ Kff_flat, Mff_flat, nF, nModes, dense: denseModal, method: modalMethod },
           [Kff_flat.buffer, Mff_flat.buffer]); // transfer — zero copy
         worker.onmessage = (ev) => {
@@ -2479,7 +2479,7 @@ class App {
       // Modal por iteración de subespacio en worker (no bloquea la UI).
       const dense = !!this._config?.analisis?.matrizDensa;
       const rawModes = await new Promise((resolve, reject) => {
-        const w = new Worker(new URL('./solver/modal_worker.js?v=130', import.meta.url), { type: 'module' });
+        const w = new Worker(new URL('./solver/modal_worker.js?v=131', import.meta.url), { type: 'module' });
         w.postMessage({ Kff_flat: Kff, Mff_flat: Mff, nF, nModes, dense, method: 'subspace' }, [Kff.buffer, Mff.buffer]);
         w.onmessage = ev => { w.terminate(); ev.data.error ? reject(new Error(ev.data.error)) : resolve(ev.data.modes); };
         w.onerror = ev => { w.terminate(); reject(new Error(ev.message || 'Error en worker modal')); };
@@ -2548,7 +2548,7 @@ class App {
   _thSolveInWorker(modes, ag, dt, zeta) {
     return new Promise((resolve, reject) => {
       let w;
-      try { w = new Worker(new URL('./solver/timehistory_worker.js?v=130', import.meta.url), { type: 'module' }); }
+      try { w = new Worker(new URL('./solver/timehistory_worker.js?v=131', import.meta.url), { type: 'module' }); }
       catch (e) {
         try { const r = modalTimeHistory({ modes: modes.map(m => ({ ...m, phi: new Float64Array(0) })), ag, dt, zeta }); resolve({ q: r.q, peakModal: r.peakModal }); }
         catch (err) { reject(err); }
@@ -2843,7 +2843,7 @@ class App {
     return new Promise((resolve, reject) => {
       let worker;
       try {
-        worker = new Worker(new URL('./solver/nl_worker.js?v=130', import.meta.url), { type: 'module' });
+        worker = new Worker(new URL('./solver/nl_worker.js?v=131', import.meta.url), { type: 'module' });
       } catch (e) {
         try { resolve(kind === 'dc' ? solveNonlinearDC(opts) : solveNonlinear(opts)); }
         catch (err) { reject(err); }
@@ -3100,7 +3100,7 @@ class App {
 
       // Iteración de subespacio en el Worker (no bloquea la UI)
       const rawModes = await new Promise((resolve, reject) => {
-        const worker = new Worker(new URL('./solver/buckling_worker.js?v=130', import.meta.url), { type: 'module' });
+        const worker = new Worker(new URL('./solver/buckling_worker.js?v=131', import.meta.url), { type: 'module' });
         worker.postMessage({ Kff_flat, Kgff_flat, nF, nModes, dense },
           [Kff_flat.buffer, Kgff_flat.buffer]);   // transfer — zero copy
         worker.onmessage = (ev) => { worker.terminate(); ev.data.error ? reject(new Error(ev.data.error)) : resolve(ev.data.modes); };
@@ -3477,22 +3477,39 @@ class App {
     // coinciden con los seleccionados y se perdería el Mp por elemento (#36).
     if (!selEls.length) this._applyAutoDiscIfEnabled();
     const popts = opts.silent
-      ? { mpDefault: opts.mp || this._lastMp || 100, mpSel: opts.mp || this._lastMp || 100, soloSel: false, pattern: this._lastPattern || 'all', mode: opts.mode || 'perfecto', residual: opts.residual ?? 1 }
+      ? { mpDefault: opts.mp || this._lastMp || 100, mpSel: opts.mp || this._lastMp || 100, soloSel: false, pattern: this._lastPattern || 'all', mode: opts.mode || 'perfecto', residual: opts.residual ?? 1, thetaU: opts.thetaU, deltaU: opts.deltaU, Np: opts.Np, Vp: opts.Vp }
       : await this._plasticDialog(selEls.length > 0);
     if (!popts) return;
     const { mpDefault, mpSel, soloSel } = popts;
-    const hingeMode = popts.mode || 'perfecto';        // 'perfecto' | 'fragil'
-    const residual = (hingeMode === 'fragil') ? (popts.residual ?? 1e-4) : 1;   // fracción de Mp retenida
+    // Comportamiento: 'perfecto' (meseta ∞), 'ductil_caida' (meseta hasta θu/δu y cae),
+    // 'fragil' (caída inmediata). residual = fracción retenida tras la caída.
+    const hingeMode = popts.mode || 'perfecto';
+    const residual = (hingeMode === 'perfecto') ? 1 : (popts.residual ?? 1e-4);
+    const thetaU = hingeMode === 'fragil' ? 0 : (hingeMode === 'ductil_caida' ? (popts.thetaU ?? 0.02) : Infinity);   // rotación última (rad) de las rótulas de MOMENTO
+    const deltaU = hingeMode === 'fragil' ? 0 : (hingeMode === 'ductil_caida' ? (popts.deltaU ?? 0.02) : Infinity);   // desplazamiento último (m) de N/V
+    // Capacidades por elemento: Mp (momento My/Mz), Np (axial) y Vp (cortante Vy/Vz).
+    // Np/Vp por defecto ∞ (no fluyen) salvo que el usuario los indique → así el
+    // comportamiento por defecto sigue siendo de rótulas de MOMENTO.
+    const Np = popts.Np > 0 ? popts.Np : Infinity, Vp = popts.Vp > 0 ? popts.Vp : Infinity;
     this._lastMp = mpDefault;
     const Mp = mpDefault;
     const selSet = new Set(selEls);
     const capByElem = new Map();
     for (const el of model.elements.values()) {
-      let cap = mpDefault;
-      if (selEls.length && selSet.has(el.id)) cap = mpSel;
-      else if (selEls.length && soloSel) cap = Infinity;   // no rotula → permanece elástico
-      capByElem.set(el.id, cap);
+      let mp = mpDefault;
+      if (selEls.length && selSet.has(el.id)) mp = mpSel;
+      else if (selEls.length && soloSel) mp = Infinity;   // no rotula → permanece elástico
+      capByElem.set(el.id, { N: Np, Vy: Vp, Vz: Vp, My: mp, Mz: mp });
     }
+    const capOf = (eid, axis) => (capByElem.get(eid) || {})[axis] ?? Infinity;
+    // componentes de fluencia por elemento (DOF local, eje, ¿rotacional?)
+    const COMPS = [
+      { end: 1, dl: 0, axis: 'N', rot: false }, { end: 1, dl: 1, axis: 'Vy', rot: false }, { end: 1, dl: 2, axis: 'Vz', rot: false },
+      { end: 1, dl: 4, axis: 'My', rot: true }, { end: 1, dl: 5, axis: 'Mz', rot: true },
+      { end: 2, dl: 7, axis: 'Vy', rot: false }, { end: 2, dl: 8, axis: 'Vz', rot: false },
+      { end: 2, dl: 10, axis: 'My', rot: true }, { end: 2, dl: 11, axis: 'Mz', rot: true },
+    ];
+    const dropMode = (thetaU !== Infinity || deltaU !== Infinity);   // hay caída (frágil o dúctil-con-caída)
 
     const nodeIndex = buildNodeIndex(model);
     const nDOF = nodeIndex.size * 6;
@@ -3524,9 +3541,60 @@ class App {
     const releasesByElem = new Map();
     for (const el of model.elements.values()) releasesByElem.set(el.id, (el.releases || Array(12).fill(0)).slice());
     const Macc = new Map(), hinged = new Set();
+    const thetaP = new Map(), dropped = new Set();   // deformación plástica de cada rótula + rótulas ya caídas
     let lambda = 0; const u = new Float64Array(nDOF);
     const events = []; let collapsed = false;
-    const maxEvents = 6 * model.elements.size + 12;
+    const maxEvents = 12 * model.elements.size + 24;
+
+    // Aplica la CAÍDA de un conjunto de rótulas: libera el momento/fuerza retenido
+    // −(1−ε)·X_form, redistribuye y forma EN CASCADA las que se pasan de capacidad
+    // (frágil → caen de inmediato). Devuelve true si se forma un mecanismo.
+    const applyDrops = (queue0) => {
+      let queue = queue0, guard2 = 0;
+      while (queue.length && guard2++ < 600) {
+        const { K: Kd, elems: elemsD } = this._plasticAssemble(nodeIndex, releasesByElem);
+        const eb = new Map(elemsD.map(e => [e.id, e]));
+        const Kffd = new Float64Array(nF * nF);
+        for (let i = 0; i < nF; i++) { const ri = freeDOF[i] * nDOF; for (let j = 0; j < nF; j++) Kffd[i * nF + j] = Kd[ri + freeDOF[j]]; }
+        const facd = makeFactor(Kffd, nF, false);
+        if (!facd.ok) return true;   // mecanismo tras la caída
+        const G = new Float64Array(nDOF);
+        for (const c of queue) {
+          const e = eb.get(c.elemId); if (!e) continue;
+          const shed = -(1 - residual) * c.M_form;
+          for (let i = 0; i < 12; i++) G[e.ed[i]] += e.T[c.dofLocal][i] * shed;   // T^T: local→global
+          Macc.set(c.key, residual * c.M_form); dropped.add(c.key);
+        }
+        const Gf = new Float64Array(nF); for (let i = 0; i < nF; i++) Gf[i] = G[freeDOF[i]];
+        const duf = facd.solve(Gf);
+        const duJ = new Float64Array(nDOF); for (let i = 0; i < nF; i++) duJ[freeDOF[i]] = duf[i];
+        for (let i = 0; i < nDOF; i++) u[i] += duJ[i];
+        const over = [];
+        for (const e of elemsD) {
+          const ue = e.ed.map(d => duJ[d]);
+          const ul = new Array(12).fill(0); for (let i = 0; i < 12; i++) { let s = 0; for (let j = 0; j < 12; j++) s += e.T[i][j] * ue[j]; ul[i] = s; }
+          const fl = new Array(12).fill(0); for (let i = 0; i < 12; i++) { let s = 0; for (let j = 0; j < 12; j++) s += e.KeCond[i][j] * ul[j]; fl[i] = s; }
+          for (const c of COMPS) {
+            const key = `${e.id}:${c.end}:${c.axis}`;
+            if (hinged.has(key)) { if (!dropped.has(key)) thetaP.set(key, (thetaP.get(key) || 0) + ul[c.dl]); continue; }
+            const cap = capOf(e.id, c.axis); if (!isFinite(cap)) continue;
+            const M1 = (Macc.get(key) || 0) + fl[c.dl]; Macc.set(key, M1);
+            if (Math.abs(M1) > cap * (1 + 1e-6)) over.push({ key, elemId: e.id, dofLocal: c.dl, end: c.end, axis: c.axis, rot: c.rot, M_form: Math.sign(M1) * cap });
+          }
+        }
+        let dctrl2 = 0; for (const node of model.nodes.values()) { const d = getNodeDOFs(nodeIndex, node.id); dctrl2 = Math.max(dctrl2, Math.hypot(u[d[0]], u[d[1]], u[d[2]])); }
+        const next = [];
+        for (const o of over) {
+          releasesByElem.get(o.elemId)[o.dofLocal] = 1; hinged.add(o.key); thetaP.set(o.key, 0);
+          const nd = model.elements.get(o.elemId);
+          events.push({ lambda, elemId: o.elemId, nodeId: o.end === 1 ? nd.n1 : nd.n2, axis: o.axis, dctrl: dctrl2, cascade: true });
+          Macc.set(o.key, o.M_form);
+          if ((o.rot ? thetaU : deltaU) === 0) next.push({ key: o.key, elemId: o.elemId, dofLocal: o.dofLocal, end: o.end, axis: o.axis, M_form: o.M_form });   // frágil → cae al instante
+        }
+        queue = next;
+      }
+      return false;
+    };
 
     this._showProgress('Rótulas plásticas…', 'Análisis incremental evento a evento (motor en banda)');
     await new Promise(r => setTimeout(r, 20));
@@ -3541,100 +3609,68 @@ class App {
       const uf = fac.solve(Ff);
       const uUnit = new Float64Array(nDOF); for (let i = 0; i < nF; i++) uUnit[freeDOF[i]] = uf[i];
 
-      // Tasa de momento por extremo/eje (no rotulado): m_unit = KeCond·(T·ue)
-      const rates = [];
+      // Fuerzas/tasas por COMPONENTE (N, Vy, Vz, My, Mz) en extremos no rotulados +
+      // deformación plástica de las rótulas ya formadas (no caídas).
+      const rates = [], hingeDef = [];
       for (const e of elems) {
         const ue = e.ed.map(d => uUnit[d]);
         const ul = new Array(12).fill(0);
         for (let i = 0; i < 12; i++) { let s = 0; for (let j = 0; j < 12; j++) s += e.T[i][j] * ue[j]; ul[i] = s; }
         const fl = new Array(12).fill(0);
         for (let i = 0; i < 12; i++) { let s = 0; for (let j = 0; j < 12; j++) s += e.KeCond[i][j] * ul[j]; fl[i] = s; }
-        for (const [end, dl, axis] of [[1, 4, 'My'], [1, 5, 'Mz'], [2, 10, 'My'], [2, 11, 'Mz']]) {
-          const key = `${e.id}:${end}:${axis}`;
-          if (hinged.has(key)) continue;
-          rates.push({ key, elemId: e.id, end, axis, dofLocal: dl, mr: fl[dl] });
+        for (const c of COMPS) {
+          const key = `${e.id}:${c.end}:${c.axis}`;
+          if (hinged.has(key)) { if (!dropped.has(key)) hingeDef.push({ key, dl: c.dl, rot: c.rot, vrate: ul[c.dl] }); continue; }
+          const cap = capOf(e.id, c.axis); if (!isFinite(cap)) continue;   // sin capacidad → no fluye
+          rates.push({ key, elemId: e.id, end: c.end, axis: c.axis, dofLocal: c.dl, rot: c.rot, mr: fl[c.dl], cap });
         }
       }
 
-      // Δλ mínimo para alcanzar ±Mp en algún extremo
+      // Δλ a la próxima FLUENCIA (la fuerza alcanza ±cap del componente)
       let dlam = Infinity;
-      const cand = [];   // {r, dl} candidatos a rotular
+      const cand = [];
       for (const r of rates) {
-        if (Math.abs(r.mr) < 1e-9) continue;
+        if (Math.abs(r.mr) < 1e-12) continue;
         const M0 = Macc.get(r.key) || 0;
-        const cap = capByElem.get(r.elemId) ?? Mp;   // Infinity → nunca rotula
         let best = Infinity;
-        for (const tgt of [cap, -cap]) { const dl = (tgt - M0) / r.mr; if (dl > 1e-9 && dl < best) best = dl; }
+        for (const tgt of [r.cap, -r.cap]) { const dl = (tgt - M0) / r.mr; if (dl > 1e-9 && dl < best) best = dl; }
         if (isFinite(best)) { cand.push({ r, dl: best }); if (best < dlam) dlam = best; }
       }
-      if (!cand.length || !isFinite(dlam)) break;   // no hay más fluencia (carga insuficiente para colapsar)
+      // Δλ a la próxima CAÍDA (deformación plástica alcanza θu/δu) — dúctil-con-caída
+      if (dropMode) for (const h of hingeDef) {
+        const defCap = h.rot ? thetaU : deltaU; if (!isFinite(defCap) || defCap === 0) continue;
+        if (Math.abs(h.vrate) < 1e-15) continue;
+        const dl = (defCap - Math.abs(thetaP.get(h.key) || 0)) / Math.abs(h.vrate);
+        if (dl < dlam) dlam = Math.max(0, dl);
+      }
+      if (!isFinite(dlam)) break;   // no hay más fluencia ni caída → fin
 
       lambda += dlam;
       for (const r of rates) Macc.set(r.key, (Macc.get(r.key) || 0) + dlam * r.mr);
+      for (const h of hingeDef) thetaP.set(h.key, (thetaP.get(h.key) || 0) + dlam * h.vrate);
       for (let i = 0; i < nDOF; i++) u[i] += dlam * uUnit[i];
       let dctrl = 0;
       for (const node of model.nodes.values()) { const d = getNodeDOFs(nodeIndex, node.id); dctrl = Math.max(dctrl, Math.hypot(u[d[0]], u[d[1]], u[d[2]])); }
-      // Rotular TODOS los extremos que alcanzan Mp a la misma carga (casos
-      // simétricos/degenerados forman varias rótulas simultáneas).
       const tol = Math.max(1e-9, dlam * 1e-6);
-      let justFormed = [];
+
+      // FORMAR los componentes que fluyen a este λ (rótula de N/V/M)
+      const fragilNow = [];
       for (const c of cand) {
         if (c.dl > dlam + tol) continue;
-        releasesByElem.get(c.r.elemId)[c.r.dofLocal] = 1;   // insertar rótula
-        hinged.add(c.r.key);
+        releasesByElem.get(c.r.elemId)[c.r.dofLocal] = 1; hinged.add(c.r.key); thetaP.set(c.r.key, 0);
         const nd = model.elements.get(c.r.elemId);
         events.push({ lambda, elemId: c.r.elemId, nodeId: c.r.end === 1 ? nd.n1 : nd.n2, axis: c.r.axis, dctrl });
-        justFormed.push({ key: c.r.key, elemId: c.r.elemId, dofLocal: c.r.dofLocal, end: c.r.end, axis: c.r.axis, M_form: Macc.get(c.r.key) || 0 });
+        if ((c.r.rot ? thetaU : deltaU) === 0) fragilNow.push({ key: c.r.key, elemId: c.r.elemId, dofLocal: c.r.dofLocal, end: c.r.end, axis: c.r.axis, M_form: Macc.get(c.r.key) || 0 });
       }
-
-      // ── Modo FRÁGIL: la rótula recién formada CAE a residual·Mp. Se redistribuye
-      // el momento liberado y puede gatillar más rótulas EN CASCADA al mismo λ. ──
-      if (hingeMode === 'fragil' && justFormed.length) {
-        let queue = justFormed, guard2 = 0;
-        while (queue.length && guard2++ < 300) {
-          const { K: Kd, elems: elemsD } = this._plasticAssemble(nodeIndex, releasesByElem);
-          const eb = new Map(elemsD.map(e => [e.id, e]));
-          const Kffd = new Float64Array(nF * nF);
-          for (let i = 0; i < nF; i++) { const ri = freeDOF[i] * nDOF; for (let j = 0; j < nF; j++) Kffd[i * nF + j] = Kd[ri + freeDOF[j]]; }
-          const facd = makeFactor(Kffd, nF, false);
-          if (!facd.ok) { collapsed = true; queue = []; break; }   // mecanismo tras la caída
-          // cupla = momento LIBERADO −(1−ε)·M_form en cada rótula recién formada
-          const G = new Float64Array(nDOF);
-          for (const c of queue) {
-            const e = eb.get(c.elemId); if (!e) continue;
-            const shed = -(1 - residual) * c.M_form;
-            for (let i = 0; i < 12; i++) G[e.ed[i]] += e.T[c.dofLocal][i] * shed;   // T^T: local→global
-            Macc.set(c.key, residual * c.M_form);   // momento retenido tras la caída
-          }
-          const Gf = new Float64Array(nF); for (let i = 0; i < nF; i++) Gf[i] = G[freeDOF[i]];
-          const duf = facd.solve(Gf);
-          const duJ = new Float64Array(nDOF); for (let i = 0; i < nF; i++) duJ[freeDOF[i]] = duf[i];
-          for (let i = 0; i < nDOF; i++) u[i] += duJ[i];
-          // incrementos de momento por la redistribución → extremos NO rotulados
-          const over = [];
-          for (const e of elemsD) {
-            const ue = e.ed.map(d => duJ[d]);
-            const ul = new Array(12).fill(0); for (let i = 0; i < 12; i++) { let s = 0; for (let j = 0; j < 12; j++) s += e.T[i][j] * ue[j]; ul[i] = s; }
-            const fl = new Array(12).fill(0); for (let i = 0; i < 12; i++) { let s = 0; for (let j = 0; j < 12; j++) s += e.KeCond[i][j] * ul[j]; fl[i] = s; }
-            for (const [end, dl, axis] of [[1, 4, 'My'], [1, 5, 'Mz'], [2, 10, 'My'], [2, 11, 'Mz']]) {
-              const key = `${e.id}:${end}:${axis}`; if (hinged.has(key)) continue;
-              const M1 = (Macc.get(key) || 0) + fl[dl]; Macc.set(key, M1);
-              const cap = capByElem.get(e.id) ?? Mp;
-              if (isFinite(cap) && Math.abs(M1) > cap * (1 + 1e-6)) over.push({ key, elemId: e.id, dofLocal: dl, end, axis, M_form: Math.sign(M1) * cap });
-            }
-          }
-          let dctrl2 = 0; for (const node of model.nodes.values()) { const d = getNodeDOFs(nodeIndex, node.id); dctrl2 = Math.max(dctrl2, Math.hypot(u[d[0]], u[d[1]], u[d[2]])); }
-          queue = [];
-          for (const o of over) {
-            releasesByElem.get(o.elemId)[o.dofLocal] = 1; hinged.add(o.key);
-            const nd = model.elements.get(o.elemId);
-            events.push({ lambda, elemId: o.elemId, nodeId: o.end === 1 ? nd.n1 : nd.n2, axis: o.axis, dctrl: dctrl2, cascade: true });
-            Macc.set(o.key, o.M_form);
-            queue.push({ key: o.key, elemId: o.elemId, dofLocal: o.dofLocal, end: o.end, axis: o.axis, M_form: o.M_form });
-          }
-        }
-        if (collapsed) break;
+      // CAÍDAS por deformación última alcanzada (dúctil-con-caída)
+      const reached = [];
+      if (dropMode) for (const h of hingeDef) {
+        const defCap = h.rot ? thetaU : deltaU; if (!isFinite(defCap) || defCap === 0) continue;
+        if (Math.abs(thetaP.get(h.key) || 0) >= defCap - 1e-9) { const p = h.key.split(':'); reached.push({ key: h.key, elemId: +p[0], dofLocal: h.dl, end: +p[1], axis: p[2], M_form: Macc.get(h.key) || 0 }); }
       }
+      // Procesar las caídas (frágil-inmediato + θu/δu-alcanzado) con cascada
+      const dq = fragilNow.concat(reached);
+      if (dq.length && applyDrops(dq)) { collapsed = true; break; }
     }
     this._hideProgress();
 
@@ -3644,7 +3680,7 @@ class App {
         : 'Ningún extremo alcanza Mp: suba el patrón de carga o baje Mp (con el Mp dado la carga de referencia no produce ese momento).', 'warn');
       return;
     }
-    this._plasticResult = { events, lambda, collapsed, u: Float64Array.from(u), nodeIndex, Mp, capByElem, nCasos, patLabel, hingeMode, residual };
+    this._plasticResult = { events, lambda, collapsed, u: Float64Array.from(u), nodeIndex, Mp, capByElem, nCasos, patLabel, hingeMode, residual, thetaU, deltaU, Np, Vp };
 
     // Mostrar mecanismo de colapso (deformada) + secuencia de rótulas, con panel
     // de animación paso a paso (#47).
@@ -3776,17 +3812,22 @@ class App {
                `<text x="${x0 - 4}" y="${yTop}" font-size="10" fill="var(--text-muted)" text-anchor="end">M</text>` +
                `<line x1="${x0}" y1="${yM(1)}" x2="${x0 + 4}" y2="${yM(1)}" stroke="var(--text-muted)"/>` +
                `<text x="${x0 - 4}" y="${yM(1) + 3}" font-size="10" fill="var(--text-muted)" text-anchor="end">Mp</text>`;
-    let path;
+    const xEnd = xMax - x0 - 20, xDrop = xy(xYield) + Math.round((xEnd - xYield) * 0.45);   // θu para dúctil-con-caída
+    let path, note, uMark = '';
     if (mode === 'fragil') {
-      path = `M ${xy(0)} ${yM(0)} L ${xy(xYield)} ${yM(1)} L ${xy(xYield)} ${yM(r)} L ${xy(xMax - x0 - 20)} ${yM(r)}`;
-      var note = `<text x="${xy(xYield) + 4}" y="${yM(r) + (r < 0.15 ? -4 : 12)}" font-size="9" fill="var(--accent,#3b82f6)">caída a ${(+resPct).toFixed(2)}%·Mp</text>`;
+      path = `M ${xy(0)} ${yM(0)} L ${xy(xYield)} ${yM(1)} L ${xy(xYield)} ${yM(r)} L ${xy(xEnd)} ${yM(r)}`;
+      note = `<text x="${xy(xYield) + 4}" y="${yM(r) + (r < 0.15 ? -4 : 12)}" font-size="9" fill="var(--accent,#3b82f6)">caída a ${(+resPct).toFixed(2)}%·Mp</text>`;
+    } else if (mode === 'ductil_caida') {
+      path = `M ${xy(0)} ${yM(0)} L ${xy(xYield)} ${yM(1)} L ${xDrop} ${yM(1)} L ${xDrop} ${yM(r)} L ${xy(xEnd)} ${yM(r)}`;
+      note = `<text x="${xy(xYield) + 4}" y="${yM(1) - 4}" font-size="9" fill="var(--accent,#3b82f6)">meseta hasta θu, luego cae</text>`;
+      uMark = `<line x1="${xDrop}" y1="${y0}" x2="${xDrop}" y2="${yM(1)}" stroke="var(--border)" stroke-dasharray="2,2"/><text x="${xDrop}" y="${y0 + 12}" font-size="9" fill="var(--text-muted)" text-anchor="middle">θu</text>`;
     } else {
-      path = `M ${xy(0)} ${yM(0)} L ${xy(xYield)} ${yM(1)} L ${xy(xMax - x0 - 20)} ${yM(1)}`;
-      var note = `<text x="${xy(xYield) + 4}" y="${yM(1) - 4}" font-size="9" fill="var(--accent,#3b82f6)">meseta ∞ (dúctil)</text>`;
+      path = `M ${xy(0)} ${yM(0)} L ${xy(xYield)} ${yM(1)} L ${xy(xEnd)} ${yM(1)}`;
+      note = `<text x="${xy(xYield) + 4}" y="${yM(1) - 4}" font-size="9" fill="var(--accent,#3b82f6)">meseta ∞ (dúctil)</text>`;
     }
     return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;background:var(--bg4);border-radius:6px">` +
       ax + `<line x1="${xy(xYield)}" y1="${y0}" x2="${xy(xYield)}" y2="${yM(1)}" stroke="var(--border)" stroke-dasharray="2,2"/>` +
-      `<text x="${xy(xYield)}" y="${y0 + 12}" font-size="9" fill="var(--text-muted)" text-anchor="middle">θy</text>` +
+      `<text x="${xy(xYield)}" y="${y0 + 12}" font-size="9" fill="var(--text-muted)" text-anchor="middle">θy</text>` + uMark +
       `<path d="${path}" fill="none" stroke="var(--accent,#3b82f6)" stroke-width="2.5"/>` + note + `</svg>`;
   }
 
@@ -3818,18 +3859,27 @@ class App {
         ${selBlock}
         <div class="prop-row cols1" style="margin-top:8px">
           <div class="prop-field">
-            <label>Comportamiento de la rótula (curva M–θ)</label>
+            <label>Comportamiento de la rótula (curva constitutiva)</label>
             <select id="pl-mode" style="width:100%;margin-top:4px">
-              <option value="perfecto">Elasto-perfectamente-plástica (meseta ∞)</option>
-              <option value="fragil">Frágil — caída a residual (drop to ~0)</option>
+              <option value="perfecto">Dúctil — perfectamente plástica (meseta ∞)</option>
+              <option value="ductil_caida">Dúctil con caída — meseta hasta θu/δu y luego cae</option>
+              <option value="fragil">Frágil — caída inmediata al alcanzar la capacidad</option>
             </select>
           </div>
         </div>
         <div class="prop-row cols1" id="pl-res-row" style="margin-top:6px;display:none">
           <div class="prop-field">
-            <label>Momento residual tras la caída [% de Mp]</label>
+            <label>Capacidad residual tras la caída [% de la capacidad]</label>
             <input type="text" id="pl-residual" value="0.01" style="width:100%;margin-top:4px">
           </div>
+        </div>
+        <div class="prop-row cols2" id="pl-defu-row" style="margin-top:6px;display:none">
+          <div class="prop-field"><label>θu rotación última [rad] (momento)</label><input type="text" id="pl-thetau" value="0.02" style="width:100%;margin-top:4px"></div>
+          <div class="prop-field"><label>δu desplaz. último [m] (N/V)</label><input type="text" id="pl-deltau" value="0.02" style="width:100%;margin-top:4px"></div>
+        </div>
+        <div class="prop-row cols2" style="margin-top:6px">
+          <div class="prop-field"><label>Np axial [kN] (resorte/rótula N; vacío = ∞)</label><input type="text" id="pl-np" value="" placeholder="∞" style="width:100%;margin-top:4px"></div>
+          <div class="prop-field"><label>Vp cortante [kN] (rótula V; vacío = ∞)</label><input type="text" id="pl-vp" value="" placeholder="∞" style="width:100%;margin-top:4px"></div>
         </div>
         <div class="prop-row cols1" style="margin-top:8px;text-align:center">
           <div id="pl-curve">${this._hingeBackboneSVG('perfecto', 0.01)}</div>
@@ -3848,7 +3898,9 @@ class App {
       const redrawCurve = () => {
         const mode = document.getElementById('pl-mode')?.value || 'perfecto';
         const res = parseFloat(document.getElementById('pl-residual')?.value) || 0.01;
-        const row = document.getElementById('pl-res-row'); if (row) row.style.display = mode === 'fragil' ? '' : 'none';
+        const hasCaida = mode === 'fragil' || mode === 'ductil_caida';
+        const rr = document.getElementById('pl-res-row'); if (rr) rr.style.display = hasCaida ? '' : 'none';
+        const dr = document.getElementById('pl-defu-row'); if (dr) dr.style.display = mode === 'ductil_caida' ? '' : 'none';
         const c = document.getElementById('pl-curve'); if (c) c.innerHTML = this._hingeBackboneSVG(mode, res);
       };
       setTimeout(() => { document.getElementById('pl-mode')?.addEventListener('change', redrawCurve); document.getElementById('pl-residual')?.addEventListener('input', redrawCurve); const el = document.getElementById('pl-mp-def'); el?.focus(); el?.select(); }, 50);
@@ -3864,8 +3916,12 @@ class App {
         const pattern = document.getElementById('pl-pattern')?.value || 'all';
         this._lastPattern = pattern;
         const mode = document.getElementById('pl-mode')?.value || 'perfecto';
-        const residual = mode === 'fragil' ? Math.max(0, (parseFloat(document.getElementById('pl-residual')?.value) || 0.01) / 100) : 1;
-        resolve({ mpDefault, mpSel, soloSel, pattern, mode, residual });
+        const residual = (mode === 'perfecto') ? 1 : Math.max(0, (parseFloat(document.getElementById('pl-residual')?.value) || 0.01) / 100);
+        const thetaU = parseFloat(document.getElementById('pl-thetau')?.value) || 0.02;
+        const deltaU = parseFloat(document.getElementById('pl-deltau')?.value) || 0.02;
+        const Np = parseFloat(document.getElementById('pl-np')?.value);
+        const Vp = parseFloat(document.getElementById('pl-vp')?.value);
+        resolve({ mpDefault, mpSel, soloSel, pattern, mode, residual, thetaU, deltaU, Np: Np > 0 ? Np : 0, Vp: Vp > 0 ? Vp : 0 });
       };
       overlay._reject = () => resolve(null);
     });
@@ -4936,7 +4992,7 @@ class App {
               selectedNodes: sel.filter(s => s.type === 'node').map(s => s.id) };
     }
     this.snapshot();
-    const { aplicarOperaciones } = await import('./model/model_ops.js?v=130');
+    const { aplicarOperaciones } = await import('./model/model_ops.js?v=131');
     const res = aplicarOperaciones(this.model, ops, ctx);
     // los resultados previos dejan de ser válidos tras modificar la geometría/cargas
     this.viewport.clearResults?.();
@@ -4984,7 +5040,7 @@ class App {
     this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=130');
+      const { generarModelo } = await import('../asistente/generador.js?v=131');
       const modelo = generarModelo(ficha, libs);
 
       if (modo === 'sobreponer') {
@@ -6044,7 +6100,7 @@ class App {
     const deflex = this._calcularDeflexionesVigas(diseno?.params);
     const drift  = this._calcularDrift();
     try {
-      const { Docx } = await import('./io/docx.js?v=130');
+      const { Docx } = await import('./io/docx.js?v=131');
       const blob = this._memoriaDocx(Docx, imgs, diseno, deflex, drift).blob();
       this._downloadBlob(blob, 'memoria_calculo.docx');
       this.toast('Memoria Word (.docx) descargada', 'ok');
@@ -6215,7 +6271,7 @@ class App {
   // Verificación de diseño (flexión/corte/axial) por elemento, usando los
   // resultados actuales y los parámetros editables de asistente/diseno_params.json.
   async _calcularDiseno() {
-    const ver = '?v=130';
+    const ver = '?v=131';
     let params = null;
     try { params = await fetch('asistente/diseno_params.json' + ver).then(r => r.json()); }
     catch (e) { console.error('No se pudo cargar diseno_params.json:', e); return null; }

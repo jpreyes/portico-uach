@@ -1,8 +1,8 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // PropertiesPanel — right-side panel: node/element properties + mat/sec tabs
 // ──────────────────────────────────────────────────────────────────────────────
-import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=130';
-import { localAxes } from '../solver/timoshenko.js?v=130';
+import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=131';
+import { localAxes } from '../solver/timoshenko.js?v=131';
 
 export class PropertiesPanel {
   constructor(panelEl, app) {
@@ -178,17 +178,22 @@ export class PropertiesPanel {
 
     const { events, lambda, collapsed, Mp } = pr;
     const mut = 'color:var(--text-muted)';
-    const cap = (e) => (pr.capByElem && pr.capByElem.get(e.elemId)) ?? Mp;
+    // capacidad del COMPONENTE (N/Vy/Vz/My/Mz) de cada evento
+    const cap = (e) => { const c = pr.capByElem && pr.capByElem.get(e.elemId); const v = c ? c[e.axis] : Mp; return isFinite(v) ? v : Mp; };
     const rows = events.map((e, i) =>
       `<tr><td>${i + 1}${e.cascade ? '↯' : ''}</td><td>#${e.elemId}</td><td>${e.nodeId}</td><td>${e.axis}</td>` +
       `<td>${e.lambda.toFixed(3)}</td><td>${cap(e).toFixed(0)}</td><td>${e.dctrl.toExponential(1)}</td></tr>`).join('');
-    // curva constitutiva M–θ del modelo de rótula usado
-    const fragil = pr.hingeMode === 'fragil';
-    const curve = this.app._hingeBackboneSVG ? this.app._hingeBackboneSVG(fragil ? 'fragil' : 'perfecto', (pr.residual ?? 1) * 100, 220, 130) : '';
+    // curva constitutiva del modelo de rótula usado (N / V / M)
+    const mode = pr.hingeMode || 'perfecto', caida = mode !== 'perfecto';
+    const lab = mode === 'fragil' ? `frágil (caída inmediata a ${((pr.residual ?? 0) * 100).toFixed(2)}%)`
+      : mode === 'ductil_caida' ? `dúctil con caída (meseta hasta θu=${pr.thetaU}/δu=${pr.deltaU}, luego ${((pr.residual ?? 0) * 100).toFixed(2)}%)`
+      : 'dúctil — perfectamente plástica (meseta ∞)';
+    const caps = `Mp=${pr.Mp}` + (isFinite(pr.Np) && pr.Np ? ` · Np=${pr.Np}` : '') + (isFinite(pr.Vp) && pr.Vp ? ` · Vp=${pr.Vp}` : '');
+    const curve = this.app._hingeBackboneSVG ? this.app._hingeBackboneSVG(mode, (pr.residual ?? 1) * 100, 220, 130) : '';
     const modeBox = `<div style="padding:6px 10px;border-radius:6px;background:var(--bg4);margin-top:8px">
-        <b>Rótula:</b> ${fragil ? `frágil (caída a ${((pr.residual ?? 0) * 100).toFixed(2)}% de Mp)` : 'elasto-perfectamente-plástica (meseta ∞)'}
+        <b>Rótula:</b> ${lab}<br><span style="${mut};font-size:10px">capacidades: ${caps}</span>
         <div style="text-align:center;margin-top:6px">${curve}</div>
-        <div style="${mut};font-size:10px;text-align:center">Curva constitutiva momento–giro${fragil ? ' · ↯ = rótula en cascada por la caída' : ''}</div>
+        <div style="${mut};font-size:10px;text-align:center">Curva constitutiva (N/V/M)${caida ? ' · ↯ = rótula en cascada por la caída' : ''}</div>
       </div>`;
 
     const box = 'padding:8px 10px;border-radius:6px;background:var(--bg4);margin-bottom:4px';
