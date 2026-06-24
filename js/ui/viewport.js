@@ -2517,7 +2517,7 @@ export class Viewport {
   // Map(elemId → {taut,N,cable}); factor relativo sobre la escala auto.
   // hinges (opcional, #47): [{ nodeId, color }] → marca cada rótula plástica en la
   // posición deformada de su nodo, con color por orden de formación (gradiente→rojo).
-  showNLDeformed(uByNode, elemState, factor, infoText, hinges = null) {
+  showNLDeformed(uByNode, elemState, factor, infoText, hinges = null, opts = {}) {
     this.clearLoads();
     this.clearResults();
     this._resultObjects = [];
@@ -2528,7 +2528,10 @@ export class Viewport {
     for (const u of uByNode.values()) maxD = Math.max(maxD, Math.hypot(u[0], u[1], u[2]));
     const b = this.app.model.getBounds();
     const span = Math.max(b.max.x - b.min.x, b.max.y - b.min.y, b.max.z - b.min.z, 1);
-    const autoBase = maxD > 1e-12 ? span / 50 / maxD : 1;
+    // Por defecto se auto-escala (span/50) para amplificar desplazamientos chicos de
+    // cables/reticulados. Con `trueScale` (gran rotación corotacional) se muestra a
+    // ESCALA REAL: el desplazamiento ya es físico y grande.
+    const autoBase = opts.trueScale ? 1 : (maxD > 1e-12 ? span / 50 / maxD : 1);
     const f = (factor == null || !isFinite(factor) || factor <= 0) ? 1 : factor;
     const scale = autoBase * f;
     const sc = document.getElementById('result-scale'); if (sc) sc.value = +f.toPrecision(3);
