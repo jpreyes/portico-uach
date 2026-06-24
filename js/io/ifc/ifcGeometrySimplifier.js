@@ -1,0 +1,238 @@
+// ──────────────────────────────────────────────────────────────────────────────
+// io/ifc/ifcGeometrySimplifier.js — geometría y secciones IFC → barras · #76, G19
+//
+// De la geometría IFC (que puede ser sólidos barridos, curvas, mallas…) extrae lo que
+// PÓRTICO necesita de una barra: su EJE (punto inicial/final en coordenadas globales) y
+// una SECCIÓN aproximada (A, Iy, Iz, J).  Estrategia, en orden de preferencia:
+//   1) representación 'Axis' (IfcPolyline / IfcTrimmedCurve) → línea del eje directa.
+//   2) representación 'Body' con un IfcExtrudedAreaSolid → eje = recorrido de la extrusión.
+// Curvas de >2 puntos se SEGMENTAN en barras rectas (con aviso).  Las colocaciones
+// (IfcLocalPlacement) se componen recursivamente hasta el origen del proyecto.
+//
+// Todo en JS puro; las longitudes salen en METROS (se aplica el factor de unidad al final).
+// AUTÓNOMO (Node + navegador).
+// ──────────────────────────────────────────────────────────────────────────────
+
+// ── álgebra vectorial mínima (vectores [x,y,z]) ──────────────────────────────────
+const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const mul = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const len = a => Math.hypot(a[0], a[1], a[2]);
+const unit = a => { const l = len(a); return l > 1e-12 ? mul(a, 1 / l) : [0, 0, 0]; };
+const IDENT = { o: [0, 0, 0], x: [1, 0, 0], y: [0, 1, 0], z: [0, 0, 1] };
+
+// transforma una DIRECCIÓN local d por la base de M (sin traslación)
+const tdir = (M, d) => add(add(mul(M.x, d[0]), mul(M.y, d[1])), mul(M.z, d[2]));
+// transforma un PUNTO local p por M (con traslación)
+const tpt = (M, p) => add(M.o, tdir(M, p));
+// composición M = parent ∘ local  (aplica local y luego parent)
+function matMul(parent, local) {
+  return { o: tpt(parent, local.o), x: tdir(parent, local.x), y: tdir(parent, local.y), z: tdir(parent, local.z) };
+}
+
+// lista numérica de un IfcCartesianPoint / IfcDirection (rellena a 3 componentes)
+function coords3(ent) {
+  if (!ent || !Array.isArray(ent.args[0])) return [0, 0, 0];
+  const c = ent.args[0].map(v => +v || 0);
+  return [c[0] || 0, c[1] || 0, c[2] || 0];
+}
+
+// ── matriz de un IfcAxis2Placement3D / 2D ────────────────────────────────────────
+function placementMatrix(model, placement) {
+  const pl = model.get(placement);
+  if (!pl) return { ...IDENT };
+  const o = coords3(model.get(pl.args[0]));                 // Location
+  let z = pl.args[1] ? unit(coords3(model.get(pl.args[1]))) : [0, 0, 1]; // Axis
+  if (len(z) < 1e-9) z = [0, 0, 1];
+  let xref = pl.args[2] ? coords3(model.get(pl.args[2])) : [1, 0, 0];    // RefDirection
+  // ortonormaliza X respecto de Z
+  let x = unit(sub(xref, mul(z, dot(xref, z))));
+  if (len(x) < 1e-9) { // RefDirection paralelo a Z → eje arbitrario perpendicular
+    x = Math.abs(z[0]) < 0.9 ? unit(sub([1, 0, 0], mul(z, dot([1, 0, 0], z))))
+                             : unit(sub([0, 1, 0], mul(z, dot([0, 1, 0], z))));
+  }
+  const y = cross(z, x);
+  return { o, x, y, z };
+}
+
+// ── colocación GLOBAL de un IfcLocalPlacement (compone la cadena PlacementRelTo) ──
+function worldPlacement(model, objPlacement, depth = 0) {
+  const p = model.get(objPlacement);
+  if (!p || depth > 64) return { ...IDENT };
+  if (p.type !== 'IFCLOCALPLACEMENT') return { ...IDENT }; // IfcGridPlacement u otro → identidad
+  // IfcLocalPlacement(PlacementRelTo, RelativePlacement)
+  const local = placementMatrix(model, p.args[1]);
+  const parent = p.args[0] ? worldPlacement(model, p.args[0], depth + 1) : IDENT;
+  return matMul(parent, local);
+}
+
+// ── puntos locales del EJE a partir de una curva ─────────────────────────────────
+function curvePoints(model, curve) {
+  const c = model.get(curve);
+  if (!c) return null;
+  if (c.type === 'IFCPOLYLINE') {
+    const pts = (c.args[0] || []).map(r => coords3(model.get(r)));
+    return pts.length >= 2 ? pts : null;
+  }
+  if (c.type === 'IFCTRIMMEDCURVE') {
+    // IfcTrimmedCurve(BasisCurve, Trim1, Trim2, SenseAgreement, MasterRepresentation)
+    const basis = model.get(c.args[0]);
+    if (!basis || basis.type !== 'IFCLINE') return null;
+    const p0 = coords3(model.get(basis.args[0]));            // Pnt
+    const vec = model.get(basis.args[1]);                    // IfcVector(Orientation, Magnitude)
+    const dir = vec ? coords3(model.get(vec.args[0])) : [1, 0, 0];
+    const mag = vec ? (+vec.args[1] || 1) : 1;
+    const trim = (slot) => {
+      for (const t of (slot || [])) {
+        if (model.isRef(t)) { const tp = model.get(t); if (tp && tp.type === 'IFCCARTESIANPOINT') return coords3(tp); }
+        else if (typeof t === 'object' && t.type === 'IFCPARAMETERVALUE') return add(p0, mul(unit(dir), (+t.value[0] || 0) * mag));
+        else if (typeof t === 'number') return add(p0, mul(unit(dir), t * mag));
+      }
+      return null;
+    };
+    const a = trim(c.args[1]) || p0;
+    const b = trim(c.args[2]) || add(p0, mul(unit(dir), mag));
+    return [a, b];
+  }
+  return null;
+}
+
+/**
+ * Eje de una barra IFC en coordenadas GLOBALES (metros), como segmentos rectos.
+ * @returns {{ segments: number[][][], via:string } | null}
+ *   segments: [[ [x,y,z], [x,y,z] ], …]  (uno por tramo recto);  via: 'axis'|'body'
+ */
+export function memberAxis(model, element, factor, warn) {
+  const world = worldPlacement(model, element.args[5]);     // ObjectPlacement
+  const repDef = model.get(element.args[6]);                // Representation (IfcProductDefinitionShape)
+  if (!repDef || !Array.isArray(repDef.args[2])) return null;
+
+  // localizar la representación 'Axis' (preferida) o, en su defecto, 'Body'/'Reference'
+  let axisRep = null, bodyRep = null;
+  for (const r of repDef.args[2]) {
+    const sr = model.get(r);
+    if (!sr || sr.type !== 'IFCSHAPEREPRESENTATION') continue;
+    const ident = (sr.args[1] || '').toString();
+    if (ident === 'Axis') axisRep = sr;
+    else if (ident === 'Body' || ident === 'Reference') bodyRep = sr || bodyRep;
+    else if (!bodyRep) bodyRep = sr;
+  }
+
+  // 1) eje directo
+  if (axisRep && Array.isArray(axisRep.args[3]) && axisRep.args[3].length) {
+    const pts = curvePoints(model, axisRep.args[3][0]);
+    if (pts && pts.length >= 2) {
+      if (pts.length > 2) warn && warn.add('Eje con más de 2 puntos: barra curva/poligonal segmentada en tramos rectos');
+      const g = pts.map(p => mul(tpt(world, p), factor));
+      const segments = [];
+      for (let i = 0; i + 1 < g.length; i++) segments.push([g[i], g[i + 1]]);
+      return { segments, via: 'axis' };
+    }
+  }
+
+  // 2) sólido extruido → recorrido de la extrusión
+  if (bodyRep && Array.isArray(bodyRep.args[3])) {
+    for (const it of bodyRep.args[3]) {
+      const solid = model.get(it);
+      if (!solid) continue;
+      if (solid.type === 'IFCEXTRUDEDAREASOLID') {
+        // IfcExtrudedAreaSolid(SweptArea, Position, ExtrudedDirection, Depth)
+        const pos = placementMatrix(model, solid.args[1]);
+        const exDir = coords3(model.get(solid.args[2]));
+        const depth = +solid.args[3] || 0;
+        const start = pos.o;
+        const end = tpt(pos, mul(exDir, depth));
+        const a = mul(tpt(world, start), factor);
+        const b = mul(tpt(world, end), factor);
+        if (len(sub(b, a)) > 1e-9) { warn && warn.add('Eje derivado del sólido extruido (sin representación «Axis»)'); return { segments: [[a, b]], via: 'body' }; }
+      }
+    }
+  }
+  return null;
+}
+
+// ── perfil de la representación 'Body' (SweptArea del extruido) ───────────────────
+export function bodyProfile(model, element) {
+  const repDef = model.get(element.args[6]);
+  if (!repDef || !Array.isArray(repDef.args[2])) return null;
+  for (const r of repDef.args[2]) {
+    const sr = model.get(r);
+    if (!sr || sr.type !== 'IFCSHAPEREPRESENTATION' || !Array.isArray(sr.args[3])) continue;
+    for (const it of sr.args[3]) {
+      const solid = model.get(it);
+      if (solid && solid.type === 'IFCEXTRUDEDAREASOLID') return solid.args[0]; // ref a SweptArea
+    }
+  }
+  return null;
+}
+
+// ── propiedades de SECCIÓN a partir de un IfcProfileDef ───────────────────────────
+/**
+ * Convierte un IfcProfileDef en propiedades de sección de PÓRTICO (en metros).
+ * Reconoce rectángulo, círculo (macizo/hueco), doble T y tubo rectangular; el resto se
+ * aproxima por su bounding box (con aviso).  Nunca bloquea.
+ * @returns {{ name:string, A:number, Iy:number, Iz:number, J:number, approx:boolean } | null}
+ */
+export function profileProps(model, profile, factor, warn) {
+  const p = model.get(profile);
+  if (!p) return null;
+  const f = factor, f2 = factor * factor, f4 = f2 * f2;
+  const name = (p.args[1] || p.type.replace(/^IFC|PROFILEDEF$/g, '')).toString();
+  const rectJ = (b, h) => { const a = Math.max(b, h) / 2, c = Math.min(b, h) / 2; return a * c * c * c * (16 / 3 - 3.36 * (c / a) * (1 - (c * c * c * c) / (12 * a * a * a * a))); };
+
+  switch (p.type) {
+    case 'IFCRECTANGLEPROFILEDEF': {            // (.., XDim, YDim)
+      const b = (+p.args[3] || 0) * f, h = (+p.args[4] || 0) * f;
+      if (b <= 0 || h <= 0) break;
+      return { name, A: b * h, Iz: b * h * h * h / 12, Iy: h * b * b * b / 12, J: rectJ(b, h), approx: false };
+    }
+    case 'IFCRECTANGLEHOLLOWPROFILEDEF': {       // (.., XDim, YDim, WallThickness, …)
+      const b = (+p.args[3] || 0) * f, h = (+p.args[4] || 0) * f, t = (+p.args[5] || 0) * f;
+      if (b <= 0 || h <= 0 || t <= 0) break;
+      const bi = b - 2 * t, hi = h - 2 * t;
+      return { name, A: b * h - bi * hi, Iz: (b * h ** 3 - bi * hi ** 3) / 12, Iy: (h * b ** 3 - hi * bi ** 3) / 12, J: 2 * (b - t) * (b - t) * (h - t) * (h - t) * t / (b + h - 2 * t), approx: false };
+    }
+    case 'IFCCIRCLEPROFILEDEF': {                // (.., Radius)
+      const r = (+p.args[3] || 0) * f;
+      if (r <= 0) break;
+      const I = Math.PI * r ** 4 / 4;
+      return { name, A: Math.PI * r * r, Iy: I, Iz: I, J: 2 * I, approx: false };
+    }
+    case 'IFCCIRCLEHOLLOWPROFILEDEF': {          // (.., Radius, WallThickness)
+      const r = (+p.args[3] || 0) * f, t = (+p.args[4] || 0) * f, ri = r - t;
+      if (r <= 0 || ri <= 0) break;
+      const I = Math.PI * (r ** 4 - ri ** 4) / 4;
+      return { name, A: Math.PI * (r * r - ri * ri), Iy: I, Iz: I, J: 2 * I, approx: false };
+    }
+    case 'IFCISHAPEPROFILEDEF': {                // (.., OverallWidth bf, OverallDepth h, WebThickness tw, FlangeThickness tf, …)
+      const bf = (+p.args[3] || 0) * f, h = (+p.args[4] || 0) * f, tw = (+p.args[5] || 0) * f, tf = (+p.args[6] || 0) * f;
+      if (bf <= 0 || h <= 0 || tw <= 0 || tf <= 0) break;
+      const hw = h - 2 * tf;
+      const A = 2 * bf * tf + hw * tw;
+      const Iz = (bf * h ** 3 - (bf - tw) * hw ** 3) / 12;          // eje fuerte (flexión en el plano del alma)
+      const Iy = (2 * tf * bf ** 3 + hw * tw ** 3) / 12;            // eje débil
+      const J = (2 * bf * tf ** 3 + (h - tf) * tw ** 3) / 3;        // torsión de pared delgada abierta
+      return { name, A, Iz, Iy, J, approx: false };
+    }
+    case 'IFCARBITRARYCLOSEDPROFILEDEF': {       // aproximación por bounding box del contorno
+      const bb = profileBBox(model, p.args[2]);
+      if (bb) { warn && warn.add(`Sección «${name}» aproximada por su bounding box`); const b = bb.w * f, h = bb.h * f; return { name, A: b * h, Iz: b * h ** 3 / 12, Iy: h * b ** 3 / 12, J: rectJ(b, h), approx: true }; }
+      break;
+    }
+    default:
+      warn && warn.add(`Tipo de perfil ${p.type} no reconocido: sección genérica`);
+      return null;
+  }
+  return null;
+}
+
+// bounding box (ancho/alto) del contorno de un IfcArbitraryClosedProfileDef
+function profileBBox(model, curveRef) {
+  const pts = curvePoints(model, curveRef);
+  if (!pts || !pts.length) return null;
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (const pt of pts) { x0 = Math.min(x0, pt[0]); x1 = Math.max(x1, pt[0]); y0 = Math.min(y0, pt[1]); y1 = Math.max(y1, pt[1]); }
+  return { w: Math.max(x1 - x0, 1e-6), h: Math.max(y1 - y0, 1e-6) };
+}

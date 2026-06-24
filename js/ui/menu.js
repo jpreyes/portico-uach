@@ -66,6 +66,7 @@ export class MenuBar {
       case 'exportcsv':   a.exportCSV();      break;
       case 'import-interop': a.importInterop(); break;
       case 'export-interop': a.exportInterop(); break;
+      case 'import-ifc':     a.importIFC();     break;
       case 'template':    a.downloadTemplate(); break;
       case 'undo':        a.undo();           break;
       case 'redo':        a.redo();           break;
