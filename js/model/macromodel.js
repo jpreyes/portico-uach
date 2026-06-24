@@ -7,7 +7,11 @@
 // (Mainstone 1971 / FEMA 356 §7.5.2). El panel se reemplaza por 2 puntales diagonales
 // SOLO-COMPRESIÓN (uno por diagonal): bajo carga lateral, la diagonal comprimida
 // trabaja y la traccionada se afloja (N=0) — reusa `el.compressionOnly` (G14 #56).
+//
+// Para AGREGAR más macromodelos: registrarlos en `macro_registry.js` (ver el registro
+// de `infill` al final de este archivo y la guía `docs/macromodelos.md`).
 // ─────────────────────────────────────────────────────────────────────────────
+import { registerMacro } from './macro_registry.js?v=199';
 
 /**
  * Ancho del puntal diagonal equivalente (Mainstone / FEMA 356).
@@ -84,3 +88,20 @@ export function insertInfill(model, cornerIds, props = {}) {
 
   return { strutIds, matId: mat.id, secId: sec.id, strut: s, macroId };
 }
+
+// ── Registro del macromodelo «muro de relleno» (#86) ────────────────────────────
+// Patrón a seguir para los próximos macromodelos (ver docs/macromodelos.md).
+registerMacro({
+  id: 'infill',
+  name: 'Muro de relleno — puntal diagonal',
+  desc: 'Albañilería de relleno → 2 puntales diagonales solo-compresión (Mainstone/FEMA 356).',
+  nodes: 4,
+  nodesHint: 'las 4 esquinas del panel (marco)',
+  dims: '2D',
+  params: [
+    { key: 'Em', label: 'E albañilería (kN/m²)', default: 3.0e6, step: 1e5, min: 1 },
+    { key: 't', label: 'Espesor del muro (m)', default: 0.2, step: 0.05, min: 0.01 },
+    { key: 'EcIcol', label: 'EcIcol columna del marco (kN·m²)', default: Math.round(2.5e7 * (0.3 ** 4 / 12)), step: 1000, min: 1 },
+  ],
+  expand: (model, nodeIds, props) => insertInfill(model, nodeIds, props),
+});
