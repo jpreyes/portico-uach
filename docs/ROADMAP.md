@@ -3,21 +3,28 @@
 Plan de mejoras detectadas en uso práctico (análisis y diseño), agrupadas por
 similaridad. `[#]` referencia el pedido original. Estado: ⬜ pendiente · 🟡 en curso · ✅ hecho.
 
-> **Estado actual (v171).** Completos: **G1–G8, G10, G11, G14, G15, G16, G17, G20, G21**;
+> **Estado actual (v183).** Completos: **G1–G8, G10, G11, G14, G15, G16, G17, G20, G21**;
 > G12 lineal cerrado (modal, espectro, time-history de pórtico **y de áreas** `[#51]`);
 > los 3 motores + UI de **puentes** (etapas, pretensado, cargas móviles); diseño
 > multinorma (AISC/EC3/ACI/EC2/NCh/EC9) con auto-diseño, reporte y nudos SCWB; el
 > **cacho rígido nativo** `[#87]`; gestión de **casos de espectro** guardados `[#93]`;
 > diafragmas borrables + centro en el centroide `[#91]`; y N° de modos por defecto
 > = máx(12, 3·nº diafragmas) `[#92]`.
-> **G21 completo**: separar «volver a vista modelo» de «limpiar resultados» `[#88]`,
-> control de velocidad de animaciones `[#94]`, y **todos los resultados como pestañas**
-> (sin ventanas flotantes — los 6 overlays NL migrados) `[#90]`.
-> **Lo que queda (mayor)**: **`[#86]`** macromodelos, **`[#52/#53]`** mesheador/IA-torre, y los
-> módulos grandes **G7** (multi-modelo), **G18** (SAP2000/ETABS) y **G19** (IFC). Y, al
-> final del todo —lo **más difícil conceptualmente**— la **dinámica NO lineal de alta
-> fidelidad** del modelo completo (**`[#48b]`** rótulas por barra + **`[#85]`** cáscaras
-> NL), que se unen en un solo frente; el autor ya tiene los solvers de `[#48b]`, falta integrarlos.
+> **G14 completo** — las 4 «otras parciales» con verificación analítica: resorte de extremo
+> `1-008`, viga sobre fundación Winkler `1-013`, viga corotacional 2D de gran rotación
+> `1-029`, y **pandeo de cáscara** `2-016/2-017` (Kg de membrana vs placa de Bryan).
+> **G21 completo**: «vista modelo» ≠ «limpiar» `[#88]`, velocidad de animaciones `[#94]`,
+> y **todos los resultados como pestañas** (6 overlays NL migrados) `[#90]`.
+> **Más de esta tanda**: super-pestaña **«Temporales»** `[#82]`, **«Casos y combos»** a Modelo
+> `[#101]`, monitor de **centro de masa** en el time-history `[#99]`, suavizado de malla
+> **smart-Laplacian** `[#52]`, **imán** de selección de nodos, y dos features de **G13**:
+> la **IA genera torres de transmisión** `[#53]` y el primer **macromodelo** (muro de relleno /
+> puntal diagonal de Mainstone) `[#86]`.
+> **Lo que queda (mayor)**: refinos de **`[#86]`** (degradación, catálogo de macromodelos,
+> panel re-expandible) y de **`[#52]`** (paving), y los módulos grandes **G7** (multi-modelo),
+> **G18** (SAP2000/ETABS) y **G19** (IFC). Y, al final del todo —lo **más difícil
+> conceptualmente**— la **dinámica NO lineal de alta fidelidad** del modelo completo
+> (**`[#48b]`** rótulas por barra + **`[#85]`** cáscaras NL); el autor ya tiene los solvers de `[#48b]`, falta integrarlos.
 
 ---
 
@@ -242,7 +249,7 @@ y los 3 motores+UI de **puentes**. Lo que queda abierto, ordenado por esfuerzo c
 6. ✅ **`[#58]` Tensión/deformación plana** en membrana — hecho (ver G14).
 
 **🔴 Mayores (cambios de flujo o features grandes)**
-7. **`[#86]`** **macromodelos** (infill wall, etc.) como objeto 2D que expande a barras/cables/resortes (G13) · ✅ **`[#59]`/`[#60]`/`[#61]`** puentes (etapas, pretensado, cargas móviles) — **motores + UI hechos y verificados** · **`[#52]`** mesheador Gmsh (G13, fases 1-3 hechas) · **`[#53]`** IA torre (G13) · **G7** multi-modelo (rediseño mayor) · y —**al final del todo, lo más difícil conceptualmente**— la **dinámica NO lineal de alta fidelidad** ⏸️ **`[#48b]` + `[#85]`** (integración directa del modelo completo: rótulas por barra + cáscaras NL; el autor ya tiene los solvers de #48b, falta integrarlos).
+7. 🟡 **`[#86]`** **macromodelos** — primer macromodelo (muro de relleno / puntal diagonal de Mainstone) **hecho**; faltan degradación + catálogo · ✅ **`[#59]`/`[#60]`/`[#61]`** puentes (etapas, pretensado, cargas móviles) · ✅ **`[#52]`** mesheador (fases 1-3 + smart-Laplacian; falta paving avanzado) · ✅ **`[#53]`** IA torre de transmisión · **G7** multi-modelo (rediseño mayor) · y —**al final del todo, lo más difícil conceptualmente**— la **dinámica NO lineal de alta fidelidad** ⏸️ **`[#48b]` + `[#85]`** (integración directa del modelo completo: rótulas por barra + cáscaras NL; el autor ya tiene los solvers de #48b, falta integrarlos).
 
 **🏛️ Pendientes normativos (G16)** — ✅ **prácticamente completos**: `[#66]` catálogo de perfiles ✅ · `[#67]` formas C/L/T + F9/F10 ✅ · `[#64]` interacción kyy/kzz EC3 ✅ · `[#63]` aluminio EC9 ✅ · `[#65]` diagrama P-M de hormigón (uni+biaxial) ✅ · `[#68]` servicio + SCWB ✅. *(Sólo refinos menores: flecha relativa a la cuerda, armado multicapa en P-M biaxial.)*
 
