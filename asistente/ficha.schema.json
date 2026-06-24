@@ -11,9 +11,38 @@
     "modo": { "type": "string", "enum": ["2D", "3D"], "description": "2D = pórtico plano X–Z (sin ejes Y)." },
     "tipologia": {
       "type": "string",
-      "enum": ["marco", "muros_madera", "cercha", "puente", "galpon", "primitivas"],
+      "enum": ["marco", "muros_madera", "cercha", "puente", "galpon", "torre", "primitivas"],
       "default": "marco",
-      "description": "marco = pórtico de pilares y vigas. muros_madera = entramado ligero (madera o acero). cercha = celosía de techo (Warren/Pratt/Howe). puente = tablero/viga central sobre pilas. galpon = nave industrial. primitivas = ESTRUCTURA LIBRE para CUALQUIER caso sin plantilla (torres, mástiles, parrillas, puentes de N vigas…): se rellena 'elementos' y 'apoyos' con coordenadas. Usa 'primitivas' cuando ninguna plantilla encaje."
+      "description": "marco = pórtico de pilares y vigas. muros_madera = entramado ligero (madera o acero). cercha = celosía de techo (Warren/Pratt/Howe). puente = tablero/viga central sobre pilas. galpon = nave industrial. torre = torre de transmisión / celosía espacial 3D (4 patas cónicas + crucetas). primitivas = ESTRUCTURA LIBRE para CUALQUIER caso sin plantilla: se rellena 'elementos' y 'apoyos' con coordenadas. Usa 'primitivas' cuando ninguna plantilla encaje."
+    },
+
+    "torre": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Torre de transmisión / celosía espacial (tipologia 'torre').",
+      "properties": {
+        "altura_m": { "type": "number", "exclusiveMinimum": 0 },
+        "base_m": { "type": "number", "exclusiveMinimum": 0, "description": "Ancho de la base (planta cuadrada)." },
+        "cima_m": { "type": "number", "minimum": 0, "description": "Ancho de la cima." },
+        "paneles": { "type": "integer", "minimum": 2 },
+        "arriostramiento": { "type": "string", "enum": ["X"], "default": "X" },
+        "rotulado": { "type": "boolean", "description": "true = articulada (reticulado); false = nudos rígidos." },
+        "perfil_montante": { "type": ["string", "object"] },
+        "perfil_diagonal": { "type": ["string", "object"] },
+        "crucetas": {
+          "type": "array",
+          "description": "Ménsulas para los conductores, a ±X.",
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "properties": {
+              "z_m": { "type": "number", "exclusiveMinimum": 0 },
+              "largo_m": { "type": "number", "exclusiveMinimum": 0 },
+              "carga_vertical_kN": { "type": "number", "minimum": 0 },
+              "carga_transversal_kN": { "type": "number", "minimum": 0 }
+            }
+          }
+        }
+      }
     },
 
     "ubicacion": {

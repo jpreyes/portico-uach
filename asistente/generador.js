@@ -228,6 +228,9 @@ function tributario(ejes, j) {
 export function generarModelo(ficha, libs) {
   // Despacho por tipología: madera y cercha tienen geometría propia.
   const tip = String(ficha.tipologia || 'marco').toLowerCase();
+  // Torre de transmisión PARAMÉTRICA (#53): ficha.torre con dimensiones → celosía 3D.
+  if (ficha.torre && typeof ficha.torre === 'object' && !(Array.isArray(ficha.elementos) && ficha.elementos.length)
+      || (/torre|mastil|transmis|alta.?tensi|celos[ií]a.?(3d|espacial)/.test(tip) && ficha.torre)) return generarTorre(ficha, libs);
   if (/primitiv|libre|custom|generic|torre|mastil|celos[ií]a.?libre/.test(tip) || (Array.isArray(ficha.elementos) && ficha.elementos.length)) return generarDesdePrimitivas(ficha, libs);
   if (/puente|bridge|viaduct|pasarela/.test(tip)) return generarPuente(ficha, libs);
   if (/galp|nave|industrial|shed|hangar|bodega/.test(tip)) return generarGalpon(ficha, libs);
@@ -946,6 +949,111 @@ export function generarMurosMadera(ficha, libs) {
 //   superior a dos aguas (cumbrera al centro); web Warren (diagonales en zigzag,
 //   una por panel, alternando) + pendolón en la cumbrera. Resiliente.
 // ──────────────────────────────────────────────────────────────────────────────
+/**
+ * Generador paramétrico de TORRE DE TRANSMISIÓN (celosía espacial 3D) — #53.
+ * 4 patas cónicas (base→cima) en n paneles, anillos horizontales, diagonales en X
+ * por cara, crucetas (ménsulas) para los conductores, apoyos en la base y cargas de
+ * peso propio / viento / cable+hielo.
+ * ficha.torre = { altura_m, base_m, cima_m, paneles, arriostramiento:'X'|'K',
+ *   perfil_montante, perfil_diagonal, rotulado, crucetas:[{z_m, largo_m, carga_vertical_kN, carga_transversal_kN}] }
+ */
+export function generarTorre(ficha, libs) {
+  const avisos = []; const aviso = (tipo, msg) => avisos.push({ tipo, msg });
+  const T = ficha.torre || {};
+  const materiales = libs.materiales || [], perfiles = libs.perfiles || [];
+
+  const matRow = resolverMaterialFlexible(T.material || (ficha.secciones || {}).material || 'acero', materiales, aviso);
+  const mat = matRow || { name: 'Acero S275', E: 2.0e8, G: 7.7e7, nu: 0.3, rho: 7.85 }; mat.id = 1;
+  const secMont = pickSeccionGen(T.perfil_montante, perfiles, { b_cm: 12, h_cm: 12 }, 'Montante/pata de la torre', aviso); secMont.id = 1;
+  const secDiag = pickSeccionGen(T.perfil_diagonal, perfiles, { b_cm: 8, h_cm: 8 }, 'Diagonal de la torre', aviso); secDiag.id = 2;
+
+  const H = T.altura_m > 0 ? T.altura_m : 30; if (!(T.altura_m > 0)) aviso('reemplazo', 'Altura no indicada: 30 m.');
+  const Bw = T.base_m > 0 ? T.base_m : 6;     if (!(T.base_m > 0)) aviso('reemplazo', 'Ancho de base no indicado: 6 m.');
+  const Tw = T.cima_m >= 0 ? T.cima_m : 1.5;
+  const n = Math.max(2, Math.round(T.paneles || 8));
+  const rotul = T.rotulado === true;
+  if (/k/i.test(String(T.arriostramiento || '')) ) aviso('info', 'Arriostramiento K aún no soportado: se usó X.');
+
+  const nodes = [], elements = []; let nid = 0, eid = 0;
+  const rk = v => Math.round(v * 1e5) / 1e5;
+  const node = (x, y, z, restr) => { const id = ++nid; nodes.push({ id, x: rk(x), y: rk(y), z: rk(z), restraints: restr || { ux: 0, uy: 0, uz: 0, rx: 0, ry: 0, rz: 0 }, nodeMass: { mx: 0, my: 0, mz: 0 }, springs: { kux: 0, kuy: 0, kuz: 0, krx: 0, kry: 0, krz: 0 } }); return id; };
+  const rel = rotul ? [0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1] : Array(12).fill(0);
+  const addEl = (a, b, secId) => { if (a == null || b == null || a === b) return null; const id = ++eid; elements.push({ id, n1: a, n2: b, matId: 1, secId, releases: [...rel] }); return id; };
+
+  // 4 patas: esquina c en (cx,cy). c: 0=(−,−) 1=(+,−) 2=(+,+) 3=(−,+)
+  const cx = [-1, 1, 1, -1], cy = [-1, -1, 1, 1];
+  const hwOf = (i) => (Bw + (Tw - Bw) * i / n) / 2;            // semiancho a la fracción i
+  const lvl = [];
+  for (let i = 0; i <= n; i++) {
+    const z = H * i / n, hw = hwOf(i); lvl[i] = [];
+    for (let c = 0; c < 4; c++) {
+      const restr = i === 0 ? { ux: 1, uy: 1, uz: 1, rx: rotul ? 0 : 1, ry: rotul ? 0 : 1, rz: rotul ? 0 : 1 } : null;
+      lvl[i][c] = node(cx[c] * hw, cy[c] * hw, z, restr);
+    }
+  }
+  for (let c = 0; c < 4; c++) addEl(lvl[0][c], lvl[0][(c + 1) % 4], secMont.id);   // anillo base
+  for (let i = 0; i < n; i++) {
+    for (let c = 0; c < 4; c++) addEl(lvl[i][c], lvl[i + 1][c], secMont.id);          // patas
+    for (let c = 0; c < 4; c++) addEl(lvl[i + 1][c], lvl[i + 1][(c + 1) % 4], secMont.id);  // anillo sup
+    for (let c = 0; c < 4; c++) {                                                     // X en cada cara
+      addEl(lvl[i][c], lvl[i + 1][(c + 1) % 4], secDiag.id);
+      addEl(lvl[i][(c + 1) % 4], lvl[i + 1][c], secDiag.id);
+    }
+  }
+
+  // ── Crucetas (ménsulas) para los conductores, a ±X ──
+  const lcCM = { id: 1, name: 'CM (PP)', loads: [], selfWeight: true, type: 'static', specDir: null };
+  const lcVi = { id: 2, name: 'Viento', loads: [], selfWeight: false, type: 'static', specDir: null };
+  const lcCa = { id: 3, name: 'Cables', loads: [], selfWeight: false, type: 'static', specDir: null };
+  const armTips = [];
+  for (const cr of (T.crucetas || [])) {
+    const zc = cr.z_m, largo = cr.largo_m > 0 ? cr.largo_m : Bw;
+    if (!(zc > 0)) continue;
+    const i = Math.max(0, Math.min(n, Math.round(zc / (H / n))));   // nivel más cercano
+    const hw = hwOf(i), z = H * i / n;
+    for (const sgn of [-1, +1]) {                                   // brazo a −X y +X
+      const tip = node(sgn * (hw + largo), 0, z);
+      const cTop = sgn < 0 ? [3, 0] : [2, 1];    // esquinas de ese lado: −X={3,0}, +X={2,1}
+      addEl(tip, lvl[i][cTop[0]], secDiag.id);
+      addEl(tip, lvl[i][cTop[1]], secDiag.id);
+      if (i > 0) { addEl(tip, lvl[i - 1][cTop[0]], secDiag.id); addEl(tip, lvl[i - 1][cTop[1]], secDiag.id); }  // tirante de pie
+      armTips.push(tip);
+      const Pv = cr.carga_vertical_kN > 0 ? cr.carga_vertical_kN : 10;   // conductor + hielo
+      const Pt = cr.carga_transversal_kN > 0 ? cr.carga_transversal_kN : 5; // viento sobre el cable
+      lcCa.loads.push({ type: 'nodal', nodeId: tip, F: [Pt, 0, -Pv, 0, 0, 0] });
+    }
+  }
+
+  // ── Viento sobre la estructura: carga lateral +X repartida en los nodos de pata ──
+  const q = ficha.cargas?.viento_kPa > 0 ? ficha.cargas.viento_kPa : 0.5;
+  for (let i = 1; i <= n; i++) {
+    const hw = hwOf(i), area = (2 * hw) * (H / n);    // área proyectada tributaria del panel
+    const fNode = q * area / 4;                        // a los 4 nodos del nivel
+    for (let c = 0; c < 4; c++) lcVi.loads.push({ type: 'nodal', nodeId: lvl[i][c], F: [fNode, 0, 0, 0, 0, 0] });
+  }
+  if (!(ficha.cargas?.viento_kPa > 0)) aviso('estimado', 'Presión de viento no indicada: 0.5 kPa.');
+
+  const combinations = [
+    { id: 1, name: '1.2 CM + 1.6 Viento', factors: [{ caseId: 1, factor: 1.2 }, { caseId: 2, factor: 1.6 }, { caseId: 3, factor: 1.2 }] },
+    { id: 2, name: 'CM + Viento + Cables (servicio)', factors: [{ caseId: 1, factor: 1 }, { caseId: 2, factor: 1 }, { caseId: 3, factor: 1 }] },
+  ];
+  aviso('info', `Torre 3D: ${nodes.length} nodos · ${elements.length} barras · ${n} paneles · base ${Bw} m → cima ${Tw} m · ${H} m de alto${(T.crucetas || []).length ? ` · ${(T.crucetas || []).length} crucetas` : ''}. ${rotul ? 'Articulada (reticulado).' : 'Nudos rígidos.'}`);
+
+  return {
+    version: '1.0', units: 'kN-m', mode: '3D',
+    nodes, elements,
+    materials: [{ id: 1, name: mat.name, E: mat.E, G: mat.G, nu: mat.nu, rho: mat.rho, alpha: mat.alpha ?? 1.2e-5 }],
+    sections: [secMont, secDiag],
+    diaphragms: [], loadCases: [lcCM, lcVi, lcCa], combinations,
+    _generado: {
+      por: 'asistente/generador.js (torre de transmisión)',
+      reglas: libs.reglas?._meta?.version,
+      resumen: `torre ${H} m, base ${Bw}→cima ${Tw} m, ${n} paneles, ${(T.crucetas || []).length} crucetas: ${nodes.length} nodos, ${elements.length} barras`,
+    },
+    _avisos: avisos,
+  };
+}
+
 export function generarCercha(ficha, libs) {
   // Si se pide en 3D, generar una VIGA WARREN ESPACIAL (dos cerchas paralelas
   // arriostradas) — estable en 3D y analizable con discretización, a diferencia

@@ -44,6 +44,20 @@ Tipologías de PUENTE (`tipologia:"puente"` + `puente:{...}`):
   análisis lineal estable). Ej.: *"puente arco atirantado de 80 m, flecha 16 m"* →
   `{"tipologia":"puente","puente":{"tipo":"arco_atirantado","largo_m":80,"flecha_m":16}}`.
 
+Tipología TORRE DE TRANSMISIÓN / celosía espacial (`tipologia:"torre"` + `torre:{...}`):
+- Celosía 3D de 4 patas cónicas (base→cima) con anillos horizontales y diagonales en X
+  por cara; el generador crea apoyos en la base, secciones y cargas de viento/cable.
+- Campos de `torre`: `altura_m`, `base_m` (ancho de base, cuadrada), `cima_m` (ancho de
+  la cima), `paneles` (nº de paneles verticales), `arriostramiento` (`"X"`), `rotulado`
+  (true=articulada/reticulado, false=nudos rígidos), `perfil_montante`/`perfil_diagonal`
+  (perfil del catálogo o escuadría), y `crucetas` (ménsulas para los conductores, a ±X):
+  lista de `{ z_m (altura), largo_m (brazo), carga_vertical_kN (conductor+hielo),
+  carga_transversal_kN (viento sobre el cable) }`.
+- `cargas.viento_kPa` = presión de viento sobre la estructura (default 0.5 kPa).
+- Ej.: *"torre de alta tensión de 30 m, base 6 m, cima 1.5 m, 8 paneles, con 3 crucetas
+  de 4 m a 22, 26 y 30 m"* →
+  `{"tipologia":"torre","torre":{"altura_m":30,"base_m":6,"cima_m":1.5,"paneles":8,"crucetas":[{"z_m":22,"largo_m":4},{"z_m":26,"largo_m":4},{"z_m":30,"largo_m":4}]}}`.
+
 Reglas:
 - Si un dato no se menciona, **omítelo** (el generador aplica defaults). No inventes
   valores de ingeniería.
