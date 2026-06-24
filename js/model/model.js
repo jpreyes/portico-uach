@@ -89,10 +89,28 @@ export class Model {
       if (!n.springs) n.springs = { kux: 0, kuy: 0, kuz: 0, krx: 0, kry: 0, krz: 0 };
       Object.assign(n.springs, props.springs);
     }
+    // Resorte UNILATERAL por GDL (#3): '' / 'c' (solo-compresión, actúa con u≤0) /
+    // 't' (solo-tracción, actúa con u≥0). El resorte se desactiva cuando el apoyo se
+    // despega (uplift/gap), resuelto por conjunto activo en el solver estático.
+    if (props.springUni) {
+      if (!n.springUni) n.springUni = { ux: '', uy: '', uz: '', rx: '', ry: '', rz: '' };
+      Object.assign(n.springUni, props.springUni);
+      if (!Object.values(n.springUni).some(v => v === 'c' || v === 't')) delete n.springUni;
+    }
     // Matriz de resorte ACOPLADA 6×6 (#2): resortes inclinados / rigidez suelo-estructura
     // cruzada. `null`/array vacío = sin acoplamiento (se usa sólo la diagonal `springs`).
     if (props.springK !== undefined) {
       n.springK = (Array.isArray(props.springK) && props.springK.length === 36 && props.springK.some(v => v)) ? props.springK.map(Number) : null;
+    }
+    // Resorte de SUELO NO LINEAL (#4): por GDL, curva fuerza–desplazamiento tabulada
+    // [[d,F],…] monótona (p-y lateral / t-z fuste / q-z punta). El solver estático la
+    // resuelve por Newton. Fuera del rango tabulado se satura (fuerza última). null/[] = sin curva.
+    if (props.soilSpring !== undefined) {
+      const ss = props.soilSpring || {};
+      const out = {};
+      for (const d of ['ux', 'uy', 'uz', 'rx', 'ry', 'rz'])
+        if (Array.isArray(ss[d]) && ss[d].length >= 2) out[d] = ss[d].map(p => [+p[0], +p[1]]);
+      n.soilSpring = Object.keys(out).length ? out : null;
     }
     // Desplazamiento prescrito (asentamiento/giro de apoyo). Valores en m / rad.
     // Un GDL con valor ≠ 0 se impone como soporte con ese desplazamiento (#54).

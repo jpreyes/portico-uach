@@ -1,8 +1,8 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // PropertiesPanel — right-side panel: node/element properties + mat/sec tabs
 // ──────────────────────────────────────────────────────────────────────────────
-import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=206';
-import { localAxes } from '../solver/timoshenko.js?v=206';
+import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=207';
+import { localAxes } from '../solver/timoshenko.js?v=207';
 
 export class PropertiesPanel {
   constructor(panelEl, app) {
@@ -170,7 +170,7 @@ export class PropertiesPanel {
   // madera). Cambiarlo fija model.designSettings.codeByFamily y re-verifica.
   async _designCodeSelectorHTML() {
     try {
-      const mod = this._designMod || (this._designMod = await import('../design/diseno.js?v=206'));
+      const mod = this._designMod || (this._designMod = await import('../design/diseno.js?v=207'));
       const fams = new Set();
       for (const m of this.app.model.materials.values()) {
         const fam = (m.design?.family) || mod.clasificarMaterial(m.name);
@@ -1169,6 +1169,8 @@ export class PropertiesPanel {
     const sp = node.springs  || { kux: 0, kuy: 0, kuz: 0, krx: 0, kry: 0, krz: 0 };
     const hasSp = Object.values(sp).some(k => k > 0);
     const hasSK = Array.isArray(node.springK) && node.springK.length === 36;   // resorte acoplado (#2)
+    const su = node.springUni || {};   // resorte unilateral (#3)
+    const uniMode = ['ux', 'uy', 'uz', 'rx', 'ry', 'rz'].map(d => su[d]).find(v => v === 'c' || v === 't') || '';
     const pd = node.prescDisp || { ux: 0, uy: 0, uz: 0, rx: 0, ry: 0, rz: 0 };
     const hasPD = Object.values(pd).some(v => v);
     const is2D = this.app.model.mode === '2D';
@@ -1239,6 +1241,16 @@ export class PropertiesPanel {
           Apoyo parcial: resorte en GDL global <b>libre</b> (no marque la
           restricción rígida de ese GDL). k = 0 → sin resorte. La reacción
           del resorte aparece al mostrar Reacciones.
+        </div>
+        <div class="prop-row" style="margin-top:6px">
+          <div class="prop-field" style="flex:1">
+            <label title="Apoyo UNILATERAL: el resorte se desactiva cuando el nodo se despega (uplift/gap). Solo-compresión = no toma tracción (fundaciones que se levantan). Se resuelve por conjunto activo en el análisis estático (#3).">Unilateral (a los GDL con resorte)</label>
+            <select id="ns-uni" style="width:100%">
+              <option value="" ${uniMode === '' ? 'selected' : ''}>Bilateral (normal)</option>
+              <option value="c" ${uniMode === 'c' ? 'selected' : ''}>Solo-compresión (uplift)</option>
+              <option value="t" ${uniMode === 't' ? 'selected' : ''}>Solo-tracción</option>
+            </select>
+          </div>
         </div>
         <div class="prop-row cols4" style="margin-top:6px">
           <div class="prop-field"><label title="Rigidez del resorte a lo largo de la dirección dada">k incl. (kN/m)</label>
@@ -1356,7 +1368,12 @@ export class PropertiesPanel {
         ux: numVal('#np-ux'), uy: numVal('#np-uy'), uz: numVal('#np-uz'),
         rx: numVal('#np-rx'), ry: numVal('#np-ry'), rz: numVal('#np-rz'),
       };
-      this.app.model.updateNode(node.id, { x, y, z, restraints, nodeMass, springs, prescDisp });
+      // Resorte unilateral (#3): el modo elegido se aplica a los GDL que tengan resorte (k>0).
+      const uniSel = sel.querySelector('#ns-uni')?.value || '';
+      const springUni = {};
+      [['ux', springs.kux], ['uy', springs.kuy], ['uz', springs.kuz], ['rx', springs.krx], ['ry', springs.kry], ['rz', springs.krz]]
+        .forEach(([d, kk]) => springUni[d] = (uniSel && kk > 0) ? uniSel : '');
+      this.app.model.updateNode(node.id, { x, y, z, restraints, nodeMass, springs, prescDisp, springUni });
       this.app.viewport.refreshNode(this.app.model.nodes.get(node.id));
       this.app.markDirty();
     };
@@ -1367,6 +1384,7 @@ export class PropertiesPanel {
     sel.querySelectorAll('[data-dof]').forEach(cb =>
       cb.addEventListener('change', save)
     );
+    sel.querySelector('#ns-uni')?.addEventListener('change', save);   // resorte unilateral (#3)
 
     // Quick presets
     sel.querySelector('#btn-fix-all')?.addEventListener('click', () => {
@@ -1889,7 +1907,7 @@ export class PropertiesPanel {
       <select id="mat-catalog"><option value="">— catálogo —</option></select></div>
       <button id="mat-catalog-add" class="btn-secondary" style="white-space:nowrap;font-size:11px">＋ Insertar</button>`;
     container.appendChild(pick);
-    import('../design/materials_catalog.js?v=206').then(({ MATERIAL_FAMILIES, getMaterialDef }) => {
+    import('../design/materials_catalog.js?v=207').then(({ MATERIAL_FAMILIES, getMaterialDef }) => {
       const sel = pick.querySelector('#mat-catalog');
       sel.innerHTML = '<option value="">— catálogo —</option>' +
         Object.entries(MATERIAL_FAMILIES).map(([fam, names]) => `<optgroup label="${fam}">` + names.map(n => `<option value="${n}">${n}</option>`).join('') + '</optgroup>').join('');
@@ -2355,7 +2373,7 @@ export class PropertiesPanel {
     if (!shapeSel) return;
     // Catálogo de perfiles tabulados (#66): poblar y aplicar al elegir.
     const catSel = card.querySelector('.sd-catalog');
-    if (catSel) import('../design/profiles.js?v=206').then(({ catalogFamilies, catalogNames, profileToSection }) => {
+    if (catSel) import('../design/profiles.js?v=207').then(({ catalogFamilies, catalogNames, profileToSection }) => {
       let html = '<option value="">— elegir perfil comercial —</option>';
       for (const fam of catalogFamilies()) html += `<optgroup label="${fam}">` + catalogNames(fam).map(n => `<option value="${n}" ${sec.design?.profile === n ? 'selected' : ''}>${n}</option>`).join('') + '</optgroup>';
       catSel.innerHTML = html;
@@ -2406,7 +2424,7 @@ export class PropertiesPanel {
       const s = this.app.model.sections.get(sec.id);
       if (!s.design?.shape || s.design.shape === 'generic') { this.app.toast('Elija una forma con dimensiones primero', 'warn'); return; }
       try {
-        const { fromShape } = await import('../design/section_props.js?v=206');
+        const { fromShape } = await import('../design/section_props.js?v=207');
         const g = fromShape(s.design.shape, s.design);
         if (!g) { this.app.toast('Faltan dimensiones de la forma', 'warn'); return; }
         this.app.snapshot();
