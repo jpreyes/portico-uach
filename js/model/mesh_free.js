@@ -15,9 +15,9 @@
 // Soporta AGUJEROS (opts.holes): cada hueco se fusiona al contorno con un puente de
 // ancho cero (bridging estilo earcut) → polígono simple que ear-clipping triangula.
 // ──────────────────────────────────────────────────────────────────────────────
-import { quadMinScaledJacobian, weldPoints } from './mesh_map.js?v=184';
-import { triQuality, boundaryNodes, laplacianSmooth } from './mesh_quality.js?v=184';
-import { maxWeightMatching } from './matching.js?v=184';
+import { quadMinScaledJacobian, weldPoints } from './mesh_map.js?v=185';
+import { triQuality, quadQuality, boundaryNodes, laplacianSmooth } from './mesh_quality.js?v=185';
+import { maxWeightMatching } from './matching.js?v=185';
 
 const EPS = 1e-9;
 const signedArea2 = (pts) => { let s = 0; for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length]; s += a[0] * b[1] - b[0] * a[1]; } return s / 2; };
@@ -109,13 +109,113 @@ export function uniformRefine(V, tris) {
   return out;
 }
 
+// ── 3b. Refinamiento ADAPTATIVO por arista más larga (Rivara, conforme) ──────────
+// Subdivide selectivamente donde el tamaño objetivo `targetFn(x,y)` es menor que la
+// arista, manteniendo la malla CONFORME (sin nodos colgantes): se usa un conjunto
+// GLOBAL de aristas a bisecar + caché de puntos medios compartidos, con CLAUSURA de
+// arista más larga (Rivara) → garantiza terminación y buenos ángulos.  Cada triángulo
+// se parte en 2/3/4 según cuántas de sus aristas estén marcadas.
+function splitTri(V, tri, marked, getMid) {
+  const ek = (x, y) => x < y ? `${x},${y}` : `${y},${x}`;
+  const [a, b, c] = tri;
+  const E = [[a, b], [b, c], [c, a]];
+  const mk = E.map(([x, y]) => marked.has(ek(x, y)));
+  const n = (mk[0] ? 1 : 0) + (mk[1] ? 1 : 0) + (mk[2] ? 1 : 0);
+  if (n === 0) return [tri];
+  if (n === 3) { const ab = getMid(a, b), bc = getMid(b, c), ca = getMid(c, a); return [[a, ab, ca], [ab, b, bc], [ca, bc, c], [ab, bc, ca]]; }
+  if (n === 1) { const i = mk.indexOf(true); const [x, y] = E[i]; const z = tri[(i + 2) % 3]; const m = getMid(x, y); return [[x, m, z], [m, y, z]]; }
+  // n === 2: rota para que la arista NO marcada sea CA → AB y BC marcadas
+  const u = mk.indexOf(false);
+  let A, B, C;
+  if (u === 0) { A = b; B = c; C = a; } else if (u === 1) { A = c; B = a; C = b; } else { A = a; B = b; C = c; }
+  const p = getMid(A, B), q = getMid(B, C);
+  const out = [[p, B, q]];                                 // esquina en B
+  const d = (i, j) => Math.hypot(V[i][0] - V[j][0], V[i][1] - V[j][1]);
+  if (d(A, q) <= d(p, C)) out.push([A, p, q], [A, q, C]);  // diagonal más corta (mejor forma)
+  else out.push([A, p, C], [p, q, C]);
+  return out;
+}
+
+export function adaptiveRefine(V, tris, targetFn, opts = {}) {
+  const maxPass = opts.maxPass ?? 6;
+  const ek = (x, y) => x < y ? `${x},${y}` : `${y},${x}`;
+  const len = (x, y) => Math.hypot(V[x][0] - V[y][0], V[x][1] - V[y][1]);
+  const longest = (t) => { let bi = 0, bl = -1; for (let i = 0; i < 3; i++) { const l = len(t[i], t[(i + 1) % 3]); if (l > bl) { bl = l; bi = i; } } return bi; };
+  for (let pass = 0; pass < maxPass; pass++) {
+    const marked = new Set();
+    for (const t of tris) {
+      const cx = (V[t[0]][0] + V[t[1]][0] + V[t[2]][0]) / 3, cy = (V[t[0]][1] + V[t[1]][1] + V[t[2]][1]) / 3;
+      const li = longest(t);
+      if (len(t[li], t[(li + 1) % 3]) > targetFn(cx, cy) * 1.0000001) marked.add(ek(t[li], t[(li + 1) % 3]));
+    }
+    if (!marked.size) break;
+    // clausura de Rivara: todo triángulo con alguna arista marcada marca también su arista más larga
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const t of tris) {
+        let any = false; for (let i = 0; i < 3; i++) if (marked.has(ek(t[i], t[(i + 1) % 3]))) { any = true; break; }
+        if (!any) continue;
+        const li = longest(t), k = ek(t[li], t[(li + 1) % 3]);
+        if (!marked.has(k)) { marked.add(k); changed = true; }
+      }
+    }
+    const mid = new Map();
+    const getMid = (x, y) => { const k = ek(x, y); if (mid.has(k)) return mid.get(k); V.push([(V[x][0] + V[y][0]) / 2, (V[x][1] + V[y][1]) / 2]); mid.set(k, V.length - 1); return V.length - 1; };
+    const out = [];
+    for (const t of tris) for (const nt of splitTri(V, t, marked, getMid)) out.push(nt);
+    tris = out;
+  }
+  return tris;
+}
+
+// Campo de tamaño por CURVATURA del contorno: refina cerca de esquinas REENTRANTES
+// (entrante en el material → concentración de tensiones, p.ej. el ángulo interior de
+// una L) y de PUNTAS muy agudas.  Devuelve targetFn(x,y) = tamaño objetivo: hmin en la
+// esquina, creciendo linealmente (gradiente `grade`) hasta h lejos de ella.
+// `rings` = anillos del dominio [outer, …holes] en 2D; el primero es el contorno (CCW),
+// los demás agujeros (CW); por eso TODA esquina convexa de un agujero es reentrante
+// para el material y también se refina.
+function buildCurvatureSizeField(rings, h, cfg = {}) {
+  const hmin = cfg.hmin ?? h / 2;
+  const grade = cfg.grade ?? 0.5;
+  const reentrant = cfg.reentrant ?? 200;   // ángulo interior (°) > esto → reentrante
+  const acute = cfg.acute ?? 50;            // ángulo interior (°) < esto → punta aguda
+  const corners = [];
+  rings.forEach((ringIn, ri) => {
+    if (ringIn.length < 3) return;
+    // orienta: contorno CCW (área>0), agujeros CW (área<0) → el ángulo interior medido es el del MATERIAL
+    let ring = ringIn.slice(); const area = signedArea2(ring);
+    if ((ri === 0 && area < 0) || (ri > 0 && area > 0)) ring = ring.reverse();
+    const n = ring.length;
+    for (let i = 0; i < n; i++) {
+      const a = ring[(i - 1 + n) % n], b = ring[i], c = ring[(i + 1) % n];
+      const dix = b[0] - a[0], diy = b[1] - a[1], dox = c[0] - b[0], doy = c[1] - b[1];   // dir. entrante/saliente
+      const turn = Math.atan2(dix * doy - diy * dox, dix * dox + diy * doy) * 180 / Math.PI;  // giro exterior firmado
+      const interior = 180 - turn;            // CCW: ángulo interior del material
+      if (interior > reentrant || interior < acute) corners.push([b[0], b[1]]);
+    }
+  });
+  if (!corners.length) return null;
+  return (x, y) => {
+    let s = h;
+    for (const P of corners) { const d = Math.hypot(x - P[0], y - P[1]); const v = hmin + grade * d; if (v < s) s = v; }
+    return Math.max(hmin, Math.min(h, s));
+  };
+}
+
 // ── 4. Recombinación a cuadriláteros ─────────────────────────────────────────────
 // Empareja triángulos adyacentes que formen un buen quad.  Por defecto resuelve el
 // EMPAREJAMIENTO DE PESO MÁXIMO exacto (Edmonds/«Blossom», `matching.js`) sobre el
 // grafo «triángulo–triángulo» con peso = calidad del quad → óptimo GLOBAL (más quads
 // y de mejor calidad que el emparejado voraz, como en Gmsh).  `opts.blossom===false`
 // vuelve al voraz (orden por calidad descendente). Devuelve celdas [tri…] + [quad…].
+//   opts.cost = 'gmsh' (def.) → peso = calidad ANGULAR de Remacle η=1−(2/π)·máx|90°−θ|
+//               (el criterio de blossom-quad de Gmsh, premia ángulos rectos);
+//             = 'jac'        → peso = Jacobiano escalado mínimo (forma).
+// El Jacobiano escalado SIEMPRE filtra la validez (jac>minJac descarta quads cóncavos).
 export function recombineToQuads(V, tris, minJac = 0.30, opts = {}) {
+  const cost = opts.cost ?? 'gmsh';
   const key = (a, b) => a < b ? `${a},${b}` : `${b},${a}`;
   const edge = new Map();
   tris.forEach((t, ti) => { for (let e = 0; e < 3; e++) { const a = t[e], b = t[(e + 1) % 3], opp = t[(e + 2) % 3]; const k = key(a, b); if (!edge.has(k)) edge.set(k, []); edge.get(k).push({ ti, opp, a, b }); } });
@@ -125,8 +225,12 @@ export function recombineToQuads(V, tris, minJac = 0.30, opts = {}) {
     if (arr.length !== 2) continue;
     const [e1, e2] = arr; const u = e1.a, v = e1.b, p = e1.opp, q = e2.opp;
     const quad = [p, u, q, v];   // alrededor: apex t1 → comp → apex t2 → comp
-    const jac = quadMinScaledJacobian(lift(quad[0]), lift(quad[1]), lift(quad[2]), lift(quad[3]));
-    if (jac > minJac) cands.push({ t1: e1.ti, t2: e2.ti, quad, jac });
+    const P = [lift(quad[0]), lift(quad[1]), lift(quad[2]), lift(quad[3])];
+    const jac = quadMinScaledJacobian(...P);
+    if (jac <= minJac) continue;                          // descarta quads inválidos/cóncavos
+    let w = jac;
+    if (cost === 'gmsh') { const qq = quadQuality(...P); w = Math.max(0, 1 - Math.max(Math.abs(90 - qq.minAngle), Math.abs(90 - qq.maxAngle)) / 90); }
+    cands.push({ t1: e1.ti, t2: e2.ti, quad, jac: w });
   }
   const used = new Array(tris.length).fill(false);
   const cells = [];
@@ -247,11 +351,12 @@ function eliminateHoles(outer, holes) {
 // ── Orquestador: polígono 2D → malla {V, cells, boundary} ───────────────────────
 /**
  * @param {Array} outer  vértices del contorno [[x,y]…] (sin repetir el primero)
- * @param {object} opts  { h, levels, recombine=true, blossom=true, valence=true, minQuad=0.30, smooth=3, holes:[…] }
+ * @param {object} opts  { h, levels, recombine, blossom, valence, adaptive, minQuad, smooth, holes }
  *   h        = tamaño de elemento objetivo (deriva los niveles de refinamiento)
  *   levels   = niveles de refinamiento uniforme explícitos (alternativa a h)
  *   blossom  = recombinación a quad por matching de peso máximo (Edmonds); false = voraz
  *   valence  = optimización topológica de valencia (edge-flips de regularidad) antes de recombinar
+ *   adaptive = refinamiento por curvatura del contorno (esquinas reentrantes/agudas); def. true
  *   holes    = lista de agujeros (cada uno un anillo [[x,y]…]); se fusionan por puentes.
  * @returns { V:[[x,y]…], cells:[[i,j,k]|[i,j,k,l]…], boundary:Set, stats }
  */
@@ -275,6 +380,13 @@ export function triangulatePolygon(outer, opts = {}) {
     levels = Math.min(6, Math.max(0, Math.ceil(Math.log2(maxEdge / opts.h))));
   }
   for (let l = 0; l < (levels || 0); l++) { tris = uniformRefine(V, tris); tris = delaunayFlips(V, tris); }
+  // Refinamiento ADAPTATIVO por curvatura: más fino en esquinas reentrantes/agudas del
+  // contorno (concentración de tensiones), conforme por bisección de arista más larga.
+  if (opts.adaptive !== false && opts.h > 0) {
+    const rings = [outer, ...(opts.holes || [])];
+    const sizeFn = buildCurvatureSizeField(rings, opts.h, opts.adaptiveOpts || {});
+    if (sizeFn) { tris = adaptiveRefine(V, tris, sizeFn, opts.adaptiveOpts || {}); tris = delaunayFlips(V, tris); }
+  }
   // Optimización topológica de valencia (regulariza la malla antes de recombinar).
   if (opts.valence !== false) tris = valenceOptimize(V, tris, opts.valenceOpts || {});
   let cells = (opts.recombine !== false) ? recombineToQuads(V, tris, opts.minQuad ?? 0.30, { blossom: opts.blossom !== false }) : tris;
