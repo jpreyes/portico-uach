@@ -250,6 +250,13 @@ similaridad. `[#]` referencia el pedido original. Estado: ⬜ pendiente · 🟡 
 - ✅ **Centro de análisis: «Avanzadas» con selección de casos a correr** `[#105]` (v194): fila Estático → botón **«⚙ Elegir casos a correr…»** con TODOS los casos en checkboxes (+ Todos/Ninguno y la categoría de cada uno). `runAnalysis(force, only)` resuelve sólo los marcados; las combinaciones se recalculan de los casos corridos; las corridas parciales no se cachean.
 - ✅ **Tipo/rol de carga por caso (muerta/viva/viento/sismo/nieve…) para combos y diseño automáticos** `[#106]` (v192): campo `lc.loadType` (dead/live/wind/seismic/snow/temperature/other) con selector en los diálogos de caso, badge en la lista, round-trip `.s3d`, y `crearCasosYCombosNorma` identifica D/L por categoría (robusto). Análogo al `DesignType` de SAP2000.
 
+## G24 · Diseño por material — estados límite, normas y refinos ⬜ *(ampliar el diseño multinorma ya existente)*
+*El **diseño de miembros** en acero (AISC 360 / EC3), aluminio (EC9), madera (NCh1198) y hormigón (ACI 318 / EC2) ya está hecho (G15/G16): verificación D/C por chequeo, LTB, interacción, auto-diseño desde catálogo. Este grupo lo **profundiza por material**.*
+- ⬜ **Estados límite faltantes por material** `[#107]`: **fuego** (resistencia al fuego: acero con factor de reducción por temperatura/protección, madera por velocidad de carbonización, hormigón); **fatiga** (acero/aluminio: rangos de tensión, curvas S–N / categorías de detalle); **servicio por material**: **vibraciones de piso** (criterio de aceleración/frecuencia para acero y madera), **fluencia lenta / duración de carga (kmod, k_def)** en madera, **deformaciones diferidas** (creep/retracción) en hormigón. Se suman al motor de diseño (`js/design/`) como chequeos por familia, reusando el registro de códigos.
+- ⬜ **Más normas por material** `[#108]`: **NDS** (madera, EE.UU. — ASD/LRFD, factores C_D/C_M/C_t…) y **AA/ADM (Aluminum Design Manual)** (aluminio, EE.UU.) como alternativas a EC9; estructura conectable lista (`js/design/registry.js` + `codes/`), igual que EC9/NCh1198 ya registrados. *(Opcional: más normas de acero/madera nacionales.)*
+- ⬜ **Refinos del diseño existente** `[#109]`: más **formas de sección** verificadas por norma, **detallado** por código (cuantías, separaciones, compacidad), **reporte de diseño** más completo (memoria por elemento con todos los chequeos y la ecuación que gobierna), y **optimización automática** (elegir el perfil más liviano que cumple, por familia/rol). Absorbe los refinos menores pendientes de G16 (flecha relativa a la cuerda, armado multicapa en P-M biaxial, centro de cortante del canal).
+- ↗ **Diseño de UNIONES / conexiones** `[#110]` *(fuera de alcance de PÓRTICO — aplicación APARTE)*: pernos/soldadura (acero), conectores/clavos/pernos (madera), uniones de aluminio, placas base y anclajes se desarrollarán en **otra aplicación** del autor. En PÓRTICO sólo queda como **interoperabilidad futura**: exportar los esfuerzos de nudo/extremo de barra hacia esa app y, opcionalmente, traer de vuelta las capacidades de la conexión.
+
 ---
 
 ## Secuencia sugerida — qué sigue, de lo MÁS FÁCIL a lo más difícil
@@ -274,8 +281,9 @@ y los 3 motores+UI de **puentes**. Lo que queda abierto, ordenado por esfuerzo c
 
 **🧰 Módulos grandes nuevos (G17–G19)**:
 - **G17 secciones/diseño automático** `[#69-#73]` — ✅ **completo**: biblioteca precargada `[#69]`, editor ampliado + polígono/huecos + **editor gráfico de vértices** `[#70]`, predimensionar `[#71]`, diseñar por catálogo `[#72]`, UX/preview + **reporte CSV + preferencias** `[#73]`. *(Refino menor: H.A./madera con barras explícitas en el editor.)*
-- **G18 SAP2000/ETABS** `[#74]` ⬜: modelo neutro + export/import `.s2k`/`.e2k` (esfuerzo medio, sin solver nuevo).
+- **G18 SAP2000/ETABS** `[#74]` ✅: modelo neutro + adaptadores; 6 motores (VECTOR/Abaqus/SAP2000/ETABS/OpenSees/SOFISTIK).
 - **G19 importador IFC** `[#75-#77]` ⬜: depende de una librería web (web-ifc); el más grande de UI; barras primero, áreas cuando G-áreas lo permita.
+- **G24 diseño por material** `[#107-#109]` ⬜: ampliar el diseño multinorma ya hecho — estados límite faltantes (fuego/fatiga/servicio: vibraciones, creep/duración de carga madera), normas **NDS** (madera) y **AA/ADM** (aluminio), y refinos. *(Uniones/conexiones `[#110]` → app aparte.)*
 
 ## Decisiones tomadas
 *Todas resueltas y ya reflejadas en los grupos correspondientes.*
