@@ -15,9 +15,9 @@
 // Soporta AGUJEROS (opts.holes): cada hueco se fusiona al contorno con un puente de
 // ancho cero (bridging estilo earcut) → polígono simple que ear-clipping triangula.
 // ──────────────────────────────────────────────────────────────────────────────
-import { quadMinScaledJacobian, weldPoints } from './mesh_map.js?v=185';
-import { triQuality, quadQuality, boundaryNodes, laplacianSmooth } from './mesh_quality.js?v=185';
-import { maxWeightMatching } from './matching.js?v=185';
+import { quadMinScaledJacobian, weldPoints } from './mesh_map.js?v=186';
+import { triQuality, quadQuality, boundaryNodes, laplacianSmooth } from './mesh_quality.js?v=186';
+import { maxWeightMatching } from './matching.js?v=186';
 
 const EPS = 1e-9;
 const signedArea2 = (pts) => { let s = 0; for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length]; s += a[0] * b[1] - b[0] * a[1]; } return s / 2; };
@@ -238,8 +238,14 @@ export function recombineToQuads(V, tris, minJac = 0.30, opts = {}) {
   if (opts.blossom !== false && cands.length) {
     // Grafo de matching: vértices = triángulos, aristas = quads candidatos.
     // Peso entero = calidad·SCALE (la aritmética de duales del Blossom es exacta así).
+    // COSTO DE BORDE tipo Blossom-IV (Gmsh): con `maxCardinality` (def.) se suma un BONO
+    // constante por arista, dominante sobre la calidad → el matching maximiza primero el
+    // NÚMERO de quads (menos triángulos sobrantes) y la calidad sólo desempata; usa el
+    // mismo camino verificado de peso máximo (no el de cardinalidad pura).
     const SCALE = 1e6;
-    const mEdges = cands.map(c => [c.t1, c.t2, Math.max(1, Math.round(c.jac * SCALE))]);
+    const maxCard = opts.maxCardinality !== false;
+    const BONUS = maxCard ? SCALE * (tris.length + 1) : 0;
+    const mEdges = cands.map(c => [c.t1, c.t2, BONUS + Math.max(1, Math.round(c.jac * SCALE))]);
     const quadByPair = new Map();
     for (const c of cands) quadByPair.set(key(c.t1, c.t2), c.quad);
     const mate = maxWeightMatching(mEdges, tris.length);
@@ -357,6 +363,9 @@ function eliminateHoles(outer, holes) {
  *   blossom  = recombinación a quad por matching de peso máximo (Edmonds); false = voraz
  *   valence  = optimización topológica de valencia (edge-flips de regularidad) antes de recombinar
  *   adaptive = refinamiento por curvatura del contorno (esquinas reentrantes/agudas); def. true
+ *   maxCardinality = costo de borde Blossom-IV: maximiza el nº de quads (def. true)
+ *   sizeField = función (x,y)→tamaño objetivo del usuario (se combina con la curvatura por mínimo)
+ *   adaptiveOpts = { hmin, grade, maxPass, reentrant, acute } del campo de tamaño por curvatura
  *   holes    = lista de agujeros (cada uno un anillo [[x,y]…]); se fusionan por puentes.
  * @returns { V:[[x,y]…], cells:[[i,j,k]|[i,j,k,l]…], boundary:Set, stats }
  */
@@ -384,12 +393,16 @@ export function triangulatePolygon(outer, opts = {}) {
   // contorno (concentración de tensiones), conforme por bisección de arista más larga.
   if (opts.adaptive !== false && opts.h > 0) {
     const rings = [outer, ...(opts.holes || [])];
-    const sizeFn = buildCurvatureSizeField(rings, opts.h, opts.adaptiveOpts || {});
+    const curv = buildCurvatureSizeField(rings, opts.h, opts.adaptiveOpts || {});
+    // Campo de tamaño DEFINIDO POR EL USUARIO (opcional): función (x,y)→tamaño objetivo en
+    // coords del plano de mallado.  Se combina con la curvatura tomando el mínimo (lo más fino).
+    const user = (typeof opts.sizeField === 'function') ? opts.sizeField : null;
+    const sizeFn = (curv && user) ? ((x, y) => Math.min(curv(x, y), user(x, y))) : (curv || user);
     if (sizeFn) { tris = adaptiveRefine(V, tris, sizeFn, opts.adaptiveOpts || {}); tris = delaunayFlips(V, tris); }
   }
   // Optimización topológica de valencia (regulariza la malla antes de recombinar).
   if (opts.valence !== false) tris = valenceOptimize(V, tris, opts.valenceOpts || {});
-  let cells = (opts.recombine !== false) ? recombineToQuads(V, tris, opts.minQuad ?? 0.30, { blossom: opts.blossom !== false }) : tris;
+  let cells = (opts.recombine !== false) ? recombineToQuads(V, tris, opts.minQuad ?? 0.30, { blossom: opts.blossom !== false, maxCardinality: opts.maxCardinality, cost: opts.cost }) : tris;
   // suavizado (nodos interiores)
   const sm = opts.smooth ?? 3;
   if (sm > 0) { const V3 = V.map(p => [p[0], p[1], 0]); const r = laplacianSmooth(V3, cells, { iters: sm, omega: 0.5 }); r.nodes.forEach((p, i) => { V[i][0] = p[0]; V[i][1] = p[1]; }); }
