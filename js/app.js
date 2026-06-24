@@ -1,45 +1,45 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // App — main orchestrator
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model }           from './model/model.js?v=196';
-import { Serializer }      from './model/serializer.js?v=196';
-import { Viewport }        from './ui/viewport.js?v=196';
-import { PropertiesPanel } from './ui/properties.js?v=196';
-import { MenuBar }         from './ui/menu.js?v=196';
-import { UndoStack }       from './utils/undo.js?v=196';
-import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=196';
-import { Results }                         from './solver/postprocess.js?v=196';
-import { areaStress, areaBendingStress, vonMises } from './solver/membrane.js?v=196';
-import { ModalSolver }                     from './solver/modal_solver.js?v=196';
-import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=196';
-import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=196';
-import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=196';
-import { solveCorotBeam, corotBeamForceTangent } from './solver/corotbeam.js?v=196';
-import { insertInfill } from './model/macromodel.js?v=196';
-import { assembleKg } from './solver/geometric.js?v=196';
-import { makeFactor } from './solver/linsolve.js?v=196';
-import { formFind } from './solver/formfind.js?v=196';
-import { ModalResults }                    from './solver/modal_results.js?v=196';
-import { modalTimeHistory }                from './solver/timehistory.js?v=196';
-import { parseAccelerogram, accStats, scaleToPGA, DEMO_PRESETS, G as GACC } from './solver/accelerograms.js?v=196';
-import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=196';
-import { StagedSolver }                    from './solver/staged.js?v=196';
-import { tendonEquivalentLoads, applyTendon, tendonEcc } from './solver/tendon.js?v=196';
-import { buildLane, influenceLine, movingLoadEnvelope, responseReaction, responseSection } from './solver/moving_load.js?v=196';
-import { newmarkNonlinear, shearBuilding, rayleighDamping } from './solver/nl_timehistory.js?v=196';
-import { checkDrift } from './design/serviceability.js?v=196';
-import { seleccionarPerfil, steelCandidates, predimensionar, candidatesForFamily } from './design/autodesign.js?v=196';
-import { jointSCWB } from './design/seismic.js?v=196';
-import { resolveMaterial } from './design/material_props.js?v=196';
-import { resolveSectionProps } from './design/section_props.js?v=196';
-import { autoDetectDiaphragms, computeFloorCR, applyDiaphragmConstraints } from './solver/diaphragm.js?v=196';
-import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=196';
-import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=196';
-import { blockCells, cornerGridIndices } from './model/mesher.js?v=196';
-import { coonsGridFromCorners } from './model/mesh_map.js?v=196';
-import { meshPolygonIntoModel } from './model/mesh_free.js?v=196';
-import { smoothAreasInModel } from './model/mesh_quality.js?v=196';
-import { listFormats, exportModel, importModel } from './io/index.js?v=196';
+import { Model }           from './model/model.js?v=197';
+import { Serializer }      from './model/serializer.js?v=197';
+import { Viewport }        from './ui/viewport.js?v=197';
+import { PropertiesPanel } from './ui/properties.js?v=197';
+import { MenuBar }         from './ui/menu.js?v=197';
+import { UndoStack }       from './utils/undo.js?v=197';
+import { StaticSolver, ensureDefaultLC }   from './solver/static_solver.js?v=197';
+import { Results }                         from './solver/postprocess.js?v=197';
+import { areaStress, areaBendingStress, vonMises } from './solver/membrane.js?v=197';
+import { ModalSolver }                     from './solver/modal_solver.js?v=197';
+import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './solver/assembler.js?v=197';
+import { assembleSparseGlobal, extractFreeCSR } from './solver/sparse.js?v=197';
+import { solveNonlinear, solveNonlinearDC } from './solver/nl_lite.js?v=197';
+import { solveCorotBeam, corotBeamForceTangent } from './solver/corotbeam.js?v=197';
+import { insertInfill } from './model/macromodel.js?v=197';
+import { assembleKg } from './solver/geometric.js?v=197';
+import { makeFactor } from './solver/linsolve.js?v=197';
+import { formFind } from './solver/formfind.js?v=197';
+import { ModalResults }                    from './solver/modal_results.js?v=197';
+import { modalTimeHistory }                from './solver/timehistory.js?v=197';
+import { parseAccelerogram, accStats, scaleToPGA, DEMO_PRESETS, G as GACC } from './solver/accelerograms.js?v=197';
+import { SpectrumSolver }                  from './solver/spectrum_solver.js?v=197';
+import { StagedSolver }                    from './solver/staged.js?v=197';
+import { tendonEquivalentLoads, applyTendon, tendonEcc } from './solver/tendon.js?v=197';
+import { buildLane, influenceLine, movingLoadEnvelope, responseReaction, responseSection } from './solver/moving_load.js?v=197';
+import { newmarkNonlinear, shearBuilding, rayleighDamping } from './solver/nl_timehistory.js?v=197';
+import { checkDrift } from './design/serviceability.js?v=197';
+import { seleccionarPerfil, steelCandidates, predimensionar, candidatesForFamily } from './design/autodesign.js?v=197';
+import { jointSCWB } from './design/seismic.js?v=197';
+import { resolveMaterial } from './design/material_props.js?v=197';
+import { resolveSectionProps } from './design/section_props.js?v=197';
+import { autoDetectDiaphragms, computeFloorCR, applyDiaphragmConstraints } from './solver/diaphragm.js?v=197';
+import { splitElement, splitByLength, discretizeAll, joinElements, intersectarElementos } from './model/discretize.js?v=197';
+import { localAxes, stiffnessMatrix, massMatrix, transformMatrix, globalStiffness, applyReleases } from './solver/timoshenko.js?v=197';
+import { blockCells, cornerGridIndices } from './model/mesher.js?v=197';
+import { coonsGridFromCorners } from './model/mesh_map.js?v=197';
+import { meshPolygonIntoModel } from './model/mesh_free.js?v=197';
+import { smoothAreasInModel } from './model/mesh_quality.js?v=197';
+import { listFormats, exportModel, importModel } from './io/index.js?v=197';
 
 // Categorías de carga (#106) — para combinaciones y diseño automáticos.
 const LOAD_TYPES = [
@@ -67,6 +67,10 @@ class App {
     this._activeLcId      = null;   // active load case ID
     this._config          = this._loadConfig();   // configuración de la app (memoria, visual, modificadores)
 
+    // G7 · Proyecto multi-modelo: varios modelos en una sola memoria, sin vínculo
+    // geométrico. Los INACTIVOS viven como blobs JSON (`json`); el ACTIVO es `this.model`.
+    this._project = { models: [{ id: 1, name: 'Modelo 1', json: null }], activeId: 1, nextId: 2 };
+
     // UI components
     this.viewport = new Viewport(
       document.getElementById('viewport-container'), this
@@ -86,6 +90,7 @@ class App {
     this._bindKeys();
     this._bindModal();
     this._bindElectronMenu();
+    this._initProjectUI();
 
     // Autoguardado periódico cada 5 min (además del debounced y el beforeunload):
     // tolerante a cierre/corte de luz incluso durante ediciones largas (#43).
@@ -1920,7 +1925,7 @@ class App {
   _staticWorkerSolve(K, nDOF, freeDOF, Flist, dense = false) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=196', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=197', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -1949,7 +1954,7 @@ class App {
   _staticWorkerSolveSparse(csr, cf, nDOF, freeDOF, Flist) {
     return new Promise((resolve, reject) => {
       let worker;
-      try { worker = new Worker(new URL('./solver/static_worker.js?v=196', import.meta.url), { type: 'module' }); }
+      try { worker = new Worker(new URL('./solver/static_worker.js?v=197', import.meta.url), { type: 'module' }); }
       catch (e) { reject(e); return; }
       this._staticWorker = worker;
       const cancelar = () => { try { worker.terminate(); } catch (e) {} this._staticWorker = null; this._hideProgress(); reject(new Error('cancelado')); };
@@ -2365,7 +2370,7 @@ class App {
       // ── Run Stodola in a Web Worker (non-blocking) ───────────────────────────
       const denseModal = !!this._config?.analisis?.matrizDensa;
       const modes = await new Promise((resolve, reject) => {
-        const worker = new Worker(new URL('./solver/modal_worker.js?v=196', import.meta.url), { type: 'module' });
+        const worker = new Worker(new URL('./solver/modal_worker.js?v=197', import.meta.url), { type: 'module' });
         worker.postMessage({ Kff_flat, Mff_flat, nF, nModes, dense: denseModal, method: modalMethod },
           [Kff_flat.buffer, Mff_flat.buffer]); // transfer — zero copy
         worker.onmessage = (ev) => {
@@ -2778,7 +2783,7 @@ class App {
       // Modal por iteración de subespacio en worker (no bloquea la UI).
       const dense = !!this._config?.analisis?.matrizDensa;
       const rawModes = await new Promise((resolve, reject) => {
-        const w = new Worker(new URL('./solver/modal_worker.js?v=196', import.meta.url), { type: 'module' });
+        const w = new Worker(new URL('./solver/modal_worker.js?v=197', import.meta.url), { type: 'module' });
         w.postMessage({ Kff_flat: Kff, Mff_flat: Mff, nF, nModes, dense, method: 'subspace' }, [Kff.buffer, Mff.buffer]);
         w.onmessage = ev => { w.terminate(); ev.data.error ? reject(new Error(ev.data.error)) : resolve(ev.data.modes); };
         w.onerror = ev => { w.terminate(); reject(new Error(ev.message || 'Error en worker modal')); };
@@ -2851,7 +2856,7 @@ class App {
   _thSolveInWorker(modes, ag, dt, zeta) {
     return new Promise((resolve, reject) => {
       let w;
-      try { w = new Worker(new URL('./solver/timehistory_worker.js?v=196', import.meta.url), { type: 'module' }); }
+      try { w = new Worker(new URL('./solver/timehistory_worker.js?v=197', import.meta.url), { type: 'module' }); }
       catch (e) {
         try { const r = modalTimeHistory({ modes: modes.map(m => ({ ...m, phi: new Float64Array(0) })), ag, dt, zeta }); resolve({ q: r.q, peakModal: r.peakModal }); }
         catch (err) { reject(err); }
@@ -4295,12 +4300,12 @@ class App {
     if (!ok) return;
     const p = this._predim; if (!p) return;
     if (document.getElementById('pd-assign').checked) {
-      const { profileToSection } = await import('./design/profiles.js?v=196');
+      const { profileToSection } = await import('./design/profiles.js?v=197');
       this.snapshot();
       // Perfil del catálogo → props directas; forma libre (H.A./madera) → calcular A,I,J.
       let secProps = p.profile ? profileToSection(p.profile) : { design: { shape: p.shape, dims: p.dims } };
       if (!p.profile) {
-        const { fromShape } = await import('./design/section_props.js?v=196');
+        const { fromShape } = await import('./design/section_props.js?v=197');
         const g = fromShape(p.shape, p.dims);
         if (g) secProps = { A: g.A, Iz: g.Iz, Iy: g.Iy, J: g.J, Avy: g.Avz_web, Avz: g.Avy_flange, design: { shape: p.shape, dims: p.dims } };
       }
@@ -4324,7 +4329,7 @@ class App {
     return new Promise((resolve, reject) => {
       let worker;
       try {
-        worker = new Worker(new URL('./solver/nl_worker.js?v=196', import.meta.url), { type: 'module' });
+        worker = new Worker(new URL('./solver/nl_worker.js?v=197', import.meta.url), { type: 'module' });
       } catch (e) {
         try { resolve(kind === 'dc' ? solveNonlinearDC(opts) : solveNonlinear(opts)); }
         catch (err) { reject(err); }
@@ -4686,7 +4691,7 @@ class App {
 
       // Iteración de subespacio en el Worker (no bloquea la UI)
       const rawModes = await new Promise((resolve, reject) => {
-        const worker = new Worker(new URL('./solver/buckling_worker.js?v=196', import.meta.url), { type: 'module' });
+        const worker = new Worker(new URL('./solver/buckling_worker.js?v=197', import.meta.url), { type: 'module' });
         worker.postMessage({ Kff_flat, Kgff_flat, nF, nModes, dense },
           [Kff_flat.buffer, Kgff_flat.buffer]);   // transfer — zero copy
         worker.onmessage = (ev) => { worker.terminate(); ev.data.error ? reject(new Error(ev.data.error)) : resolve(ev.data.modes); };
@@ -6528,6 +6533,9 @@ class App {
 
     this.model = new Model();
     this.model.mode = mode;
+    // G7: modelo nuevo → proyecto de un solo modelo.
+    this._project = { models: [{ id: 1, name: 'Modelo 1', json: null }], activeId: 1, nextId: 2 };
+    this._renderProjectSelector();
     this.viewport._elevation = null;
     this.undoStack.clear();
     this._fileHandle = null;
@@ -6586,10 +6594,12 @@ class App {
     inp.click();
   }
 
-  _loadJSON(text, filename, keepResults = false) {
+  _loadJSON(text, filename, keepResults = false, keepProject = false) {
     try {
       let parsed = null;
       try { parsed = JSON.parse(text); } catch {}
+      // G7: archivo de PROYECTO (varios modelos) → ruta dedicada.
+      if (!keepProject && parsed && parsed.portico_project) { this._loadProjectJSON(parsed, filename); return; }
       this.model = this.serializer.fromJSON(text);
       // Grupos y ocultos guardados en el archivo (estado de vista).
       this._grupos = new Map((parsed && Array.isArray(parsed.grupos) ? parsed.grupos : [])
@@ -6646,6 +6656,10 @@ class App {
       this.refreshLoads();
       this._updateStats();
       this._updateTitle(filename);
+      // G7: abrir un archivo SIMPLE reinicia el proyecto a un solo modelo; un switch/
+      // carga de proyecto conserva la lista (keepProject).
+      if (!keepProject) { this._project = { models: [{ id: 1, name: this._modelName || filename || 'Modelo 1', json: null }], activeId: 1, nextId: 2 }; }
+      this._renderProjectSelector();
       this.viewport.applyProjectMode();   // cámara/insumos según modo 2D/3D
       if (this.model.mode !== '2D') this.viewport.zoomExtents();
       this.toast(`Modelo cargado: ${filename}${this.model.mode === '2D' ? ' (2D)' : ''}`, 'ok');
@@ -6824,7 +6838,7 @@ class App {
               selectedNodes: sel.filter(s => s.type === 'node').map(s => s.id) };
     }
     this.snapshot();
-    const { aplicarOperaciones } = await import('./model/model_ops.js?v=196');
+    const { aplicarOperaciones } = await import('./model/model_ops.js?v=197');
     const res = aplicarOperaciones(this.model, ops, ctx);
     // los resultados previos dejan de ser válidos tras modificar la geometría/cargas
     this.viewport.clearResults?.();
@@ -6872,7 +6886,7 @@ class App {
     this._showProgress('Generando el modelo…', 'Aplicando reglas y cargas normativas');
     try {
       const libs = await this._cargarBibliotecasAsistente();
-      const { generarModelo } = await import('../asistente/generador.js?v=196');
+      const { generarModelo } = await import('../asistente/generador.js?v=197');
       const modelo = generarModelo(ficha, libs);
 
       if (modo === 'sobreponer') {
@@ -7619,9 +7633,153 @@ class App {
     return !!(c && c.cases && c.cases.length && c.sig === this._modelSig(!!c.autoDisc));
   }
 
+  // JSON para guardar: si el proyecto tiene varios modelos, envuelve a todos; si no,
+  // el .s3d de un solo modelo de siempre (cero cambio para archivos existentes).
+  _fullSaveJSON() {
+    if (this._project && this._project.models.length > 1) return this._buildProjectSaveJSON();
+    return this._singleSaveJSON();
+  }
+
+  // ── G7: proyecto multi-modelo ───────────────────────────────────────────────
+  _initProjectUI() {
+    document.getElementById('project-select')?.addEventListener('change', e => this._projectSwitch(e.target.value));
+    document.getElementById('btn-project')?.addEventListener('click', () => this._projectDialog());
+    this._renderProjectSelector();
+  }
+
+  // Diálogo de gestión de modelos del proyecto.
+  async _projectDialog() {
+    const overlay = document.getElementById('modal-overlay');
+    document.getElementById('modal-title').textContent = '🗂 Modelos del proyecto';
+    const rows = this._project.models.map(m => `
+      <div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;margin-bottom:4px;font-size:12px;${m.id === this._project.activeId ? 'border-color:var(--accent)' : ''}">
+        <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.id === this._project.activeId ? '● ' : ''}${(m.name || '').replace(/[<>&]/g, '')}</span>
+        <button class="pj-act" data-act="switch" data-id="${m.id}" title="Activar este modelo" style="background:none;border:none;color:var(--text-muted);cursor:pointer">↪</button>
+        <button class="pj-act" data-act="rename" data-id="${m.id}" title="Renombrar" style="background:none;border:none;color:var(--text-muted);cursor:pointer">✎</button>
+        <button class="pj-act" data-act="del" data-id="${m.id}" title="Eliminar del proyecto" style="background:none;border:none;color:var(--danger,#f85149);cursor:pointer">🗑</button>
+      </div>`).join('');
+    document.getElementById('modal-body').innerHTML = `
+      <p style="color:var(--text-muted);font-size:11px;margin:0 0 8px">Varios modelos en un mismo proyecto (edificio, cercha, fundación…). Se integran en <b>una sola memoria</b> de cálculo; no comparten geometría. Se guardan juntos en el .s3d.</p>
+      ${rows}
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button type="button" id="pj-new" class="btn-secondary" style="font-size:12px">＋ Nuevo modelo</button>
+        <button type="button" id="pj-dup" class="btn-secondary" style="font-size:12px">⧉ Duplicar activo</button>
+      </div>`;
+    document.getElementById('modal-cancel').style.display = '';
+    overlay.classList.remove('hidden');
+    const closeAnd = (fn) => { overlay.classList.add('hidden'); overlay._resolve = () => {}; overlay._reject = () => {}; fn(); };
+    overlay.querySelectorAll('.pj-act').forEach(b => b.addEventListener('click', async () => {
+      const id = +b.dataset.id, act = b.dataset.act;
+      if (act === 'switch') closeAnd(() => this._projectSwitch(id));
+      else if (act === 'del') { const m = this._project.models.find(x => x.id === id); if (await this._confirm(`¿Eliminar el modelo «${m?.name}» del proyecto?`)) closeAnd(() => this._projectDelete(id)); }
+      else if (act === 'rename') {
+        const m = this._project.models.find(x => x.id === id);
+        const name = await this._promptModal('Renombrar modelo', 'Nombre del modelo', m?.name || '');
+        if (name) { m.name = name; if (id === this._project.activeId) this._updateTitle(name); this._renderProjectSelector(); this.markDirty(); closeAnd(() => this._projectDialog()); }
+      }
+    }));
+    document.getElementById('pj-new')?.addEventListener('click', async () => {
+      const mode = await this._askModelMode(); if (!mode) return; closeAnd(() => this._projectAddModel(mode));
+    });
+    document.getElementById('pj-dup')?.addEventListener('click', () => closeAnd(() => this._projectDuplicate()));
+    overlay._resolve = () => {}; overlay._reject = () => { overlay.classList.add('hidden'); };
+  }
+
+  // Pregunta 2D/3D (reutilizable). Devuelve '2D' | '3D' | null.
+  async _askModelMode() {
+    const overlay = document.getElementById('modal-overlay');
+    document.getElementById('modal-title').textContent = 'Nuevo modelo';
+    document.getElementById('modal-body').innerHTML = `
+      <div class="prop-field"><label>Tipo de modelo</label>
+        <select id="am-mode" style="width:100%"><option value="3D">Estructura 3D (espacial)</option><option value="2D">Pórtico 2D — plano X–Z</option></select></div>`;
+    document.getElementById('modal-cancel').style.display = '';
+    overlay.classList.remove('hidden');
+    const ok = await new Promise(res => { overlay._resolve = res; overlay._reject = () => res(false); });
+    if (!ok) return null;
+    return document.getElementById('am-mode')?.value === '2D' ? '2D' : '3D';
+  }
+
+  _activeModelEntry() { return this._project.models.find(m => m.id === this._project.activeId); }
+  // Serializa el modelo ACTIVO (con sus resultados/memoria/vista) en su slot.
+  _stashActiveModel() {
+    const e = this._activeModelEntry(); if (!e) return;
+    if (this._modelName) e.name = this._modelName;
+    e.json = this._singleSaveJSON();
+  }
+  // Archivo de proyecto: {portico_project, models:[{id,name,data}], activeId}.
+  _buildProjectSaveJSON() {
+    this._stashActiveModel();
+    return JSON.stringify({
+      portico_project: true, version: 1, activeId: this._project.activeId,
+      models: this._project.models.map(m => ({ id: m.id, name: m.name, data: JSON.parse(m.json || this.serializer.toJSON(new Model())) })),
+    }, null, 2);
+  }
+  // Carga un archivo de proyecto: arma la lista y abre el modelo activo.
+  _loadProjectJSON(obj, filename) {
+    const models = (obj.models || []).filter(m => m && m.data).map((m, i) => ({ id: m.id ?? (i + 1), name: m.name || `Modelo ${i + 1}`, json: JSON.stringify(m.data) }));
+    if (!models.length) { this.toast('Proyecto sin modelos', 'warn'); return; }
+    const activeId = models.some(m => m.id === obj.activeId) ? obj.activeId : models[0].id;
+    this._project = { models, activeId, nextId: Math.max(...models.map(m => m.id)) + 1 };
+    const active = this._activeModelEntry();
+    this._loadJSON(active.json, active.name, true, true);   // keepResults + keepProject
+    this._renderProjectSelector();
+    this.toast(`Proyecto cargado: ${models.length} modelo(s) · activo «${active.name}»`, 'ok');
+  }
+
+  // Rellena el selector de modelos de la barra superior.
+  _renderProjectSelector() {
+    const sel = document.getElementById('project-select'); if (!sel) return;
+    sel.innerHTML = this._project.models.map(m => `<option value="${m.id}" ${m.id === this._project.activeId ? 'selected' : ''}>${(m.name || ('Modelo ' + m.id)).replace(/[<>&]/g, '')}</option>`).join('');
+  }
+
+  // Cambia el modelo activo (guarda el actual en su slot y abre el destino).
+  _projectSwitch(id) {
+    id = +id;
+    if (id === this._project.activeId) return;
+    const e = this._project.models.find(m => m.id === id); if (!e || !e.json) return;
+    this._stashActiveModel();
+    this._project.activeId = id;
+    this._loadJSON(e.json, e.name, true, true);
+    this._renderProjectSelector();
+  }
+
+  // Agrega un modelo nuevo (vacío) al proyecto y lo activa.
+  _projectAddModel(mode = '3D') {
+    this._stashActiveModel();
+    const id = this._project.nextId++;
+    const m = new Model(); m.mode = mode; ensureDefaultLC(m);
+    const name = `Modelo ${this._project.models.length + 1}`;
+    this._project.models.push({ id, name, json: this.serializer.toJSON(m) });
+    this._project.activeId = id;
+    this._loadJSON(this._activeModelEntry().json, name, false, true);
+    this._renderProjectSelector();
+    this.toast(`Modelo «${name}» (${mode}) agregado al proyecto`, 'ok');
+  }
+
+  // Duplica el modelo activo.
+  _projectDuplicate() {
+    this._stashActiveModel();
+    const cur = this._activeModelEntry(); const id = this._project.nextId++;
+    const name = `${cur.name} (copia)`;
+    this._project.models.push({ id, name, json: cur.json });
+    this._project.activeId = id;
+    this._loadJSON(cur.json, name, true, true);
+    this._renderProjectSelector();
+    this.toast(`Modelo duplicado: «${name}»`, 'ok');
+  }
+
+  _projectDelete(id) {
+    id = +id;
+    if (this._project.models.length <= 1) { this.toast('El proyecto debe tener al menos un modelo', 'warn'); return; }
+    const wasActive = id === this._project.activeId;
+    this._project.models = this._project.models.filter(m => m.id !== id);
+    if (wasActive) { this._project.activeId = this._project.models[0].id; this._loadJSON(this._activeModelEntry().json, this._activeModelEntry().name, true, true); }
+    this._renderProjectSelector(); this.markDirty();
+  }
+
   // JSON para guardar en el archivo .s3d: modelo + (si existen y corresponden)
   // los resultados del análisis embebidos, para reabrir el archivo "ya corrido".
-  _fullSaveJSON() {
+  _singleSaveJSON() {
     const modelJSON = this._modelJSONForSave();
     let obj;
     try { obj = JSON.parse(modelJSON); } catch { return modelJSON; }
@@ -7781,9 +7939,11 @@ class App {
   static get _AUTOSAVE_MAX() { return 6; }
   _autosaveNow() {
     try {
-      const json = this._modelJSONForSave();
+      // G7: con varios modelos, autoguarda el PROYECTO completo (no se pierden los
+      // inactivos al recuperar la sesión); con uno solo, el modelo de siempre.
+      const json = (this._project && this._project.models.length > 1) ? this._fullSaveJSON() : this._modelJSONForSave();
       // No autoguardar el modelo "nuevo" vacío (no ensucia el índice con basura).
-      if (this.model.nodes.size === 0) return;
+      if (this.model.nodes.size === 0 && this._project.models.length <= 1) return;
       const key = 'portico_autosave_' + this._sessionId;
       const name = this._modelName || 'Sin título';
       const meta = { sid: this._sessionId, key, ts: Date.now(), name,
@@ -8114,7 +8274,7 @@ class App {
     const deflex = this._calcularDeflexionesVigas(diseno?.params);
     const drift  = this._calcularDrift();
     try {
-      const { Docx } = await import('./io/docx.js?v=196');
+      const { Docx } = await import('./io/docx.js?v=197');
       const blob = this._memoriaDocx(Docx, imgs, diseno, deflex, drift).blob();
       this._downloadBlob(blob, 'memoria_calculo.docx');
       this.toast('Memoria Word (.docx) descargada', 'ok');
@@ -8285,7 +8445,7 @@ class App {
   // Verificación de diseño (flexión/corte/axial) por elemento, usando los
   // resultados actuales y los parámetros editables de asistente/diseno_params.json.
   async _calcularDiseno() {
-    const ver = '?v=196';
+    const ver = '?v=197';
     let params = null;
     try { params = await fetch('asistente/diseno_params.json' + ver).then(r => r.json()); }
     catch (e) { console.error('No se pudo cargar diseno_params.json:', e); return null; }
