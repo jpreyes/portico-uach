@@ -351,13 +351,16 @@ export class Model {
   // todos los elementos (típico del caso CM / carga muerta).
   // type: 'static' (cargas asignadas, F5) o 'spectrum' (sísmico por espectro de
   // respuesta, F7). Un caso espectral no admite cargas; specDir = 'X' | 'Y'.
-  addLoadCase(name, selfWeight = false, type = 'static', specDir = null) {
+  addLoadCase(name, selfWeight = false, type = 'static', specDir = null, loadType = null) {
     const id = this._next('loadCases');
     const lc = {
       id, name: name || `LC${id}`, loads: [],
       selfWeight: !!selfWeight,
       type: type === 'spectrum' ? 'spectrum' : 'static',
       specDir: type === 'spectrum' ? (specDir || 'X') : null,
+      // Categoría de carga (para combinaciones y diseño automáticos): dead/live/
+      // wind/seismic/snow/temperature/other.  Por defecto se infiere del caso.
+      loadType: loadType || (type === 'spectrum' ? 'seismic' : (selfWeight ? 'dead' : 'other')),
     };
     this.loadCases.set(id, lc);
     return lc;
