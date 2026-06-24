@@ -63,7 +63,9 @@ export class Model {
       id,
       x: +x, y: +y, z: +z,
       restraints: { ux: 0, uy: 0, uz: 0, rx: 0, ry: 0, rz: 0, ...restraints },
-      nodeMass:   { mx: 0, my: 0, mz: 0 },
+      // Masa nodal: traslacional (mx/my/mz, ton) + inercia rotacional (irx/iry/irz,
+      // ton·m²) en los GDL de giro Rx/Ry/Rz (#6).
+      nodeMass:   { mx: 0, my: 0, mz: 0, irx: 0, iry: 0, irz: 0 },
       // Apoyo elástico: rigidez de resorte por GDL global
       // (kux/kuy/kuz en kN/m; krx/kry/krz en kN·m/rad). 0 = sin resorte.
       springs:    { kux: 0, kuy: 0, kuz: 0, krx: 0, kry: 0, krz: 0 },
@@ -80,12 +82,17 @@ export class Model {
     if (props.z !== undefined) n.z = +props.z;
     if (props.restraints) Object.assign(n.restraints, props.restraints);
     if (props.nodeMass) {
-      if (!n.nodeMass) n.nodeMass = { mx: 0, my: 0, mz: 0 };
+      if (!n.nodeMass) n.nodeMass = { mx: 0, my: 0, mz: 0, irx: 0, iry: 0, irz: 0 };
       Object.assign(n.nodeMass, props.nodeMass);
     }
     if (props.springs) {
       if (!n.springs) n.springs = { kux: 0, kuy: 0, kuz: 0, krx: 0, kry: 0, krz: 0 };
       Object.assign(n.springs, props.springs);
+    }
+    // Matriz de resorte ACOPLADA 6×6 (#2): resortes inclinados / rigidez suelo-estructura
+    // cruzada. `null`/array vacío = sin acoplamiento (se usa sólo la diagonal `springs`).
+    if (props.springK !== undefined) {
+      n.springK = (Array.isArray(props.springK) && props.springK.length === 36 && props.springK.some(v => v)) ? props.springK.map(Number) : null;
     }
     // Desplazamiento prescrito (asentamiento/giro de apoyo). Valores en m / rad.
     // Un GDL con valor ≠ 0 se impone como soporte con ese desplazamiento (#54).
@@ -96,6 +103,17 @@ export class Model {
       if (!Object.values(n.prescDisp).some(v => v)) delete n.prescDisp;
     }
     return n;
+  }
+
+  // Matriz 6×6 (row-major, 36) de un resorte de apoyo INCLINADO de rigidez `k` (kN/m)
+  // a lo largo de la dirección `dir` (se normaliza): bloque traslacional k·(d⊗d) (#2).
+  // Útil para apoyos inclinados / sobre planos no alineados con los ejes globales.
+  static inclinedSpringK(k, dir) {
+    const L = Math.hypot(dir[0] || 0, dir[1] || 0, dir[2] || 0) || 1;
+    const d = [(dir[0] || 0) / L, (dir[1] || 0) / L, (dir[2] || 0) / L];
+    const KS = new Array(36).fill(0);
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) KS[i * 6 + j] = k * d[i] * d[j];
+    return KS;
   }
 
   removeNode(id) {

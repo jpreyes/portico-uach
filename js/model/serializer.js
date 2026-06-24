@@ -1,7 +1,7 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // Serializer — JSON (.s3d) and CSV import/export
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model } from './model.js?v=204';
+import { Model } from './model.js?v=205';
 
 export class Serializer {
 
@@ -47,7 +47,8 @@ export class Serializer {
     for (const d of (obj.materials || []))  { m.materials.set(d.id, d); }
     for (const d of (obj.sections  || []))  { m.sections.set(d.id, d); }
     for (const d of (obj.nodes     || []))  {
-      if (!d.nodeMass) d.nodeMass = { mx: 0, my: 0, mz: 0 };
+      // backfill de masa nodal incl. inercia rotacional irx/iry/irz (#6, archivos viejos)
+      d.nodeMass = { mx: 0, my: 0, mz: 0, irx: 0, iry: 0, irz: 0, ...(d.nodeMass || {}) };
       if (!d.springs)  d.springs  = { kux: 0, kuy: 0, kuz: 0, krx: 0, kry: 0, krz: 0 };
       m.nodes.set(d.id, d);
     }
@@ -175,13 +176,13 @@ export class Serializer {
       lines.push('#');
     }
 
-    const hasNodeMass = [...model.nodes.values()].some(n => n.nodeMass && (n.nodeMass.mx || n.nodeMass.my || n.nodeMass.mz));
+    const hasNodeMass = [...model.nodes.values()].some(n => n.nodeMass && (n.nodeMass.mx || n.nodeMass.my || n.nodeMass.mz || n.nodeMass.irx || n.nodeMass.iry || n.nodeMass.irz));
     if (hasNodeMass) {
-      lines.push('# TYPE, node_id, mx(ton), my(ton), mz(ton)');
+      lines.push('# TYPE, node_id, mx(ton), my(ton), mz(ton), irx(ton·m²), iry, irz');
       for (const n of model.nodes.values()) {
         const nm = n.nodeMass;
-        if (!nm || (!nm.mx && !nm.my && !nm.mz)) continue;
-        lines.push(`NODE_MASS, ${n.id}, ${fmt(nm.mx || 0)}, ${fmt(nm.my || 0)}, ${fmt(nm.mz || 0)}`);
+        if (!nm || (!nm.mx && !nm.my && !nm.mz && !nm.irx && !nm.iry && !nm.irz)) continue;
+        lines.push(`NODE_MASS, ${n.id}, ${fmt(nm.mx || 0)}, ${fmt(nm.my || 0)}, ${fmt(nm.mz || 0)}, ${fmt(nm.irx || 0)}, ${fmt(nm.iry || 0)}, ${fmt(nm.irz || 0)}`);
       }
       lines.push('#');
     }
@@ -345,12 +346,12 @@ export class Serializer {
 
     // ── Node Masses ───────────────────────────────────────────────────────────
     for (const { cols, line } of parsed.NODE_MASS) {
-      // NODE_MASS, node_id, mx, my, mz
-      if (cols.length < 5) { errors.push(`Línea ${line}: NODE_MASS necesita 5 columnas`); continue; }
-      const [, nodeId, mx, my, mz] = cols;
+      // NODE_MASS, node_id, mx, my, mz [, irx, iry, irz]  (las rotacionales son opcionales)
+      if (cols.length < 5) { errors.push(`Línea ${line}: NODE_MASS necesita al menos 5 columnas`); continue; }
+      const [, nodeId, mx, my, mz, irx, iry, irz] = cols;
       const node = model.nodes.get(+nodeId);
       if (!node) { errors.push(`Línea ${line}: nodo ${nodeId} no existe`); continue; }
-      node.nodeMass = { mx: +mx, my: +my, mz: +mz };
+      node.nodeMass = { mx: +mx, my: +my, mz: +mz, irx: +(irx || 0), iry: +(iry || 0), irz: +(irz || 0) };
     }
 
     // ── Node Springs (apoyos elásticos) ───────────────────────────────────────

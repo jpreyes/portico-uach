@@ -1,8 +1,8 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // PropertiesPanel — right-side panel: node/element properties + mat/sec tabs
 // ──────────────────────────────────────────────────────────────────────────────
-import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=204';
-import { localAxes } from '../solver/timoshenko.js?v=204';
+import { computeFloorCR, computeFloorCM, computeTributaryWeights } from '../solver/diaphragm.js?v=205';
+import { localAxes } from '../solver/timoshenko.js?v=205';
 
 export class PropertiesPanel {
   constructor(panelEl, app) {
@@ -170,7 +170,7 @@ export class PropertiesPanel {
   // madera). Cambiarlo fija model.designSettings.codeByFamily y re-verifica.
   async _designCodeSelectorHTML() {
     try {
-      const mod = this._designMod || (this._designMod = await import('../design/diseno.js?v=204'));
+      const mod = this._designMod || (this._designMod = await import('../design/diseno.js?v=205'));
       const fams = new Set();
       for (const m of this.app.model.materials.values()) {
         const fam = (m.design?.family) || mod.clasificarMaterial(m.name);
@@ -1165,9 +1165,10 @@ export class PropertiesPanel {
   // ── Node form ──────────────────────────────────────────────────────────────
   _nodeHTML(node) {
     const r  = node.restraints;
-    const nm = node.nodeMass || { mx: 0, my: 0, mz: 0 };
+    const nm = node.nodeMass || { mx: 0, my: 0, mz: 0, irx: 0, iry: 0, irz: 0 };
     const sp = node.springs  || { kux: 0, kuy: 0, kuz: 0, krx: 0, kry: 0, krz: 0 };
     const hasSp = Object.values(sp).some(k => k > 0);
+    const hasSK = Array.isArray(node.springK) && node.springK.length === 36;   // resorte acoplado (#2)
     const pd = node.prescDisp || { ux: 0, uy: 0, uz: 0, rx: 0, ry: 0, rz: 0 };
     const hasPD = Object.values(pd).some(v => v);
     const is2D = this.app.model.mode === '2D';
@@ -1182,7 +1183,7 @@ export class PropertiesPanel {
       </div>`;
     }).join('');
 
-    const hasNM = nm.mx > 0 || nm.my > 0 || nm.mz > 0;
+    const hasNM = nm.mx > 0 || nm.my > 0 || nm.mz > 0 || nm.irx > 0 || nm.iry > 0 || nm.irz > 0;
 
     return `
       <div class="prop-id">Nodo #${node.id}</div>
@@ -1239,6 +1240,17 @@ export class PropertiesPanel {
           restricción rígida de ese GDL). k = 0 → sin resorte. La reacción
           del resorte aparece al mostrar Reacciones.
         </div>
+        <div class="prop-row cols4" style="margin-top:6px">
+          <div class="prop-field"><label title="Rigidez del resorte a lo largo de la dirección dada">k incl. (kN/m)</label>
+            <input type="number" id="ns-incl-k" value="0" step="100" min="0"></div>
+          <div class="prop-field"><label>dx</label><input type="number" id="ns-incl-dx" value="1" step="0.1"></div>
+          <div class="prop-field"><label>dy</label><input type="number" id="ns-incl-dy" value="0" step="0.1"></div>
+          <div class="prop-field"><label>dz</label><input type="number" id="ns-incl-dz" value="0" step="0.1"></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px">
+          <button class="btn-secondary" id="btn-incl-spring" style="flex:1;font-size:11px" title="Resorte de apoyo INCLINADO: rigidez k a lo largo de (dx,dy,dz). Genera una matriz de resorte ACOPLADA 6×6 (términos fuera de la diagonal) y se ensambla completa (#2).">↗ Aplicar resorte inclinado${hasSK ? ' ●' : ''}</button>
+          <button class="btn-secondary" id="btn-clear-sk" style="font-size:11px" title="Quitar la matriz de resorte acoplada">✕</button>
+        </div>
       </div>
 
       <div class="prop-section">
@@ -1289,13 +1301,24 @@ export class PropertiesPanel {
             <input type="number" id="nm-mz" value="${nm.mz ?? 0}" step="0.1" min="0">
           </div>
         </div>
+        <div class="prop-row cols3">
+          <div class="prop-field"><label>Irx (ton·m²)</label>
+            <input type="number" id="nm-irx" value="${nm.irx ?? 0}" step="0.1" min="0" title="Inercia rotacional concentrada en el GDL de giro Rx">
+          </div>
+          <div class="prop-field"><label>Iry (ton·m²)</label>
+            <input type="number" id="nm-iry" value="${nm.iry ?? 0}" step="0.1" min="0" title="Inercia rotacional concentrada en el GDL de giro Ry">
+          </div>
+          <div class="prop-field"><label>Irz (ton·m²)</label>
+            <input type="number" id="nm-irz" value="${nm.irz ?? 0}" step="0.1" min="0" title="Inercia rotacional concentrada en el GDL de giro Rz">
+          </div>
+        </div>
         <div style="display:flex;gap:6px;margin-top:4px">
           <button class="btn-secondary" id="btn-nm-iso" style="flex:1;font-size:11px;">
             Copiar mx → my, mz
           </button>
         </div>
         <div style="font-size:10px;color:var(--text-muted);margin-top:4px">
-          Entra en matriz M (análisis modal). W [kN] → m = W/9.81 ton
+          Entra en matriz M (análisis modal). W [kN] → m = W/9.81 ton · Irx/Iry/Irz = inercia rotacional (modos torsionales).
         </div>
       </div>
 
@@ -1321,6 +1344,9 @@ export class PropertiesPanel {
         mx: numVal('#nm-mx'),
         my: numVal('#nm-my'),
         mz: numVal('#nm-mz'),
+        irx: numVal('#nm-irx'),
+        iry: numVal('#nm-iry'),
+        irz: numVal('#nm-irz'),
       };
       const springs = {
         kux: numVal('#ns-kux'), kuy: numVal('#ns-kuy'), kuz: numVal('#ns-kuz'),
@@ -1365,6 +1391,26 @@ export class PropertiesPanel {
       sel.querySelector('#nm-my').value = val;
       sel.querySelector('#nm-mz').value = val;
       save();
+    });
+
+    // Resorte de apoyo INCLINADO → matriz acoplada 6×6 (#2)
+    sel.querySelector('#btn-incl-spring')?.addEventListener('click', () => {
+      const k = numVal('#ns-incl-k');
+      const dir = [numVal('#ns-incl-dx'), numVal('#ns-incl-dy'), numVal('#ns-incl-dz')];
+      if (k <= 0 || !dir.some(v => v)) { this.app.toast('Indique k > 0 y una dirección (dx,dy,dz)', 'warn'); return; }
+      this.app.snapshot();
+      this.app.model.updateNode(node.id, { springK: this.app.model.constructor.inclinedSpringK(k, dir) });
+      this.app.markDirty();
+      this.app.toast('Resorte inclinado (acoplado) aplicado', 'ok');
+      this.app.viewport.refreshNode(this.app.model.nodes.get(node.id)); this.showNode(this.app.model.nodes.get(node.id), true);
+    });
+    sel.querySelector('#btn-clear-sk')?.addEventListener('click', () => {
+      if (!(Array.isArray(node.springK) && node.springK.length === 36)) return;
+      this.app.snapshot();
+      this.app.model.updateNode(node.id, { springK: null });
+      this.app.markDirty();
+      this.app.toast('Resorte acoplado quitado', 'ok');
+      this.app.viewport.refreshNode(this.app.model.nodes.get(node.id)); this.showNode(this.app.model.nodes.get(node.id), true);
     });
 
     sel.querySelector('#btn-del-node')?.addEventListener('click', () => {
@@ -1843,7 +1889,7 @@ export class PropertiesPanel {
       <select id="mat-catalog"><option value="">— catálogo —</option></select></div>
       <button id="mat-catalog-add" class="btn-secondary" style="white-space:nowrap;font-size:11px">＋ Insertar</button>`;
     container.appendChild(pick);
-    import('../design/materials_catalog.js?v=204').then(({ MATERIAL_FAMILIES, getMaterialDef }) => {
+    import('../design/materials_catalog.js?v=205').then(({ MATERIAL_FAMILIES, getMaterialDef }) => {
       const sel = pick.querySelector('#mat-catalog');
       sel.innerHTML = '<option value="">— catálogo —</option>' +
         Object.entries(MATERIAL_FAMILIES).map(([fam, names]) => `<optgroup label="${fam}">` + names.map(n => `<option value="${n}">${n}</option>`).join('') + '</optgroup>').join('');
@@ -2309,7 +2355,7 @@ export class PropertiesPanel {
     if (!shapeSel) return;
     // Catálogo de perfiles tabulados (#66): poblar y aplicar al elegir.
     const catSel = card.querySelector('.sd-catalog');
-    if (catSel) import('../design/profiles.js?v=204').then(({ catalogFamilies, catalogNames, profileToSection }) => {
+    if (catSel) import('../design/profiles.js?v=205').then(({ catalogFamilies, catalogNames, profileToSection }) => {
       let html = '<option value="">— elegir perfil comercial —</option>';
       for (const fam of catalogFamilies()) html += `<optgroup label="${fam}">` + catalogNames(fam).map(n => `<option value="${n}" ${sec.design?.profile === n ? 'selected' : ''}>${n}</option>`).join('') + '</optgroup>';
       catSel.innerHTML = html;
@@ -2360,7 +2406,7 @@ export class PropertiesPanel {
       const s = this.app.model.sections.get(sec.id);
       if (!s.design?.shape || s.design.shape === 'generic') { this.app.toast('Elija una forma con dimensiones primero', 'warn'); return; }
       try {
-        const { fromShape } = await import('../design/section_props.js?v=204');
+        const { fromShape } = await import('../design/section_props.js?v=205');
         const g = fromShape(s.design.shape, s.design);
         if (!g) { this.app.toast('Faltan dimensiones de la forma', 'warn'); return; }
         this.app.snapshot();

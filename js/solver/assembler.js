@@ -6,10 +6,10 @@ import {
   transformMatrix, globalStiffness,
   applyReleases, fixedEndForces, condenseFEF,
   elemLocalK, elemLocalM
-} from './timoshenko.js?v=204';
-import { applyDiaphragmConstraints, applyDiaphragmMass } from './diaphragm.js?v=204';
-import { applyLinkConstraints } from './links.js?v=204';
-import { assembleAreasInto, assembleAreasMassInto, areaThermalContribs } from './membrane.js?v=204';
+} from './timoshenko.js?v=205';
+import { applyDiaphragmConstraints, applyDiaphragmMass } from './diaphragm.js?v=205';
+import { applyLinkConstraints } from './links.js?v=205';
+import { assembleAreasInto, assembleAreasMassInto, areaThermalContribs } from './membrane.js?v=205';
 
 // ── Node index (contiguous 0-based numbering) ─────────────────────────────
 export function buildNodeIndex(model) {
@@ -69,15 +69,24 @@ export function assembleK(model, nodeIndex) {
     }
   }
 
-  // Apoyos elásticos: rigidez de resorte en la diagonal de los GDL globales
+  // Apoyos elásticos: rigidez de resorte en los GDL globales del nodo.
+  //  • node.springs  = {kux…krz} → términos en la DIAGONAL (caso usual).
+  //  • node.springK  = matriz 6×6 (36, row-major) ACOPLADA (#2): resortes inclinados /
+  //    rigidez suelo-estructura cruzada (traslación↔rotación). Se ensambla COMPLETA y
+  //    se simetriza por seguridad; coexiste con la diagonal (se suman).
   for (const node of model.nodes.values()) {
-    const sp = node.springs;
-    if (!sp) continue;
-    const ks = [sp.kux, sp.kuy, sp.kuz, sp.krx, sp.kry, sp.krz];
-    if (!ks.some(k => k > 0)) continue;
     const b = nodeIndex.get(node.id) * 6;
-    for (let i = 0; i < 6; i++) {
-      if (ks[i] > 0) K[(b + i) * nDOF + (b + i)] += ks[i];
+    const sp = node.springs;
+    if (sp) {
+      const ks = [sp.kux, sp.kuy, sp.kuz, sp.krx, sp.kry, sp.krz];
+      for (let i = 0; i < 6; i++) if (ks[i] > 0) K[(b + i) * nDOF + (b + i)] += ks[i];
+    }
+    const KS = node.springK;
+    if (KS && KS.length === 36) {
+      for (let i = 0; i < 6; i++) for (let j = 0; j < 6; j++) {
+        const kij = 0.5 * ((+KS[i * 6 + j] || 0) + (+KS[j * 6 + i] || 0));   // simetriza
+        if (kij) K[(b + i) * nDOF + (b + j)] += kij;
+      }
     }
   }
 
@@ -95,14 +104,18 @@ export function assembleK(model, nodeIndex) {
   // Apply diaphragm concentrated masses (for modal analysis)
   applyDiaphragmMass(M, model, nodeIndex, nDOF);
 
-  // Apply user-defined nodal point masses (mx, my, mz in ton)
+  // Apply user-defined nodal point masses: traslacional (mx, my, mz en ton) +
+  // inercia rotacional (irx, iry, irz en ton·m²) en los GDL de giro Rx/Ry/Rz (#6).
   for (const node of model.nodes.values()) {
     const nm = node.nodeMass;
-    if (!nm || (nm.mx === 0 && nm.my === 0 && nm.mz === 0)) continue;
+    if (!nm || (!nm.mx && !nm.my && !nm.mz && !nm.irx && !nm.iry && !nm.irz)) continue;
     const b = nodeIndex.get(node.id) * 6;
-    M[b*nDOF     + b    ] += nm.mx || 0;   // Ux
-    M[(b+1)*nDOF + (b+1)] += nm.my || 0;   // Uy
-    M[(b+2)*nDOF + (b+2)] += nm.mz || 0;   // Uz
+    M[b*nDOF     + b    ] += nm.mx  || 0;   // Ux
+    M[(b+1)*nDOF + (b+1)] += nm.my  || 0;   // Uy
+    M[(b+2)*nDOF + (b+2)] += nm.mz  || 0;   // Uz
+    M[(b+3)*nDOF + (b+3)] += nm.irx || 0;   // Rx
+    M[(b+4)*nDOF + (b+4)] += nm.iry || 0;   // Ry
+    M[(b+5)*nDOF + (b+5)] += nm.irz || 0;   // Rz
   }
 
   return { K, M, nDOF };
