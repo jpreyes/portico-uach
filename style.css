@@ -91,15 +91,16 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 /* ── Árbol lateral: modelos del proyecto + temporales ───────────── */
 #model-tree {
   background: var(--bg2);
-  border-right: 1px solid var(--border);
   overflow: hidden auto;
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 6px;
+  box-sizing: border-box;
 }
-#main:not(.tree-open) #model-tree { display: none; }
+/* Cerrado: la 1.ª columna del grid mide 0 → el árbol se colapsa SIN sacarlo del grid
+   (usar display:none lo quitaría como ítem y correría todas las columnas una posición). */
+#main.tree-open #model-tree { border-right: 1px solid var(--border); padding: 6px; }
 .mt-section { display: flex; flex-direction: column; min-width: 0; }
 .mt-head {
   display: flex; align-items: center; justify-content: space-between;
