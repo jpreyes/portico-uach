@@ -29,8 +29,8 @@
       window.dispatchEvent(new Event('pwa-installed'));
     });
   </script>
-  <link rel="stylesheet" href="style.css?v=201">
-  <link rel="stylesheet" href="ui-v2.css?v=201">
+  <link rel="stylesheet" href="style.css?v=202">
+  <link rel="stylesheet" href="ui-v2.css?v=202">
   <script type="importmap">
   {
     "imports": {
@@ -72,6 +72,7 @@
           <li data-action="import-interop">🔄 Importar de otro motor…</li>
           <li data-action="export-interop">🔄 Exportar a otro motor…</li>
           <li data-action="import-ifc">🏗️ Importar IFC…</li>
+          <li data-action="export-ifc">🏗️ Exportar IFC…</li>
           <li class="sep"></li>
           <li data-action="export-results">Exportar Resultados Estáticos</li>
           <li data-action="export-modal">Exportar Resultados Modales</li>
@@ -1087,7 +1088,7 @@
 
 <!-- numeric.js para solver (Fase 2+) -->
 <script src="lib/numeric.js"></script>
-<script type="module" src="js/app.js?v=201"></script>
+<script type="module" src="js/app.js?v=202"></script>
 
 <!-- PWA: registrar el service worker (offline). Solo en contexto seguro
      (https o localhost); el navegador deja navigator.serviceWorker undefined
