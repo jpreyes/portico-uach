@@ -236,3 +236,77 @@ function profileBBox(model, curveRef) {
   for (const pt of pts) { x0 = Math.min(x0, pt[0]); x1 = Math.max(x1, pt[0]); y0 = Math.min(y0, pt[1]); y1 = Math.max(y1, pt[1]); }
   return { w: Math.max(x1 - x0, 1e-6), h: Math.max(y1 - y0, 1e-6) };
 }
+
+// ── superficie de un ÁREA (muro/losa/placa) a partir del sólido extruido ─────────
+// polígono 2D del perfil (en coords del perfil): rectángulo (4 esquinas) o contorno.
+function profilePolygon2D(model, profile) {
+  const p = model.get(profile);
+  if (!p) return null;
+  if (p.type === 'IFCRECTANGLEPROFILEDEF') {
+    const b = +p.args[3] || 0, h = +p.args[4] || 0;
+    if (b <= 0 || h <= 0) return null;
+    return [[-b / 2, -h / 2], [b / 2, -h / 2], [b / 2, h / 2], [-b / 2, h / 2]];
+  }
+  if (p.type === 'IFCARBITRARYCLOSEDPROFILEDEF') {
+    const pts = curvePoints(model, p.args[2]);          // OuterCurve
+    if (!pts || pts.length < 3) return null;
+    let poly = pts.map(q => [q[0], q[1]]);
+    const f = poly[0], l = poly[poly.length - 1];        // quitar punto de cierre duplicado
+    if (Math.hypot(f[0] - l[0], f[1] - l[1]) < 1e-9) poly = poly.slice(0, -1);
+    return poly.length >= 3 ? poly : null;
+  }
+  return null;
+}
+
+/**
+ * Superficie estructural (3–4 esquinas globales + espesor) de un IfcWall/IfcSlab/IfcPlate.
+ * Estrategia sobre el IfcExtrudedAreaSolid del 'Body':
+ *   • LOSA/PLACA horizontal → el contorno del perfil en el PLANO MEDIO (zoff = depth/2),
+ *     espesor = profundidad de extrusión.
+ *   • MURO (panel vertical) → rectángulo (eje largo del perfil) × altura de extrusión,
+ *     en el plano medio del espesor (la dimensión corta del perfil).
+ * @returns {{ corners:number[][], thickness:number, via:string } | null}
+ */
+export function areaSurface(model, element, kind, factor, warn) {
+  const world = worldPlacement(model, element.args[5]);
+  const repDef = model.get(element.args[6]);
+  if (!repDef || !Array.isArray(repDef.args[2])) return null;
+  let solid = null;
+  for (const r of repDef.args[2]) {
+    const sr = model.get(r);
+    if (!sr || sr.type !== 'IFCSHAPEREPRESENTATION' || !Array.isArray(sr.args[3])) continue;
+    for (const it of sr.args[3]) { const s = model.get(it); if (s && s.type === 'IFCEXTRUDEDAREASOLID') { solid = s; break; } }
+    if (solid) break;
+  }
+  if (!solid) { warn && warn.add('Sin sólido extruido: geometría de área no reconocible'); return null; }
+
+  const pos = placementMatrix(model, solid.args[1]);     // sistema del perfil
+  const depth = +solid.args[3] || 0;                     // profundidad de extrusión
+  const poly = profilePolygon2D(model, solid.args[0]);
+  if (!poly) { warn && warn.add('Perfil de área no reconocido (sólo rectángulo o polígono)'); return null; }
+
+  // punto del perfil (x, y, zoff a lo largo de la extrusión) → global en metros
+  const G = (x, y, z) => mul(tpt(world, tpt(pos, [x, y, z])), factor);
+
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (const q of poly) { x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); }
+  const wx = x1 - x0, wy = y1 - y0, H = Math.abs(depth);
+
+  // muro «real» (footprint largo×fino extruido en altura) vs losa/panel (contorno
+  // extruido por el espesor): se decide por la GEOMETRÍA, no por el tipo IFC — así también
+  // se reimportan bien los muros que este exportador escribe como polígono×espesor.
+  const thinProfile = Math.min(wx, wy) < Math.max(wx, wy) * 0.5 && Math.min(wx, wy) < H * 0.5;
+  const asWall = thinProfile && H > Math.min(wx, wy);
+
+  if (asWall) {
+    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+    let e1, e2, thick;
+    if (wx >= wy) { e1 = [x0, cy]; e2 = [x1, cy]; thick = wy; } else { e1 = [cx, y0]; e2 = [cx, y1]; thick = wx; }
+    const corners = [G(e1[0], e1[1], 0), G(e2[0], e2[1], 0), G(e2[0], e2[1], depth), G(e1[0], e1[1], depth)];
+    return { corners, thickness: (thick || 0.2) * factor, via: 'wall' };
+  }
+
+  if (poly.length > 4) { warn && warn.add(`Losa/placa con ${poly.length} vértices: sólo se importan 3–4 (rectángulo/triángulo)`); return null; }
+  const corners = poly.map(q => G(q[0], q[1], depth / 2));
+  return { corners, thickness: (H || 0.2) * factor, via: 'slab' };
+}

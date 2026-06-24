@@ -82,14 +82,20 @@ export class IfcPreview {
     this.left.clear();
     const box = new THREE.Box3();
     const lines = { ok: [], nogeom: [], unsup: [] };
+    const faces = { ok: [], nogeom: [], unsup: [] };
     for (const it of items) {
-      const bucket = it.status === 'ok' ? lines.ok : (it.status === 'no-geom' ? lines.nogeom : lines.unsup);
+      const key = it.status === 'ok' ? 'ok' : (it.status === 'no-geom' ? 'nogeom' : 'unsup');
       for (const [a, b] of (it.segments || [])) {
         const va = m2t(a[0], a[1], a[2]), vb = m2t(b[0], b[1], b[2]);
-        bucket.push(va, vb); box.expandByPoint(va); box.expandByPoint(vb);
+        lines[key].push(va, vb); box.expandByPoint(va); box.expandByPoint(vb);
+      }
+      if (it.corners && it.corners.length >= 3) {
+        this._areaEdges(it.corners, lines[key], box);
+        this._areaTris(it.corners, faces[key]);
       }
     }
-    for (const [k, pts] of Object.entries(lines)) if (pts.length) this.left.group.add(this._seg(pts, COL[k === 'ok' ? 'ok' : k === 'nogeom' ? 'nogeom' : 'unsup'], k === 'unsup' ? 0.35 : 1));
+    for (const [k, pts] of Object.entries(lines)) if (pts.length) this.left.group.add(this._seg(pts, COL[k], k === 'unsup' ? 0.35 : 1));
+    for (const [k, tris] of Object.entries(faces)) if (tris.length) this.left.group.add(this._face(tris, COL[k], 0.16));
 
     // encuadre
     if (!box.isEmpty()) {
@@ -104,7 +110,7 @@ export class IfcPreview {
   // reconstruye el lado DERECHO (PÓRTICO) con la selección actual
   updateSelection(selected) {
     this.right.clear();
-    const pts = [], nodeSet = new Map();
+    const pts = [], tris = [], nodeSet = new Map();
     for (const it of this.items) {
       if (it.status !== 'ok') continue;
       if (selected && !selected.has(it.ifcId)) continue;
@@ -113,7 +119,13 @@ export class IfcPreview {
         pts.push(va, vb);
         nodeSet.set(a.join(','), va); nodeSet.set(b.join(','), vb);
       }
+      if (it.corners && it.corners.length >= 3) {
+        this._areaEdges(it.corners, pts, null);
+        this._areaTris(it.corners, tris);
+        for (const c of it.corners) nodeSet.set(c.join(','), m2t(c[0], c[1], c[2]));
+      }
     }
+    if (tris.length) this.right.group.add(this._face(tris, COL.portico, 0.18));
     if (pts.length) this.right.group.add(this._seg(pts, COL.portico, 1));
     if (nodeSet.size) {
       const geo = new THREE.BufferGeometry().setFromPoints([...nodeSet.values()]);
@@ -121,10 +133,30 @@ export class IfcPreview {
     }
   }
 
+  // aristas del contorno (par de vértices por arista, cerrado) de un área
+  _areaEdges(corners, out, box) {
+    const n = corners.length;
+    for (let i = 0; i < n; i++) {
+      const a = corners[i], b = corners[(i + 1) % n];
+      const va = m2t(a[0], a[1], a[2]), vb = m2t(b[0], b[1], b[2]);
+      out.push(va, vb); if (box) { box.expandByPoint(va); box.expandByPoint(vb); }
+    }
+  }
+  // triángulos (abanico) para el relleno translúcido del área
+  _areaTris(corners, out) {
+    const v = corners.map(c => m2t(c[0], c[1], c[2]));
+    for (let i = 1; i + 1 < v.length; i++) out.push(v[0], v[i], v[i + 1]);
+  }
+
   _seg(pts, color, opacity) {
     const geo = new THREE.BufferGeometry().setFromPoints(pts);
     const mat = new THREE.LineBasicMaterial({ color, transparent: opacity < 1, opacity });
     return new THREE.LineSegments(geo, mat);
+  }
+  _face(verts, color, opacity) {
+    const geo = new THREE.BufferGeometry().setFromPoints(verts);
+    const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity, side: THREE.DoubleSide, depthWrite: false });
+    return new THREE.Mesh(geo, mat);
   }
 
   dispose() {

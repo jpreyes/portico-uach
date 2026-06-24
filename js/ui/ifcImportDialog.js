@@ -10,9 +10,9 @@
 // construye y confirma (con snapshot → undo).  Robusta: los no-importables se listan
 // deshabilitados, nunca rompen.  AUTÓNOMO salvo Three (vía el preview).
 // ──────────────────────────────────────────────────────────────────────────────
-import { IfcPreview } from './ifcSideBySidePreview.js?v=202';
-import { itemsToNeutral } from '../io/ifc/ifcToPortico.js?v=202';
-import { KIND_LABEL } from '../io/ifc/ifcClassifier.js?v=202';
+import { IfcPreview } from './ifcSideBySidePreview.js?v=203';
+import { itemsToNeutral } from '../io/ifc/ifcToPortico.js?v=203';
+import { KIND_LABEL } from '../io/ifc/ifcClassifier.js?v=203';
 
 const STATUS = {
   ok:            { txt: 'Importable', color: 'var(--success)' },
@@ -117,9 +117,10 @@ export function openIfcImportDialog({ fileName, analysis }) {
     const refresh = () => {
       preview.updateSelection(selected);
       const { stats } = itemsToNeutral(items, selected);
-      statsEl.textContent = `Se crearán ${stats.members} barra(s), ${stats.nodes} nodo(s), ${stats.sections} sección(es), ${stats.materials} material(es).`;
-      win.querySelector('#ifc-ok').disabled = stats.members === 0;
-      win.querySelector('#ifc-ok').style.opacity = stats.members === 0 ? .5 : 1;
+      const nada = stats.members === 0 && stats.areas === 0;
+      statsEl.textContent = `Se crearán ${stats.members} barra(s), ${stats.areas} área(s), ${stats.nodes} nodo(s), ${stats.sections} sección(es), ${stats.materials} material(es).`;
+      win.querySelector('#ifc-ok').disabled = nada;
+      win.querySelector('#ifc-ok').style.opacity = nada ? .5 : 1;
     };
 
     buildRows(); refresh();

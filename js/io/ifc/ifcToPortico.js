@@ -12,11 +12,11 @@
 // Convención de ejes: IFC y PÓRTICO comparten Z VERTICAL, así que las coordenadas pasan
 // directas (sólo conversión de unidades a metros).  AUTÓNOMO (Node + navegador).
 // ──────────────────────────────────────────────────────────────────────────────
-import { parseIFC, lengthUnit } from './ifcLoader.js?v=202';
-import { classify, KIND_LABEL } from './ifcClassifier.js?v=202';
-import { memberAxis, bodyProfile, profileProps } from './ifcGeometrySimplifier.js?v=202';
-import { Warnings } from './ifcWarnings.js?v=202';
-import { neutralToModel } from '../neutral.js?v=202';
+import { parseIFC, lengthUnit } from './ifcLoader.js?v=203';
+import { classify, KIND_LABEL } from './ifcClassifier.js?v=203';
+import { memberAxis, bodyProfile, profileProps, areaSurface } from './ifcGeometrySimplifier.js?v=203';
+import { Warnings } from './ifcWarnings.js?v=203';
+import { neutralToModel } from '../neutral.js?v=203';
 
 const DEFAULT_TOL = 0.01;       // m — tolerancia de snap de nodos coincidentes
 // material genérico (acero) cuando el IFC no trae propiedades mecánicas — kN/m²
@@ -41,6 +41,12 @@ function resolveMaterial(model, materialRef, mechE) {
       case 'IFCMATERIALPROFILE':                             // (Name, Desc, Material, Profile, …)
         if (m.args[3]) out.profile = m.args[3];              // el nombre de material lo da el IfcMaterial, no el perfil
         m = model.get(m.args[2]); continue;                  // → IfcMaterial (nombre/E)
+      case 'IFCMATERIALLAYERSETUSAGE':                        // áreas: muros/losas por capas
+        m = model.get(m.args[0]); continue;                  // ForLayerSet
+      case 'IFCMATERIALLAYERSET':
+        m = model.get((m.args[0] || [])[0]); continue;       // MaterialLayers[0]
+      case 'IFCMATERIALLAYER':
+        m = model.get(m.args[0]); continue;                  // → IfcMaterial
       default:
         return out;                                          // capas (muros) u otros → genérico
     }
@@ -79,14 +85,36 @@ export function analyzeIFC(text, opts = {}) {
     const w = new Warnings();
     const item = {
       ifcId: el.id, ifcType: el.ifcType, kind: el.kind, kindLabel: KIND_LABEL[el.kind] || el.kind,
-      supported: el.supported, name: el.name,
+      supported: el.supported, isArea: !!el.isArea, name: el.name,
       levelName: el.storeyId != null ? (levelName.get(el.storeyId) || '—') : '—',
-      segments: [], matName: '', E: null, secName: '', sec: null,
+      segments: [], corners: null, thickness: 0, matName: '', E: null, secName: '', sec: null,
       status: 'unsupported', warnings: w,
     };
 
     if (!el.supported) {
-      item.warnings.add(`${item.kindLabel} aún no soportado (sólo barras)`);
+      item.warnings.add(`${item.kindLabel} aún no soportado`);
+      items.push(item); continue;
+    }
+
+    // material (común a barras y áreas)
+    const setMaterial = () => {
+      const mat = resolveMaterial(model, el.materialRef, mechE);
+      item.matName = mat.name || 'Genérico (IFC)';
+      if (mat.E && mat.E > 0) item.E = mat.E;
+      else { item.E = GENERIC.E; w.add('Sin propiedades mecánicas: material genérico (acero)'); }
+      return mat;
+    };
+
+    // ── ÁREA (muro/losa/placa): superficie de 3–4 esquinas + espesor ──
+    if (el.isArea) {
+      const surf = areaSurface(model, model.get(el.id), el.kind, unit.factor, w);
+      if (!surf || surf.corners.length < 3) { item.status = 'no-geom'; w.add('Sin geometría de superficie reconocible: no se puede importar'); items.push(item); continue; }
+      item.corners = surf.corners;
+      item.thickness = surf.thickness;
+      item.areaKind = surf.via;
+      setMaterial();
+      item.secName = `e = ${(surf.thickness * 1000).toFixed(0)} mm`;
+      item.status = 'ok';
       items.push(item); continue;
     }
 
@@ -96,10 +124,7 @@ export function analyzeIFC(text, opts = {}) {
     item.segments = axis.segments;
 
     // material
-    const mat = resolveMaterial(model, el.materialRef, mechE);
-    item.matName = mat.name || 'Genérico (IFC)';
-    if (mat.E && mat.E > 0) item.E = mat.E;
-    else { item.E = GENERIC.E; w.add('Sin propiedades mecánicas: material genérico (acero)'); }
+    const mat = setMaterial();
 
     // sección: perfil del sólido extruido, o el del material, o genérica
     let prof = bodyProfile(model, model.get(el.id)) || mat.profile;
@@ -150,24 +175,33 @@ export function itemsToNeutral(items, selected = null, opts = {}) {
 
   const matKey = new Map(), materials = [];
   const secKey = new Map(), sections = [];
-  const members = [];
+  const members = [], areas = [];
   const nodeCoords = [];   // se llena al final desde el snapper
 
   // acumulador de nodos: el snapper devuelve índices 0..N-1; reconstruimos coords después
   const usedNodes = new Map(); // idx → [x,y,z]
   const getNode = (p) => { const i = snap(p); if (!usedNodes.has(i)) usedNodes.set(i, p); return i; };
 
-  let skipped = 0;
+  let skipped = 0, skippedAreas = 0;
   for (const it of items) {
     if (it.status !== 'ok') continue;
     if (selected && !selected.has(it.ifcId)) continue;
 
-    // material (dedupe por nombre+E)
+    // material (dedupe por nombre+E) — común a barras y áreas
     const mk = `${it.matName}|${Math.round((it.E || GENERIC.E))}`;
     let mIdx = matKey.get(mk);
     if (mIdx == null) { mIdx = materials.length + 1; matKey.set(mk, mIdx); materials.push({ id: mIdx, name: it.matName, E: it.E || GENERIC.E, nu: GENERIC.nu, rho: GENERIC.rho, alpha: GENERIC.alpha }); }
 
-    // sección (dedupe por nombre+props)
+    // ── ÁREA (muro/losa/placa) → cáscara de 3–4 nodos ──
+    if (it.corners && it.corners.length >= 3) {
+      const ids = it.corners.map(p => getNode(p) + 1);
+      const uniq = []; for (const id of ids) if (!uniq.includes(id)) uniq.push(id);   // colapsa esquinas coincidentes
+      if (uniq.length >= 3 && uniq.length <= 4) areas.push({ id: areas.length + 1, nodes: uniq, mat: mIdx, thickness: it.thickness || 0.2, behavior: 'shell' });
+      else skippedAreas++;
+      continue;
+    }
+
+    // ── BARRA → sección + miembro(s) ──
     const s = it.sec;
     const sk = s ? `${it.secName}|${s.A.toExponential(4)}|${s.Iy.toExponential(4)}|${s.Iz.toExponential(4)}` : `gen|${it.secName}`;
     let sIdx = secKey.get(sk);
@@ -189,14 +223,15 @@ export function itemsToNeutral(items, selected = null, opts = {}) {
   }
 
   if (skipped) warnings.push(`${skipped} tramo(s) de longitud ~0 descartado(s) tras el snap (tol ${tol} m)`);
-  if (!members.length) warnings.push('No se generó ninguna barra con la selección actual');
+  if (skippedAreas) warnings.push(`${skippedAreas} área(s) descartada(s): tras el snap no quedaron 3–4 esquinas distintas`);
+  if (!members.length && !areas.length) warnings.push('No se generó ninguna barra ni área con la selección actual');
 
   const neutral = {
     units: { length: 'm', force: 'kN' },
     meta: { name: opts.name || 'IFC', source: 'ifc', warnings },
-    nodes: nodeCoords, materials, sections, members, loadCases: [],
+    nodes: nodeCoords, materials, sections, members, areas, loadCases: [],
   };
-  return { neutral, stats: { nodes: nodeCoords.length, members: members.length, materials: materials.length, sections: sections.length }, warnings };
+  return { neutral, stats: { nodes: nodeCoords.length, members: members.length, areas: areas.length, materials: materials.length, sections: sections.length }, warnings };
 }
 
 /** Atajo: texto IFC → `Model` de PÓRTICO con TODOS los elementos soportados (para Node/tests). */

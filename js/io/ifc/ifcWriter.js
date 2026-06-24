@@ -21,6 +21,14 @@ function ifcGuid() {
   return s;
 }
 
+// álgebra vectorial mínima (para superficies de área)
+const vsub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const vmul = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+const vdot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const vcross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const vlen = a => Math.hypot(a[0], a[1], a[2]);
+const vunit = a => { const l = vlen(a); return l > 1e-12 ? vmul(a, 1 / l) : [0, 0, 0]; };
+
 // real IFC: siempre con punto decimal (1 → "1.")
 function num(v) { let s = (+v || 0).toString(); if (!/[.eE]/.test(s)) s += '.'; return s; }
 // string IFC: comilla escapada '' y no-ASCII como \X2\HHHH…\X0\ (compatibilidad amplia)
@@ -127,9 +135,44 @@ export function neutralToIFC(neutral, opts = {}) {
     e(`IFCRELASSOCIATESMATERIAL(${str(ifcGuid())},$,$,$,(${els.join(',')}),${mUse})`);
   }
 
-  // ── contención de TODAS las barras en el piso ──
+  // ── áreas: muro/losa como sólido extruido (contorno medio × espesor) ──
+  const nById = new Map((neutral.nodes || []).map(n => [n.id, [n.x, n.y, n.z]]));
+  for (const ar of (neutral.areas || [])) {
+    const cs = (ar.nodes || []).map(i => nById.get(i)).filter(Boolean);
+    if (cs.length < 3) continue;
+    const t = ar.thickness || 0.2;
+    let nrm = vunit(vcross(vsub(cs[1], cs[0]), vsub(cs[2], cs[0])));
+    if (vlen(nrm) < 1e-9) continue;
+    const vertical = Math.abs(nrm[2]) <= 0.7;
+    const lx = vunit(vsub(cs[1], cs[0])), lz = nrm, ly = vcross(lz, lx);
+    const base0 = vsub(cs[0], vmul(lz, t / 2));                 // plano base del sólido (centra en la superficie media)
+    const poly2d = cs.map(c => [vdot(vsub(c, cs[0]), lx), vdot(vsub(c, cs[0]), ly)]);
+    const ptRefs = poly2d.map(q => e(`IFCCARTESIANPOINT((${num(q[0])},${num(q[1])}))`));
+    const pl = e(`IFCPOLYLINE((${ptRefs.join(',')},${ptRefs[0]}))`);   // contorno cerrado
+    const prof = e(`IFCARBITRARYCLOSEDPROFILEDEF(.AREA.,${str(ar.name || 'Área')},${pl})`);
+    const oPt = e(`IFCCARTESIANPOINT((${num(base0[0])},${num(base0[1])},${num(base0[2])}))`);
+    const zD = e(`IFCDIRECTION((${num(lz[0])},${num(lz[1])},${num(lz[2])}))`);
+    const xD = e(`IFCDIRECTION((${num(lx[0])},${num(lx[1])},${num(lx[2])}))`);
+    const ap = e(`IFCAXIS2PLACEMENT3D(${oPt},${zD},${xD})`);
+    const solid = e(`IFCEXTRUDEDAREASOLID(${prof},${ap},${e('IFCDIRECTION((0.,0.,1.))')},${num(t)})`);
+    const sr = e(`IFCSHAPEREPRESENTATION(${ctx},'Body','SweptSolid',(${solid}))`);
+    const ps = e(`IFCPRODUCTDEFINITIONSHAPE($,$,(${sr}))`);
+    const tipo = vertical ? 'IFCWALL' : 'IFCSLAB';
+    const pdt = vertical ? '.STANDARD.' : '.FLOOR.';
+    const el = e(`${tipo}(${str(ifcGuid())},$,${str((vertical ? 'Muro ' : 'Losa ') + ar.id)},$,$,${memPl},${ps},$,${pdt})`);
+    allElems.push(el);
+    const mr = matRef.get(ar.mat) || matRef.values().next().value;
+    if (mr) {
+      const ml = e(`IFCMATERIALLAYER(${mr},${num(t)},$)`);
+      const mls = e(`IFCMATERIALLAYERSET((${ml}),${str((vertical ? 'Muro ' : 'Losa ') + ar.id)})`);
+      const mlu = e(`IFCMATERIALLAYERSETUSAGE(${mls},.AXIS2.,.POSITIVE.,0.)`);
+      e(`IFCRELASSOCIATESMATERIAL(${str(ifcGuid())},$,$,$,(${el}),${mlu})`);
+    }
+  }
+
+  // ── contención de TODOS los elementos (barras + áreas) en el piso ──
   if (allElems.length)
-    e(`IFCRELCONTAINEDINSPATIALSTRUCTURE(${str(ifcGuid())},$,'Barras',$,(${allElems.join(',')}),${storey})`);
+    e(`IFCRELCONTAINEDINSPATIALSTRUCTURE(${str(ifcGuid())},$,'Elementos',$,(${allElems.join(',')}),${storey})`);
 
   // ── ensamblar el archivo ──
   const ts = new Date().toISOString().slice(0, 19);

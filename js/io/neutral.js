@@ -10,7 +10,7 @@
 // El modelo neutro usa ids 1..N CONSECUTIVOS (los formatos externos suelen exigirlo);
 // la conversión guarda el remapeo para no perder la conectividad.  AUTÓNOMO (Node+browser).
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model } from '../model/model.js?v=202';
+import { Model } from '../model/model.js?v=203';
 
 /** `Model` de PÓRTICO → modelo neutro (ids renumerados 1..N). */
 export function modelToNeutral(model) {
@@ -49,7 +49,14 @@ export function modelToNeutral(model) {
       releases: (e.releases || Array(12).fill(0)).slice(), beta: 0,
     });
   }
-  if (model.areas && model.areas.size) warnings.push(`${model.areas.size} elemento(s) de área no se exportan (sólo barras por ahora)`);
+  // Áreas (membrana/placa/cáscara): 3–4 nodos + material + espesor + comportamiento.
+  // Sólo los adaptadores que las soporten (p.ej. IFC) las escribirán; el resto las ignora.
+  const areas = [];
+  for (const a of (model.areas?.values() || [])) {
+    const ns = (a.nodes || []).map(id => nodeIdx.get(id)).filter(Boolean);
+    if (ns.length < 3) continue;
+    areas.push({ id: a.id, nodes: ns, mat: matIdx.get(a.matId) || 1, thickness: a.thickness ?? 0.2, behavior: a.behavior || 'membrane', drilling: !!a.drilling, planeStrain: !!a.planeStrain });
+  }
 
   const loadCases = [];
   for (const lc of model.loadCases.values()) {
@@ -61,7 +68,7 @@ export function modelToNeutral(model) {
     loadCases.push({ id: lc.id, name: lc.name, selfWeight: !!lc.selfWeight, type: lc.type || 'static', loads });
   }
 
-  return { units: { length: 'm', force: 'kN' }, meta: { name: model.name || 'PORTICO', source: 'portico', warnings }, nodes, materials, sections, members, loadCases };
+  return { units: { length: 'm', force: 'kN' }, meta: { name: model.name || 'PORTICO', source: 'portico', warnings }, nodes, materials, sections, members, areas, loadCases };
 }
 
 /** Modelo neutro → `Model` nuevo de PÓRTICO (remapea ids; conserva conectividad). */
@@ -102,6 +109,12 @@ export function neutralToModel(neutral) {
   for (const e of (neutral.members || [])) {
     const el = model.addElement(nodeId.get(e.ni), nodeId.get(e.nj), matId.get(e.mat) ?? firstMat, secId.get(e.sec) ?? firstSec);
     if (el) { memId.set(e.id, el.id); if (e.releases && e.releases.some(Boolean)) model.updateElement(el.id, { releases: e.releases }); }
+  }
+
+  for (const a of (neutral.areas || [])) {
+    const ns = (a.nodes || []).map(id => nodeId.get(id)).filter(v => v != null);
+    if (ns.length < 3) continue;
+    model.addArea(ns, matId.get(a.mat) ?? firstMat, { thickness: a.thickness ?? 0.2, behavior: a.behavior || 'membrane', drilling: !!a.drilling, planeStrain: !!a.planeStrain });
   }
 
   for (const lc of (neutral.loadCases || [])) {

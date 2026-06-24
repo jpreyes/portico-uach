@@ -25,7 +25,9 @@ const KIND = new Map([
   ['IFCPLATE', 'plate'], ['IFCPLATESTANDARDCASE', 'plate'],
   ['IFCFOOTING', 'footing'], ['IFCPILE', 'pile'],
 ]);
-const SUPPORTED = new Set(['beam', 'column', 'member']);
+// barras → IfcBeam/Column/Member; áreas → IfcWall/Slab/Plate (3–4 nodos en PÓRTICO)
+const SUPPORTED = new Set(['beam', 'column', 'member', 'wall', 'slab', 'plate']);
+const AREA_KINDS = new Set(['wall', 'slab', 'plate']);
 
 /** Etiqueta legible (es) por clase, para la UI. */
 export const KIND_LABEL = { beam: 'Viga', column: 'Pilar', member: 'Barra', wall: 'Muro', slab: 'Losa', plate: 'Placa', footing: 'Zapata', pile: 'Pilote' };
@@ -68,7 +70,7 @@ export function classify(model) {
     for (const e of model.ofType(type)) {
       counts[kind] = (counts[kind] || 0) + 1;
       elements.push({
-        id: e.id, ifcType: type, kind, supported: SUPPORTED.has(kind),
+        id: e.id, ifcType: type, kind, supported: SUPPORTED.has(kind), isArea: AREA_KINDS.has(kind),
         name: (e.args[2] || `${KIND_LABEL[kind] || kind} ${e.id}`).toString(),
         predefined: (typeof e.args[8] === 'string' ? e.args[8] : '') || '',
         storeyId: storeyOf.get(e.id) ?? null,
@@ -80,4 +82,4 @@ export function classify(model) {
   return { elements, levels, counts };
 }
 
-export { SUPPORTED, KIND };
+export { SUPPORTED, AREA_KINDS, KIND };
