@@ -25,6 +25,7 @@
   --radius:      8px;
   --radius-sm:   5px;
   --toolbar-w:   68px;
+  --tree-w:      252px;
   --panel-w:     300px;
   --menu-h:      40px;
   --status-h:    26px;
@@ -77,10 +78,61 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 
 #main {
   display: grid;
-  grid-template-columns: var(--toolbar-w) 1fr 5px var(--panel-w);
+  /* 1.ª columna = árbol lateral (0 cuando está cerrado → la barra de herramientas
+     "se corre" hacia la derecha al abrirlo). */
+  grid-template-columns: 0 var(--toolbar-w) 1fr 5px var(--panel-w);
   overflow: hidden;
   min-height: 0;
 }
+#main.tree-open {
+  grid-template-columns: var(--tree-w) var(--toolbar-w) 1fr 5px var(--panel-w);
+}
+
+/* ── Árbol lateral: modelos del proyecto + temporales ───────────── */
+#model-tree {
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  overflow: hidden auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+}
+#main:not(.tree-open) #model-tree { display: none; }
+.mt-section { display: flex; flex-direction: column; min-width: 0; }
+.mt-head {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 11px; font-weight: 700; letter-spacing: .2px;
+  color: var(--text-muted); text-transform: uppercase;
+  padding: 6px 4px 4px;
+}
+.mt-head button {
+  background: var(--bg4); border: 1px solid var(--border2); color: var(--text);
+  border-radius: 6px; cursor: pointer; font-size: 13px; line-height: 1; padding: 2px 7px;
+}
+.mt-head button:hover { background: var(--accent); color: #06121c; border-color: var(--accent); }
+.mt-body { display: flex; flex-direction: column; gap: 3px; }
+
+.mt-node {
+  display: flex; align-items: center; gap: 4px;
+  padding: 5px 6px; border: 1px solid transparent; border-radius: 6px;
+  cursor: pointer; font-size: 12px; min-width: 0;
+}
+.mt-node:hover { background: var(--bg4); }
+.mt-node.active { background: rgba(56,139,253,0.15); border-color: var(--accent-dim); }
+.mt-node .mt-ico { color: var(--accent); width: 12px; text-align: center; flex: none; }
+.mt-node .mt-name {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--text);
+}
+.mt-node.active .mt-name { font-weight: 600; }
+.mt-node .mt-act {
+  background: none; border: none; color: var(--text-muted); cursor: pointer;
+  font-size: 12px; padding: 1px 3px; border-radius: 4px; flex: none;
+}
+.mt-node .mt-act:hover { background: var(--bg2); color: var(--text); }
+.mt-node .mt-act.danger:hover { color: var(--danger); }
 
 /* ── Menubar ────────────────────────────────────────────────── */
 #menubar {
