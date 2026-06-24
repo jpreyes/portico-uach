@@ -19,8 +19,8 @@
 //   4. Update x ← y / ‖y‖_M ,  Rayleigh quotient ωᵢ² = xᵀKx.
 //   5. Repeat until ‖Δω²‖/ω² < 1e-7.
 // ──────────────────────────────────────────────────────────────────────────────
-import { buildNodeIndex, assembleK, getNodeDOFs } from './assembler.js?v=205';
-import { ModalResults } from './modal_results.js?v=205';
+import { buildNodeIndex, assembleK, getNodeDOFs } from './assembler.js?v=206';
+import { ModalResults } from './modal_results.js?v=206';
 
 export class ModalSolver {
   /**
@@ -52,6 +52,9 @@ export class ModalSolver {
       Array.from({length: nF}, (_, j) => M[freeDOF[i]*nDOF + freeDOF[j]])
     );
 
+    const num = window.numeric;
+    if (!num) throw new Error('numeric.js no disponible.');
+
     // ── Check that model has mass ─────────────────────────────────────────────
     let maxMd = 0;
     for (let i = 0; i < nF; i++) maxMd = Math.max(maxMd, Math.abs(Mff[i][i]));
@@ -60,31 +63,90 @@ export class ModalSolver {
         'Matriz de masas nula. Asigne densidad ρ a los materiales ' +
         'o masa a los diafragmas.'
       );
-    const eps = maxMd * 1e-8;
-    for (let i = 0; i < nF; i++) {
-      if (Math.abs(Mff[i][i]) < eps) Mff[i][i] = eps;
-    }
 
-    const num = window.numeric;
-    if (!num) throw new Error('numeric.js no disponible.');
+    // ── #5: condensación estática (Guyan) de los GDL SIN MASA ─────────────────
+    // Los GDL con rigidez pero masa ~nula (modelos con ρ=0, rotaciones sin inercia
+    // rotacional, nodos internos sin masa) generan MODOS ESPURIOS de frecuencia
+    // altísima / mal condicionamiento. Se condensan estáticamente antes del modal
+    // (exacto cuando el GDL no tiene inercia). Sólo se activa si hay GDL realmente sin
+    // masa (< 1e-6 del máximo) → los modelos normales (masa consistente) no se tocan.
+    const red = guyanReduce(Kff, Mff, nF, maxMd, num);
+    const Kw = red ? red.Kr : Kff;
+    const Mw = red ? red.Mr : Mff;
+    const nW = red ? red.nM : nF;
 
-    // ── Pre-factor Kff once (reused across all inverse power steps) ───────────
+    // Piso de masa de seguridad (sólo afecta diagonales residualmente nulas; en el
+    // camino sin condensar reproduce el comportamiento anterior).
+    let maxW = 0; for (let i = 0; i < nW; i++) maxW = Math.max(maxW, Math.abs(Mw[i][i]));
+    const eps = (maxW || maxMd) * 1e-8;
+    for (let i = 0; i < nW; i++) if (Math.abs(Mw[i][i]) < eps) Mw[i][i] = eps;
+
+    // ── Pre-factor once (reused across all inverse power steps) ───────────────
     let KLU;
-    try { KLU = num.LU(Kff); } catch(e) {
+    try { KLU = num.LU(Kw); } catch(e) {
       throw new Error('Factorización de K falló: ' + e.message +
                       '.  Verifique estabilidad del modelo.');
     }
 
     // ── Stodola inverse power iteration ──────────────────────────────────────
-    const modes = _stodola(Kff, KLU, Mff, nF, nModes, num);
+    const modesR = _stodola(Kw, KLU, Mw, nW, nModes, num);
 
-    if (modes.length === 0)
+    if (modesR.length === 0)
       throw new Error(
         'Sin modos estructurales. Verifique masa (ρ en material o diafragmas) y apoyos.'
       );
 
+    // Re-expandir los modos condensados a todos los GDL libres (φ_s = T_sm · φ_m).
+    const modes = red ? modesR.map(m => ({ omega2: m.omega2, vec: red.expand(m.vec) })) : modesR;
+
     return new ModalResults(model, nodeIndex, freeDOF, modes, M, nDOF);
   }
+}
+
+// ── #5: reducción estática de Guyan de los GDL sin masa ───────────────────────
+// Particiona los GDL libres en MAESTROS (con masa) y ESCLAVOS (masa ~nula) y condensa
+// los esclavos: Kr = Kmm − Kms·Kss⁻¹·Ksm,  Mr = Tᵀ M T  con  T=[I ; −Kss⁻¹Ksm].
+// Devuelve { Kr, Mr, nM, expand(φm)→φlibres, nCondensed } o null si no hay nada que
+// condensar (o Kss es singular → se deja el camino normal).
+export function guyanReduce(Kff, Mff, nF, maxMd, num) {
+  if (!(maxMd > 0)) return null;
+  const thr = maxMd * 1e-6;
+  const master = [], slave = [];
+  for (let i = 0; i < nF; i++) (Math.abs(Mff[i][i]) > thr ? master : slave).push(i);
+  if (!slave.length || !master.length) return null;   // nada que condensar
+
+  const sub = (A, rows, cols) => rows.map(i => cols.map(j => A[i][j]));
+  const Kss = sub(Kff, slave, slave);
+  let Kssi;
+  try { Kssi = num.inv(Kss); } catch { return null; }
+  if (!Kssi || Kssi.some(r => r.some(v => !isFinite(v)))) return null;
+
+  const Ksm = sub(Kff, slave, master);
+  const Kms = sub(Kff, master, slave);
+  const Tsm = num.neg(num.dot(Kssi, Ksm));            // esclavos = Tsm · maestros  (nS×nM)
+
+  // Kr = Kmm + Kms·Tsm
+  const Kr = num.add(sub(Kff, master, master), num.dot(Kms, Tsm));
+  // Mr = Mmm + Mms·Tsm + Tsmᵀ·Msm + Tsmᵀ·Mss·Tsm   (masa de Guyan completa)
+  const Mmm = sub(Mff, master, master), Mms = sub(Mff, master, slave);
+  const Msm = sub(Mff, slave, master),  Mss = sub(Mff, slave, slave);
+  const TsmT = num.transpose(Tsm);
+  let Mr = num.add(Mmm, num.dot(Mms, Tsm));
+  Mr = num.add(Mr, num.dot(TsmT, Msm));
+  Mr = num.add(Mr, num.dot(TsmT, num.dot(Mss, Tsm)));
+
+  const nM = master.length, nS = slave.length;
+  for (let i = 0; i < nM; i++) for (let j = i + 1; j < nM; j++) {   // simetriza
+    const k = 0.5 * (Kr[i][j] + Kr[j][i]); Kr[i][j] = Kr[j][i] = k;
+    const m = 0.5 * (Mr[i][j] + Mr[j][i]); Mr[i][j] = Mr[j][i] = m;
+  }
+  const expand = (vM) => {
+    const vF = new Array(nF).fill(0);
+    for (let a = 0; a < nM; a++) vF[master[a]] = vM[a];
+    for (let s = 0; s < nS; s++) { let acc = 0; const row = Tsm[s]; for (let a = 0; a < nM; a++) acc += row[a] * vM[a]; vF[slave[s]] = acc; }
+    return vF;
+  };
+  return { Kr, Mr, nM, expand, nCondensed: nS };
 }
 
 // ── Stodola with M-orthogonal deflation ───────────────────────────────────────
