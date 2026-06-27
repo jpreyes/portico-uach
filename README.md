@@ -7,8 +7,35 @@ Universidad Austral de Chile.
 Para estudiantes de **Arquitectura**, **Construcción** e
 **Ingeniería Civil en Obras Civiles**.
 
-Aplicación web de análisis estructural tridimensional para docencia.  
+Aplicación web de **análisis y diseño estructural 3D** para docencia.
 No requiere instalación — solo un navegador moderno (Chrome, Edge, Firefox).
+
+## Capacidades
+
+- **Modelado:** barras 3D Timoshenko (12 GDL) con liberaciones/rótulas, fijación parcial y
+  cachos rígidos; **elementos de área** membrana (CST/QUAD), placa (MITC4/DKT) y cáscara, con
+  mallador (recombinación Blossom, refinamiento adaptativo).
+- **Apoyos y conexiones:** diafragmas rígidos, masas nodales (traslacional y rotacional),
+  apoyos elásticos diagonales y acoplados 6×6, **resortes unilaterales (uplift)** y de
+  **suelo no lineal (p-y/t-z/q-z)**, links/coupling, asentamientos prescritos, gradiente térmico.
+- **Cargas:** nodales, distribuidas uniformes y **trapezoidales**, temperatura, peso propio,
+  pretensado por tendón, **cargas móviles / líneas de influencia**; casos y combinaciones
+  (incl. LRFD/servicio de la NCh3171).
+- **Análisis:** estático, modal (Stodola y subespacio de Bathe, con K_g), **espectro de
+  respuesta NCh433/DS61** (CQC/SRSS), pandeo lineal, P-Δ; **no lineal** (cables, rótulas
+  plásticas/pushover, control de desplazamiento, form-finding, gran rotación corotacional,
+  time-history modal y no lineal); **etapas constructivas**.
+- **Diseño (verificación) multinorma:** acero (AISC 360 / Eurocódigo 3), aluminio (Eurocódigo 9),
+  hormigón armado y madera (NCh1198 / EN 338); predimensionado y auto-selección de perfiles;
+  razón D/C, **flechas de servicio** y **derivas sísmicas de entrepiso (NCh433)**.
+- **Interoperabilidad:** **Importar/Exportar IFC (BIM)**; intercambio con SAP2000, ETABS,
+  Abaqus/CalculiX, OpenSees, SOFISTIK, VECTOR; CSV; proyectos **multi-modelo**.
+- **Productividad y docencia:** **asistente con IA** (descripción en palabras → modelo),
+  **memoria de cálculo en PDF y Word**, matrices Ke/T/K/M y globales, DCL con equilibrio.
+  App **instalable y offline** (PWA).
+
+> Herramienta de carácter **docente**: para proyectos reales use software profesional validado
+> y el criterio de un ingeniero calculista competente.
 
 ---
 
@@ -81,7 +108,7 @@ En el panel derecho, pestaña **Mat.**:
 - Clic en **＋ Agregar Material**
 - Ingresar: nombre, E (módulo de elasticidad), G (módulo de corte), ν (Poisson), ρ (densidad)
 
-Ejemplo concreto H30 (kN-m):
+Ejemplo hormigón G30 (kN-m):
 
 | E | G | ν | ρ |
 |---|---|---|---|
@@ -246,7 +273,7 @@ Formato de una sola tabla con columna TYPE:
 
 ```csv
 TYPE,      ID,  nombre,      E,          G,        nu,    rho
-MATERIAL,   1,  Concreto,    28700000,   11960000, 0.20,  2.5
+MATERIAL,   1,  Hormigón,    28700000,   11960000, 0.20,  2.5
 
 TYPE,      ID,  nombre,   A,     Iz,      Iy,      J,       Avy,   Avz
 SECTION,    1,  Col30,    0.09,  6.75e-4, 6.75e-4, 1.13e-4, 0.075, 0.075

@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PÓRTICO · Análisis Estructural 3D — IOC · UACh</title>
+  <title>PÓRTICO · Análisis y Diseño Estructural 3D — IOC · UACh</title>
+  <meta name="description" content="PÓRTICO: análisis y diseño estructural 3D en el navegador. Barras y áreas (muros/losas/cáscaras); estático, modal, espectro NCh433, pandeo, P-Δ y no lineal (pushover, time-history); diseño en acero, hormigón, madera y aluminio con derivas y flechas de norma; importar/exportar IFC (BIM) y asistente con IA. Docente · UACh.">
+  <meta property="og:title" content="PÓRTICO · Análisis y Diseño Estructural 3D">
+  <meta property="og:description" content="Barras y áreas 3D; estático/modal/espectro/no lineal; diseño acero·hormigón·madera·aluminio; derivas NCh433; IFC/BIM; asistente IA. En el navegador, sin instalar.">
+  <meta property="og:type" content="website">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 21 V8 Q4 5 7 5 H17 Q20 5 20 8 V21' fill='none' stroke='%2338bdf8' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
   <!-- PWA -->
   <link rel="manifest" href="manifest.webmanifest">
@@ -29,8 +33,8 @@
       window.dispatchEvent(new Event('pwa-installed'));
     });
   </script>
-  <link rel="stylesheet" href="style.css?v=211">
-  <link rel="stylesheet" href="ui-v2.css?v=211">
+  <link rel="stylesheet" href="style.css?v=212">
+  <link rel="stylesheet" href="ui-v2.css?v=212">
   <script type="importmap">
   {
     "imports": {
@@ -889,7 +893,7 @@
           </svg>
           <div>
             <h2 style="margin:0">PÓRTICO</h2>
-            <p style="margin:2px 0 0;color:var(--text-muted)">Laboratorio virtual de análisis estructural 3D
+            <p style="margin:2px 0 0;color:var(--text-muted)">Laboratorio virtual de análisis y diseño estructural 3D
               · <b id="help-version">versión 87</b> · junio 2026</p>
           </div>
         </div>
@@ -907,21 +911,43 @@
         </div>
         <h2>Capacidades</h2>
         <ul class="help-list">
-          <li>Elementos barra 3D tipo Timoshenko (12 GDL), liberaciones por condensación estática.</li>
-          <li>Análisis estático lineal de todos los casos y combinaciones; peso propio por caso.</li>
-          <li>Diafragmas rígidos, masas nodales, apoyos elásticos (resortes).</li>
-          <li>Análisis modal y espectro de respuesta (CQC/SRSS).</li>
-          <li>Herramientas didácticas: matrices Ke/T/K/Me y globales, DCL con verificación de equilibrio.</li>
+          <li><b>Modelado.</b> Barras 3D Timoshenko (12 GDL) con liberaciones/rótulas, fijación
+              parcial (resorte de extremo) y cachos rígidos; <b>elementos de área</b>: membrana
+              (CST/QUAD), placa (MITC4/DKT) y cáscara, con mallador (recombinación Blossom,
+              refinamiento adaptativo).</li>
+          <li><b>Apoyos y conexiones.</b> Diafragmas rígidos, masas nodales (traslacional y
+              rotacional), apoyos elásticos diagonales y acoplados 6×6, <b>resortes unilaterales
+              (uplift)</b> y de <b>suelo no lineal (p-y/t-z/q-z)</b>, links/coupling,
+              asentamientos prescritos y gradiente térmico.</li>
+          <li><b>Cargas.</b> Nodales, distribuidas uniformes y <b>trapezoidales</b>, temperatura,
+              peso propio, pretensado por tendón y <b>cargas móviles / líneas de influencia</b>;
+              casos y combinaciones (incl. LRFD/servicio de la NCh3171).</li>
+          <li><b>Análisis.</b> Estático, modal (Stodola y subespacio de Bathe, con K<sub>g</sub>),
+              <b>espectro de respuesta NCh433/DS61</b> (CQC/SRSS), pandeo lineal, P-Δ; <b>no
+              lineal</b>: cables/solo-tracción-compresión, rótulas plásticas (pushover por carga),
+              pushover por control de desplazamiento, form-finding, gran rotación corotacional,
+              time-history modal y no lineal; <b>etapas constructivas</b>.</li>
+          <li><b>Diseño (verificación) multinorma.</b> Acero (AISC 360 / Eurocódigo 3), aluminio
+              (Eurocódigo 9), hormigón armado y madera (NCh1198 / EN 338); predimensionado y
+              auto-selección de perfiles; razón D/C, <b>flechas de servicio</b> y
+              <b>derivas sísmicas de entrepiso (NCh433)</b>.</li>
+          <li><b>Interoperabilidad.</b> <b>Importar/Exportar IFC (BIM)</b> con vista comparada;
+              intercambio con SAP2000, ETABS, Abaqus/CalculiX, OpenSees, SOFISTIK y VECTOR;
+              CSV y proyectos <b>multi-modelo</b>.</li>
+          <li><b>Productividad y docencia.</b> <b>Asistente con IA</b> (descripción en palabras →
+              modelo), <b>memoria de cálculo en PDF y Word</b>, matrices Ke/T/K/M y globales, DCL
+              con verificación de equilibrio. Aplicación <b>instalable y offline</b> (PWA).</li>
         </ul>
-        <h2>Limitaciones conocidas (¡léalas!)</h2>
+        <h2>Alcances y limitaciones (¡léalas!)</h2>
         <ul class="help-list">
-          <li>Análisis <b>lineal</b>: sin P-Δ ni no-linealidad de material o geometría.</li>
-          <li>Solo elementos barra: <b>no</b> modela muros ni losas como elementos (el diafragma
-              solo impone compatibilidad de piso).</li>
-          <li>Cargas en elementos: solo distribuidas uniformes en todo el vano.</li>
-          <li>Sin verificación de diseño (hormigón/acero) ni normativa automática (NCh433).</li>
-          <li>Herramienta <b>docente</b>: para proyectos reales use software profesional validado
-              y el criterio de un ingeniero calculista.</li>
+          <li>Herramienta de carácter <b>docente</b>: para proyectos reales use software profesional
+              validado y el criterio de un ingeniero calculista competente.</li>
+          <li>Las <b>verificaciones de diseño son orientativas</b> (resistencia, flechas, derivas):
+              no reemplazan el detallamiento normativo completo ni el diseño de conexiones.</li>
+          <li>Los elementos de área son <b>lineal-elásticos</b>; la importación IFC de muros/losas
+              se limita por ahora a contornos de 3–4 vértices.</li>
+          <li>La <b>dinámica no lineal de alta fidelidad</b> del modelo completo (rótulas por barra
+              + cáscaras NL) está en integración.</li>
         </ul>
         <p class="help-note">Tecnologías: JavaScript (ES Modules) · Three.js · numeric.js — corre
           íntegramente en su navegador, sin enviar datos a ningún servidor.</p>
@@ -965,15 +991,18 @@
     </svg>
 
     <h1 class="hero-title">PÓRTICO</h1>
-    <p class="hero-tag">Laboratorio virtual de análisis estructural 3D</p>
+    <p class="hero-tag">Laboratorio virtual de análisis y diseño estructural 3D</p>
     <p class="hero-desc">
-      Modele estructuras tridimensionales, ejecute análisis estático, modal y de
-      espectro de respuesta, y visualice esfuerzos internos, deformadas y formas
-      modales — directamente en su navegador, sin instalar nada.
+      Modele estructuras 3D de <b>barras y de áreas</b> (muros, losas, cáscaras); analice
+      en <b>estático, modal, espectro de respuesta (NCh433), pandeo, P-Δ y no lineal</b>
+      (cables, rótulas plásticas, pushover, time-history); <b>verifique el diseño</b> en
+      acero, hormigón, madera y aluminio, con <b>derivas y flechas de norma</b>; e
+      <b>importe/exporte IFC (BIM)</b> y otros motores. Todo en su navegador, sin instalar nada.
     </p>
     <div class="hero-chips">
-      <span>Modelado 3D</span><span>Análisis estático</span><span>Formas modales</span>
-      <span>Espectro de respuesta</span><span>Combinaciones</span><span>Diafragmas rígidos</span>
+      <span>Barras + áreas 3D</span><span>Estático · Modal</span><span>Espectro NCh433</span>
+      <span>Pandeo · P-Δ</span><span>No lineal · Pushover</span><span>Diseño acero/hormigón/madera/aluminio</span>
+      <span>Derivas sísmicas</span><span>IFC / BIM</span><span>Asistente IA</span>
     </div>
     <div class="hero-actions">
       <button id="btn-enter">Entrar al laboratorio (vacío) <span class="arrow">→</span></button>
@@ -1120,7 +1149,7 @@
 
 <!-- numeric.js para solver (Fase 2+) -->
 <script src="lib/numeric.js"></script>
-<script type="module" src="js/app.js?v=211"></script>
+<script type="module" src="js/app.js?v=212"></script>
 
 <!-- PWA: registrar el service worker (offline). Solo en contexto seguro
      (https o localhost); el navegador deja navigator.serviceWorker undefined

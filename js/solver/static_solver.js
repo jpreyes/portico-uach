@@ -2,8 +2,8 @@
 // StaticSolver — direct stiffness method for linear static analysis
 // Solver:  K_ff · u_f = F_f  (Gaussian elimination via numeric.js)
 // ──────────────────────────────────────────────────────────────────────────────
-import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './assembler.js?v=211';
-import { Results } from './postprocess.js?v=211';
+import { buildNodeIndex, assembleK, assembleF, getNodeDOFs } from './assembler.js?v=212';
+import { Results } from './postprocess.js?v=212';
 
 // Curva de suelo no lineal (#4): fuerza restauradora y tangente por interpolación lineal
 // de la tabla [[d,F],…] (monótona en d). Fuera del rango → fuerza última (saturación).
