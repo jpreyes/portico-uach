@@ -37,6 +37,18 @@ button:focus-visible, select:focus-visible, input:focus-visible {
   margin-right: 20px;
 }
 .brand .brand-mark { width: 20px; height: 20px; flex-shrink: 0; }
+/* Logo institucional UACh junto a la marca PÓRTICO (chip blanco para que lea en
+   ambos temas, claro/oscuro). El logo trae texto oscuro → fondo blanco fijo. */
+.brand .brand-uach {
+  height: 22px;
+  width: auto;
+  flex-shrink: 0;
+  background: #fff;
+  padding: 2px 6px;
+  border-radius: 6px;
+  box-sizing: content-box;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .18);
+}
 .brand-sub {
   font-size: 9px;
   font-weight: 600;
