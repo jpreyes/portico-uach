@@ -16,7 +16,8 @@ const ENT = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'
 const decode = s => s.replace(/&[a-z#0-9]+;/gi, m => ENT[m] ?? m);
 const norm = s => decode(s).replace(/\$\{[^}]*\}/g, '…').replace(/\s+/g, ' ').trim();
 const hasLetter = s => /[A-Za-zÀ-ÿ]/.test(s);
-const meaningful = s => s && hasLetter(s) && s !== '…' && !/^[…\s.,:;|/×·–—\-+]+$/.test(s);
+const meaningful = s => s && hasLetter(s) && s !== '…' && !/^[…\s.,:;|/×·–—\-+]+$/.test(s)
+  && !/^[a-zà-ÿ]{1,2}$/.test(s);   // descarta tokens sueltos de 1–2 letras minúsculas (ruido), conserva XY/Hz/3D…
 
 const fileCache = {};
 const linesOf = f => (fileCache[f] ??= (() => { try { return readFileSync(f, 'utf8').split(/\r?\n/); } catch { return null; } })());
@@ -67,7 +68,9 @@ const MSG = [/\btoast\(\s*(['"`])([^'"`]+?)\1/g, /\b_confirm\(\s*(['"`])([^'"`]+
   /\b_prompt\(\s*(['"`])([^'"`]+?)\1/g, /modal-title'\)\.textContent\s*=\s*(['"`])([^'"`]+?)\1/g];
 
 // ── 1) refrescar líneas de las filas existentes ─────────────────────────────────
-const rows = parseCSV(readFileSync(CSV, 'utf8'));
+let rows = parseCSV(readFileSync(CSV, 'utf8').replace(/^﻿/, ''));   // ignora BOM si lo hay
+// poda filas-ruido (texto no significativo) SÓLO si no tienen propuesta escrita
+rows = rows.filter(r => r.prop.trim() !== '' || meaningful(r.text));
 let refreshed = 0;
 for (const r of rows) {
   const file = r.ubic.replace(/\s*\(L\d+\)\s*$/, '');
@@ -117,8 +120,10 @@ rows.sort((a, b) => { const fa = order.indexOf(fileOf(a)), fb = order.indexOf(fi
 
 const q = s => '"' + String(s).replace(/"/g, '""') + '"';
 const csv = ['ubicacion,categoria,texto_actual,texto_propuesto',
-  ...rows.map(r => [q(r.ubic), q(r.cat), q(r.text), q(r.prop)].join(','))].join('\n') + '\n';
-writeFileSync(CSV, csv);
+  ...rows.map(r => [q(r.ubic), q(r.cat), q(r.text), q(r.prop)].join(','))].join('\r\n') + '\r\n';
+// UTF-8 CON BOM (﻿) + saltos CRLF → Excel en Windows lo abre con los tildes correctos
+// (sin BOM lo lee como ANSI/Latin-1 y los acentos/símbolos salen ilegibles).
+writeFileSync(CSV, '﻿' + csv);
 
 const nuevos = rows.filter(r => r._new).length;
 console.log(`textos_ui.csv: ${rows.length} filas · líneas refrescadas: ${refreshed} · filas nuevas: ${nuevos}`);
