@@ -12,11 +12,11 @@
 // Convención de ejes: IFC y PÓRTICO comparten Z VERTICAL, así que las coordenadas pasan
 // directas (sólo conversión de unidades a metros).  AUTÓNOMO (Node + navegador).
 // ──────────────────────────────────────────────────────────────────────────────
-import { parseIFC, lengthUnit } from './ifcLoader.js?v=214';
-import { classify, KIND_LABEL } from './ifcClassifier.js?v=214';
-import { memberAxis, bodyProfile, profileProps, areaSurface } from './ifcGeometrySimplifier.js?v=214';
-import { Warnings } from './ifcWarnings.js?v=214';
-import { neutralToModel } from '../neutral.js?v=214';
+import { parseIFC, lengthUnit } from './ifcLoader.js?v=215';
+import { classify, KIND_LABEL } from './ifcClassifier.js?v=215';
+import { memberAxis, bodyProfile, profileProps, areaSurface } from './ifcGeometrySimplifier.js?v=215';
+import { Warnings } from './ifcWarnings.js?v=215';
+import { neutralToModel } from '../neutral.js?v=215';
 
 const DEFAULT_TOL = 0.01;       // m — tolerancia de snap de nodos coincidentes
 // material genérico (acero) cuando el IFC no trae propiedades mecánicas — kN/m²

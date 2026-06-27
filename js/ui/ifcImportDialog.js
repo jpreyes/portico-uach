@@ -10,9 +10,9 @@
 // construye y confirma (con snapshot → undo).  Robusta: los no-importables se listan
 // deshabilitados, nunca rompen.  AUTÓNOMO salvo Three (vía el preview).
 // ──────────────────────────────────────────────────────────────────────────────
-import { IfcPreview } from './ifcSideBySidePreview.js?v=214';
-import { itemsToNeutral } from '../io/ifc/ifcToPortico.js?v=214';
-import { KIND_LABEL } from '../io/ifc/ifcClassifier.js?v=214';
+import { IfcPreview } from './ifcSideBySidePreview.js?v=215';
+import { itemsToNeutral } from '../io/ifc/ifcToPortico.js?v=215';
+import { KIND_LABEL } from '../io/ifc/ifcClassifier.js?v=215';
 
 const STATUS = {
   ok:            { txt: 'Importable', color: 'var(--success)' },
