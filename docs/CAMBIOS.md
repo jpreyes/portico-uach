@@ -1,6 +1,6 @@
-# Cambios — nomenclatura del hormigón (NCh170) y textos de UI
+# Cambios — hormigón (NCh170), textos de UI y copy de capacidades
 
-Registro de los cambios aplicados en esta tanda. Versión de la app: **v211**.
+Registro de los cambios aplicados en esta tanda. Versión de la app: **v212**.
 
 ---
 
@@ -71,10 +71,29 @@ Los ítems de menú ya estaban diferenciados: **«Pushover — colapso…»** vs
 
 ---
 
+## 4. Copy de capacidades (la app dejaba de parecer «solo barras»)
+
+El texto de presentación sub-vendía la app y las **«Limitaciones conocidas»** del *Acerca de*
+estaban **obsoletas y eran falsas** (decían «sin verificación de diseño», «solo elementos
+barra», «solo cargas uniformes», «análisis lineal»). Se reescribió todo el copy:
+
+- **Landing (splash):** tagline → «análisis **y diseño** estructural 3D»; descripción y chips
+  con la gama real (barras + áreas, espectro NCh433, pandeo·P-Δ, no lineal·pushover, diseño
+  acero/hormigón/madera/aluminio, derivas, IFC/BIM, asistente IA).
+- **Acerca de:** «Capacidades» reescritas y completas (modelado, apoyos/conexiones, cargas,
+  análisis, **diseño multinorma**, interoperabilidad, productividad). «Limitaciones» →
+  **«Alcances y limitaciones»** con las limitaciones REALES (herramienta docente; diseño
+  orientativo; áreas lineal-elásticas; dinámica NL de alta fidelidad en integración).
+- **`<head>`:** título → «Análisis y Diseño»; se añadió `meta description` + Open Graph
+  (`og:title`/`og:description`/`og:type`) para compartir/buscar.
+- **`README.md`:** nueva sección «Capacidades» + nota docente; ejemplo de material → Hormigón G30.
+
+---
+
 ## Verificación
 
 - Batería de tests verde: IFC (40), solver `#2…#6` (masa rotacional, resortes acoplados,
   Guyan, uplift, suelo p-y), y tests del asistente (`test_generador`, `test_primitivas`,
   `test_puente_galpon`).
-- `node --input-type=module --check` OK en los módulos tocados.
-- Bump de versión global a **v211** (cache-busting).
+- `node --input-type=module --check` OK en los módulos tocados; HTML del *Acerca de* balanceado.
+- Bump de versión global a **v212** (cache-busting).
