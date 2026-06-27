@@ -22,10 +22,12 @@ export const MATERIALS = {
   'Acero A572 Gr.50':  STEEL(345, 450, 2.0e8),
   'Acero S275':        STEEL(275, 430, 2.1e8),
   'Acero S355':        STEEL(355, 490, 2.1e8),
-  // Hormigón (E = 4700√f'c MPa aprox → kN/m²).
-  'Hormigón H25':      CONC(25, 2.35e7),
-  'Hormigón H30':      CONC(30, 2.57e7),
-  'Hormigón H40':      CONC(40, 2.97e7),
+  // Hormigón (E = 4700√f'c MPa aprox → kN/m²). Nomenclatura NCh170:2016: grado «G»
+  // por resistencia CILÍNDRICA f'c en MPa (reemplaza la antigua «H» cúbica).
+  'Hormigón G20':      CONC(20, 2.10e7),
+  'Hormigón G25':      CONC(25, 2.35e7),
+  'Hormigón G30':      CONC(30, 2.57e7),
+  'Hormigón G40':      CONC(40, 2.97e7),
   // Madera aserrada (EN 338 / valores característicos típicos).
   'Madera C16':        TIMBER(16, 17, 8.5, 1.8, 8.0e6, 0.37),
   'Madera C24':        TIMBER(24, 21, 14, 2.5, 1.1e7, 0.42),
@@ -37,7 +39,7 @@ export const MATERIALS = {
 // Familias para agrupar en la UI.
 export const MATERIAL_FAMILIES = {
   Acero:    ['Acero A36', 'Acero A572 Gr.50', 'Acero S275', 'Acero S355'],
-  Hormigón: ['Hormigón H25', 'Hormigón H30', 'Hormigón H40'],
+  Hormigón: ['Hormigón G20', 'Hormigón G25', 'Hormigón G30', 'Hormigón G40'],
   Madera:   ['Madera C16', 'Madera C24'],
   Aluminio: ['Aluminio 6061-T6'],
 };

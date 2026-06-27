@@ -126,13 +126,14 @@ export function resolverMaterialFlexible(n, materiales, aviso) {
   if (/pino|madera|wood|radiata|timber/.test(low)) {
     const w = byName.get('pino radiata'); if (w) { if (low !== 'pino radiata') aviso('info', `Material "${n}" interpretado como "${w.nombre}".`); return filaAMaterial(w); }
   }
-  const ctx = /(horm|h\s*\d|fc|concret)/.test(low);
-  const fcm = low.match(/(\d{2,3})/);   // sin \b: captura "H50", "fc=50", "hormigón 50"
+  // Hormigón: grado «Gxx» (NCh170:2016) o el legado «Hxx»; fc = el número.
+  const ctx = /(horm|[hg]\s*\d|fc|concret)/.test(low);
+  const fcm = low.match(/(\d{2,3})/);   // sin \b: captura "G50", "H50", "fc=50", "hormigón 50"
   if (ctx && fcm) {
-    const fc = +fcm[1]; const c = byName.get('h' + fc); if (c) return filaAMaterial(c);
+    const fc = +fcm[1]; const c = byName.get('g' + fc) || byName.get('h' + fc); if (c) return filaAMaterial(c);
     const E = Math.round(4700 * Math.sqrt(fc) * 1000);
     aviso('estimado', `Hormigón fc=${fc} MPa estimado (E≈${(E / 1e6).toFixed(0)} GPa).`);
-    return { name: `H${fc}(est)`, E, G: Math.round(E / 2.4), nu: 0.2, rho: 2.5 };
+    return { name: `G${fc}(est)`, E, G: Math.round(E / 2.4), nu: 0.2, rho: 2.5 };
   }
   return null;
 }
@@ -285,11 +286,11 @@ export function generarModelo(ficha, libs) {
         return filaAMaterial(best);
       }
     }
-    const defNom = contextoHormigon ? 'H30' : 'S275';
+    const defNom = contextoHormigon ? 'G30' : 'S275';
     aviso('reemplazo', `Material ${n == null ? '(no indicado)' : `"${n}"`} no reconocido: se usó ${defNom} por defecto.`);
     const def = matPorNombre.get(defNom);
     if (def) return filaAMaterial(def);
-    return contextoHormigon ? { name: 'H30', E: 28700000, G: 11960000, nu: 0.2, rho: 2.5 }
+    return contextoHormigon ? { name: 'G30', E: 28700000, G: 11960000, nu: 0.2, rho: 2.5 }
                             : { name: 'S275', E: 210000000, G: 80800000, nu: 0.3, rho: 7.85 };
   };
 

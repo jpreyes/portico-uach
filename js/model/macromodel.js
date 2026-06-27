@@ -11,7 +11,7 @@
 // Para AGREGAR más macromodelos: registrarlos en `macro_registry.js` (ver el registro
 // de `infill` al final de este archivo y la guía `docs/macromodelos.md`).
 // ─────────────────────────────────────────────────────────────────────────────
-import { registerMacro } from './macro_registry.js?v=209';
+import { registerMacro } from './macro_registry.js?v=210';
 
 /**
  * Ancho del puntal diagonal equivalente (Mainstone / FEMA 356).
@@ -62,7 +62,7 @@ export function insertInfill(model, cornerIds, props = {}) {
 
   const t = +props.t || 0.2;
   const Em = +props.Em || 3.0e6;              // kN/m² (≈3 GPa albañilería)
-  const EcIcol = +props.EcIcol || (2.5e7 * (0.3 ** 4 / 12));   // por defecto col 30×30 H25
+  const EcIcol = +props.EcIcol || (2.5e7 * (0.3 ** 4 / 12));   // por defecto col 30×30 G25
   const s = mainstoneStrut({ hm, Lm, t, Em, EcIcol, hcol: hm });
   if (!(s.area > 0) || !isFinite(s.area)) return { error: 'No se pudo calcular el puntal (revise propiedades).' };
 

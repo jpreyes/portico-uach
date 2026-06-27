@@ -48,7 +48,7 @@ export class Model {
 
   // ── Default material & section ─────────────────────────────────────────────
   _initDefaults() {
-    this.addMaterial({ name: 'Concreto H30', E: 2.87e7, G: 1.19e7, nu: 0.2, rho: 2.5 });
+    this.addMaterial({ name: 'Hormigón G30', E: 2.87e7, G: 1.19e7, nu: 0.2, rho: 2.5 });
     this.addSection({
       name: 'Col 30×30',
       A: 0.09, Iz: 6.75e-4, Iy: 6.75e-4, J: 1.14e-3,   // St. Venant 0.30x0.30 (0.1406 a^4); antes 1.13e-4 (10x bajo)

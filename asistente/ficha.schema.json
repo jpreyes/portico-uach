@@ -122,7 +122,7 @@
       "required": ["material", "vigas", "pilares"],
       "additionalProperties": false,
       "properties": {
-        "material": { "type": "string", "description": "Acero (S235/S275/S355/A630-420H) u hormigón (H20/H25/H30/H40). fc en MPa → H{fc}, ej. fc=30 → 'H30'." },
+        "material": { "type": "string", "description": "Acero (S235/S275/S355/A630-420H) u hormigón grado G (NCh170:2016): G20/G25/G30/G40. fc cilíndrico en MPa → G{fc}, ej. fc=30 → 'G30'. (Se acepta la antigua nomenclatura H{fc} como equivalente.)" },
         "vigas": { "$ref": "#/$defs/seccion", "description": "Perfil de acero (string, ej. 'IPE300') o sección rectangular de hormigón {b_cm,h_cm}." },
         "pilares": { "$ref": "#/$defs/seccion", "description": "Perfil de acero (string, ej. 'HEB200') o sección rectangular de hormigón {b_cm,h_cm}." }
       }
@@ -293,7 +293,7 @@
       }
     },
 
-    "material_defecto": { "type": "string", "description": "Solo tipologia = 'primitivas'. Material por defecto de los elementos (ej. 'H50', 'S275', 'Pino Radiata'). Cada elemento puede override con su propio 'material'." },
+    "material_defecto": { "type": "string", "description": "Solo tipologia = 'primitivas'. Material por defecto de los elementos (ej. 'G50', 'S275', 'Pino Radiata'). Cada elemento puede override con su propio 'material'." },
 
     "elementos": {
       "type": "array",

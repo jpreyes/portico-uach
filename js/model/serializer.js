@@ -1,7 +1,7 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // Serializer — JSON (.s3d) and CSV import/export
 // ──────────────────────────────────────────────────────────────────────────────
-import { Model } from './model.js?v=209';
+import { Model } from './model.js?v=210';
 
 export class Serializer {
 
@@ -397,7 +397,7 @@ export class Serializer {
 
 # ── MATERIALES ─────────────────────────────────────────────────
 # TYPE,     ID,  nombre,           E (kN/m²),    G (kN/m²),    nu,    rho (ton/m³)
-MATERIAL,    1,  Concreto H30,     28700000,     11960000,     0.2,   2.5
+MATERIAL,    1,  Hormigón G30,     28700000,     11960000,     0.2,   2.5
 MATERIAL,    2,  Acero A630-420H,  200000000,    77000000,     0.3,   7.85
 
 # ── SECCIONES ──────────────────────────────────────────────────

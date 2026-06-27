@@ -4,7 +4,7 @@
   "ejemplos": [
     {
       "desc": "edificio de hormigon armado de varios niveles, vigas y pilares, vanos, sismo por ciudad valdivia",
-      "ficha": { "modo": "3D", "tipologia": "marco", "secciones": { "material": "H30", "vigas": { "b_cm": 25, "h_cm": 50 }, "pilares": { "b_cm": 30, "h_cm": 30 } }, "geometria": { "niveles": [{ "altura_m": 3 }, { "altura_m": 3 }, { "altura_m": 3 }], "vanos_x": { "cantidad": 3, "luz_m": 5 }, "vanos_y": { "cantidad": 2, "luz_m": 5 } }, "ubicacion": { "ciudad": "Valdivia" }, "cargas": { "uso_NCh1537": "Escuelas/Salas de Clases", "sismo": true }, "apoyo_base": "empotrado" }
+      "ficha": { "modo": "3D", "tipologia": "marco", "secciones": { "material": "G30", "vigas": { "b_cm": 25, "h_cm": 50 }, "pilares": { "b_cm": 30, "h_cm": 30 } }, "geometria": { "niveles": [{ "altura_m": 3 }, { "altura_m": 3 }, { "altura_m": 3 }], "vanos_x": { "cantidad": 3, "luz_m": 5 }, "vanos_y": { "cantidad": 2, "luz_m": 5 } }, "ubicacion": { "ciudad": "Valdivia" }, "cargas": { "uso_NCh1537": "Escuelas/Salas de Clases", "sismo": true }, "apoyo_base": "empotrado" }
     },
     {
       "desc": "edificio de acero estructural, perfiles IPE para vigas y HEB para pilares",
@@ -32,7 +32,7 @@
     },
     {
       "desc": "puente con viga central de hormigon y vigas transversales perpendiculares sobre cepas, carga en transversales",
-      "ficha": { "modo": "3D", "tipologia": "puente", "secciones": { "material": "H50" }, "puente": { "tipo": "viga_central", "largo_m": 100, "ancho_m": 10, "altura_pila_m": 5, "luz_pila_m": 20, "escuadria_longitudinal": { "b_cm": 50, "h_cm": 200 }, "escuadria_transversal": { "b_cm": 30, "h_cm": 80 }, "escuadria_pila": { "b_cm": 100, "h_cm": 100 }, "separacion_transversal_m": 2, "carga_transversal_kN_m": 500 } }
+      "ficha": { "modo": "3D", "tipologia": "puente", "secciones": { "material": "G50" }, "puente": { "tipo": "viga_central", "largo_m": 100, "ancho_m": 10, "altura_pila_m": 5, "luz_pila_m": 20, "escuadria_longitudinal": { "b_cm": 50, "h_cm": 200 }, "escuadria_transversal": { "b_cm": 30, "h_cm": 80 }, "escuadria_pila": { "b_cm": 100, "h_cm": 100 }, "separacion_transversal_m": 2, "carga_transversal_kN_m": 500 } }
     },
     {
       "desc": "torre de alta tension torre de celosia mastil 4 patas con diagonales y anillos horizontales",
@@ -40,7 +40,7 @@
     },
     {
       "desc": "puente de 3 vigas dos laterales y una central con transversales y cepas, estructura a medida por coordenadas",
-      "ficha": { "modo": "3D", "tipologia": "primitivas", "material_defecto": "H40", "elementos": [{ "tipo": "vigas_repetidas", "desde": [0, -4, 5], "hasta": [60, -4, 5], "paso_dir": "Y", "paso": 4, "n_repeticiones": 3, "seccion": { "b_cm": 40, "h_cm": 120 } }, { "tipo": "vigas_repetidas", "desde": [0, -4, 5], "hasta": [0, 4, 5], "paso_dir": "X", "paso": 2, "hasta_coord": 60, "seccion": { "b_cm": 30, "h_cm": 60 }, "carga_kN_m": 50 }, { "tipo": "vigas_repetidas", "desde": [0, -4, 0], "hasta": [0, -4, 5], "paso_dir": "X", "paso": 20, "hasta_coord": 60, "seccion": { "b_cm": 80, "h_cm": 80 } }, { "tipo": "vigas_repetidas", "desde": [0, 4, 0], "hasta": [0, 4, 5], "paso_dir": "X", "paso": 20, "hasta_coord": 60, "seccion": { "b_cm": 80, "h_cm": 80 } }], "apoyos": [{ "z": 0, "tipo": "empotrado" }] }
+      "ficha": { "modo": "3D", "tipologia": "primitivas", "material_defecto": "G40", "elementos": [{ "tipo": "vigas_repetidas", "desde": [0, -4, 5], "hasta": [60, -4, 5], "paso_dir": "Y", "paso": 4, "n_repeticiones": 3, "seccion": { "b_cm": 40, "h_cm": 120 } }, { "tipo": "vigas_repetidas", "desde": [0, -4, 5], "hasta": [0, 4, 5], "paso_dir": "X", "paso": 2, "hasta_coord": 60, "seccion": { "b_cm": 30, "h_cm": 60 }, "carga_kN_m": 50 }, { "tipo": "vigas_repetidas", "desde": [0, -4, 0], "hasta": [0, -4, 5], "paso_dir": "X", "paso": 20, "hasta_coord": 60, "seccion": { "b_cm": 80, "h_cm": 80 } }, { "tipo": "vigas_repetidas", "desde": [0, 4, 0], "hasta": [0, 4, 5], "paso_dir": "X", "paso": 20, "hasta_coord": 60, "seccion": { "b_cm": 80, "h_cm": 80 } }], "apoyos": [{ "z": 0, "tipo": "empotrado" }] }
     },
     {
       "desc": "estructura libre a medida dando coordenadas de barras, marco simple por primitivas",
@@ -64,7 +64,7 @@
     },
     {
       "desc": "puente en arco de tablero superior con montantes, tipo Salginatobel, hormigon",
-      "ficha": { "modo": "2D", "tipologia": "puente", "secciones": { "material": "H30" }, "puente": { "tipo": "arco", "largo_m": 90, "ancho_m": 6, "flecha_m": 13 } }
+      "ficha": { "modo": "2D", "tipologia": "puente", "secciones": { "material": "G30" }, "puente": { "tipo": "arco", "largo_m": 90, "ancho_m": 6, "flecha_m": 13 } }
     }
   ]
 }

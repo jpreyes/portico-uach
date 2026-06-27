@@ -40,7 +40,7 @@ ok(cruz.nodes.length === 5, `cruz: 5 nodos (4 extremos + 1 centro) (es ${cruz.no
 ok(cruz.elements.length === 4, `cruz: 4 barras (cada diagonal partida) (es ${cruz.elements.length})`);
 
 console.log('── Puente de 3 vigas (2 laterales + 1 central) por primitivas ──');
-const puente3 = generarModelo({ modo: '3D', tipologia: 'primitivas', material_defecto: 'H40', elementos: [
+const puente3 = generarModelo({ modo: '3D', tipologia: 'primitivas', material_defecto: 'G40', elementos: [
   { tipo: 'vigas_repetidas', desde: [0, -4, 5], hasta: [60, -4, 5], paso_dir: 'Y', paso: 4, n_repeticiones: 3, seccion: { b_cm: 40, h_cm: 120 } },
   { tipo: 'vigas_repetidas', desde: [0, -4, 5], hasta: [0, 4, 5], paso_dir: 'X', paso: 2, hasta_coord: 60, seccion: { b_cm: 30, h_cm: 60 }, carga_kN_m: 50 },
   { tipo: 'vigas_repetidas', desde: [0, -4, 0], hasta: [0, -4, 5], paso_dir: 'X', paso: 20, hasta_coord: 60, seccion: { b_cm: 80, h_cm: 80 } },
@@ -49,7 +49,7 @@ const puente3 = generarModelo({ modo: '3D', tipologia: 'primitivas', material_de
 console.log('  ', puente3._generado.resumen);
 const central = puente3.nodes.some(n => Math.abs(n.x - 2) < 1e-3 && Math.abs(n.y) < 1e-3 && Math.abs(n.z - 5) < 1e-3);
 ok(central, 'nodo de cruce viga central×transversal en (2,0,5) (auto-conexión)');
-ok(/H40/.test(puente3.materials[0].name), `material H40 (${puente3.materials[0].name})`);
+ok(/G40/.test(puente3.materials[0].name), `material G40 (${puente3.materials[0].name})`);
 const e3 = eq(puente3, 'CV');
 ok(e3.finite, `solución finita: ΣRz=${e3.Rz.toFixed(0)} kN`);
 ok(Math.abs(e3.Rz - e3.W) / e3.W < 1e-4, `ΣRz = ΣCV (${e3.Rz.toFixed(0)} vs ${e3.W.toFixed(0)} kN)`);

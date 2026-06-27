@@ -32,7 +32,7 @@ function equilibrio(modelo, lcName) {
 }
 
 console.log('── PUENTE (viga continua) ──');
-const pv = generarModelo({ modo: '3D', tipologia: 'puente', secciones: { material: 'H30' }, puente: { largo_m: 100, ancho_m: 2, luz_pila_m: 20, altura_pila_m: 6, tipo_viga: 'viga' } }, { reglas, materiales, perfiles });
+const pv = generarModelo({ modo: '3D', tipologia: 'puente', secciones: { material: 'G30' }, puente: { largo_m: 100, ancho_m: 2, luz_pila_m: 20, altura_pila_m: 6, tipo_viga: 'viga' } }, { reglas, materiales, perfiles });
 console.log('  ', pv._generado.resumen);
 const eqpv = equilibrio(pv, 'CV');
 ok(eqpv.finite, `solución finita: ΣRz=${eqpv.Rz.toFixed(1)} kN`);
