@@ -1,6 +1,28 @@
 # Cambios — hormigón (NCh170), textos de UI y copy de capacidades
 
-Registro de los cambios aplicados en esta tanda. Versión de la app: **v212**.
+Registro de los cambios aplicados en esta tanda. Versión de la app: **v213**.
+
+---
+
+## 0. PÓRTICO 100% académico — se elimina el modo PROFESIONAL / PRO
+
+PÓRTICO pasa a ser **100% académico, específico para la Universidad Austral de Chile**.
+Se eliminó por completo el **modo profesional / token PRO** y todas las funciones que
+dependían de él:
+
+| Quitado | Detalle |
+|---|---|
+| **Badge «PRO»** (`index.html`) | Reemplazado por un badge fijo **«ACADEMIC»** (siempre visible, título «Versión académica · UACh»). |
+| **Modo profesional** (`js/app.js`) | Eliminados `activarPro` / `desactivarPro` / `_verificarPro` / `_initPro` / `_actualizarBadgePro` y el estado `this._pro`. |
+| **Endpoint `/api/asistente/pro`** (`worker/asistente.js`) | Borrado; ya no se usan los secretos `PRO_TOKENS` / `PRO_TOKEN`. |
+| **Memoria — «Encabezado profesional»** | Se quitaron del ⚙ los campos que estaban bajo token: **subtítulo (kicker), institución y sub-institución**. Ahora son **fijos académicos** (UACh · Facultad · IOC). El encabezado editable conserva sólo **título, proyectista y revisó**. |
+| **Memoria — «Contenido profesional»** | Eliminado el fieldset completo: **descripción, pie de página personalizado, limitaciones personalizadas y logo de empresa**. La memoria usa **siempre** el pie y las limitaciones académicas (`_ACAD_FOOTER` / `_ACAD_LIMITS`) y conserva **siempre** los logos UACh/Facultad/IOC y el badge «Producto académico». |
+| **«Funciones avanzadas (profesional)»** | Eliminado el fieldset: selector de **motor de análisis** y **elementos de área (no implementados)**. Se mantiene el fieldset **Análisis** académico (matriz densa, NL-lite). |
+
+El diálogo ⚙ Configuración queda con 5 secciones: *PÓRTICO · versión académica*,
+*Memoria — encabezado*, *Visualización de la memoria*, *Análisis* y *Modificadores de
+sección*. Verificado en navegador (badge ACADEMIC, sin métodos PRO, sin campos PRO en el
+diálogo, sin la palabra «profesional» en la configuración) y `node --check` OK.
 
 ---
 
@@ -96,4 +118,4 @@ barra», «solo cargas uniformes», «análisis lineal»). Se reescribió todo e
   Guyan, uplift, suelo p-y), y tests del asistente (`test_generador`, `test_primitivas`,
   `test_puente_galpon`).
 - `node --input-type=module --check` OK en los módulos tocados; HTML del *Acerca de* balanceado.
-- Bump de versión global a **v212** (cache-busting).
+- Bump de versión global a **v213** (cache-busting); `sw.js` `CACHE_VERSION` → `v167`.

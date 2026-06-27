@@ -17,10 +17,7 @@
   //   Pendiente del usuario en el dashboard: crear el secreto ASIS_LOG_TOKEN
   //   (Worker → Settings → Variables and Secrets → Add → Secret) para poder leer /log.
   //
-  // ── Modo PROFESIONAL (funciones que evitan el uso comercial sin autorización) ──
-  //   Secreto PRO_TOKENS = lista de tokens válidos separados por comas (o PRO_TOKEN
-  //   para uno solo). Crear en el dashboard (Worker → Settings → Variables and Secrets
-  //   → Add → Secret). El cliente valida con POST /api/asistente/pro { token }.
-  //   Sin el secreto, el modo profesional queda deshabilitado (versión académica).
+  // PÓRTICO es 100% académico (Universidad Austral de Chile): no hay modo profesional
+  // ni tokens PRO. Todas las funciones están siempre disponibles, sin licencia.
   "kv_namespaces": [ { "binding": "ASIS_LOG", "id": "a74d6e66bda9466cbcd9a6c01ef5d052" } ]
 }
