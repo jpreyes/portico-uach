@@ -29,8 +29,8 @@
       window.dispatchEvent(new Event('pwa-installed'));
     });
   </script>
-  <link rel="stylesheet" href="style.css?v=210">
-  <link rel="stylesheet" href="ui-v2.css?v=210">
+  <link rel="stylesheet" href="style.css?v=211">
+  <link rel="stylesheet" href="ui-v2.css?v=211">
   <script type="importmap">
   {
     "imports": {
@@ -601,9 +601,9 @@
           <div id="res-tabs">
             <button class="rtab active" data-rtab="modal">Modal</button>
             <button class="rtab" data-rtab="estatico">Estático</button>
-            <button class="rtab" data-rtab="plastico">Pushover</button>
+            <button class="rtab" data-rtab="plastico">Pushover (colapso)</button>
             <button class="rtab" data-rtab="th">Dinámico</button>
-            <button class="rtab" data-rtab="dc">Pushover</button>
+            <button class="rtab" data-rtab="dc">Pushover (DC)</button>
             <button class="rtab" data-rtab="buck">Pandeo</button>
             <button class="rtab" data-rtab="nl">No lineal</button>
             <button class="rtab" data-rtab="ml">Cargas móviles</button>
@@ -1120,7 +1120,7 @@
 
 <!-- numeric.js para solver (Fase 2+) -->
 <script src="lib/numeric.js"></script>
-<script type="module" src="js/app.js?v=210"></script>
+<script type="module" src="js/app.js?v=211"></script>
 
 <!-- PWA: registrar el service worker (offline). Solo en contexto seguro
      (https o localhost); el navegador deja navigator.serviceWorker undefined
