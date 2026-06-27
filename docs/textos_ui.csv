@@ -1,1250 +1,1250 @@
 ﻿ubicacion,categoria,texto_actual,texto_propuesto
-"index.html (L6)","etiqueta/HTML","IOC · UACh",""
-"index.html (L6)","etiqueta/HTML","PÓRTICO · Análisis Estructural 3D — IOC · UACh",""
-"index.html (L6)","etiqueta/HTML","Análisis",""
-"index.html (L6)","etiqueta/HTML","PÓRTICO",""
-"index.html (L54)","etiqueta/HTML","PÓRTICO IOC · UACh",""
-"index.html (L60)","etiqueta/HTML","Archivo",""
-"index.html (L62)","etiqueta/HTML","Nuevo Ctrl+N",""
-"index.html (L63)","etiqueta/HTML","Abrir… Ctrl+O",""
-"index.html (L64)","etiqueta/HTML","Guardar Ctrl+S",""
-"index.html (L65)","etiqueta/HTML","Guardar Como…",""
-"index.html (L66)","etiqueta/HTML","🧹 Autoguardados temporales…",""
-"index.html (L66)","etiqueta/HTML","Autoguardados temporales",""
-"index.html (L68)","etiqueta/HTML","Importar CSV…",""
-"index.html (L69)","etiqueta/HTML","Exportar CSV",""
-"index.html (L70)","etiqueta/HTML","Descargar Plantilla CSV",""
-"index.html (L72)","etiqueta/HTML","🔄 Importar de otro motor…",""
-"index.html (L73)","etiqueta/HTML","🔄 Exportar a otro motor…",""
-"index.html (L74)","etiqueta/HTML","🏗️ Importar IFC…",""
-"index.html (L75)","etiqueta/HTML","🏗️ Exportar IFC…",""
-"index.html (L77)","etiqueta/HTML","Exportar Resultados Estáticos",""
-"index.html (L77)","etiqueta/HTML","Resultados",""
-"index.html (L77)","etiqueta/HTML","Estático",""
-"index.html (L78)","etiqueta/HTML","Exportar Resultados Modales",""
-"index.html (L78)","etiqueta/HTML","Modal",""
-"index.html (L79)","etiqueta/HTML","Exportar Resultados Espectrales",""
-"index.html (L81)","etiqueta/HTML","📄 Memoria / Bases de Cálculo (PDF)…",""
-"index.html (L82)","etiqueta/HTML","📝 Memoria de Cálculo (Word .docx)…",""
-"index.html (L84)","etiqueta/HTML","Deshacer Ctrl+Z",""
-"index.html (L85)","etiqueta/HTML","Rehacer Ctrl+Y",""
-"index.html (L87)","etiqueta/HTML","Selec. Todo Ctrl+A",""
-"index.html (L87)","etiqueta/HTML","Editar",""
-"index.html (L88)","etiqueta/HTML","Eliminar Del",""
-"index.html (L95)","etiqueta/HTML","Discretizar Todo…",""
-"index.html (L96)","etiqueta/HTML","Unir Elementos Seleccionados",""
-"index.html (L97)","etiqueta/HTML","Unir en Intersección (crear nodo)…",""
-"index.html (L98)","etiqueta/HTML","Crear elemento de área (membrana 3/4 nodos)…",""
-"index.html (L99)","etiqueta/HTML","Mallar panel (4 esquinas) — clic en nodos…",""
-"index.html (L99)","etiqueta/HTML","Mallar",""
-"index.html (L100)","etiqueta/HTML","Mallar región libre — clic en nodos…",""
-"index.html (L101)","etiqueta/HTML","Suavizar malla (calidad)…",""
-"index.html (L102)","etiqueta/HTML","Crear link / coupling (2 nodos)…",""
-"index.html (L103)","etiqueta/HTML","Muro de relleno — puntal diagonal (4 nodos)…",""
-"index.html (L105)","etiqueta/HTML","Definir Ejes de Grilla…",""
-"index.html (L106)","etiqueta/HTML","Combinaciones de Carga… F8",""
-"index.html (L106)","etiqueta/HTML","Combinaciones",""
-"index.html (L107)","etiqueta/HTML","Crear casos y combos de norma (NCh3171)…",""
-"index.html (L108)","etiqueta/HTML","Isométrica I",""
-"index.html (L109)","etiqueta/HTML","Planta XY T",""
-"index.html (L110)","etiqueta/HTML","Frente XZ F",""
-"index.html (L111)","etiqueta/HTML","Lateral YZ L",""
-"index.html (L112)","etiqueta/HTML","Vista",""
-"index.html (L113)","etiqueta/HTML","Grilla G",""
-"index.html (L115)","etiqueta/HTML","Zoom Extensión Home",""
-"index.html (L115)","etiqueta/HTML","XY",""
-"index.html (L116)","etiqueta/HTML","XZ",""
-"index.html (L117)","etiqueta/HTML","Ocultar selección H",""
-"index.html (L117)","etiqueta/HTML","YZ",""
-"index.html (L118)","etiqueta/HTML","Mostrar todo Shift+H",""
-"index.html (L120)","etiqueta/HTML","Ejes XYZ",""
-"index.html (L121)","etiqueta/HTML","Resultado: Deformada 1",""
-"index.html (L122)","etiqueta/HTML","Resultado: Axial N 2",""
-"index.html (L123)","etiqueta/HTML","Resultado: Cortante Vy 3",""
-"index.html (L124)","etiqueta/HTML","Resultado: Cortante Vz 4",""
-"index.html (L125)","etiqueta/HTML","Mostrar/ocultar cargas",""
-"index.html (L125)","etiqueta/HTML","Resultado: Torsión T 5",""
-"index.html (L126)","etiqueta/HTML","Resultado: Momento My 6",""
-"index.html (L127)","etiqueta/HTML","Resultado: Momento Mz 7",""
-"index.html (L127)","etiqueta/HTML","Deformada",""
-"index.html (L128)","etiqueta/HTML","Resultado: Tensiones áreas (von Mises) 8",""
-"index.html (L128)","etiqueta/HTML","Axial N",""
-"index.html (L129)","etiqueta/HTML","Cortante Vy",""
-"index.html (L130)","etiqueta/HTML","Cortante Vz",""
-"index.html (L131)","etiqueta/HTML","Torsión T",""
-"index.html (L132)","etiqueta/HTML","Momento My",""
-"index.html (L133)","etiqueta/HTML","Momento Mz",""
-"index.html (L134)","etiqueta/HTML","Tensiones áreas (von Mises)",""
-"index.html (L135)","etiqueta/HTML","▶ Análisis Estático F5",""
-"index.html (L141)","etiqueta/HTML","▶ Estático — todos los casos y combos F5",""
-"index.html (L142)","etiqueta/HTML","↻ Recalcular (forzar, ignora resultados guardados)",""
-"index.html (L145)","etiqueta/HTML","Análisis lineales",""
-"index.html (L145)","etiqueta/HTML","Análisis lineales ▸",""
-"index.html (L148)","etiqueta/HTML","▶ Modal… F6",""
-"index.html (L149)","etiqueta/HTML","▶ Espectro de Respuesta… F7",""
-"index.html (L150)","etiqueta/HTML","▶ Time-history modal — acelerograma…",""
-"index.html (L154)","etiqueta/HTML","Análisis NL-lite",""
-"index.html (L154)","etiqueta/HTML","Análisis NL-lite ▸",""
-"index.html (L156)","etiqueta/HTML","▶ No Lineal — cables…",""
-"index.html (L157)","etiqueta/HTML","▶ Gran rotación — viga corotacional 2D…",""
-"index.html (L158)","etiqueta/HTML","▶ P-Delta…",""
-"index.html (L159)","etiqueta/HTML","▶ Pandeo Lineal — factor crítico…",""
-"index.html (L159)","etiqueta/HTML","Pandeo",""
-"index.html (L159)","etiqueta/HTML","Pan",""
-"index.html (L160)","etiqueta/HTML","▶ Form-finding — densidades de fuerza…",""
-"index.html (L161)","etiqueta/HTML","▶ Rótulas Plásticas — colapso…",""
-"index.html (L161)","etiqueta/HTML","Rótulas",""
-"index.html (L162)","etiqueta/HTML","▶ Pushover — control de desplazamiento…",""
-"index.html (L162)","etiqueta/HTML","Pushover",""
-"index.html (L163)","etiqueta/HTML","▶ Time-history NO LINEAL — rótulas (edificio de corte)…",""
-"index.html (L167)","etiqueta/HTML","Puentes ▸",""
-"index.html (L169)","etiqueta/HTML","▶ Etapas constructivas — staged…",""
-"index.html (L170)","etiqueta/HTML","▶ Pretensado por tendón — cargas equivalentes…",""
-"index.html (L171)","etiqueta/HTML","▶ Cargas móviles / líneas de influencia…",""
-"index.html (L171)","etiqueta/HTML","✕ Limpiar Resultados (descartar)",""
-"index.html (L171)","etiqueta/HTML","Cargas móviles",""
-"index.html (L175)","etiqueta/HTML","Ver Matrices Globales K · M…",""
-"index.html (L176)","etiqueta/HTML","Diagnosticar estabilidad (nodos sueltos)…",""
-"index.html (L178)","tooltip","DESCARTA todos los resultados calculados (estático, modal, espectro, NL, diseño) y revierte la malla auto-discretizada. Pide confirmación. Para sólo volver a ver el modelo sin borrar nada, usa «Vista modelo» en la barra.",""
-"index.html (L178)","etiqueta/HTML","Vista modelo",""
-"index.html (L183)","etiqueta/HTML","Asistente",""
-"index.html (L185)","etiqueta/HTML","Generar modelo desde ficha…",""
-"index.html (L185)","etiqueta/HTML","Guía Rápida F1",""
-"index.html (L190)","etiqueta/HTML","Ayuda",""
-"index.html (L192)","etiqueta/HTML","Guía Rápida",""
-"index.html (L193)","etiqueta/HTML","Convenciones de Signos y Ejes",""
-"index.html (L193)","etiqueta/HTML","Convenciones",""
-"index.html (L194)","etiqueta/HTML","Ejemplos Guiados",""
-"index.html (L196)","etiqueta/HTML","Acerca de PÓRTICO",""
-"index.html (L196)","etiqueta/HTML","Acerca de",""
-"index.html (L209)","tooltip","Modo profesional activo",""
-"index.html (L209)","etiqueta/HTML","PRO",""
-"index.html (L209)","etiqueta/HTML","Modo",""
-"index.html (L210)","tooltip","Configuración (memoria, visualización, modificadores de sección)",""
-"index.html (L212)","tooltip","Cambiar tema claro/oscuro",""
-"index.html (L214)","etiqueta/HTML","Unidades",""
-"index.html (L217)","tooltip","Sistema de unidades fijo: kN, m, ton, rad. Todo el cálculo se hace en estas unidades.",""
-"index.html (L217)","tooltip","Seleccionar S",""
-"index.html (L218)","etiqueta/HTML","kN – m",""
-"index.html (L219)","etiqueta/HTML","ton – m (no disponible)",""
-"index.html (L220)","etiqueta/HTML","kip – ft (no disponible)",""
-"index.html (L221)","tooltip","Mover vista — PAN (arrastrar con la izquierda)",""
-"index.html (L227)","tooltip","Agregar Nodo N",""
-"index.html (L231)","etiqueta/HTML","🗂 Modelos del proyecto",""
-"index.html (L231)","etiqueta/HTML","Modelo",""
-"index.html (L232)","tooltip","Agregar modelo nuevo al proyecto",""
-"index.html (L236)","etiqueta/HTML","🧹 Temporales",""
-"index.html (L236)","etiqueta/HTML","Temporales",""
-"index.html (L237)","tooltip","Agregar Elemento E",""
-"index.html (L237)","tooltip","Limpiar todos los autoguardados",""
-"index.html (L244)","tooltip","Modelos del proyecto y temporales (árbol lateral)",""
-"index.html (L252)","etiqueta/HTML","Árbol",""
-"index.html (L257)","etiqueta/HTML","Sel.",""
-"index.html (L259)","tooltip","Selección por cuadro: arrastra con la izquierda para dibujar un recuadro y seleccionar nodos y elementos dentro (sin tener que apretar Alt). Ctrl al soltar añade a la selección.",""
-"index.html (L261)","etiqueta/HTML","Cuadro",""
-"index.html (L263)","tooltip","Asignar Apoyo R",""
-"index.html (L269)","etiqueta/HTML","Nodo",""
-"index.html (L285)","etiqueta/HTML","Elem.",""
-"index.html (L287)","tooltip","Agregar Área (membrana/placa/shell): clic en 3–4 nodos, Enter para crear",""
-"index.html (L287)","tooltip","Ejecutar Análisis F5",""
-"index.html (L287)","etiqueta/HTML","Área",""
-"index.html (L297)","tooltip","Mallar región: activa el modo y luego haz clic en los nodos del contorno → Enter para mallar (Esc reinicia)",""
-"index.html (L305)","etiqueta/HTML","Apoyo",""
-"index.html (L319)","tooltip","Zoom Extensión Home",""
-"index.html (L326)","etiqueta/HTML","Ext.",""
-"index.html (L335)","tooltip","Volver a la vista normal del modelo (sale de la deformada/diagramas/contornos CONSERVANDO los resultados). Para descartar los resultados: menú Análisis → Limpiar Resultados.",""
-"index.html (L348)","etiqueta/HTML","Config.",""
-"index.html (L356)","etiqueta/HTML","Z piso",""
-"index.html (L357)","tooltip","Plano de inserción de nodos (coordenada Z del piso activo)",""
-"index.html (L357)","etiqueta/HTML","Plano",""
-"index.html (L359)","tooltip","Mostrar/ocultar IDs de nodos D",""
-"index.html (L360)","etiqueta/HTML","Snap",""
-"index.html (L361)","tooltip","Tamaño del snap a grilla",""
-"index.html (L365)","tooltip","Imán a nodos: al crear elementos, los extremos se pegan al nodo existente más cercano (lo reutilizan en vez de duplicar). Desactívalo para crear un nodo nuevo aunque haya otro al lado.",""
-"index.html (L367)","tooltip","Vista extruida de secciones X",""
-"index.html (L372)","tooltip","Fijar nodos: impide mover un nodo al arrastrarlo con el mouse (evita moverlo sin querer). Desmárcalo para poder arrastrar los nodos seleccionados.",""
-"index.html (L378)","tooltip","Plano de arrastre de nodos: en qué plano se mueve el nodo al arrastrarlo (XY = horizontal, XZ = vertical frontal, YZ = vertical lateral).",""
-"index.html (L378)","tooltip","Plano de arrastre de nodos",""
-"index.html (L387)","tooltip","Discretización automática: al analizar, cada elemento se subdivide internamente en N tramos (deformadas y diagramas precisos, rótulas visibles en la deformada). Al limpiar resultados el modelo vuelve a su estado original.",""
-"index.html (L390)","tooltip","Nº de tramos por elemento para el análisis",""
-"index.html (L396)","tooltip","Modo del modelo (se elige en Archivo → Nuevo)",""
-"index.html (L403)","tooltip","Elevación 2D real de un eje estructural: muestra solo ese plano (ortográfico, sin profundidad) y los nodos nuevos caen en él. Defina ejes en Editar → Definir Ejes de Grilla.",""
-"index.html (L426)","etiqueta/HTML","Caso",""
-"index.html (L428)","tooltip","Nuevo caso de carga o combinación",""
-"index.html (L429)","tooltip","Editar caso activo: nombre, peso propio, eliminar",""
-"index.html (L430)","etiqueta/HTML","⬇ cargas",""
-"index.html (L430)","tooltip","Mostrar / ocultar las flechas de carga",""
-"index.html (L447)","etiqueta/HTML","Hz T",""
-"index.html (L450)","tooltip","Factor de escala relativo: 1 = ajuste automático normalizado. Doble clic en el número para volver a 1.",""
-"index.html (L451)","etiqueta/HTML","Escala ×",""
-"index.html (L453)","tooltip","Ajuste fino relativo al tamaño automático (×0.03 … ×31)",""
-"index.html (L455)","tooltip","Factor relativo (1 = automático). Doble clic = volver a 1.",""
-"index.html (L460)","tooltip","Caso o combinación de resultados a mostrar (X, Y, combos…)",""
-"index.html (L461)","tooltip","Descargar los resultados de este caso (CSV)",""
-"index.html (L472)","etiqueta/HTML","0 — max",""
-"index.html (L478)","tooltip","Mostrar/ocultar reacciones en los apoyos (flechas con valores; incluye resortes)",""
-"index.html (L486)","tooltip","Exportar imagen PNG",""
-"index.html (L507)","etiqueta/HTML","Amp.",""
-"index.html (L509)","tooltip","Animar modo",""
-"index.html (L510)","etiqueta/HTML","Vel.",""
-"index.html (L514)","etiqueta/HTML","Participación",""
-"index.html (L515)","etiqueta/HTML","↓ CSV",""
-"index.html (L519)","etiqueta/HTML","MODO RESULTADOS — haga clic sobre nodos y elementos para ver valores",""
-"index.html (L524)","tooltip","Arrastrar para redimensionar",""
-"index.html (L533)","etiqueta/HTML","Diseño",""
-"index.html (L534)","tooltip","Autoguardados temporales: copias automáticas de las sesiones recientes (reanudar / eliminar)",""
-"index.html (L543)","etiqueta/HTML","Nodos",""
-"index.html (L545)","etiqueta/HTML","Mat.",""
-"index.html (L546)","etiqueta/HTML","Sec.",""
-"index.html (L547)","etiqueta/HTML","Diaf.",""
-"index.html (L548)","etiqueta/HTML","Casos y combos",""
-"index.html (L553)","etiqueta/HTML","Haga clic en un nodo o elemento para ver y editar sus propiedades.",""
-"index.html (L555)","etiqueta/HTML","Ejecute Rótulas plásticas (Análisis → NL-lite) para ver la secuencia de formación de rótulas y el factor de colapso.",""
-"index.html (L558)","etiqueta/HTML","＋ Nuevo Nodo",""
-"index.html (L567)","etiqueta/HTML","＋ Agregar Material",""
-"index.html (L572)","etiqueta/HTML","＋ Agregar Sección",""
-"index.html (L574)","etiqueta/HTML","Ejecute Dinámico (time-history) (Análisis → NL-lite → Dinámico lineal) para ver la respuesta en el tiempo.",""
-"index.html (L578)","etiqueta/HTML","Ejecute Pushover (control de desplazamiento) (Análisis → NL-lite) para ver la curva carga–desplazamiento.",""
-"index.html (L582)","etiqueta/HTML","⚡ Auto-detectar Pisos",""
-"index.html (L582)","etiqueta/HTML","Ejecute Pandeo lineal (Análisis → NL-lite) para ver los modos de pandeo y λcr.",""
-"index.html (L583)","etiqueta/HTML","＋ Agregar Diafragma",""
-"index.html (L586)","etiqueta/HTML","Ejecute No lineal o P-Delta (Análisis → NL-lite) para ver la deformada no lineal paso a paso.",""
-"index.html (L587)","etiqueta/HTML","Casos de carga",""
-"index.html (L589)","etiqueta/HTML","＋ Nuevo caso de carga",""
-"index.html (L590)","etiqueta/HTML","Ejecute Cargas móviles (Análisis → Puentes) para ver la línea de influencia / envolvente.",""
-"index.html (L591)","etiqueta/HTML","⚙ Crear casos y combos de norma (NCh3171)",""
-"index.html (L591)","tooltip","Casos D/L y combinaciones LRFD + servicio de la NCh3171",""
-"index.html (L593)","etiqueta/HTML","＋ Agregar Combinación",""
-"index.html (L594)","etiqueta/HTML","Ejecute Dinámico NO lineal (Análisis → NL-lite) para ver la respuesta del edificio de corte paso a paso.",""
-"index.html (L603)","etiqueta/HTML","X: — Y: — Z: —",""
-"index.html (L605)","etiqueta/HTML","Dinámico",""
-"index.html (L608)","etiqueta/HTML","No lineal",""
-"index.html (L610)","etiqueta/HTML","Dinámico NL",""
-"index.html (L614)","etiqueta/HTML","Ejecute Análisis Modal (F6) para ver resultados.",""
-"index.html (L618)","etiqueta/HTML","Ejecute Análisis Estático (F5) para ver resultados.",""
-"index.html (L655)","etiqueta/HTML","Verificación de",""
-"index.html (L655)","etiqueta/HTML","Verificación de flexión, corte y axial (razón D/C = demanda/capacidad) por elemento. Acero LRFD (AISC 360), hormigón ACI 318, madera NCh1198 con valores normativos estándar.",""
-"index.html (L656)","etiqueta/HTML","⚙ Verificar diseño",""
-"index.html (L664)","etiqueta/HTML","Describe la estructura en palabras y el asistente arma la ficha y genera el modelo (geometría, secciones, cargas NCh y combinaciones).",""
-"index.html (L666)","etiqueta/HTML","Descripción del modelo",""
-"index.html (L667)","placeholder","Ej.: edificio de 4 niveles de 3 m, 3 vanos de 6 m en X y 2 de 5 m en Y, hormigón H30, vigas 25x50, pilares 35x35, salas de clases, en Valdivia, con sismo zona 2 suelo D",""
-"index.html (L668)","etiqueta/HTML","💡 Vacío: Tab rellena el ejemplo · Enter lo genera (para probar de inmediato).",""
-"index.html (L670)","etiqueta/HTML","✦ Generar modelo con el asistente",""
-"index.html (L671)","etiqueta/HTML","Editar ficha avanzada (JSON)…",""
-"index.html (L672)","etiqueta/HTML","La credencial del asistente vive como secreto del servidor; nunca en el navegador. Reemplaza el modelo actual.",""
-"index.html (L675)","etiqueta/HTML","Modificar el modelo actual",""
-"index.html (L676)","etiqueta/HTML","Pide cambios sobre el modelo ya construido: agregar cargas, anexar un piso encima o un vano lateral, aplicar modificadores de rigidez o masa. Si seleccionas elementos/nodos, las órdenes con ""selección"" actúan sobre ellos.",""
-"index.html (L678)","etiqueta/HTML","¿Qué cambio quieres hacer?",""
-"index.html (L679)","placeholder","Ej.: agrega carga viva de 20 kN/m a todas las vigas · anexa un piso de 3 m encima · agrega un vano de 5 m hacia la derecha · aplica modificador de rigidez 0.5 a la selección",""
-"index.html (L681)","etiqueta/HTML","✦ Aplicar cambio",""
-"index.html (L689)","etiqueta/HTML","Copias automáticas de las sesiones recientes (cada ~5 min). Reanude una (descarta el trabajo actual no guardado), elimine las que no use, o límpielas todas.",""
-"index.html (L690)","etiqueta/HTML","El eje x local va del nodo 1 al nodo 2. Los ejes y/z se orientan automáticamente:",""
-"index.html (L702)","etiqueta/HTML","Modo: Seleccionar",""
-"index.html (L705)","etiqueta/HTML","Sin selección",""
-"index.html (L706)","etiqueta/HTML","Sin resultados",""
-"index.html (L706)","tooltip","Resultados disponibles — clic para abrir el Centro de análisis",""
-"index.html (L707)","etiqueta/HTML","Nodos: 0 | Elem: 0",""
-"index.html (L708)","etiqueta/HTML","kN — m",""
-"index.html (L720)","etiqueta/HTML","Cancelar",""
-"index.html (L729)","etiqueta/HTML","PÓRTICO — Ayuda",""
-"index.html (L729)","etiqueta/HTML","N > 0 = tracción · N < 0 = compresión.",""
-"index.html (L736)","tooltip","Cerrar (Esc)",""
-"index.html (L743)","etiqueta/HTML","Flujo de trabajo",""
-"index.html (L743)","etiqueta/HTML","Liberar un esfuerzo (N, Vy, Vz, T, My, Mz) en un extremo ⇒ ese esfuerzo vale 0 ahí.",""
-"index.html (L745)","etiqueta/HTML","Elija el tipo de modelo en Archivo → Nuevo: Pórtico 2D (plano X–Z real,",""
-"index.html (L746)","etiqueta/HTML","sin profundidad, GDL fuera del plano restringidos) o Estructura 3D .",""
-"index.html (L747)","etiqueta/HTML","⚠ Liberar en exceso crea un mecanismo : el análisis lo detecta y avisa.",""
-"index.html (L747)","etiqueta/HTML","El modo no se cambia después. Luego defina los ejes de grilla",""
-"index.html (L749)","etiqueta/HTML","cada eje en 2D real con el selector Vista → Eje… (elevaciones).",""
-"index.html (L750)","etiqueta/HTML","Modele : herramienta Nodo (N) para insertar nodos (se ajustan a los ejes),",""
-"index.html (L751)","etiqueta/HTML","Elem. (E) para conectarlos, Apoyo (R) para empotrar/apoyar.",""
-"index.html (L752)","etiqueta/HTML","En el panel del nodo puede definir apoyos elásticos (resortes).",""
-"index.html (L753)","etiqueta/HTML","Asigne propiedades : material y sección en las pestañas Mat. y Sec. ;",""
-"index.html (L755)","etiqueta/HTML","Cargue : seleccione un nodo o elemento y asigne cargas en su panel.",""
-"index.html (L756)","etiqueta/HTML","El caso de carga se elige ahí mismo (cree casos con ＋ , edítelos con ✎ —",""
-"index.html (L757)","etiqueta/HTML","ahí se activa el peso propio , típico del caso CM). Para sismo por espectro,",""
-"index.html (L758)","etiqueta/HTML","cree un caso espectral (＋ → Caso sísmico, dirección X o Y): no lleva cargas,",""
-"index.html (L760)","etiqueta/HTML","Analice (F5) : resuelve todos los casos y combos a la vez. Cambie de caso en el",""
-"index.html (L761)","etiqueta/HTML","desplegable para ver cada resultado. F6 modal · F7 espectro de respuesta.",""
-"index.html (L762)","etiqueta/HTML","Interprete : deformada y diagramas (teclas 1–7), botón ⭡ Reacciones ,",""
-"index.html (L763)","etiqueta/HTML","clic en un elemento para ver sus fuerzas, y en su panel: Σ Matrices y ⊟ DCL .",""
-"index.html (L765)","etiqueta/HTML","Atajos de teclado",""
-"index.html (L765)","etiqueta/HTML","Modele el ejemplo en PÓRTICO y guárdelo con Archivo → Guardar (ej.: viga_simple.s3d ).",""
-"index.html (L766)","etiqueta/HTML","Copie el archivo a la carpeta examples/ del proyecto.",""
-"index.html (L767)","etiqueta/HTML","Cree o edite examples/index.json con una entrada por ejemplo:",""
-"index.html (L767)","etiqueta/HTML","S N E R Modos: Seleccionar · Nodo · Elemento · Apoyo",""
-"index.html (L768)","etiqueta/HTML","I T F L Vistas: Isométrica · Planta · Frente · Lateral",""
-"index.html (L769)","etiqueta/HTML","Análisis estático",""
-"index.html (L769)","etiqueta/HTML","F5 F6 F7 F8 Análisis estático · Modal · Espectro · Combos",""
-"index.html (L770)","etiqueta/HTML","1 … 7 Resultados: Deformada · N · Vy · Vz · T · My · Mz",""
-"index.html (L771)","etiqueta/HTML","G D X Home Grilla · IDs · Vista extruida · Zoom extensión",""
-"index.html (L772)","etiqueta/HTML","Ctrl+Z / Y Ctrl+S Del Deshacer/Rehacer · Guardar · Eliminar selección",""
-"index.html (L773)","etiqueta/HTML","F1 Esc Esta ayuda · Cerrar diálogos",""
-"index.html (L775)","etiqueta/HTML","💾 Su trabajo se autoguarda en el navegador: al reabrir la app",""
-"index.html (L777)","etiqueta/HTML","📦 Modelos ya corridos: si guarda (Archivo → Guardar) después de",""
-"index.html (L778)","etiqueta/HTML","analizar, el archivo .s3d incluye los resultados (dice «Guardado con",""
-"index.html (L779)","etiqueta/HTML","resultados»). Al reabrir ese archivo, los resultados aparecen solos , sin recalcular.",""
-"index.html (L781)","etiqueta/HTML","Análisis → Recalcular .",""
-"index.html (L786)","etiqueta/HTML","Ejes globales",""
-"index.html (L787)","etiqueta/HTML","X este · Y norte · Z arriba (convención SAP2000/ETABS).",""
-"index.html (L788)","etiqueta/HTML","La gravedad actúa en −Z : una carga con dirección «Gravedad» y w > 0 apunta hacia abajo.",""
-"index.html (L790)","etiqueta/HTML","Ejes locales del elemento",""
-"index.html (L806)","etiqueta/HTML","Viga horizontal (según X): la gravedad carga el eje y local",""
-"index.html (L807)","etiqueta/HTML","⇒ flexión Mz . Cargas según Y global ⇒ flexión My .",""
-"index.html (L817)","etiqueta/HTML","Análisis lineal : sin P-Δ ni no-linealidad de material o geometría.",""
-"index.html (L821)","etiqueta/HTML","Columna vertical : cargas/sismo según X ⇒ flexión Mz ;",""
-"index.html (L822)","etiqueta/HTML","según Y ⇒ flexión My . La torsión T gira en torno a Z global.",""
-"index.html (L828)","etiqueta/HTML","Signos de esfuerzos y resultados",""
-"index.html (L831)","etiqueta/HTML","Momentos : positivos antihorarios (regla de la mano derecha sobre el eje local).",""
-"index.html (L833)","etiqueta/HTML","Diagramas M(x) : convención FEM, dM/dx = −V. El extremo de momento dentro",""
-"index.html (L835)","etiqueta/HTML","Reacciones : flechas naranjas = fuerzas,",""
-"index.html (L836)","etiqueta/HTML","violetas (doble punta)",""
-"index.html (L836)","etiqueta/HTML","violetas (doble punta) = momentos. En apoyos",""
-"index.html (L838)","etiqueta/HTML","GDL por nodo (orden): [ux, uy, uz, rx, ry, rz] globales;",""
-"index.html (L842)","etiqueta/HTML","Liberaciones (rótulas)",""
-"index.html (L845)","etiqueta/HTML","En 3D: ● círculo verde = giro liberado ·",""
-"index.html (L846)","etiqueta/HTML","■ cuadrado ámbar = desplazamiento liberado.",""
-"index.html (L847)","etiqueta/HTML","El botón «Rótula» libera My + Mz (rótula clásica de momento).",""
-"index.html (L852)","etiqueta/HTML","Todo el cálculo se hace en kN, m, ton, rad (E y G en kN/m², ρ en ton/m³,",""
-"index.html (L854)","etiqueta/HTML","solo una etiqueta de referencia — no convierte los valores ingresados.",""
-"index.html (L859)","etiqueta/HTML","Ejemplos guiados",""
-"index.html (L861)","etiqueta/HTML","Cargando…",""
-"index.html (L864)","etiqueta/HTML","📋 Instrucciones para el docente: cómo agregar ejemplos",""
-"index.html (L878)","etiqueta/HTML","Entrar al laboratorio (vacío) →",""
-"index.html (L879)","etiqueta/HTML","✦ Generar modelo con el asistente →",""
-"index.html (L892)","etiqueta/HTML","Laboratorio virtual de análisis estructural 3D",""
-"index.html (L893)","etiqueta/HTML","· versión 87 · junio 2026",""
-"index.html (L896)","etiqueta/HTML","Material docente desarrollado por el Dr. Juan Patricio Reyes C. —",""
-"index.html (L898)","etiqueta/HTML","Universidad Austral de Chile .",""
-"index.html (L898)","etiqueta/HTML","Universidad Austral de Chile",""
-"index.html (L899)","etiqueta/HTML","Dirigido a estudiantes de Arquitectura , Construcción e",""
-"index.html (L900)","etiqueta/HTML","Ingeniería Civil en Obras Civiles : una herramienta para ver por dentro",""
-"index.html (L908)","etiqueta/HTML","Capacidades",""
-"index.html (L910)","etiqueta/HTML","Elementos barra 3D tipo Timoshenko (12 GDL), liberaciones por condensación estática.",""
-"index.html (L911)","etiqueta/HTML","Análisis estático lineal de todos los casos y combinaciones; peso propio por caso.",""
-"index.html (L912)","etiqueta/HTML","Diafragmas rígidos, masas nodales, apoyos elásticos (resortes).",""
-"index.html (L912)","etiqueta/HTML","Diafragmas rígidos",""
-"index.html (L913)","etiqueta/HTML","Análisis modal y espectro de respuesta (CQC/SRSS).",""
-"index.html (L914)","etiqueta/HTML","Herramientas didácticas: matrices Ke/T/K/Me y globales, DCL con verificación de equilibrio.",""
-"index.html (L916)","etiqueta/HTML","Limitaciones conocidas (¡léalas!)",""
-"index.html (L919)","etiqueta/HTML","Solo elementos barra: no modela muros ni losas como elementos (el diafragma",""
-"index.html (L921)","etiqueta/HTML","Cargas en elementos: solo distribuidas uniformes en todo el vano.",""
-"index.html (L922)","etiqueta/HTML","Sin verificación de diseño (hormigón/acero) ni normativa automática (NCh433).",""
-"index.html (L923)","etiqueta/HTML","Herramienta docente : para proyectos reales use software profesional validado",""
-"index.html (L943)","etiqueta/HTML","Facultad de Ciencias de la Ingeniería · Instituto de Obras Civiles",""
-"index.html (L975)","etiqueta/HTML","Modelado 3D",""
-"index.html (L975)","etiqueta/HTML","Formas modales",""
-"index.html (L975)","etiqueta/HTML","Modelado 3D Análisis estático Formas modales",""
-"index.html (L976)","etiqueta/HTML","Espectro de respuesta",""
-"index.html (L976)","etiqueta/HTML","Espectro de respuesta Combinaciones Diafragmas rígidos",""
-"index.html (L981)","etiqueta/HTML","📖 Manual de uso",""
-"index.html (L982)","etiqueta/HTML","⤓ Instalar app",""
-"index.html (L984)","etiqueta/HTML","o presione Enter",""
-"index.html (L993)","etiqueta/HTML","Material docente desarrollado por Dr. Juan Patricio Reyes C. —",""
-"index.html (L995)","etiqueta/HTML","Para estudiantes de Arquitectura , Construcción e",""
-"index.html (L996)","etiqueta/HTML","Ingeniería Civil en Obras Civiles .",""
-"index.html (L1104)","etiqueta/HTML","hint.innerHTML = 'Para instalar: usa el ícono ⊕ / instalar de la barra de ' +",""
-"index.html (L1105)","etiqueta/HTML","'direcciones, o el menú ⋮ → Instalar PÓRTICO . En iPhone/iPad: ' +",""
-"index.html (L1106)","etiqueta/HTML","' Compartir → Agregar a inicio .';",""
-"index.html (L1117)","etiqueta/HTML","Mejor en horizontal — PÓRTICO se ve mejor apaisado, pero puedes seguir usándolo en vertical.",""
-"index.html (L1150)","etiqueta/HTML","' + m[2].trim() + '",""
-"index.html (L1150)","etiqueta/HTML","return m[1].trim() + ' ' + m[2].trim() + ' ';",""
-"js/app.js (L37)","etiqueta/HTML","Elem …",""
-"js/app.js (L215)","mensaje/JS","Se salió de la malla de análisis (auto-disc) para editar el modelo original",""
-"js/app.js (L233)","etiqueta/HTML","… elem…",""
-"js/app.js (L235)","mensaje/JS","No se pudo crear el elemento (nodos inválidos)",""
-"js/app.js (L253)","etiqueta/HTML","Nodo …",""
-"js/app.js (L260)","mensaje/JS","Nodo #… eliminado",""
-"js/app.js (L260)","mensaje/JS","Elemento #… eliminado",""
-"js/app.js (L260)","mensaje/JS","Elemento de área #… eliminado",""
-"js/app.js (L271)","mensaje/JS","Elemento #… dividido en … tramos",""
-"js/app.js (L281)","mensaje/JS","Elemento de área … #… (…, t=… m) creado",""
-"js/app.js (L281)","mensaje/JS","Elemento de área",""
-"js/app.js (L284)","mensaje/JS","Área … #… (…, t=… m) — ajusta sus propiedades en el panel",""
-"js/app.js (L325)","mensaje/JS","Discretizado: … → … elementos",""
-"js/app.js (L332)","mensaje/JS","No se pudo discretizar (¿el tramo objetivo es mayor que el elemento?)",""
-"js/app.js (L340)","mensaje/JS","Nodo de intersección creado (#…); … tramos",""
-"js/app.js (L346)","mensaje/JS","Seleccione 2 o más elementos colineales (Ctrl+clic) para unir",""
-"js/app.js (L351)","mensaje/JS","No se pudo unir: …",""
-"js/app.js (L357)","mensaje/JS","… elementos unidos → Elemento #…",""
-"js/app.js (L364)","mensaje/JS","Seleccione exactamente 2 elementos que se intersecten (Ctrl+clic) para unirlos",""
-"js/app.js (L375)","mensaje/JS","Nuevo modelo … creado",""
-"js/app.js (L392)","mensaje/JS","… área(s) actualizadas",""
-"js/app.js (L401)","mensaje/JS","Material aplicado a … elemento(s)",""
-"js/app.js (L401)","mensaje/JS","Sección aplicada a … elemento(s)",""
-"js/app.js (L401)","mensaje/JS","Copiado …: +… elemento(s)",""
-"js/app.js (L401)","mensaje/JS","Espejado en …=…: +… elemento(s)",""
-"js/app.js (L418)","mensaje/JS","… elemento(s) divididos en … (… tramos)",""
-"js/app.js (L421)","mensaje/JS","Seleccione elementos para ocultar",""
-"js/app.js (L421)","mensaje/JS","Seleccione elementos",""
-"js/app.js (L423)","mensaje/JS","… elemento(s) oculto(s) · Vista → Mostrar todo para revertir",""
-"js/app.js (L433)","mensaje/JS","Seleccione elementos para agrupar",""
-"js/app.js (L448)","mensaje/JS","Seleccione 3 nodos (CST) o 4 nodos (QUAD) para crear un elemento de área",""
-"js/app.js (L453)","mensaje/JS","Espesor inválido",""
-"js/app.js (L460)","mensaje/JS","No se pudo crear el área (nodos repetidos o inexistentes)",""
-"js/app.js (L470)","mensaje/JS","Un área necesita 3 (CST) o 4 (QUAD) nodos",""
-"js/app.js (L510)","mensaje/JS","Seleccione 4 nodos esquina del panel (en cualquier orden)",""
-"js/app.js (L511)","mensaje/JS","Mallar panel (4 esquinas)",""
-"js/app.js (L518)","mensaje/JS","Valores inválidos (nx, ny ≥ 1; t > 0)",""
-"js/app.js (L519)","mensaje/JS","Demasiados elementos (>2500). Reduzca nx·ny.",""
-"js/app.js (L546)","mensaje/JS","El nodo … no existe",""
-"js/app.js (L546)","mensaje/JS","El elemento … no existe",""
-"js/app.js (L546)","mensaje/JS","El área … no existe",""
-"js/app.js (L546)","mensaje/JS","El diafragma … no existe",""
-"js/app.js (L549)","mensaje/JS","Seleccione ≥3 nodos que formen el contorno de la región",""
-"js/app.js (L556)","mensaje/JS","Región mallada: … celdas (… quad + … tri, …) · h=… m",""
-"js/app.js (L557)","mensaje/JS","Valores inválidos (h>0, t>0)",""
-"js/app.js (L566)","mensaje/JS","No se pudo mallar la región:",""
-"js/app.js (L578)","mensaje/JS","🔲 Mallar región libre",""
-"js/app.js (L640)","mensaje/JS","No hay elementos de área en el modelo",""
-"js/app.js (L640)","mensaje/JS","No hay elementos",""
-"js/app.js (L641)","mensaje/JS","Suavizar malla (calidad)",""
-"js/app.js (L641)","mensaje/JS","nº de iteraciones (1–20)",""
-"js/app.js (L655)","mensaje/JS","Seleccione exactamente 2 nodos (1º = maestro, 2º = esclavo)",""
-"js/app.js (L657)","mensaje/JS","Crear link / coupling",""
-"js/app.js (L677)","mensaje/JS","Seleccione los 4 nodos de las ESQUINAS del panel",""
-"js/app.js (L678)","mensaje/JS","El muro de relleno (puntal diagonal 2D) requiere un modelo PLANO X–Z",""
-"js/app.js (L690)","mensaje/JS","Muro de relleno — puntal diagonal equivalente",""
-"js/app.js (L702)","mensaje/JS","Muro de relleno insertado: puntal w=… cm (A=… cm²), 2 diagonales solo-compresión. Corra Análisis → No lineal para activar una diagonal.",""
-"js/app.js (L711)","mensaje/JS","Macromodelo «…» no registrado",""
-"js/app.js (L711)","mensaje/JS","Macromodelo «…» insertado (… elemento(s) calibrados)",""
-"js/app.js (L712)","mensaje/JS","«…» requiere un modelo …",""
-"js/app.js (L737)","mensaje/JS","Seleccione nodos",""
-"js/app.js (L758)","mensaje/JS","Indique un desplazamiento (dX, dY o dZ)",""
-"js/app.js (L759)","mensaje/JS","Seleccione nodos o elementos para mover",""
-"js/app.js (L763)","mensaje/JS","… nodo(s) movidos (…, …, …)",""
-"js/app.js (L768)","mensaje/JS","Indique un desplazamiento (dX, dY o dZ) ≠ 0",""
-"js/app.js (L770)","mensaje/JS","Seleccione nodos o elementos para copiar",""
-"js/app.js (L829)","mensaje/JS","Seleccione nodos o elementos para espejar",""
-"js/app.js (L860)","mensaje/JS","No hay caso de carga",""
-"js/app.js (L861)","mensaje/JS","El caso espectral no admite cargas nodales",""
-"js/app.js (L877)","mensaje/JS","El caso espectral no admite cargas distribuidas",""
-"js/app.js (L893)","mensaje/JS","El caso espectral no admite cargas de temperatura",""
-"js/app.js (L907)","mensaje/JS","Área no encontrada",""
-"js/app.js (L922)","mensaje/JS","Discretizar Todos los Elementos",""
-"js/app.js (L925)","etiqueta/HTML","Modo … — T = … s",""
-"js/app.js (L925)","mensaje/JS","Modo … (… Hz)",""
-"js/app.js (L927)","etiqueta/HTML","Nº de partes por elemento",""
-"js/app.js (L928)","etiqueta/HTML","Longitud de tramo (m)",""
-"js/app.js (L997)","mensaje/JS","Elemento incompleto",""
-"js/app.js (L1020)","etiqueta/HTML","⬇ Exportar matrices a CSV",""
-"js/app.js (L1024)","mensaje/JS","Matrices del Elemento #…",""
-"js/app.js (L1044)","mensaje/JS","Modelo vacío",""
-"js/app.js (L1066)","etiqueta/HTML","⬇ Exportar K y M globales a CSV",""
-"js/app.js (L1070)","mensaje/JS","Matrices Globales K y M",""
-"js/app.js (L1131)","etiqueta/HTML","Abrir ejemplo",""
-"js/app.js (L1134)","mensaje/JS","¿Descartar los cambios no guardados y abrir el ejemplo?",""
-"js/app.js (L1144)","mensaje/JS","No se pudo abrir: …",""
-"js/app.js (L1216)","mensaje/JS","Ejecute el análisis primero (F5) para ver el DCL",""
-"js/app.js (L1218)","mensaje/JS","Sin resultados para este elemento",""
-"js/app.js (L1290)","mensaje/JS","Definir Ejes de Grilla",""
-"js/app.js (L1295)","mensaje/JS","Importado de …: … nodos, … barras${warnings.length ?",""
-"js/app.js (L1295)","mensaje/JS","IFC importado: … nodos, … barras${stats.areas ?",""
-"js/app.js (L1297)","etiqueta/HTML","Ejes X (A, B, C…) — dirección X global",""
-"js/app.js (L1299)","etiqueta/HTML","Ejes Y (1, 2, 3…) — dirección Y global",""
-"js/app.js (L1301)","etiqueta/HTML","Niveles Z (pisos)",""
-"js/app.js (L1304)","etiqueta/HTML","Ver ……",""
-"js/app.js (L1326)","mensaje/JS","Nada que deshacer",""
-"js/app.js (L1332)","mensaje/JS","Deshecho",""
-"js/app.js (L1337)","mensaje/JS","Nada que rehacer",""
-"js/app.js (L1343)","mensaje/JS","Rehecho",""
-"js/app.js (L1349)","mensaje/JS","El modelo no tiene suficientes nodos",""
-"js/app.js (L1354)","mensaje/JS","No se encontraron nuevos pisos (nodos en el mismo nivel Z)",""
-"js/app.js (L1366)","mensaje/JS","… diafragma(s) creado(s) automáticamente…",""
-"js/app.js (L1392)","mensaje/JS","Diafragma … creado — asigne nodos en el panel",""
-"js/app.js (L1397)","etiqueta/HTML","sin ejecutar",""
-"js/app.js (L1447)","etiqueta/HTML","✓ resultados",""
-"js/app.js (L1455)","tooltip","Incluir en «Analizar seleccionados»",""
-"js/app.js (L1458)","etiqueta/HTML","Ejecutar…",""
-"js/app.js (L1483)","tooltip","Cerrar",""
-"js/app.js (L1485)","etiqueta/HTML","Estático / lineal",""
-"js/app.js (L1486)","etiqueta/HTML","Avanzados (NL-lite)",""
-"js/app.js (L1490)","tooltip","Elegir qué casos de carga correr (LC1, LC2, …)",""
-"js/app.js (L1490)","mensaje/JS","⚙ Elegir casos a correr",""
-"js/app.js (L1492)","mensaje/JS","Espectro…",""
-"js/app.js (L1500)","mensaje/JS","Pandeo lineal…",""
-"js/app.js (L1500)","mensaje/JS","Pandeo lineal",""
-"js/app.js (L1504)","mensaje/JS","Time-history…",""
-"js/app.js (L1508)","mensaje/JS","Cargas móviles / líneas de influencia",""
-"js/app.js (L1512)","etiqueta/HTML","▶ Analizar seleccionados",""
-"js/app.js (L1512)","tooltip","Corre en orden los análisis marcados, con parámetros por defecto (sin diálogos)",""
-"js/app.js (L1538)","mensaje/JS","Marque al menos un análisis",""
-"js/app.js (L1577)","mensaje/JS","Lote …/…: ……",""
-"js/app.js (L1580)","mensaje/JS","Lote detenido en «…»: …",""
-"js/app.js (L1589)","mensaje/JS","No hay resultados estáticos",""
-"js/app.js (L1593)","mensaje/JS","No hay resultados modales",""
-"js/app.js (L1598)","mensaje/JS","Caso espectral no encontrado",""
-"js/app.js (L1598)","mensaje/JS","Caso espectral",""
-"js/app.js (L1603)","mensaje/JS","No hay resultados no lineales",""
-"js/app.js (L1606)","mensaje/JS","No hay resultados P-Delta",""
-"js/app.js (L1609)","mensaje/JS","No hay resultados de pandeo",""
-"js/app.js (L1612)","mensaje/JS","No hay resultados de rótulas plásticas",""
-"js/app.js (L1615)","mensaje/JS","No hay resultados de pushover",""
-"js/app.js (L1618)","mensaje/JS","No hay resultados de time-history",""
-"js/app.js (L1621)","mensaje/JS","No hay resultados de etapas constructivas",""
-"js/app.js (L1624)","mensaje/JS","No hay resultados de cargas móviles",""
-"js/app.js (L1627)","mensaje/JS","No hay resultados de time-history no lineal",""
-"js/app.js (L1682)","mensaje/JS","No hay casos de carga estáticos que correr",""
-"js/app.js (L1705)","mensaje/JS","No marcaste ningún caso",""
-"js/app.js (L1715)","mensaje/JS","El modelo debe tener nodos y elementos (barras o áreas)",""
-"js/app.js (L1715)","mensaje/JS","El modelo debe tener nodos y elementos",""
-"js/app.js (L1725)","mensaje/JS","Analizando…",""
-"js/app.js (L1770)","mensaje/JS","No hay casos de carga estáticos que analizar",""
-"js/app.js (L1787)","mensaje/JS","Sin resultados: cree un caso de carga estático o ejecute F6+F7 para los espectrales",""
-"js/app.js (L1796)","mensaje/JS","Corotacional OK · … pasos · gran rotación · … caso(s)",""
-"js/app.js (L1811)","mensaje/JS","Análisis cancelado",""
-"js/app.js (L1813)","mensaje/JS","Error: …",""
-"js/app.js (L1819)","mensaje/JS","Modo: Resultados",""
-"js/app.js (L1854)","mensaje/JS","No se pudo diagnosticar: …",""
-"js/app.js (L1856)","mensaje/JS","Sin GDL sueltos: no se detectaron nodos con rigidez nula. Si el análisis falla, el mecanismo puede ser de varios GDL acoplados (p.ej. barras colineales rotuladas).",""
-"js/app.js (L2022)","mensaje/JS","¿Descartar TODOS los resultados calculados (estático, modal, espectro, NL, diseño) y revertir la malla auto-discretizada? Si sólo quieres volver a ver el modelo sin borrar nada, usa «Vista modelo» en la barra.",""
-"js/app.js (L2091)","mensaje/JS","Resultados exportados",""
-"js/app.js (L2108)","mensaje/JS","Diagramas (…/…)…",""
-"js/app.js (L2167)","mensaje/JS","Ya estás en la vista del modelo",""
-"js/app.js (L2174)","etiqueta/HTML","Salir",""
-"js/app.js (L2179)","etiqueta/HTML","Ver resultados",""
-"js/app.js (L2180)","mensaje/JS","Vista del modelo (los resultados se conservan — usa «Ver resultados» para volver)",""
-"js/app.js (L2207)","mensaje/JS","No hay resultados que limpiar",""
-"js/app.js (L2208)","mensaje/JS","¿Descartar TODOS los resultados calculados (estático, modal, espectro, NL, diseño) y revertir la malla auto-discretizada?\n\nSi sólo quieres volver a ver el modelo sin borrar nada, usa «Vista modelo» en la barra.",""
-"js/app.js (L2280)","mensaje/JS","No hay resultados — ejecute el análisis primero",""
-"js/app.js (L2311)","mensaje/JS","Ese caso aún no tiene resultados (córrelo primero)",""
-"js/app.js (L2328)","mensaje/JS","El modelo no tiene apoyos",""
-"js/app.js (L2344)","mensaje/JS","Análisis modal…",""
-"js/app.js (L2459)","mensaje/JS","Error modal: …",""
-"js/app.js (L2464)","mensaje/JS","Modo: Modal",""
-"js/app.js (L2468)","etiqueta/HTML","N° de modos",""
-"js/app.js (L2478)","mensaje/JS","Análisis Modal",""
-"js/app.js (L2485)","etiqueta/HTML","Número de modos a extraer (1–50)",""
-"js/app.js (L2497)","etiqueta/HTML","Método de extracción",""
-"js/app.js (L2499)","etiqueta/HTML","Iteración inversa (Stodola) — robusto, modo a modo",""
-"js/app.js (L2500)","etiqueta/HTML","Iteración de subespacio (Bathe) — bloque, rápido con muchos modos",""
-"js/app.js (L2505)","tooltip","Modal sobre K+Kg(estado): la fuerza axial del estado de referencia rigidiza (tracción) o ablanda (compresión) las frecuencias. Como en SAP2000 (modal sobre un caso no lineal).",""
-"js/app.js (L2511)","etiqueta/HTML","Estado de referencia (carga que genera Kg)",""
-"js/app.js (L2694)","mensaje/JS","No hay resultados modales — ejecute Análisis Modal primero",""
-"js/app.js (L2698)","mensaje/JS","Resultados modales exportados",""
-"js/app.js (L2703)","mensaje/JS","No hay resultados espectrales — ejecute Espectro de Respuesta primero",""
-"js/app.js (L2703)","mensaje/JS","Espectro de Respuesta",""
-"js/app.js (L2707)","mensaje/JS","Resultados espectrales exportados",""
-"js/app.js (L2713)","mensaje/JS","Ejecute primero el Análisis Modal (F6)",""
-"js/app.js (L2724)","mensaje/JS","Espectro omitido en el lote: defínalo una vez manualmente para fijar la curva.",""
-"js/app.js (L2727)","placeholder","Pegue el registro: dos columnas «t a» (s, m/s²) o una columna «a» con Δt. Líneas con # o texto se ignoran.",""
-"js/app.js (L2733)","etiqueta/HTML","Aceptar",""
-"js/app.js (L2739)","etiqueta/HTML","Calcular",""
-"js/app.js (L2739)","mensaje/JS","Caso «…» guardado sin calcular. Use «Calcular» (o F7) para correrlo.",""
-"js/app.js (L2739)","mensaje/JS","Caso «…» creado (sin calcular).",""
-"js/app.js (L2788)","mensaje/JS","Error espectro: …",""
-"js/app.js (L2793)","mensaje/JS","Modo: Espectro",""
-"js/app.js (L2815)","mensaje/JS","Acelerograma vacío o no reconocido.",""
-"js/app.js (L2892)","mensaje/JS","Time-history OK · … modos · … · PGA … m/s² · u_máx … m (nodo …) · T₁=…s",""
-"js/app.js (L2892)","mensaje/JS","Time-history NL OK · … pisos · … · T₁=…s · u_techo máx … m · … piso(s) en fluencia",""
-"js/app.js (L2896)","mensaje/JS","Time-history: …",""
-"js/app.js (L2900)","mensaje/JS","Modo: Time-history",""
-"js/app.js (L2922)","tooltip","ID del nodo, elemento o área a monitorear",""
-"js/app.js (L2946)","mensaje/JS","Time-history modal (acelerograma en la base)",""
-"js/app.js (L2951)","etiqueta/HTML","Dirección de excitación",""
-"js/app.js (L2952)","etiqueta/HTML","Z (vertical)",""
-"js/app.js (L2954)","etiqueta/HTML","Amortiguamiento ζ (%)",""
-"js/app.js (L2954)","etiqueta/HTML","Amortiguamiento ζ",""
-"js/app.js (L2959)","etiqueta/HTML","Demo — Pulso de Ricker (sintético)",""
-"js/app.js (L2960)","etiqueta/HTML","Demo — Armónico (sintético)",""
-"js/app.js (L2961)","etiqueta/HTML","Demo — Sismo sintético (NO es real)",""
-"js/app.js (L2962)","etiqueta/HTML","Pegar / cargar registro (t a) o (a)…",""
-"js/app.js (L2966)","placeholder","Pegue el registro: dos columnas «t a» (s, m/s²) o una columna «a» con Δt.\nLíneas con # o texto se ignoran.",""
-"js/app.js (L2968)","etiqueta/HTML","Δt si es 1 columna (s)",""
-"js/app.js (L2973)","etiqueta/HTML","Escalar a PGA (m/s², 0 = no escalar)",""
-"js/app.js (L2996)","mensaje/JS","Registro:",""
-"js/app.js (L3206)","tooltip","Registro/caso dinámico a mostrar",""
-"js/app.js (L3210)","etiqueta/HTML","Centro de masa",""
-"js/app.js (L3211)","tooltip","ID del nodo, elemento, área o diafragma (piso) a monitorear",""
-"js/app.js (L3218)","tooltip","Velocidad de animación",""
-"js/app.js (L3225)","tooltip","Ir al instante de máxima respuesta",""
-"js/app.js (L3226)","etiqueta/HTML","⤓ CSV",""
-"js/app.js (L3279)","mensaje/JS","Cargas móviles OK · … · máx … … · mín … …",""
-"js/app.js (L3296)","mensaje/JS","Historia exportada (…)",""
-"js/app.js (L3296)","mensaje/JS","Historia exportada",""
-"js/app.js (L3308)","mensaje/JS","Etapas constructivas (staged)",""
-"js/app.js (L3311)","mensaje/JS","Las etapas constructivas requieren elementos de barra",""
-"js/app.js (L3322)","mensaje/JS","Etapas OK · … fases · δmax acumulado … m · activos finales …",""
-"js/app.js (L3326)","mensaje/JS","Etapas: …",""
-"js/app.js (L3348)","etiqueta/HTML","Todos los elementos (…)",""
-"js/app.js (L3349)","etiqueta/HTML","Grupo «…» (…)",""
-"js/app.js (L3350)","etiqueta/HTML","— ninguna —",""
-"js/app.js (L3358)","etiqueta/HTML","Añadir etapa con",""
-"js/app.js (L3359)","etiqueta/HTML","peso propio nuevo",""
-"js/app.js (L3360)","etiqueta/HTML","➕ Añadir",""
-"js/app.js (L3364)","etiqueta/HTML","Caso de SERVICIO en la última etapa (estructura terminada)",""
-"js/app.js (L3378)","tooltip","Subir",""
-"js/app.js (L3379)","tooltip","Bajar",""
-"js/app.js (L3380)","tooltip","Quitar",""
-"js/app.js (L3382)","etiqueta/HTML","Sin etapas. Añade al menos una.",""
-"js/app.js (L3393)","mensaje/JS","El grupo no tiene elementos",""
-"js/app.js (L3424)","mensaje/JS","Selecciona los elementos del tendón (en orden, del ancla activa a la pasiva)",""
-"js/app.js (L3431)","mensaje/JS","Caso de carga inexistente",""
-"js/app.js (L3436)","mensaje/JS","Tendón aplicado a «…» · P=… kN · w_eq=… kN/m · L=… m",""
-"js/app.js (L3439)","mensaje/JS","Tendón: …",""
-"js/app.js (L3445)","mensaje/JS","Pretensado por tendón — cargas equivalentes",""
-"js/app.js (L3447)","etiqueta/HTML","(crea un caso de carga primero)",""
-"js/app.js (L3455)","etiqueta/HTML","Caso de carga destino",""
-"js/app.js (L3458)","etiqueta/HTML","e inicial (m)",""
-"js/app.js (L3459)","etiqueta/HTML","e centro (m)",""
-"js/app.js (L3460)","etiqueta/HTML","e final (m)",""
-"js/app.js (L3463)","etiqueta/HTML","Quiebres «s,e» por línea (s∈[0,1], e ↓+ en m)",""
-"js/app.js (L3469)","etiqueta/HTML","Efectiva P directa",""
-"js/app.js (L3469)","etiqueta/HTML","Tesado + pérdidas",""
-"js/app.js (L3470)","etiqueta/HTML","P (kN)",""
-"js/app.js (L3473)","etiqueta/HTML","P₀ gato (kN)",""
-"js/app.js (L3474)","etiqueta/HTML","μ (1/rad)",""
-"js/app.js (L3476)","etiqueta/HTML","Pérdida tanto alzado",""
-"js/app.js (L3478)","etiqueta/HTML","Resolver estático tras aplicar",""
-"js/app.js (L3496)","mensaje/JS","Selecciona un caso de carga",""
-"js/app.js (L3518)","mensaje/JS","Selecciona los elementos de la PISTA (en orden a lo largo del recorrido)",""
-"js/app.js (L3541)","mensaje/JS","Cargas móviles: …",""
-"js/app.js (L3559)","etiqueta/HTML","Línea de influencia (carga unitaria)",""
-"js/app.js (L3559)","etiqueta/HTML","Envolvente (tren de cargas)",""
-"js/app.js (L3560)","etiqueta/HTML","Posiciones de barrido",""
-"js/app.js (L3563)","etiqueta/HTML","Reacción de apoyo",""
-"js/app.js (L3563)","etiqueta/HTML","Esfuerzo en sección",""
-"js/app.js (L3567)","etiqueta/HTML","Fz (vertical)",""
-"js/app.js (L3571)","etiqueta/HTML","Posición ξ (0–1)",""
-"js/app.js (L3575)","etiqueta/HTML","Tren «offset,P» por línea (offset m respecto al eje de referencia, P en kN ↓)",""
-"js/app.js (L3612)","mensaje/JS","Define al menos un eje del tren",""
-"js/app.js (L3658)","etiqueta/HTML","Pista L = … m · … posiciones",""
-"js/app.js (L3660)","etiqueta/HTML","⬇ CSV",""
-"js/app.js (L3671)","mensaje/JS","Resultado exportado",""
-"js/app.js (L3686)","mensaje/JS","El time-history no lineal (edificio de corte) requiere diafragmas rígidos por piso. Use «auto-detectar diafragmas» o defínalos.",""
-"js/app.js (L3692)","mensaje/JS","No se pudo armar el edificio de corte: …",""
-"js/app.js (L3693)","mensaje/JS","No se identificaron pisos (diafragmas).",""
-"js/app.js (L3702)","mensaje/JS","Cada piso necesita masa y rigidez > 0 (edite la tabla).",""
-"js/app.js (L3739)","mensaje/JS","Time-history no lineal: …",""
-"js/app.js (L3807)","mensaje/JS","Time-history NO LINEAL — edificio de corte (rótulas)",""
-"js/app.js (L3826)","etiqueta/HTML","Endurec. α",""
-"js/app.js (L3835)","etiqueta/HTML","Botón de re-semilla de Vy a un coef. de corte basal Cy·peso:",""
-"js/app.js (L3837)","etiqueta/HTML","↻ Vy = Cy·peso acumulado",""
-"js/app.js (L3848)","placeholder","Registro: «t a» (s, m/s²) o una columna «a» con Δt.",""
-"js/app.js (L3848)","etiqueta/HTML","ancho máx cm",""
-"js/app.js (L3849)","etiqueta/HTML","alto máx cm",""
-"js/app.js (L3850)","etiqueta/HTML","Δt si 1 columna (s)",""
-"js/app.js (L3855)","etiqueta/HTML","Escalar a PGA (m/s², 0 = no)",""
-"js/app.js (L3928)","tooltip","Ir al pico",""
-"js/app.js (L4030)","etiqueta/HTML","Reglas simples de ingeniería para una sección inicial (antes del análisis). El resultado es editable y preliminar — requiere verificación posterior.",""
-"js/app.js (L4036)","mensaje/JS","Ejecute el análisis estático (F5) antes de diseñar.",""
-"js/app.js (L4064)","mensaje/JS","No hay elementos en el alcance con resultados de diseño.",""
-"js/app.js (L4084)","etiqueta/HTML","D/C objetivo",""
-"js/app.js (L4124)","etiqueta/HTML","Diseñar",""
-"js/app.js (L4129)","etiqueta/HTML","Límite de dimensiones (opcional):",""
-"js/app.js (L4134)","tooltip","Recorrer sólo las secciones marcadas como pilar o viga (según el «Tipo de elemento» de la sección).",""
-"js/app.js (L4136)","etiqueta/HTML","Todas",""
-"js/app.js (L4137)","etiqueta/HTML","🟦 Sólo pilares",""
-"js/app.js (L4138)","etiqueta/HTML","🟩 Sólo vigas",""
-"js/app.js (L4139)","etiqueta/HTML","· Sólo genéricas",""
-"js/app.js (L4141)","tooltip","D/C objetivo: la selección prefiere candidatos con D/C cerca de este valor (sin pasar de 1).",""
-"js/app.js (L4142)","etiqueta/HTML","Acero:",""
-"js/app.js (L4142)","tooltip","Familias de acero permitidas como candidatas (sólo aplica a secciones de acero/aluminio).",""
-"js/app.js (L4153)","etiqueta/HTML","⚠ compartida = la sección la usan también elementos fuera del alcance.",""
-"js/app.js (L4154)","etiqueta/HTML","✓ Aplicar al modelo",""
-"js/app.js (L4203)","mensaje/JS","No hay propuestas seleccionadas",""
-"js/app.js (L4218)","mensaje/JS","Diseño aplicado a … sección(es). Recalcule el análisis (F5) y vuelva a verificar. Ctrl+Z deshace.",""
-"js/app.js (L4228)","mensaje/JS","Ejecute el análisis (F5) y verifique el diseño antes de exportar el reporte.",""
-"js/app.js (L4253)","mensaje/JS","Reporte de diseño exportado · … elementos · … no cumplen",""
-"js/app.js (L4261)","mensaje/JS","No hay barras para chequear nudos SCWB",""
-"js/app.js (L4270)","mensaje/JS","No hay nudos viga-columna (se necesita ≥1 columna y ≥1 viga concurrentes; se clasifica por verticalidad)",""
-"js/app.js (L4275)","mensaje/JS","Nudos SCWB: … nudo(s) viga-columna · … NO cumple(n) · γ=…",""
-"js/app.js (L4297)","etiqueta/HTML","γ = ΣMnc ≥ γ·ΣMnb",""
-"js/app.js (L4308)","etiqueta/HTML","Mn ≈ Fy·Zz por barra. Clasificación columna/viga por verticalidad. Clic en una fila para centrar el nudo. Rojo = no cumple.",""
-"js/app.js (L4322)","mensaje/JS","⚡ Predimensionar (preliminar)",""
-"js/app.js (L4327)","etiqueta/HTML","Hormigón armado",""
-"js/app.js (L4330)","etiqueta/HTML","Luz / altura L (m)",""
-"js/app.js (L4331)","etiqueta/HTML","Carga q (kN/m)",""
-"js/app.js (L4332)","etiqueta/HTML","Axial N (kN)",""
-"js/app.js (L4333)","etiqueta/HTML","f'c (MPa)",""
-"js/app.js (L4336)","etiqueta/HTML","Crear sección y asignar a la selección de elementos",""
-"js/app.js (L4372)","mensaje/JS","Sección «…» creada${selEls.length ?",""
-"js/app.js (L4374)","mensaje/JS","Predimensionado: ${p.profile || Object.entries(p.dims).map(([k, v]) =>",""
-"js/app.js (L4402)","etiqueta/HTML","+ peso propio",""
-"js/app.js (L4406)","mensaje/JS","Active «Análisis no lineal (NL-lite)» en ⚙ Configuración primero",""
-"js/app.js (L4406)","mensaje/JS","Active «Análisis no lineal (NL-lite)» en ⚙ Configuración",""
-"js/app.js (L4406)","mensaje/JS","⚙ Configuración",""
-"js/app.js (L4411)","mensaje/JS","Modelo vacío: agregue nodos y elementos",""
-"js/app.js (L4433)","mensaje/JS","No hay elementos válidos para el análisis no lineal",""
-"js/app.js (L4443)","mensaje/JS","Todos los nodos están restringidos (sin GDL libres)",""
-"js/app.js (L4443)","mensaje/JS","Todos los nodos están restringidos",""
-"js/app.js (L4485)","mensaje/JS","Error no lineal: …",""
-"js/app.js (L4488)","mensaje/JS","El análisis no lineal no produjo pasos (¿mecanismo?)",""
-"js/app.js (L4490)","mensaje/JS","No convergió en el paso …/… (tangente singular o carga excesiva). Se muestran los pasos logrados.",""
-"js/app.js (L4490)","mensaje/JS","Corotacional: no convergió en el paso …/…. Se muestran los pasos logrados.",""
-"js/app.js (L4491)","mensaje/JS","No lineal OK · … pasos · … caso(s) combinados",""
-"js/app.js (L4506)","mensaje/JS","La viga corotacional es 2D: requiere un modelo PLANO X–Z (Archivo → Nuevo → 2D).",""
-"js/app.js (L4508)","mensaje/JS","No hay elementos para el análisis",""
-"js/app.js (L4526)","mensaje/JS","No hay elementos válidos en el plano",""
-"js/app.js (L4567)","mensaje/JS","Error corotacional: …",""
-"js/app.js (L4570)","mensaje/JS","El análisis no produjo pasos (¿mecanismo?)",""
-"js/app.js (L4722)","mensaje/JS","Sin GDL libres",""
-"js/app.js (L4765)","mensaje/JS","Pandeo: λcr = … · carga crítica = λcr × carga de referencia",""
-"js/app.js (L4765)","mensaje/JS","Pandeo: …",""
-"js/app.js (L4774)","mensaje/JS","Modo: Pandeo",""
-"js/app.js (L4787)","etiqueta/HTML","Número de modos de pandeo (1–20)",""
-"js/app.js (L4872)","etiqueta/HTML","Sin elementos en compresión para este modo.",""
-"js/app.js (L4891)","mensaje/JS","Defina al menos un caso de carga.",""
-"js/app.js (L4904)","mensaje/JS","Estado lineal inestable (mecanismo).",""
-"js/app.js (L4906)","mensaje/JS","Estado lineal singular.",""
-"js/app.js (L4916)","mensaje/JS","Tangente singular: la carga iguala o supera la de pandeo (λcr ≤ 1). Reduzca la carga o ejecute Pandeo.",""
-"js/app.js (L4918)","mensaje/JS","Divergió: la carga alcanza la de pandeo.",""
-"js/app.js (L4975)","mensaje/JS","El form-finding necesita ≥ 2 nodos ancla (apoyos, o bordes de la selección). Restrinja algunos nodos o seleccione los elementos a formar.",""
-"js/app.js (L4983)","mensaje/JS","Sin elementos para formar la red.",""
-"js/app.js (L5026)","mensaje/JS","Form-finding:",""
-"js/app.js (L5049)","mensaje/JS","Form-finding (densidades de fuerza)",""
-"js/app.js (L5057)","etiqueta/HTML","Densidad de fuerza q = N/L [kN/m] (mayor q → forma más tensa/recta)",""
-"js/app.js (L5063)","etiqueta/HTML","Coordenadas a ajustar",""
-"js/app.js (L5065)","etiqueta/HTML","Sólo vertical (Z) — mantiene las luces en planta (recomendado)",""
-"js/app.js (L5066)","etiqueta/HTML","3D (x, y, z) — redistribuye también en planta (redes/mallas)",""
-"js/app.js (L5077)","mensaje/JS","q debe ser un número > 0",""
-"js/app.js (L5205)","mensaje/JS","Defina al menos un caso de carga (patrón de carga del pushover).",""
-"js/app.js (L5209)","mensaje/JS","El patrón de carga es nulo (los casos no tienen cargas, o el peso propio no está activo). Asigne cargas antes de correr rótulas.",""
-"js/app.js (L5427)","etiqueta/HTML","Caso de espectro (elige uno guardado para editar sus parámetros, o crea uno nuevo)",""
-"js/app.js (L5480)","etiqueta/HTML","g (×9.81 → m/s²)",""
-"js/app.js (L5488)","etiqueta/HTML","Espectro — T (s), Sa (una pareja por línea)",""
-"js/app.js (L5492)","etiqueta/HTML","Curva Sa(T) (se dibuja desde los datos de arriba)",""
-"js/app.js (L5512)","mensaje/JS","Rótulas plásticas (material elasto-plástico)",""
-"js/app.js (L5517)","etiqueta/HTML","Mp para los elementos SELECCIONADOS [kN·m]",""
-"js/app.js (L5529)","etiqueta/HTML","Momento plástico Mp [kN·m] (capacidad …)",""
-"js/app.js (L5536)","etiqueta/HTML","Comportamiento de la rótula (curva constitutiva)",""
-"js/app.js (L5538)","etiqueta/HTML","Dúctil — perfectamente plástica (meseta ∞)",""
-"js/app.js (L5539)","etiqueta/HTML","Dúctil con caída — meseta hasta θu/δu y luego cae",""
-"js/app.js (L5540)","etiqueta/HTML","Frágil — caída inmediata al alcanzar la capacidad",""
-"js/app.js (L5546)","etiqueta/HTML","Capacidad residual tras la caída [% de la capacidad]",""
-"js/app.js (L5551)","etiqueta/HTML","θu rotación última [rad] (momento)",""
-"js/app.js (L5552)","etiqueta/HTML","δu desplaz. último [m] (N/V)",""
-"js/app.js (L5560)","etiqueta/HTML","Curva constitutiva momento–giro de la rótula",""
-"js/app.js (L5564)","etiqueta/HTML","Patrón de carga a evaluar (#45)",""
-"js/app.js (L5583)","mensaje/JS","Mp debe ser un número > 0",""
-"js/app.js (L5587)","mensaje/JS","Mp de la selección debe ser > 0",""
-"js/app.js (L5657)","mensaje/JS","Pushover — control de desplazamiento",""
-"js/app.js (L5662)","etiqueta/HTML","Patrón de carga de referencia (#45)",""
-"js/app.js (L5673)","etiqueta/HTML","Idealiza las barras como reticulado (axial/cables). La imperfección dispara inestabilidades (snap-through / puntos límite).",""
-"js/app.js (L5703)","mensaje/JS","Defina un caso de carga (patrón de referencia).",""
-"js/app.js (L5729)","mensaje/JS","Error en pushover: …",""
-"js/app.js (L5731)","mensaje/JS","Pushover DC:",""
-"js/app.js (L5833)","etiqueta/HTML","Período arbitrario (escribir ↓)",""
-"js/app.js (L5845)","etiqueta/HTML","(elige uno guardado para editar sus parámetros, o crea uno nuevo)",""
-"js/app.js (L5848)","etiqueta/HTML","➕ Nuevo caso de espectro…",""
-"js/app.js (L5851)","etiqueta/HTML","＋ caso",""
-"js/app.js (L5851)","tooltip","Crear otro caso de espectro con estos parámetros (sin salir de la ventana)",""
-"js/app.js (L5852)","tooltip","Eliminar el caso de espectro seleccionado",""
-"js/app.js (L5852)","tooltip","Eliminar",""
-"js/app.js (L5859)","etiqueta/HTML","Dirección sísmica",""
-"js/app.js (L5859)","etiqueta/HTML","Dirección sísmica …",""
-"js/app.js (L5868)","etiqueta/HTML","CQC (recomendado)",""
-"js/app.js (L5879)","etiqueta/HTML","Construir espectro NCh433 / DS61",""
-"js/app.js (L5881)","etiqueta/HTML","Zona sísmica (Ao)",""
-"js/app.js (L5884)","etiqueta/HTML","Tipo de suelo",""
-"js/app.js (L5887)","etiqueta/HTML","Categoría (I)",""
-"js/app.js (L5888)","etiqueta/HTML","III (1.2)",""
-"js/app.js (L5893)","etiqueta/HTML","T* (s) — período fundamental",""
-"js/app.js (L5893)","placeholder","período en s",""
-"js/app.js (L5894)","etiqueta/HTML","Generar curva",""
-"js/app.js (L5901)","etiqueta/HTML","Unidades de Sa",""
-"js/app.js (L5912)","placeholder","Aún sin espectro. Use «Generar curva» (NCh433) o pegue sus pares T, Sa.",""
-"js/app.js (L5915)","etiqueta/HTML","(se dibuja desde los datos de arriba)",""
-"js/app.js (L5994)","tooltip","Cerrar la ventana sin más cambios",""
-"js/app.js (L5996)","etiqueta/HTML","➕ Crear caso",""
-"js/app.js (L5996)","tooltip","Crear un caso de espectro nuevo con estos parámetros y seguir en esta ventana",""
-"js/app.js (L5997)","tooltip","Guardar los parámetros en el caso seleccionado y cerrar — NO ejecuta el análisis",""
-"js/app.js (L5998)","tooltip","Guardar y ejecutar el análisis espectral",""
-"js/app.js (L6008)","mensaje/JS","El espectro necesita al menos 2 puntos (T,Sa)",""
-"js/app.js (L6073)","mensaje/JS","Elige primero un caso guardado para eliminar",""
-"js/app.js (L6075)","mensaje/JS","¿Eliminar el caso",""
-"js/app.js (L6075)","mensaje/JS","¿Eliminar el caso de espectro «…»?",""
-"js/app.js (L6084)","mensaje/JS","Caso de espectro «…» eliminado",""
-"js/app.js (L6233)","mensaje/JS","Nuevo Caso / Combinación",""
-"js/app.js (L6238)","etiqueta/HTML","Caso de carga estático",""
-"js/app.js (L6239)","etiqueta/HTML","Caso sísmico — espectro de respuesta",""
-"js/app.js (L6258)","etiqueta/HTML","X (E–O)",""
-"js/app.js (L6259)","etiqueta/HTML","Y (N–S)",""
-"js/app.js (L6327)","mensaje/JS","No hay caso de carga activo",""
-"js/app.js (L6330)","mensaje/JS","Editar Caso",""
-"js/app.js (L6459)","mensaje/JS","Combinación vacía — agregue al menos un factor",""
-"js/app.js (L6535)","mensaje/JS","Norma NCh3171: casos D/L + … combinación(es) LRFD y servicio…",""
-"js/app.js (L6541)","mensaje/JS","No hay combinaciones — créelas en la pestaña Combos.",""
-"js/app.js (L6549)","mensaje/JS","Ejecutar Combinación",""
-"js/app.js (L6565)","mensaje/JS","¿Descartar cambios no guardados y crear un nuevo modelo?",""
-"js/app.js (L6571)","mensaje/JS","Nuevo Modelo",""
-"js/app.js (L6573)","etiqueta/HTML","Tipo de modelo",""
-"js/app.js (L6575)","etiqueta/HTML","Estructura 3D (espacial)",""
-"js/app.js (L6576)","etiqueta/HTML","Pórtico 2D — plano X–Z (vista ortográfica real)",""
-"js/app.js (L6582)","etiqueta/HTML","Las funciones profesionales (editar descripción, pie de página, limitaciones, logo de empresa, motor de análisis y elementos de área) requieren un token autorizado , que se obtiene enviando una solicitud. Garantiza que la herramienta no se use con fines comerciales sin autorización. La versión académica conserva los créditos UACh · Facultad · IOC.",""
-"js/app.js (L6614)","mensaje/JS","Nuevo modelo",""
-"js/app.js (L6619)","mensaje/JS","¿Descartar cambios no guardados?",""
-"js/app.js (L6628)","etiqueta/HTML","Habilitar análisis no lineal (NL-lite)",""
-"js/app.js (L6641)","mensaje/JS","Error al abrir: …",""
-"js/app.js (L6728)","mensaje/JS","Error al cargar archivo: …",""
-"js/app.js (L6757)","mensaje/JS","Asistente — generar modelo desde ficha",""
-"js/app.js (L6761)","mensaje/JS","Generar modelo",""
-"js/app.js (L6763)","placeholder","/api/asistente",""
-"js/app.js (L6782)","etiqueta/HTML","Describe el modelo en palabras (el asistente arma la ficha)",""
-"js/app.js (L6783)","placeholder","Ej.: edificio de 4 niveles de 3 m, planta con 3 vanos de 6 m en X y 2 de 5 m en Y, hormigón H30, vigas 25x50, pilares 35x35, salas de clases, en Valdivia, con sismo zona 2 suelo D",""
-"js/app.js (L6787)","etiqueta/HTML","Endpoint del asistente (Cloudflare Worker /api/asistente)",""
-"js/app.js (L6789)","etiqueta/HTML","✦ Pedir ficha al asistente",""
-"js/app.js (L6794)","etiqueta/HTML","Ver / editar la ficha (JSON) — avanzado",""
-"js/app.js (L6807)","mensaje/JS","Configure el endpoint del asistente",""
-"js/app.js (L6808)","mensaje/JS","Escriba una descripción",""
-"js/app.js (L6819)","mensaje/JS","Ficha recibida — pulsa «Generar modelo»",""
-"js/app.js (L6820)","mensaje/JS","Error asistente:",""
-"js/app.js (L6863)","mensaje/JS","Escribe qué cambiar en el modelo",""
-"js/app.js (L6864)","mensaje/JS","No hay modelo que modificar (créalo primero)",""
-"js/app.js (L6935)","mensaje/JS","Ficha JSON inválida:",""
-"js/app.js (L6965)","mensaje/JS","Estructura sobrepuesta — … nodo(s) coincidente(s) fundido(s)",""
-"js/app.js (L6966)","mensaje/JS","Aviso: el modelo generado era … y el actual es …; se conservó …",""
-"js/app.js (L6978)","mensaje/JS","Error al generar:",""
-"js/app.js (L6983)","etiqueta/HTML","✗ No era lo que pedí",""
-"js/app.js (L6992)","etiqueta/HTML","¿El modelo es lo que pediste?",""
-"js/app.js (L7001)","mensaje/JS","Feedback del asistente",""
-"js/app.js (L7001)","mensaje/JS","¿Qué esperabas? (opcional, ayuda a mejorar)",""
-"js/app.js (L7006)","mensaje/JS","Gracias — registrado como «no era lo solicitado»",""
-"js/app.js (L7007)","mensaje/JS","No se pudo enviar el feedback:",""
-"js/app.js (L7102)","etiqueta/HTML","Modo profesional …",""
-"js/app.js (L7161)","etiqueta/HTML","Desactivar modo profesional",""
-"js/app.js (L7162)","etiqueta/HTML","Token profesional",""
-"js/app.js (L7162)","placeholder","pegue su token",""
-"js/app.js (L7166)","etiqueta/HTML","Memoria — encabezado",""
-"js/app.js (L7169)","etiqueta/HTML","Subtítulo (kicker)…",""
-"js/app.js (L7172)","etiqueta/HTML","Institución…",""
-"js/app.js (L7173)","etiqueta/HTML","Sub-institución / unidad…",""
-"js/app.js (L7182)","etiqueta/HTML","Memoria — contenido profesional…",""
-"js/app.js (L7183)","etiqueta/HTML","Descripción del proyecto",""
-"js/app.js (L7184)","etiqueta/HTML","Pie de página (vacío = pie académico)",""
-"js/app.js (L7186)","etiqueta/HTML","Logo de empresa",""
-"js/app.js (L7196)","etiqueta/HTML","Visualización de la memoria",""
-"js/app.js (L7197)","etiqueta/HTML","Mostrar IDs de nodos y elementos en las figuras",""
-"js/app.js (L7198)","etiqueta/HTML","Amplificar las formas modales para que se observen",""
-"js/app.js (L7210)","etiqueta/HTML","Funciones avanzadas (profesional)…",""
-"js/app.js (L7211)","etiqueta/HTML","Motor de análisis (elija uno)",""
-"js/app.js (L7213)","etiqueta/HTML","Elementos de área (membrana / placa / Shell lineal elástico)",""
-"js/app.js (L7221)","etiqueta/HTML","Modificadores de sección por defecto (rigidez)",""
-"js/app.js (L7222)","etiqueta/HTML","Factores aplicados a A, I, J en el análisis (p.ej. sección agrietada ACI: viga 0.35, columna 0.70). Editables por sección en la pestaña Sec.",""
-"js/app.js (L7229)","etiqueta/HTML","Aplicar estos modificadores a TODAS las secciones",""
-"js/app.js (L7231)","etiqueta/HTML","Los parámetros de diseño (Fy, f′c, φ, cuantía…) usan valores normativos estándar.",""
-"js/app.js (L7239)","mensaje/JS","Modo profesional activado",""
-"js/app.js (L7242)","mensaje/JS","Modo profesional desactivado",""
-"js/app.js (L7247)","mensaje/JS","Logo cargado (se aplica al guardar)",""
-"js/app.js (L7261)","mensaje/JS","Modificadores aplicados a todas las secciones",""
-"js/app.js (L7274)","mensaje/JS","El motor seleccionado no está implementado en esta versión; se usará Normal.",""
-"js/app.js (L7277)","mensaje/JS","Los elementos de área (membrana/placa/Shell) no están implementados aún (versión avanzada).",""
-"js/app.js (L7289)","mensaje/JS","Configuración guardada",""
-"js/app.js (L7309)","etiqueta/HTML","➕ Sobreponer — agregar al modelo actual (funde nodos coincidentes)",""
-"js/app.js (L7310)","etiqueta/HTML","🗑 Nueva — reemplazar el modelo actual por el generado",""
-"js/app.js (L7311)","etiqueta/HTML","✕ Cancelar",""
-"js/app.js (L7420)","mensaje/JS","Sin reemplazos: todo se interpretó correctamente",""
-"js/app.js (L7423)","mensaje/JS","Resumen del asistente — ajustes realizados",""
-"js/app.js (L7424)","etiqueta/HTML","El modelo se generó. Estos datos faltaban o no se reconocieron y se sustituyeron/estimaron:",""
-"js/app.js (L7524)","mensaje/JS","Error al guardar: …",""
-"js/app.js (L7593)","mensaje/JS","CSV importado con … advertencia(s)",""
-"js/app.js (L7596)","mensaje/JS","CSV importado correctamente",""
-"js/app.js (L7601)","mensaje/JS","Advertencias al importar",""
-"js/app.js (L7606)","mensaje/JS","Error al importar CSV: …",""
-"js/app.js (L7617)","mensaje/JS","CSV exportado",""
-"js/app.js (L7623)","mensaje/JS","No hay formatos de exportación registrados",""
-"js/app.js (L7626)","mensaje/JS","🔄 Exportar a otro motor",""
-"js/app.js (L7640)","mensaje/JS","Exportado a …${warnings.length ?",""
-"js/app.js (L7641)","mensaje/JS","Advertencias al exportar",""
-"js/app.js (L7642)","mensaje/JS","Error al exportar:",""
-"js/app.js (L7647)","mensaje/JS","No hay formatos de importación registrados",""
-"js/app.js (L7651)","mensaje/JS","🔄 Importar de otro motor",""
-"js/app.js (L7677)","mensaje/JS","Error al importar:",""
-"js/app.js (L7695)","mensaje/JS","No se pudo cargar el importador IFC:",""
-"js/app.js (L7701)","mensaje/JS","Error al leer el IFC:",""
-"js/app.js (L7702)","mensaje/JS","El IFC no contiene elementos reconocibles",""
-"js/app.js (L7718)","mensaje/JS","Advertencias al importar IFC",""
-"js/app.js (L7719)","mensaje/JS","Error al construir el modelo:",""
-"js/app.js (L7726)","mensaje/JS","Modelo vacío — nada que exportar",""
-"js/app.js (L7738)","mensaje/JS","IFC exportado: … barras${neutral.areas?.length ?",""
-"js/app.js (L7739)","mensaje/JS","Advertencias al exportar IFC",""
-"js/app.js (L7740)","mensaje/JS","Error al exportar IFC:",""
-"js/app.js (L7794)","tooltip","Activar «…»",""
-"js/app.js (L7795)","tooltip","Renombrar",""
-"js/app.js (L7796)","tooltip","Duplicar",""
-"js/app.js (L7806)","mensaje/JS","Renombrar modelo",""
-"js/app.js (L7812)","mensaje/JS","¿Eliminar el modelo «…» del proyecto?",""
-"js/app.js (L7822)","mensaje/JS","🗂 Modelos del proyecto",""
-"js/app.js (L7826)","tooltip","Activar este modelo",""
-"js/app.js (L7828)","tooltip","Eliminar del proyecto",""
-"js/app.js (L7889)","mensaje/JS","Proyecto sin modelos",""
-"js/app.js (L7895)","mensaje/JS","Proyecto cargado: … modelo(s) · activo «…»",""
-"js/app.js (L7926)","mensaje/JS","Modelo «…» (…) agregado al proyecto",""
-"js/app.js (L7938)","mensaje/JS","Modelo duplicado: «…»",""
-"js/app.js (L7943)","mensaje/JS","El proyecto debe tener al menos un modelo",""
-"js/app.js (L7993)","mensaje/JS","El archivo trae resultados que no calzan con el modelo (se ignoran)",""
-"js/app.js (L8092)","mensaje/JS","Plantilla descargada",""
-"js/app.js (L8175)","etiqueta/HTML","Empezar nuevo (vacío)",""
-"js/app.js (L8190)","mensaje/JS","No se pudo leer el autoguardado",""
-"js/app.js (L8233)","etiqueta/HTML","· sesión actual",""
-"js/app.js (L8238)","mensaje/JS","No hay autoguardados temporales",""
-"js/app.js (L8248)","etiqueta/HTML","🧹 Limpiar todos",""
-"js/app.js (L8259)","mensaje/JS","¿Reanudar",""
-"js/app.js (L8261)","mensaje/JS","Autoguardado reanudado",""
-"js/app.js (L8265)","mensaje/JS","¿Eliminar TODOS los autoguardados temporales? (No afecta el modelo abierto.)",""
-"js/app.js (L8268)","mensaje/JS","Autoguardados temporales eliminados",""
-"js/app.js (L8299)","tooltip","Eliminar este autoguardado",""
-"js/app.js (L8334)","mensaje/JS","Trabajo autoguardado recuperado",""
-"js/app.js (L8410)","mensaje/JS","Imagen exportada",""
-"js/app.js (L8416)","mensaje/JS","Modelo vacío — nada que documentar",""
-"js/app.js (L8418)","mensaje/JS","Generando memoria de cálculo…",""
-"js/app.js (L8434)","mensaje/JS","Pop-up bloqueado — memoria descargada como HTML",""
-"js/app.js (L8440)","mensaje/JS","Memoria generada — use «Imprimir → Guardar como PDF»",""
-"js/app.js (L8481)","mensaje/JS","Generando memoria (Word)…",""
-"js/app.js (L8496)","mensaje/JS","Memoria Word (.docx) descargada",""
-"js/app.js (L8496)","mensaje/JS","Memoria Word (.docx) descargada${multi ?",""
-"js/app.js (L8499)","mensaje/JS","No se pudo generar el .docx:",""
-"js/app.js (L8562)","etiqueta/HTML","Documento de carácter docente. Los resultados deben ser validados por un profesional competente antes de cualquier uso en obra.",""
-"js/app.js (L8574)","etiqueta/HTML","1. Bases de cálculo",""
-"js/app.js (L8625)","etiqueta/HTML","Modos extraídos: …. Frecuencias y períodos de los primeros modos:",""
-"js/app.js (L8650)","etiqueta/HTML","No hay resultados de análisis para verificar. Ejecute el análisis estático (F5) con sus combinaciones de carga antes de generar la memoria.",""
-"js/app.js (L8999)","etiqueta/HTML","No hay casos de carga estáticos definidos.",""
-"js/app.js (L9013)","etiqueta/HTML","Espectro de respuesta — dirección …",""
-"js/app.js (L9016)","etiqueta/HTML","Sa(T) = S·A₀·I·α(T)/R* (NCh433 / DS61). Unidad de Sa: ….",""
-"js/app.js (L9039)","etiqueta/HTML","Mx/My/Mrz = masa modal participante (%). Σ = acumulada.",""
-"js/app.js (L9042)","etiqueta/HTML","No se ha ejecutado el análisis modal. Ejecute «Análisis → Análisis Modal (F6)» para documentar los modos de vibrar.",""
-"js/app.js (L9049)","etiqueta/HTML","Deformada no disponible — ejecute el análisis estático (F5).",""
-"js/app.js (L9091)","etiqueta/HTML","Límites como fracción de la luz L. La verificación de flecha por elemento debe contrastarse con la luz libre de cada vano.",""
-"js/app.js (L9261)","etiqueta/HTML","🖨 Imprimir / Guardar PDF",""
-"js/app.js (L9270)","etiqueta/HTML","1.1 Descripción del modelo",""
-"js/app.js (L9279)","etiqueta/HTML","1.2 Métodos de diseño",""
-"js/app.js (L9282)","etiqueta/HTML","1.3 Normas y códigos",""
-"js/app.js (L9285)","etiqueta/HTML","1.4 Materiales y propiedades mecánicas",""
-"js/app.js (L9289)","etiqueta/HTML","1.5 Secciones",""
-"js/app.js (L9293)","etiqueta/HTML","1.6 Cargas y sobrecargas",""
-"js/app.js (L9296)","etiqueta/HTML","1.7 Acción sísmica",""
-"js/app.js (L9299)","etiqueta/HTML","1.8 Combinaciones de carga",""
-"js/app.js (L9302)","etiqueta/HTML","1.9 Flechas admisibles",""
-"js/app.js (L9305)","etiqueta/HTML","2. Análisis estructural",""
-"js/app.js (L9306)","etiqueta/HTML","2.1 Modelo deformado",""
-"js/app.js (L9308)","etiqueta/HTML","2.2 Análisis modal — modos de vibrar",""
-"js/app.js (L9311)","etiqueta/HTML","3. Diseño de elementos (resistencia)",""
-"js/app.js (L9314)","etiqueta/HTML","4. Verificaciones de servicio",""
-"js/app.js (L9315)","etiqueta/HTML","4.1 Deformaciones de vigas — sobrecarga de uso (sin mayorar)",""
-"js/app.js (L9317)","etiqueta/HTML","4.2 Derivas sísmicas de entrepiso — NCh433 (límite 2/1000·h)",""
-"js/app.js (L9320)","etiqueta/HTML","5. Limitaciones y alcances",""
-"js/app.js (L9327)","etiqueta/HTML","Sin curva.",""
-"js/app.js (L9377)","mensaje/JS","Confirmar",""
-"js/ui/properties.js (L77)","mensaje/JS","Escribe una descripción del modelo",""
-"js/ui/properties.js (L85)","mensaje/JS","Escribe qué cambio hacer",""
-"js/ui/properties.js (L108)","etiqueta/HTML","Ejecute el análisis estático (F5). Para verificar la combinación última, selecciónela como resultado mostrado y vuelva a verificar.",""
-"js/ui/properties.js (L111)","etiqueta/HTML","Calculando…",""
-"js/ui/properties.js (L115)","etiqueta/HTML","No hay resultados para verificar.",""
-"js/ui/properties.js (L137)","tooltip","… — flexión … · corte … · axial … · interacción …",""
-"js/ui/properties.js (L145)","etiqueta/HTML","⚡ Predimensionar",""
-"js/ui/properties.js (L145)","tooltip","Predimensionar (antes del análisis): propone una sección inicial por reglas simples.",""
-"js/ui/properties.js (L146)","etiqueta/HTML","🧮 Diseñar (auto)",""
-"js/ui/properties.js (L146)","tooltip","Diseñar (después del análisis): elige del catálogo el perfil de acero más liviano que cumple D/C≤1.",""
-"js/ui/properties.js (L149)","etiqueta/HTML","🏛️ Nudos SCWB",""
-"js/ui/properties.js (L149)","tooltip","Nudos columna fuerte–viga débil (ACI 18.7.3 / AISC 341): resalta en el modelo los nudos donde ΣMnc < γ·ΣMnb (no cumplen).",""
-"js/ui/properties.js (L149)","etiqueta/HTML","… cumplen",""
-"js/ui/properties.js (L149)","etiqueta/HTML","… no cumplen",""
-"js/ui/properties.js (L150)","etiqueta/HTML","📄 Reporte (CSV)",""
-"js/ui/properties.js (L150)","tooltip","Exporta un reporte de diseño (CSV): por elemento, sección, esfuerzos, D/C por chequeo (flexión/corte/axial/interacción) y el que gobierna.",""
-"js/ui/properties.js (L152)","etiqueta/HTML","Estados:",""
-"js/ui/properties.js (L153)","etiqueta/HTML","… ajustados",""
-"js/ui/properties.js (L186)","etiqueta/HTML","(por defecto)",""
-"js/ui/properties.js (L187)","etiqueta/HTML","Código …",""
-"js/ui/properties.js (L189)","etiqueta/HTML","Código de diseño",""
-"js/ui/properties.js (L189)","tooltip","Norma de diseño por familia (como SAP2000). Ver docs/diseno.md.",""
-"js/ui/properties.js (L237)","placeholder","factor",""
-"js/ui/properties.js (L263)","etiqueta/HTML","capacidades: …",""
-"js/ui/properties.js (L271)","etiqueta/HTML","Carga de colapso = … × carga de referencia.",""
-"js/ui/properties.js (L282)","etiqueta/HTML","Secuencia de formación de rótulas (λ = factor de carga). Mp = capacidad de cada rótula [kN·m]. δctrl = desplazamiento máximo.",""
-"js/ui/properties.js (L309)","etiqueta/HTML","Desplazamientos Nodo Master #…",""
-"js/ui/properties.js (L322)","etiqueta/HTML","Ctrl+clic: añadir/quitar | Clic vacío: deseleccionar",""
-"js/ui/properties.js (L343)","etiqueta/HTML","… elemento(s) — ejecute el análisis para ver fuerzas.",""
-"js/ui/properties.js (L343)","etiqueta/HTML","Acciones · … elemento(s)",""
-"js/ui/properties.js (L377)","etiqueta/HTML","Fuerzas Internas",""
-"js/ui/properties.js (L388)","etiqueta/HTML","… nodo(s) — ejecute el análisis para ver desplazamientos.",""
-"js/ui/properties.js (L388)","etiqueta/HTML","Apoyo · … nodo(s)",""
-"js/ui/properties.js (L429)","etiqueta/HTML","Áreas · … seleccionada(s)",""
-"js/ui/properties.js (L441)","etiqueta/HTML","Espesor t (m)",""
-"js/ui/properties.js (L449)","etiqueta/HTML","Giro en el plano (triáng. Allman)",""
-"js/ui/properties.js (L451)","tooltip","Triángulo Allman: añade GDL de giro en-plano (supera el bloqueo del CST). Solo afecta áreas de 3 nodos.",""
-"js/ui/properties.js (L454)","etiqueta/HTML","Eliminar … área(s)",""
-"js/ui/properties.js (L480)","tooltip","Fija las 6 GDL",""
-"js/ui/properties.js (L481)","tooltip","Fija traslaciones, libera giros",""
-"js/ui/properties.js (L482)","tooltip","Solo vertical (Uz)",""
-"js/ui/properties.js (L483)","tooltip","Sin apoyo",""
-"js/ui/properties.js (L499)","etiqueta/HTML","Aplicar a todos",""
-"js/ui/properties.js (L499)","tooltip","Asigna la misma carga nodal a TODOS los nodos seleccionados",""
-"js/ui/properties.js (L500)","etiqueta/HTML","Limpiar todos",""
-"js/ui/properties.js (L500)","tooltip","Quita la carga nodal de los nodos seleccionados",""
-"js/ui/properties.js (L519)","etiqueta/HTML","Mover / Copiar selección",""
-"js/ui/properties.js (L521)","etiqueta/HTML","dX (m)",""
-"js/ui/properties.js (L522)","etiqueta/HTML","dY (m)",""
-"js/ui/properties.js (L523)","etiqueta/HTML","dZ (m)",""
-"js/ui/properties.js (L527)","etiqueta/HTML","Copiar ×N",""
-"js/ui/properties.js (L527)","tooltip","Crea copias desplazadas (array)",""
-"js/ui/properties.js (L528)","tooltip","Desplaza la selección",""
-"js/ui/properties.js (L531)","etiqueta/HTML","2ª dirección (array 2D) y espejar",""
-"js/ui/properties.js (L539)","etiqueta/HTML","Array 2D = grilla rep × rep₂ (usa ""Copiar ×N"").",""
-"js/ui/properties.js (L542)","etiqueta/HTML","Espejar plano",""
-"js/ui/properties.js (L545)","tooltip","Crea una copia reflejada de la selección",""
-"js/ui/properties.js (L548)","etiqueta/HTML","Ej.: dX=5, rep=10 → 10 copias cada 5 m. Con dY₂ y rep₂ se hace grilla 2D. Copias coincidentes se fusionan.",""
-"js/ui/properties.js (L570)","etiqueta/HTML","Material a todos",""
-"js/ui/properties.js (L575)","etiqueta/HTML","Sección a todos",""
-"js/ui/properties.js (L580)","etiqueta/HTML","Discretizar (nº tramos c/u)",""
-"js/ui/properties.js (L586)","etiqueta/HTML","Carga w (kN/m)",""
-"js/ui/properties.js (L589)","etiqueta/HTML","Gravedad ↓",""
-"js/ui/properties.js (L590)","etiqueta/HTML","Global +X",""
-"js/ui/properties.js (L591)","etiqueta/HTML","Global +Y",""
-"js/ui/properties.js (L592)","etiqueta/HTML","Local y",""
-"js/ui/properties.js (L593)","etiqueta/HTML","Local z",""
-"js/ui/properties.js (L598)","etiqueta/HTML","Aplicar carga",""
-"js/ui/properties.js (L598)","tooltip","Asigna la misma carga distribuida a todos (reemplaza la previa en ese caso)",""
-"js/ui/properties.js (L599)","etiqueta/HTML","Quitar carga",""
-"js/ui/properties.js (L599)","tooltip","Quita las cargas distribuidas de estos elementos en el caso elegido",""
-"js/ui/properties.js (L602)","etiqueta/HTML","Temperatura ΔT (°C)",""
-"js/ui/properties.js (L602)","tooltip","Cambio uniforme de temperatura. Usa α del material → carga axial térmica.",""
-"js/ui/properties.js (L605)","etiqueta/HTML","Aplicar ΔT",""
-"js/ui/properties.js (L605)","tooltip","Asigna ΔT uniforme a los elementos (reemplaza la previa en ese caso)",""
-"js/ui/properties.js (L606)","etiqueta/HTML","Quitar ΔT",""
-"js/ui/properties.js (L606)","tooltip","Quita las cargas de temperatura de estos elementos en el caso elegido",""
-"js/ui/properties.js (L610)","etiqueta/HTML","Unir colineales",""
-"js/ui/properties.js (L610)","tooltip","Une tramos colineales en una sola barra",""
-"js/ui/properties.js (L611)","etiqueta/HTML","Cortar en intersección",""
-"js/ui/properties.js (L611)","tooltip","Crea un nodo común en el cruce de los 2 elementos",""
-"js/ui/properties.js (L612)","tooltip","Oculta los elementos (Vista → Mostrar todo para revertir)",""
-"js/ui/properties.js (L612)","tooltip","Ocultar",""
-"js/ui/properties.js (L612)","tooltip","Mostrar",""
-"js/ui/properties.js (L615)","etiqueta/HTML","Crear grupo (nombre)",""
-"js/ui/properties.js (L616)","placeholder","ej. Cordón superior",""
-"js/ui/properties.js (L645)","tooltip","Seleccionar",""
-"js/ui/properties.js (L648)","tooltip","Eliminar grupo",""
-"js/ui/properties.js (L667)","etiqueta/HTML","Haga clic en un nodo, elemento o área para editar sus propiedades. Ctrl+clic para seleccionar varios.",""
-"js/ui/properties.js (L668)","etiqueta/HTML","… elemento(s) oculto(s) · Vista → Mostrar todo",""
-"js/ui/properties.js (L740)","etiqueta/HTML","Material y espesor",""
-"js/ui/properties.js (L753)","tooltip","Membrana = solo en-plano · Placa = solo flexión · Shell = membrana + placa (flexión)",""
-"js/ui/properties.js (L761)","tooltip","Deformación plana (ε_z=0) en vez de tensión plana (σ_z=0). Solo afecta la parte de membrana.",""
-"js/ui/properties.js (L765)","tooltip","Triángulo Allman: añade un GDL de giro en el plano por nodo. Menos rígido que el CST en flexión en-plano (supera el bloqueo por corte).",""
-"js/ui/properties.js (L765)","placeholder","rígido",""
-"js/ui/properties.js (L773)","etiqueta/HTML","Eliminar Área #…",""
-"js/ui/properties.js (L792)","etiqueta/HTML","Carga térmica (por cara, #57)",""
-"js/ui/properties.js (L794)","etiqueta/HTML","Caso de carga",""
-"js/ui/properties.js (L797)","etiqueta/HTML","🟥 Cara +Z, ΔT (°C)",""
-"js/ui/properties.js (L798)","tooltip","Temperatura de la cara superior (+z local, roja).",""
-"js/ui/properties.js (L799)","etiqueta/HTML","🟦 Cara −Z, ΔT (°C)",""
-"js/ui/properties.js (L800)","tooltip","Temperatura de la cara inferior (−z local, azul).",""
-"js/ui/properties.js (L803)","tooltip","Asigna la temperatura por cara a esta área (reemplaza la previa en ese caso). Media → membrana; diferencia → momento térmico de flexión.",""
-"js/ui/properties.js (L804)","tooltip","Quita la carga térmica de esta área en el caso elegido",""
-"js/ui/properties.js (L829)","etiqueta/HTML","Tensiones (centro)",""
-"js/ui/properties.js (L839)","etiqueta/HTML","Momentos de placa (kN·m/m, centro, local)",""
-"js/ui/properties.js (L844)","etiqueta/HTML","Deformaciones de membrana (ε, centro, local)",""
-"js/ui/properties.js (L855)","etiqueta/HTML","Desplazamientos nodales (δx, δy, δz)",""
-"js/ui/properties.js (L938)","etiqueta/HTML","No hay nodos. Créelos en la vista 3D (tecla N) o con el botón de abajo.",""
-"js/ui/properties.js (L1027)","etiqueta/HTML","No hay elementos. Créelos en la vista 3D (tecla E).",""
-"js/ui/properties.js (L1134)","etiqueta/HTML","Masa tributaria",""
-"js/ui/properties.js (L1144)","etiqueta/HTML","[Nodo CR]",""
-"js/ui/properties.js (L1182)","tooltip","Modelo 2D: este GDL fuera del plano se restringe automáticamente",""
-"js/ui/properties.js (L1197)","tooltip","Modelo 2D: todos los nodos están en el plano Y=0",""
-"js/ui/properties.js (L1203)","etiqueta/HTML","Restricciones (1 = fijo)",""
-"js/ui/properties.js (L1206)","etiqueta/HTML","Fijar Todo (empotramiento total)",""
-"js/ui/properties.js (L1206)","tooltip","Fija las 6 GDL (3 traslaciones + 3 giros): empotramiento, resiste fuerzas y momentos.",""
-"js/ui/properties.js (L1208)","etiqueta/HTML","Liberar Todo",""
-"js/ui/properties.js (L1208)","tooltip","Liberar … (…): el esfuerzo … vale 0 en este extremo",""
-"js/ui/properties.js (L1209)","etiqueta/HTML","Pin (rótula)",""
-"js/ui/properties.js (L1209)","tooltip","Apoyo articulado: fija traslaciones, libera giros (no resiste momentos).",""
-"js/ui/properties.js (L1219)","etiqueta/HTML","kUX (kN/m)",""
-"js/ui/properties.js (L1222)","etiqueta/HTML","kUY (kN/m)",""
-"js/ui/properties.js (L1225)","etiqueta/HTML","kUZ (kN/m)",""
-"js/ui/properties.js (L1230)","etiqueta/HTML","kRX (kN·m/rad)",""
-"js/ui/properties.js (L1233)","etiqueta/HTML","kRY (kN·m/rad)",""
-"js/ui/properties.js (L1236)","etiqueta/HTML","kRZ (kN·m/rad)",""
-"js/ui/properties.js (L1247)","tooltip","Apoyo UNILATERAL: el resorte se desactiva cuando el nodo se despega (uplift/gap). Solo-compresión = no toma tracción (fundaciones que se levantan). Se resuelve por conjunto activo en el análisis estático (#3).",""
-"js/ui/properties.js (L1247)","etiqueta/HTML","Unilateral (a los GDL con resorte)",""
-"js/ui/properties.js (L1249)","etiqueta/HTML","Bilateral (normal)",""
-"js/ui/properties.js (L1250)","etiqueta/HTML","Solo-compresión (uplift)",""
-"js/ui/properties.js (L1251)","etiqueta/HTML","Solo-tracción",""
-"js/ui/properties.js (L1256)","tooltip","Rigidez del resorte a lo largo de la dirección dada",""
-"js/ui/properties.js (L1256)","etiqueta/HTML","k incl. (kN/m)",""
-"js/ui/properties.js (L1263)","tooltip","Resorte de apoyo INCLINADO: rigidez k a lo largo de (dx,dy,dz). Genera una matriz de resorte ACOPLADA 6×6 (términos fuera de la diagonal) y se ensambla completa (#2).",""
-"js/ui/properties.js (L1263)","etiqueta/HTML","↗ Aplicar resorte inclinado",""
-"js/ui/properties.js (L1264)","tooltip","Quitar la matriz de resorte acoplada",""
-"js/ui/properties.js (L1273)","etiqueta/HTML","UX (m)",""
-"js/ui/properties.js (L1276)","etiqueta/HTML","UY (m)",""
-"js/ui/properties.js (L1279)","etiqueta/HTML","UZ (m)",""
-"js/ui/properties.js (L1284)","etiqueta/HTML","RX (rad)",""
-"js/ui/properties.js (L1287)","etiqueta/HTML","RY (rad)",""
-"js/ui/properties.js (L1290)","etiqueta/HTML","RZ (rad)",""
-"js/ui/properties.js (L1306)","etiqueta/HTML","mx (ton)",""
-"js/ui/properties.js (L1309)","etiqueta/HTML","my (ton)",""
-"js/ui/properties.js (L1312)","etiqueta/HTML","mz (ton)",""
-"js/ui/properties.js (L1317)","etiqueta/HTML","Irx (ton·m²)",""
-"js/ui/properties.js (L1318)","tooltip","Inercia rotacional concentrada en el GDL de giro Rx",""
-"js/ui/properties.js (L1320)","etiqueta/HTML","Iry (ton·m²)",""
-"js/ui/properties.js (L1321)","tooltip","Inercia rotacional concentrada en el GDL de giro Ry",""
-"js/ui/properties.js (L1323)","etiqueta/HTML","Irz (ton·m²)",""
-"js/ui/properties.js (L1324)","tooltip","Inercia rotacional concentrada en el GDL de giro Rz",""
-"js/ui/properties.js (L1338)","etiqueta/HTML","Eliminar Nodo #…",""
-"js/ui/properties.js (L1418)","mensaje/JS","Indique k > 0 y una dirección (dx,dy,dz)",""
-"js/ui/properties.js (L1422)","mensaje/JS","Resorte inclinado (acoplado) aplicado",""
-"js/ui/properties.js (L1430)","mensaje/JS","Resorte acoplado quitado",""
-"js/ui/properties.js (L1463)","etiqueta/HTML","L₀ / L (pretensado si <1)",""
-"js/ui/properties.js (L1467)","etiqueta/HTML","Se usa en Análisis → No lineal (actívalo en ⚙ Configuración). El análisis lineal (F5) ignora estos campos.",""
-"js/ui/properties.js (L1489)","tooltip","Rótula clásica: libera My y Mz en este extremo",""
-"js/ui/properties.js (L1490)","tooltip","Quitar todas las liberaciones de este extremo",""
-"js/ui/properties.js (L1503)","etiqueta/HTML","Nodo 1",""
-"js/ui/properties.js (L1504)","etiqueta/HTML","Nodo 2",""
-"js/ui/properties.js (L1531)","etiqueta/HTML","⚠ Liberar en exceso crea mecanismos (estructura inestable): el análisis lo detectará y avisará.",""
-"js/ui/properties.js (L1535)","etiqueta/HTML","Cable / No lineal (NL-lite)",""
-"js/ui/properties.js (L1536)","tooltip","El elemento se comporta como cable: solo resiste tracción (queda flojo en compresión, N=0). Para el análisis no lineal.",""
-"js/ui/properties.js (L1539)","tooltip","El elemento solo resiste compresión (puntal/contacto): queda suelto en tracción (N=0). Excluyente con «Cable». Para el análisis no lineal.",""
-"js/ui/properties.js (L1543)","tooltip","Longitud natural (sin tensión) ÷ longitud geométrica. 1 = sin pretensar. Menor que 1 = pretensado (tracción en reposo).",""
-"js/ui/properties.js (L1547)","etiqueta/HTML","Se usa en",""
-"js/ui/properties.js (L1551)","etiqueta/HTML","Cacho rígido (zona rígida de extremo)",""
-"js/ui/properties.js (L1551)","tooltip","Cacho rígido / zona rígida de extremo (end length offset, como SAP2000/ETABS): tramo rígido en cada extremo de la barra. Acorta la luz flexible → más rigidez. En metros; 0 = sin cacho.",""
-"js/ui/properties.js (L1553)","etiqueta/HTML","Cacho i — nodo … (m)",""
-"js/ui/properties.js (L1553)","tooltip","Longitud del tramo rígido en el extremo del nodo 1 (m).",""
-"js/ui/properties.js (L1555)","etiqueta/HTML","Cacho j — nodo … (m)",""
-"js/ui/properties.js (L1555)","tooltip","Longitud del tramo rígido en el extremo del nodo 2 (m).",""
-"js/ui/properties.js (L1562)","tooltip","Resorte de extremo / fijación parcial (conexión semi-rígida, como «partial fixity» de SAP2000): rigidez ROTACIONAL kN·m/rad entre la barra y el nodo. Vacío = rígido; el solver lo condensa (k→∞ rígido, k→0 rótula). Afecta el análisis lineal (F5). My/Mz como en las liberaciones de arriba.",""
-"js/ui/properties.js (L1564)","tooltip","Resorte rotacional My (flexión plano local x–z) en el extremo i.",""
-"js/ui/properties.js (L1566)","tooltip","Resorte rotacional Mz (flexión plano local x–y) en el extremo i.",""
-"js/ui/properties.js (L1570)","tooltip","Resorte rotacional My (flexión plano local x–z) en el extremo j.",""
-"js/ui/properties.js (L1572)","tooltip","Resorte rotacional Mz (flexión plano local x–y) en el extremo j.",""
-"js/ui/properties.js (L1579)","tooltip","Viga sobre fundación elástica / resorte de LÍNEA (modelo de Winkler): módulo de balasto distribuido a lo largo de la barra, kN/m por metro (= kN/m²). Resiste la traslación transversal del miembro (suelo bajo una viga de fundación, pilote lateral…). Matriz consistente sumada a K. Afecta el análisis lineal (F5).",""
-"js/ui/properties.js (L1581)","tooltip","Módulo de balasto en la dirección transversal local y (kN/m por m de longitud).",""
-"js/ui/properties.js (L1583)","tooltip","Módulo de balasto en la dirección transversal local z (kN/m por m de longitud).",""
-"js/ui/properties.js (L1590)","etiqueta/HTML","Herramientas Didácticas",""
-"js/ui/properties.js (L1592)","tooltip","Ver Ke local, T, Ke global y Me de este elemento — para comparar con el cálculo manual del curso",""
-"js/ui/properties.js (L1596)","tooltip","Diagrama de cuerpo libre: fuerzas de extremo que actúan sobre el elemento + verificación ΣF=0 ΣM=0 (requiere análisis F5)",""
-"js/ui/properties.js (L1604)","etiqueta/HTML","Nº de partes",""
-"js/ui/properties.js (L1608)","etiqueta/HTML","Dividir en N",""
-"js/ui/properties.js (L1608)","tooltip","Divide este elemento en N tramos iguales",""
-"js/ui/properties.js (L1612)","etiqueta/HTML","Tramo (m)",""
-"js/ui/properties.js (L1616)","etiqueta/HTML","Dividir c/L",""
-"js/ui/properties.js (L1616)","tooltip","Divide este elemento en tramos de ≈ esta longitud",""
-"js/ui/properties.js (L1619)","etiqueta/HTML","Para volver a unir: seleccione los tramos con Ctrl+clic y use Editar → Unir Elementos Seleccionados (o Ctrl+Z).",""
-"js/ui/properties.js (L1623)","etiqueta/HTML","Eliminar Elemento #…",""
-"js/ui/properties.js (L1680)","mensaje/JS","Ingrese 2 o más partes",""
-"js/ui/properties.js (L1685)","mensaje/JS","Ingrese una longitud válida",""
-"js/ui/properties.js (L1690)","etiqueta/HTML","Gravedad ↓ (w>0 = abajo)",""
-"js/ui/properties.js (L1724)","tooltip","Caso de carga al que se asigna esta carga (⊕PP = incluye peso propio; 〜 = espectral, no admite cargas)",""
-"js/ui/properties.js (L1780)","mensaje/JS","Carga aplicada",""
-"js/ui/properties.js (L1790)","mensaje/JS","Carga eliminada",""
-"js/ui/properties.js (L1811)","etiqueta/HTML","w en i (kN/m)",""
-"js/ui/properties.js (L1814)","etiqueta/HTML","w en j (kN/m)",""
-"js/ui/properties.js (L1815)","placeholder","= w (uniforme)",""
-"js/ui/properties.js (L1906)","etiqueta/HTML","Insertar material estándar",""
-"js/ui/properties.js (L1907)","etiqueta/HTML","— catálogo —",""
-"js/ui/properties.js (L1908)","etiqueta/HTML","＋ Insertar",""
-"js/ui/properties.js (L1921)","mensaje/JS","Material «…» agregado del catálogo",""
-"js/ui/properties.js (L1942)","etiqueta/HTML","ρ (ton/m³)",""
-"js/ui/properties.js (L1945)","etiqueta/HTML","E (kN/m²)",""
-"js/ui/properties.js (L1946)","etiqueta/HTML","G (kN/m²)",""
-"js/ui/properties.js (L1950)","tooltip","Coef. de dilatación térmica (hormigón ~1e-5, acero ~1.2e-5). Para cargas de temperatura ΔT.",""
-"js/ui/properties.js (L1984)","etiqueta/HTML","… (MPa)",""
-"js/ui/properties.js (L1994)","etiqueta/HTML","Familia «auto»: se clasifica por el nombre y se usan las resistencias del respaldo (diseno_params.json).",""
-"js/ui/properties.js (L2002)","tooltip","Familia y resistencias para la verificación de diseño (AISC 360, Eurocódigo 3, ACI 318, NCh1198). Ver docs/diseno.md.",""
-"js/ui/properties.js (L2057)","tooltip","Editar caso (nombre, peso propio, eliminar)",""
-"js/ui/properties.js (L2163)","mensaje/JS","＋ Agregar Factor",""
-"js/ui/properties.js (L2177)","etiqueta/HTML","▶ Ejecutar",""
-"js/ui/properties.js (L2234)","etiqueta/HTML","Tipo de elemento (diseño)",""
-"js/ui/properties.js (L2234)","tooltip","Clasifica la sección para el diseño: permite recorrer y diseñar sólo los pilares (o sólo las vigas). «Genérico» = sin filtrar.",""
-"js/ui/properties.js (L2234)","etiqueta/HTML","Genérico",""
-"js/ui/properties.js (L2237)","etiqueta/HTML","🟦 Pilar / columna",""
-"js/ui/properties.js (L2238)","etiqueta/HTML","🟩 Viga",""
-"js/ui/properties.js (L2257)","etiqueta/HTML","Modificadores de rigidez (× A, I, J — p.ej. sección agrietada ACI)",""
-"js/ui/properties.js (L2295)","mensaje/JS","Modificador de sección aplicado — recalcule el análisis (F5)",""
-"js/ui/properties.js (L2322)","etiqueta/HTML","Vértices del contorno «x, y» por línea (m)",""
-"js/ui/properties.js (L2323)","placeholder","0, 0\n0.3, 0\n0.3, 0.5\n0, 0.5",""
-"js/ui/properties.js (L2326)","etiqueta/HTML","clic = agregar · arrastrar = mover · doble clic = borrar",""
-"js/ui/properties.js (L2328)","etiqueta/HTML","Huecos (lazos separados por línea en blanco, opcional)",""
-"js/ui/properties.js (L2330)","etiqueta/HTML","Calcula A, Iz, Iy, Iyz, ejes principales, S y Z plástico. Pulse «Calcular A, I, J».",""
-"js/ui/properties.js (L2332)","etiqueta/HTML","Genérica: el diseño usa un rectángulo equivalente a partir de A, I.",""
-"js/ui/properties.js (L2341)","etiqueta/HTML","Forma (diseño)",""
-"js/ui/properties.js (L2341)","tooltip","Forma del perfil para el diseño: deriva módulos plásticos, esbelteces, etc. Ver docs/diseno.md.",""
-"js/ui/properties.js (L2343)","etiqueta/HTML","Perfil tabulado (catálogo)",""
-"js/ui/properties.js (L2343)","mensaje/JS","Perfil … aplicado (A, I, J y forma). Recalcule el análisis (F5).",""
-"js/ui/properties.js (L2344)","etiqueta/HTML","— elegir perfil comercial —",""
-"js/ui/properties.js (L2354)","etiqueta/HTML","ρ armadura (H.A.)",""
-"js/ui/properties.js (L2354)","tooltip","Cuantía longitudinal (fallback si no se dan barras explícitas)",""
-"js/ui/properties.js (L2355)","etiqueta/HTML","recubr. (mm)",""
-"js/ui/properties.js (L2357)","tooltip","Barras longitudinales explícitas para el diagrama P-M (#70). Tienen prioridad sobre ρ.",""
-"js/ui/properties.js (L2358)","etiqueta/HTML","n sup.",""
-"js/ui/properties.js (L2359)","etiqueta/HTML","n inf.",""
-"js/ui/properties.js (L2360)","etiqueta/HTML","φ barra (mm)",""
-"js/ui/properties.js (L2362)","tooltip","Estribos para el corte: φVn = φ(Vc+Vs), Vs=Av·fy·d/s (#70).",""
-"js/ui/properties.js (L2363)","etiqueta/HTML","estribo φ (mm)",""
-"js/ui/properties.js (L2364)","etiqueta/HTML","sep. s (mm)",""
-"js/ui/properties.js (L2366)","etiqueta/HTML","↻ Calcular A, I, J desde la forma",""
-"js/ui/properties.js (L2366)","tooltip","Calcula A, Iz, Iy, J, Av desde las dimensiones y los escribe en la sección (para el análisis y el diseño).",""
-"js/ui/properties.js (L2382)","mensaje/JS","Perfil no encontrado",""
-"js/ui/properties.js (L2387)","mensaje/JS","A, I, J calculados desde la forma …. Recalcule el análisis (F5).",""
-"js/ui/properties.js (L2425)","mensaje/JS","Elija una forma con dimensiones primero",""
-"js/ui/properties.js (L2429)","mensaje/JS","Faltan dimensiones de la forma",""
-"js/ui/properties.js (L2435)","mensaje/JS","No se pudo calcular:",""
-"js/ui/properties.js (L2514)","mensaje/JS","El polígono necesita al menos 3 vértices",""
-"js/ui/properties.js (L2533)","mensaje/JS","Calculadora de Sección",""
-"js/ui/properties.js (L2574)","etiqueta/HTML","Forma de sección",""
-"js/ui/properties.js (L2576)","etiqueta/HTML","Rectangular (b × h)",""
-"js/ui/properties.js (L2577)","etiqueta/HTML","Circular sólida (D)",""
-"js/ui/properties.js (L2578)","etiqueta/HTML","Rectangular hueca",""
-"js/ui/properties.js (L2579)","etiqueta/HTML","Tubular circular",""
-"js/ui/properties.js (L2580)","etiqueta/HTML","Perfil IPE (tabla)",""
-"js/ui/properties.js (L2580)","etiqueta/HTML","Perfil IPE",""
-"js/ui/properties.js (L2581)","etiqueta/HTML","Perfil HEB (tabla)",""
-"js/ui/properties.js (L2581)","etiqueta/HTML","Perfil HEB",""
-"js/ui/properties.js (L2617)","etiqueta/HTML","t espesor (m)",""
-"js/ui/properties.js (L2622)","etiqueta/HTML","D ext (m)",""
-"js/ui/properties.js (L2676)","etiqueta/HTML","⚠ Dimensiones inválidas",""
-"js/ui/properties.js (L2835)","etiqueta/HTML","No hay diafragmas definidos. Use ""Auto-detectar Pisos"" o agregue uno manualmente.",""
-"js/ui/properties.js (L2857)","etiqueta/HTML","… nodos | Z=…",""
-"js/ui/properties.js (L2867)","etiqueta/HTML","Z piso (m)",""
-"js/ui/properties.js (L2870)","etiqueta/HTML","Nodo CR (master) ID",""
-"js/ui/properties.js (L2874)","etiqueta/HTML","Centro de Rigidez (CR) — calculado",""
-"js/ui/properties.js (L2876)","etiqueta/HTML","CR x (m)",""
-"js/ui/properties.js (L2879)","etiqueta/HTML","CR y (m)",""
-"js/ui/properties.js (L2883)","etiqueta/HTML","Centro de Masa (CM) — calculado",""
-"js/ui/properties.js (L2885)","etiqueta/HTML","CM x (m)",""
-"js/ui/properties.js (L2888)","etiqueta/HTML","CM y (m)",""
-"js/ui/properties.js (L2892)","etiqueta/HTML","Masa Concentrada",""
-"js/ui/properties.js (L2894)","etiqueta/HTML","m (ton)",""
-"js/ui/properties.js (L2897)","etiqueta/HTML","Icm (ton·m²)",""
-"js/ui/properties.js (L2901)","etiqueta/HTML","Excentricidad Accidental",""
-"js/ui/properties.js (L2910)","etiqueta/HTML","Nodos del Piso",""
-"js/ui/properties.js (L2913)","etiqueta/HTML","IDs (separados por coma)",""
-"js/ui/properties.js (L2918)","etiqueta/HTML","⟳ Recalcular CM/CR",""
-"js/ui/properties.js (L2990)","mensaje/JS","Necesitas ≥ 2 nodos válidos",""
-"js/ui/properties.js (L2992)","mensaje/JS","CM y CR recalculados",""
-"js/ui/viewport.js (L218)","mensaje/JS","Área: selección reiniciada",""
-"js/ui/viewport.js (L222)","mensaje/JS","Mallado: selección reiniciada",""
-"js/ui/viewport.js (L1047)","etiqueta/HTML","Vista 3D",""
-"js/ui/viewport.js (L1094)","etiqueta/HTML","Eje … (Y=…)",""
-"js/ui/viewport.js (L1096)","etiqueta/HTML","Eje … (X=…)",""
-"js/ui/viewport.js (L1455)","mensaje/JS","CM Diafragma #…",""
-"js/ui/viewport.js (L1455)","mensaje/JS","Diafragma #… seleccionado",""
-"js/ui/viewport.js (L1462)","mensaje/JS","… seleccionado",""
-"js/ui/viewport.js (L1508)","mensaje/JS","Nodo #… → clic para el destino (o grilla) · Esc para terminar",""
-"js/ui/viewport.js (L1508)","mensaje/JS","Nodo #… → clic para encadenar otro tramo · Esc para terminar",""
-"js/ui/viewport.js (L1508)","mensaje/JS","Elemento #…",""
-"js/ui/viewport.js (L1508)","mensaje/JS","Nodo #…",""
-"js/ui/viewport.js (L1560)","mensaje/JS","… nodo(s) inestables resaltados",""
-"js/ui/viewport.js (L1690)","etiqueta/HTML","Nuevo nodo:",""
-"js/ui/viewport.js (L1759)","mensaje/JS","Haga clic dentro del área de trabajo",""
-"js/ui/viewport.js (L1768)","mensaje/JS","Los nodos deben ser distintos",""
-"js/ui/viewport.js (L1785)","mensaje/JS","Clic sobre un nodo (las áreas se forman con nodos)",""
-"js/ui/viewport.js (L1790)","mensaje/JS","Máximo 4 nodos. Enter para crear o Esc para reiniciar.",""
-"js/ui/viewport.js (L1801)","mensaje/JS","Seleccione 3 (CST) o 4 (QUAD) nodos",""
-"js/ui/viewport.js (L1827)","mensaje/JS","Mallar panel: …/4 esquinas",""
-"js/ui/viewport.js (L1833)","mensaje/JS","Clic sobre un nodo del contorno a mallar",""
-"js/ui/viewport.js (L1839)","mensaje/JS","El panel transfinito usa 4 esquinas. Enter para mallar o Esc para reiniciar.",""
-"js/ui/viewport.js (L1855)","mensaje/JS","El panel transfinito necesita 4 nodos esquina",""
-"js/ui/viewport.js (L1856)","mensaje/JS","La región libre necesita ≥3 nodos de contorno",""
-"js/ui/viewport.js (L1991)","etiqueta/HTML","Empotrado (fijar todo)",""
-"js/ui/viewport.js (L1991)","tooltip","Empotramiento total: fija las 6 GDL (resiste fuerzas y momentos).",""
-"js/ui/viewport.js (L1992)","etiqueta/HTML","Rótula (Pin)",""
-"js/ui/viewport.js (L1995)","etiqueta/HTML","Rodillo (libre X,Y)",""
-"js/ui/viewport.js (L2130)","mensaje/JS","Modo: …",""
-"js/ui/ifcImportDialog.js (L22)","etiqueta/HTML","const esc = s => String(s ?? '').replace(/[& ""]/g, c => ({ '&': '&', ' ': '>', '""': '""' }[c]));",""
-"js/ui/ifcImportDialog.js (L45)","etiqueta/HTML","🏗️ Importar IFC",""
-"js/ui/ifcImportDialog.js (L52)","etiqueta/HTML","Todos los importables",""
-"js/ui/ifcImportDialog.js (L53)","etiqueta/HTML","Ocultar no soportados",""
-"js/ui/ifcImportDialog.js (L60)","etiqueta/HTML","IFC original",""
-"js/ui/ifcImportDialog.js (L64)","etiqueta/HTML","PÓRTICO (a crear)",""
-"js/ui/ifcImportDialog.js (L74)","etiqueta/HTML","Importar selección",""
-"js/ui/ifcImportDialog.js (L86)","etiqueta/HTML","Tipo Nombre Nivel",""
-"js/ui/ifcImportDialog.js (L87)","etiqueta/HTML","Material Sección Estado Avisos",""
-"js/ui/ifcImportDialog.js (L100)","tooltip","aproximada",""
+index.html (L6),etiqueta/HTML,IOC · UACh,Eliminar esto
+index.html (L6),etiqueta/HTML,PÓRTICO · Análisis Estructural 3D — IOC · UACh,
+index.html (L6),etiqueta/HTML,Análisis,
+index.html (L6),etiqueta/HTML,PÓRTICO,
+index.html (L54),etiqueta/HTML,PÓRTICO IOC · UACh,
+index.html (L60),etiqueta/HTML,Archivo,
+index.html (L62),etiqueta/HTML,Nuevo Ctrl+N,
+index.html (L63),etiqueta/HTML,Abrir… Ctrl+O,
+index.html (L64),etiqueta/HTML,Guardar Ctrl+S,
+index.html (L65),etiqueta/HTML,Guardar Como…,
+index.html (L66),etiqueta/HTML,🧹 Autoguardados temporales…,
+index.html (L66),etiqueta/HTML,Autoguardados temporales,
+index.html (L68),etiqueta/HTML,Importar CSV…,
+index.html (L69),etiqueta/HTML,Exportar CSV,
+index.html (L70),etiqueta/HTML,Descargar Plantilla CSV,
+index.html (L72),etiqueta/HTML,🔄 Importar de otro motor…,
+index.html (L73),etiqueta/HTML,🔄 Exportar a otro motor…,
+index.html (L74),etiqueta/HTML,🏗️ Importar IFC…,
+index.html (L75),etiqueta/HTML,🏗️ Exportar IFC…,
+index.html (L77),etiqueta/HTML,Exportar Resultados Estáticos,
+index.html (L77),etiqueta/HTML,Resultados,
+index.html (L77),etiqueta/HTML,Estático,
+index.html (L78),etiqueta/HTML,Exportar Resultados Modales,
+index.html (L78),etiqueta/HTML,Modal,
+index.html (L79),etiqueta/HTML,Exportar Resultados Espectrales,
+index.html (L81),etiqueta/HTML,📄 Memoria / Bases de Cálculo (PDF)…,
+index.html (L82),etiqueta/HTML,📝 Memoria de Cálculo (Word .docx)…,📄 Memoria / Bases de Cálculo (Word)…
+index.html (L84),etiqueta/HTML,Deshacer Ctrl+Z,
+index.html (L85),etiqueta/HTML,Rehacer Ctrl+Y,
+index.html (L87),etiqueta/HTML,Selec. Todo Ctrl+A,
+index.html (L87),etiqueta/HTML,Editar,
+index.html (L88),etiqueta/HTML,Eliminar Del,
+index.html (L95),etiqueta/HTML,Discretizar Todo…,
+index.html (L96),etiqueta/HTML,Unir Elementos Seleccionados,
+index.html (L97),etiqueta/HTML,Unir en Intersección (crear nodo)…,
+index.html (L98),etiqueta/HTML,Crear elemento de área (membrana 3/4 nodos)…,
+index.html (L99),etiqueta/HTML,Mallar panel (4 esquinas) — clic en nodos…,
+index.html (L99),etiqueta/HTML,Mallar,
+index.html (L100),etiqueta/HTML,Mallar región libre — clic en nodos…,
+index.html (L101),etiqueta/HTML,Suavizar malla (calidad)…,Suavizar malla…
+index.html (L102),etiqueta/HTML,Crear link / coupling (2 nodos)…,
+index.html (L103),etiqueta/HTML,Muro de relleno — puntal diagonal (4 nodos)…,
+index.html (L105),etiqueta/HTML,Definir Ejes de Grilla…,
+index.html (L106),etiqueta/HTML,Combinaciones de Carga… F8,
+index.html (L106),etiqueta/HTML,Combinaciones,
+index.html (L107),etiqueta/HTML,Crear casos y combos de norma (NCh3171)…,
+index.html (L108),etiqueta/HTML,Isométrica I,
+index.html (L109),etiqueta/HTML,Planta XY T,
+index.html (L110),etiqueta/HTML,Frente XZ F,
+index.html (L111),etiqueta/HTML,Lateral YZ L,
+index.html (L112),etiqueta/HTML,Vista,
+index.html (L113),etiqueta/HTML,Grilla G,
+index.html (L115),etiqueta/HTML,Zoom Extensión Home,
+index.html (L115),etiqueta/HTML,XY,
+index.html (L116),etiqueta/HTML,XZ,
+index.html (L117),etiqueta/HTML,Ocultar selección H,
+index.html (L117),etiqueta/HTML,YZ,
+index.html (L118),etiqueta/HTML,Mostrar todo Shift+H,
+index.html (L120),etiqueta/HTML,Ejes XYZ,
+index.html (L121),etiqueta/HTML,Resultado: Deformada 1,
+index.html (L122),etiqueta/HTML,Resultado: Axial N 2,
+index.html (L123),etiqueta/HTML,Resultado: Cortante Vy 3,
+index.html (L124),etiqueta/HTML,Resultado: Cortante Vz 4,
+index.html (L125),etiqueta/HTML,Mostrar/ocultar cargas,
+index.html (L125),etiqueta/HTML,Resultado: Torsión T 5,
+index.html (L126),etiqueta/HTML,Resultado: Momento My 6,
+index.html (L127),etiqueta/HTML,Resultado: Momento Mz 7,
+index.html (L127),etiqueta/HTML,Deformada,
+index.html (L128),etiqueta/HTML,Resultado: Tensiones áreas (von Mises) 8,
+index.html (L128),etiqueta/HTML,Axial N,
+index.html (L129),etiqueta/HTML,Cortante Vy,
+index.html (L130),etiqueta/HTML,Cortante Vz,
+index.html (L131),etiqueta/HTML,Torsión T,
+index.html (L132),etiqueta/HTML,Momento My,
+index.html (L133),etiqueta/HTML,Momento Mz,
+index.html (L134),etiqueta/HTML,Tensiones áreas (von Mises),
+index.html (L135),etiqueta/HTML,▶ Análisis Estático F5,
+index.html (L141),etiqueta/HTML,▶ Estático — todos los casos y combos F5,
+index.html (L142),etiqueta/HTML,"↻ Recalcular (forzar, ignora resultados guardados)",
+index.html (L145),etiqueta/HTML,Análisis lineales,
+index.html (L145),etiqueta/HTML,Análisis lineales ▸,
+index.html (L148),etiqueta/HTML,▶ Modal… F6,
+index.html (L149),etiqueta/HTML,▶ Espectro de Respuesta… F7,
+index.html (L150),etiqueta/HTML,▶ Time-history modal — acelerograma…,▶ Time-history modal …
+index.html (L154),etiqueta/HTML,Análisis NL-lite,
+index.html (L154),etiqueta/HTML,Análisis NL-lite ▸,
+index.html (L156),etiqueta/HTML,▶ No Lineal — cables…,
+index.html (L157),etiqueta/HTML,▶ Gran rotación — viga corotacional 2D…,
+index.html (L158),etiqueta/HTML,▶ P-Delta…,
+index.html (L159),etiqueta/HTML,▶ Pandeo Lineal — factor crítico…,
+index.html (L159),etiqueta/HTML,Pandeo,
+index.html (L159),etiqueta/HTML,Pan,
+index.html (L160),etiqueta/HTML,▶ Form-finding — densidades de fuerza…,
+index.html (L161),etiqueta/HTML,▶ Rótulas Plásticas — colapso…,▶ Pushover— colapso…
+index.html (L161),etiqueta/HTML,Rótulas,Pushover
+index.html (L162),etiqueta/HTML,▶ Pushover — control de desplazamiento…,
+index.html (L162),etiqueta/HTML,Pushover,
+index.html (L163),etiqueta/HTML,▶ Time-history NO LINEAL — rótulas (edificio de corte)…,▶ Time-history NO LINEAL — Modal…
+index.html (L167),etiqueta/HTML,Puentes ▸,
+index.html (L169),etiqueta/HTML,▶ Etapas constructivas — staged…,
+index.html (L170),etiqueta/HTML,▶ Pretensado por tendón — cargas equivalentes…,
+index.html (L171),etiqueta/HTML,▶ Cargas móviles / líneas de influencia…,
+index.html (L171),etiqueta/HTML,✕ Limpiar Resultados (descartar),
+index.html (L171),etiqueta/HTML,Cargas móviles,
+index.html (L175),etiqueta/HTML,Ver Matrices Globales K · M…,
+index.html (L176),etiqueta/HTML,Diagnosticar estabilidad (nodos sueltos)…,
+index.html (L178),tooltip,"DESCARTA todos los resultados calculados (estático, modal, espectro, NL, diseño) y revierte la malla auto-discretizada. Pide confirmación. Para sólo volver a ver el modelo sin borrar nada, usa «Vista modelo» en la barra.",
+index.html (L178),etiqueta/HTML,Vista modelo,
+index.html (L183),etiqueta/HTML,Asistente,
+index.html (L185),etiqueta/HTML,Generar modelo desde ficha…,
+index.html (L185),etiqueta/HTML,Guía Rápida F1,
+index.html (L190),etiqueta/HTML,Ayuda,
+index.html (L192),etiqueta/HTML,Guía Rápida,
+index.html (L193),etiqueta/HTML,Convenciones de Signos y Ejes,
+index.html (L193),etiqueta/HTML,Convenciones,
+index.html (L194),etiqueta/HTML,Ejemplos Guiados,
+index.html (L196),etiqueta/HTML,Acerca de PÓRTICO,
+index.html (L196),etiqueta/HTML,Acerca de,
+index.html (L209),tooltip,Modo profesional activo,
+index.html (L209),etiqueta/HTML,PRO,
+index.html (L209),etiqueta/HTML,Modo,
+index.html (L210),tooltip,"Configuración (memoria, visualización, modificadores de sección)",
+index.html (L212),tooltip,Cambiar tema claro/oscuro,
+index.html (L214),etiqueta/HTML,Unidades,
+index.html (L217),tooltip,"Sistema de unidades fijo: kN, m, ton, rad. Todo el cálculo se hace en estas unidades.",
+index.html (L217),tooltip,Seleccionar S,
+index.html (L218),etiqueta/HTML,kN – m,
+index.html (L219),etiqueta/HTML,ton – m (no disponible),
+index.html (L220),etiqueta/HTML,kip – ft (no disponible),
+index.html (L221),tooltip,Mover vista — PAN (arrastrar con la izquierda),
+index.html (L227),tooltip,Agregar Nodo N,
+index.html (L231),etiqueta/HTML,🗂 Modelos del proyecto,
+index.html (L231),etiqueta/HTML,Modelo,
+index.html (L232),tooltip,Agregar modelo nuevo al proyecto,
+index.html (L236),etiqueta/HTML,🧹 Temporales,
+index.html (L236),etiqueta/HTML,Temporales,
+index.html (L237),tooltip,Agregar Elemento E,
+index.html (L237),tooltip,Limpiar todos los autoguardados,
+index.html (L244),tooltip,Modelos del proyecto y temporales (árbol lateral),
+index.html (L252),etiqueta/HTML,Árbol,
+index.html (L257),etiqueta/HTML,Sel.,
+index.html (L259),tooltip,Selección por cuadro: arrastra con la izquierda para dibujar un recuadro y seleccionar nodos y elementos dentro (sin tener que apretar Alt). Ctrl al soltar añade a la selección.,
+index.html (L261),etiqueta/HTML,Cuadro,
+index.html (L263),tooltip,Asignar Apoyo R,
+index.html (L269),etiqueta/HTML,Nodo,
+index.html (L285),etiqueta/HTML,Elem.,
+index.html (L287),tooltip,"Agregar Área (membrana/placa/shell): clic en 3–4 nodos, Enter para crear",
+index.html (L287),tooltip,Ejecutar Análisis F5,
+index.html (L287),etiqueta/HTML,Área,
+index.html (L297),tooltip,Mallar región: activa el modo y luego haz clic en los nodos del contorno → Enter para mallar (Esc reinicia),
+index.html (L305),etiqueta/HTML,Apoyo,
+index.html (L319),tooltip,Zoom Extensión Home,
+index.html (L326),etiqueta/HTML,Ext.,
+index.html (L335),tooltip,Volver a la vista normal del modelo (sale de la deformada/diagramas/contornos CONSERVANDO los resultados). Para descartar los resultados: menú Análisis → Limpiar Resultados.,
+index.html (L348),etiqueta/HTML,Config.,
+index.html (L356),etiqueta/HTML,Z piso,
+index.html (L357),tooltip,Plano de inserción de nodos (coordenada Z del piso activo),
+index.html (L357),etiqueta/HTML,Plano,
+index.html (L359),tooltip,Mostrar/ocultar IDs de nodos D,
+index.html (L360),etiqueta/HTML,Snap,
+index.html (L361),tooltip,Tamaño del snap a grilla,
+index.html (L365),tooltip,"Imán a nodos: al crear elementos, los extremos se pegan al nodo existente más cercano (lo reutilizan en vez de duplicar). Desactívalo para crear un nodo nuevo aunque haya otro al lado.",
+index.html (L367),tooltip,Vista extruida de secciones X,
+index.html (L372),tooltip,Fijar nodos: impide mover un nodo al arrastrarlo con el mouse (evita moverlo sin querer). Desmárcalo para poder arrastrar los nodos seleccionados.,
+index.html (L378),tooltip,"Plano de arrastre de nodos: en qué plano se mueve el nodo al arrastrarlo (XY = horizontal, XZ = vertical frontal, YZ = vertical lateral).",
+index.html (L378),tooltip,Plano de arrastre de nodos,
+index.html (L387),tooltip,"Discretización automática: al analizar, cada elemento se subdivide internamente en N tramos (deformadas y diagramas precisos, rótulas visibles en la deformada). Al limpiar resultados el modelo vuelve a su estado original.",
+index.html (L390),tooltip,Nº de tramos por elemento para el análisis,
+index.html (L396),tooltip,Modo del modelo (se elige en Archivo → Nuevo),
+index.html (L403),tooltip,"Elevación 2D real de un eje estructural: muestra solo ese plano (ortográfico, sin profundidad) y los nodos nuevos caen en él. Defina ejes en Editar → Definir Ejes de Grilla.",
+index.html (L426),etiqueta/HTML,Caso,
+index.html (L428),tooltip,Nuevo caso de carga o combinación,
+index.html (L429),tooltip,"Editar caso activo: nombre, peso propio, eliminar",
+index.html (L430),etiqueta/HTML,⬇ cargas,
+index.html (L430),tooltip,Mostrar / ocultar las flechas de carga,
+index.html (L447),etiqueta/HTML,Hz T,
+index.html (L450),tooltip,Factor de escala relativo: 1 = ajuste automático normalizado. Doble clic en el número para volver a 1.,
+index.html (L451),etiqueta/HTML,Escala ×,
+index.html (L453),tooltip,Ajuste fino relativo al tamaño automático (×0.03 … ×31),
+index.html (L455),tooltip,Factor relativo (1 = automático). Doble clic = volver a 1.,
+index.html (L460),tooltip,"Caso o combinación de resultados a mostrar (X, Y, combos…)",
+index.html (L461),tooltip,Descargar los resultados de este caso (CSV),
+index.html (L472),etiqueta/HTML,0 — max,
+index.html (L478),tooltip,Mostrar/ocultar reacciones en los apoyos (flechas con valores; incluye resortes),
+index.html (L486),tooltip,Exportar imagen PNG,
+index.html (L507),etiqueta/HTML,Amp.,
+index.html (L509),tooltip,Animar modo,
+index.html (L510),etiqueta/HTML,Vel.,
+index.html (L514),etiqueta/HTML,Participación,
+index.html (L515),etiqueta/HTML,↓ CSV,
+index.html (L519),etiqueta/HTML,MODO RESULTADOS — haga clic sobre nodos y elementos para ver valores,
+index.html (L524),tooltip,Arrastrar para redimensionar,
+index.html (L533),etiqueta/HTML,Diseño,
+index.html (L534),tooltip,Autoguardados temporales: copias automáticas de las sesiones recientes (reanudar / eliminar),
+index.html (L543),etiqueta/HTML,Nodos,
+index.html (L545),etiqueta/HTML,Mat.,
+index.html (L546),etiqueta/HTML,Sec.,
+index.html (L547),etiqueta/HTML,Diaf.,
+index.html (L548),etiqueta/HTML,Casos y combos,
+index.html (L553),etiqueta/HTML,Haga clic en un nodo o elemento para ver y editar sus propiedades.,
+index.html (L555),etiqueta/HTML,Ejecute Rótulas plásticas (Análisis → NL-lite) para ver la secuencia de formación de rótulas y el factor de colapso.,
+index.html (L558),etiqueta/HTML,＋ Nuevo Nodo,
+index.html (L567),etiqueta/HTML,＋ Agregar Material,
+index.html (L572),etiqueta/HTML,＋ Agregar Sección,
+index.html (L574),etiqueta/HTML,Ejecute Dinámico (time-history) (Análisis → NL-lite → Dinámico lineal) para ver la respuesta en el tiempo.,
+index.html (L578),etiqueta/HTML,Ejecute Pushover (control de desplazamiento) (Análisis → NL-lite) para ver la curva carga–desplazamiento.,
+index.html (L582),etiqueta/HTML,⚡ Auto-detectar Pisos,
+index.html (L582),etiqueta/HTML,Ejecute Pandeo lineal (Análisis → NL-lite) para ver los modos de pandeo y λcr.,
+index.html (L583),etiqueta/HTML,＋ Agregar Diafragma,
+index.html (L586),etiqueta/HTML,Ejecute No lineal o P-Delta (Análisis → NL-lite) para ver la deformada no lineal paso a paso.,
+index.html (L587),etiqueta/HTML,Casos de carga,
+index.html (L589),etiqueta/HTML,＋ Nuevo caso de carga,
+index.html (L590),etiqueta/HTML,Ejecute Cargas móviles (Análisis → Puentes) para ver la línea de influencia / envolvente.,
+index.html (L591),etiqueta/HTML,⚙ Crear casos y combos de norma (NCh3171),
+index.html (L591),tooltip,Casos D/L y combinaciones LRFD + servicio de la NCh3171,
+index.html (L593),etiqueta/HTML,＋ Agregar Combinación,
+index.html (L594),etiqueta/HTML,Ejecute Dinámico NO lineal (Análisis → NL-lite) para ver la respuesta del edificio de corte paso a paso.,
+index.html (L603),etiqueta/HTML,X: — Y: — Z: —,
+index.html (L605),etiqueta/HTML,Dinámico,
+index.html (L608),etiqueta/HTML,No lineal,
+index.html (L610),etiqueta/HTML,Dinámico NL,
+index.html (L614),etiqueta/HTML,Ejecute Análisis Modal (F6) para ver resultados.,
+index.html (L618),etiqueta/HTML,Ejecute Análisis Estático (F5) para ver resultados.,
+index.html (L655),etiqueta/HTML,Verificación de,
+index.html (L655),etiqueta/HTML,"Verificación de flexión, corte y axial (razón D/C = demanda/capacidad) por elemento. Acero LRFD (AISC 360), hormigón ACI 318, madera NCh1198 con valores normativos estándar.",
+index.html (L656),etiqueta/HTML,⚙ Verificar diseño,
+index.html (L664),etiqueta/HTML,"Describe la estructura en palabras y el asistente arma la ficha y genera el modelo (geometría, secciones, cargas NCh y combinaciones).",
+index.html (L666),etiqueta/HTML,Descripción del modelo,
+index.html (L667),placeholder,"Ej.: edificio de 4 niveles de 3 m, 3 vanos de 6 m en X y 2 de 5 m en Y, hormigón H30, vigas 25x50, pilares 35x35, salas de clases, en Valdivia, con sismo zona 2 suelo D",El hormigpon en la nueva norma se llama G30 y no H30 ya han cambiado
+index.html (L668),etiqueta/HTML,💡 Vacío: Tab rellena el ejemplo · Enter lo genera (para probar de inmediato).,
+index.html (L670),etiqueta/HTML,✦ Generar modelo con el asistente,
+index.html (L671),etiqueta/HTML,Editar ficha avanzada (JSON)…,
+index.html (L672),etiqueta/HTML,La credencial del asistente vive como secreto del servidor; nunca en el navegador. Reemplaza el modelo actual.,
+index.html (L675),etiqueta/HTML,Modificar el modelo actual,
+index.html (L676),etiqueta/HTML,"Pide cambios sobre el modelo ya construido: agregar cargas, anexar un piso encima o un vano lateral, aplicar modificadores de rigidez o masa. Si seleccionas elementos/nodos, las órdenes con ""selección"" actúan sobre ellos.",
+index.html (L678),etiqueta/HTML,¿Qué cambio quieres hacer?,
+index.html (L679),placeholder,Ej.: agrega carga viva de 20 kN/m a todas las vigas · anexa un piso de 3 m encima · agrega un vano de 5 m hacia la derecha · aplica modificador de rigidez 0.5 a la selección,
+index.html (L681),etiqueta/HTML,✦ Aplicar cambio,
+index.html (L689),etiqueta/HTML,"Copias automáticas de las sesiones recientes (cada ~5 min). Reanude una (descarta el trabajo actual no guardado), elimine las que no use, o límpielas todas.",
+index.html (L690),etiqueta/HTML,El eje x local va del nodo 1 al nodo 2. Los ejes y/z se orientan automáticamente:,
+index.html (L702),etiqueta/HTML,Modo: Seleccionar,
+index.html (L705),etiqueta/HTML,Sin selección,
+index.html (L706),etiqueta/HTML,Sin resultados,
+index.html (L706),tooltip,Resultados disponibles — clic para abrir el Centro de análisis,
+index.html (L707),etiqueta/HTML,Nodos: 0 | Elem: 0,
+index.html (L708),etiqueta/HTML,kN — m,
+index.html (L720),etiqueta/HTML,Cancelar,
+index.html (L729),etiqueta/HTML,PÓRTICO — Ayuda,
+index.html (L729),etiqueta/HTML,N > 0 = tracción · N < 0 = compresión.,
+index.html (L736),tooltip,Cerrar (Esc),
+index.html (L743),etiqueta/HTML,Flujo de trabajo,
+index.html (L743),etiqueta/HTML,"Liberar un esfuerzo (N, Vy, Vz, T, My, Mz) en un extremo ⇒ ese esfuerzo vale 0 ahí.",
+index.html (L745),etiqueta/HTML,"Elija el tipo de modelo en Archivo → Nuevo: Pórtico 2D (plano X–Z real,",
+index.html (L746),etiqueta/HTML,"sin profundidad, GDL fuera del plano restringidos) o Estructura 3D .",
+index.html (L747),etiqueta/HTML,⚠ Liberar en exceso crea un mecanismo : el análisis lo detecta y avisa.,
+index.html (L747),etiqueta/HTML,El modo no se cambia después. Luego defina los ejes de grilla,
+index.html (L749),etiqueta/HTML,cada eje en 2D real con el selector Vista → Eje… (elevaciones).,
+index.html (L750),etiqueta/HTML,"Modele : herramienta Nodo (N) para insertar nodos (se ajustan a los ejes),",
+index.html (L751),etiqueta/HTML,"Elem. (E) para conectarlos, Apoyo (R) para empotrar/apoyar.",
+index.html (L752),etiqueta/HTML,En el panel del nodo puede definir apoyos elásticos (resortes).,
+index.html (L753),etiqueta/HTML,Asigne propiedades : material y sección en las pestañas Mat. y Sec. ;,
+index.html (L755),etiqueta/HTML,Cargue : seleccione un nodo o elemento y asigne cargas en su panel.,
+index.html (L756),etiqueta/HTML,"El caso de carga se elige ahí mismo (cree casos con ＋ , edítelos con ✎ —",
+index.html (L757),etiqueta/HTML,"ahí se activa el peso propio , típico del caso CM). Para sismo por espectro,",
+index.html (L758),etiqueta/HTML,"cree un caso espectral (＋ → Caso sísmico, dirección X o Y): no lleva cargas,",
+index.html (L760),etiqueta/HTML,Analice (F5) : resuelve todos los casos y combos a la vez. Cambie de caso en el,
+index.html (L761),etiqueta/HTML,desplegable para ver cada resultado. F6 modal · F7 espectro de respuesta.,
+index.html (L762),etiqueta/HTML,"Interprete : deformada y diagramas (teclas 1–7), botón ⭡ Reacciones ,",
+index.html (L763),etiqueta/HTML,"clic en un elemento para ver sus fuerzas, y en su panel: Σ Matrices y ⊟ DCL .",
+index.html (L765),etiqueta/HTML,Atajos de teclado,
+index.html (L765),etiqueta/HTML,Modele el ejemplo en PÓRTICO y guárdelo con Archivo → Guardar (ej.: viga_simple.s3d ).,
+index.html (L766),etiqueta/HTML,Copie el archivo a la carpeta examples/ del proyecto.,
+index.html (L767),etiqueta/HTML,Cree o edite examples/index.json con una entrada por ejemplo:,
+index.html (L767),etiqueta/HTML,S N E R Modos: Seleccionar · Nodo · Elemento · Apoyo,
+index.html (L768),etiqueta/HTML,I T F L Vistas: Isométrica · Planta · Frente · Lateral,
+index.html (L769),etiqueta/HTML,Análisis estático,
+index.html (L769),etiqueta/HTML,F5 F6 F7 F8 Análisis estático · Modal · Espectro · Combos,
+index.html (L770),etiqueta/HTML,1 … 7 Resultados: Deformada · N · Vy · Vz · T · My · Mz,
+index.html (L771),etiqueta/HTML,G D X Home Grilla · IDs · Vista extruida · Zoom extensión,
+index.html (L772),etiqueta/HTML,Ctrl+Z / Y Ctrl+S Del Deshacer/Rehacer · Guardar · Eliminar selección,
+index.html (L773),etiqueta/HTML,F1 Esc Esta ayuda · Cerrar diálogos,
+index.html (L775),etiqueta/HTML,💾 Su trabajo se autoguarda en el navegador: al reabrir la app,
+index.html (L777),etiqueta/HTML,📦 Modelos ya corridos: si guarda (Archivo → Guardar) después de,
+index.html (L778),etiqueta/HTML,"analizar, el archivo .s3d incluye los resultados (dice «Guardado con",
+index.html (L779),etiqueta/HTML,"resultados»). Al reabrir ese archivo, los resultados aparecen solos , sin recalcular.",
+index.html (L781),etiqueta/HTML,Análisis → Recalcular .,
+index.html (L786),etiqueta/HTML,Ejes globales,
+index.html (L787),etiqueta/HTML,X este · Y norte · Z arriba (convención SAP2000/ETABS).,
+index.html (L788),etiqueta/HTML,La gravedad actúa en −Z : una carga con dirección «Gravedad» y w > 0 apunta hacia abajo.,
+index.html (L790),etiqueta/HTML,Ejes locales del elemento,
+index.html (L806),etiqueta/HTML,Viga horizontal (según X): la gravedad carga el eje y local,
+index.html (L807),etiqueta/HTML,⇒ flexión Mz . Cargas según Y global ⇒ flexión My .,
+index.html (L817),etiqueta/HTML,Análisis lineal : sin P-Δ ni no-linealidad de material o geometría.,
+index.html (L821),etiqueta/HTML,Columna vertical : cargas/sismo según X ⇒ flexión Mz ;,
+index.html (L822),etiqueta/HTML,según Y ⇒ flexión My . La torsión T gira en torno a Z global.,
+index.html (L828),etiqueta/HTML,Signos de esfuerzos y resultados,
+index.html (L831),etiqueta/HTML,Momentos : positivos antihorarios (regla de la mano derecha sobre el eje local).,
+index.html (L833),etiqueta/HTML,"Diagramas M(x) : convención FEM, dM/dx = −V. El extremo de momento dentro",
+index.html (L835),etiqueta/HTML,"Reacciones : flechas naranjas = fuerzas,",
+index.html (L836),etiqueta/HTML,violetas (doble punta),
+index.html (L836),etiqueta/HTML,violetas (doble punta) = momentos. En apoyos,
+index.html (L838),etiqueta/HTML,"GDL por nodo (orden): [ux, uy, uz, rx, ry, rz] globales;",
+index.html (L842),etiqueta/HTML,Liberaciones (rótulas),
+index.html (L845),etiqueta/HTML,En 3D: ● círculo verde = giro liberado ·,
+index.html (L846),etiqueta/HTML,■ cuadrado ámbar = desplazamiento liberado.,
+index.html (L847),etiqueta/HTML,El botón «Rótula» libera My + Mz (rótula clásica de momento).,
+index.html (L852),etiqueta/HTML,"Todo el cálculo se hace en kN, m, ton, rad (E y G en kN/m², ρ en ton/m³,",
+index.html (L854),etiqueta/HTML,solo una etiqueta de referencia — no convierte los valores ingresados.,
+index.html (L859),etiqueta/HTML,Ejemplos guiados,
+index.html (L861),etiqueta/HTML,Cargando…,
+index.html (L864),etiqueta/HTML,📋 Instrucciones para el docente: cómo agregar ejemplos,
+index.html (L878),etiqueta/HTML,Entrar al laboratorio (vacío) →,
+index.html (L879),etiqueta/HTML,✦ Generar modelo con el asistente →,
+index.html (L892),etiqueta/HTML,Laboratorio virtual de análisis estructural 3D,
+index.html (L893),etiqueta/HTML,· versión 87 · junio 2026,
+index.html (L896),etiqueta/HTML,Material docente desarrollado por el Dr. Juan Patricio Reyes C. —,
+index.html (L898),etiqueta/HTML,Universidad Austral de Chile .,
+index.html (L898),etiqueta/HTML,Universidad Austral de Chile,
+index.html (L899),etiqueta/HTML,"Dirigido a estudiantes de Arquitectura , Construcción e",
+index.html (L900),etiqueta/HTML,Ingeniería Civil en Obras Civiles : una herramienta para ver por dentro,
+index.html (L908),etiqueta/HTML,Capacidades,
+index.html (L910),etiqueta/HTML,"Elementos barra 3D tipo Timoshenko (12 GDL), liberaciones por condensación estática.",
+index.html (L911),etiqueta/HTML,Análisis estático lineal de todos los casos y combinaciones; peso propio por caso.,
+index.html (L912),etiqueta/HTML,"Diafragmas rígidos, masas nodales, apoyos elásticos (resortes).",
+index.html (L912),etiqueta/HTML,Diafragmas rígidos,
+index.html (L913),etiqueta/HTML,Análisis modal y espectro de respuesta (CQC/SRSS).,
+index.html (L914),etiqueta/HTML,"Herramientas didácticas: matrices Ke/T/K/Me y globales, DCL con verificación de equilibrio.",
+index.html (L916),etiqueta/HTML,Limitaciones conocidas (¡léalas!),
+index.html (L919),etiqueta/HTML,Solo elementos barra: no modela muros ni losas como elementos (el diafragma,
+index.html (L921),etiqueta/HTML,Cargas en elementos: solo distribuidas uniformes en todo el vano.,
+index.html (L922),etiqueta/HTML,Sin verificación de diseño (hormigón/acero) ni normativa automática (NCh433).,
+index.html (L923),etiqueta/HTML,Herramienta docente : para proyectos reales use software profesional validado,
+index.html (L943),etiqueta/HTML,Facultad de Ciencias de la Ingeniería · Instituto de Obras Civiles,
+index.html (L975),etiqueta/HTML,Modelado 3D,
+index.html (L975),etiqueta/HTML,Formas modales,
+index.html (L975),etiqueta/HTML,Modelado 3D Análisis estático Formas modales,
+index.html (L976),etiqueta/HTML,Espectro de respuesta,
+index.html (L976),etiqueta/HTML,Espectro de respuesta Combinaciones Diafragmas rígidos,
+index.html (L981),etiqueta/HTML,📖 Manual de uso,
+index.html (L982),etiqueta/HTML,⤓ Instalar app,
+index.html (L984),etiqueta/HTML,o presione Enter,
+index.html (L993),etiqueta/HTML,Material docente desarrollado por Dr. Juan Patricio Reyes C. —,
+index.html (L995),etiqueta/HTML,"Para estudiantes de Arquitectura , Construcción e",
+index.html (L996),etiqueta/HTML,Ingeniería Civil en Obras Civiles .,
+index.html (L1104),etiqueta/HTML,hint.innerHTML = 'Para instalar: usa el ícono ⊕ / instalar de la barra de ' +,
+index.html (L1105),etiqueta/HTML,"'direcciones, o el menú ⋮ → Instalar PÓRTICO . En iPhone/iPad: ' +",
+index.html (L1106),etiqueta/HTML,' Compartir → Agregar a inicio .';,
+index.html (L1117),etiqueta/HTML,"Mejor en horizontal — PÓRTICO se ve mejor apaisado, pero puedes seguir usándolo en vertical.",
+index.html (L1150),etiqueta/HTML,' + m[2].trim() + ',
+index.html (L1150),etiqueta/HTML,return m[1].trim() + ' ' + m[2].trim() + ' ';,
+js/app.js (L37),etiqueta/HTML,Elem …,
+js/app.js (L215),mensaje/JS,Se salió de la malla de análisis (auto-disc) para editar el modelo original,
+js/app.js (L233),etiqueta/HTML,… elem…,
+js/app.js (L235),mensaje/JS,No se pudo crear el elemento (nodos inválidos),
+js/app.js (L253),etiqueta/HTML,Nodo …,
+js/app.js (L260),mensaje/JS,Nodo #… eliminado,
+js/app.js (L260),mensaje/JS,Elemento #… eliminado,
+js/app.js (L260),mensaje/JS,Elemento de área #… eliminado,
+js/app.js (L271),mensaje/JS,Elemento #… dividido en … tramos,
+js/app.js (L281),mensaje/JS,"Elemento de área … #… (…, t=… m) creado",
+js/app.js (L281),mensaje/JS,Elemento de área,
+js/app.js (L284),mensaje/JS,"Área … #… (…, t=… m) — ajusta sus propiedades en el panel",
+js/app.js (L325),mensaje/JS,Discretizado: … → … elementos,
+js/app.js (L332),mensaje/JS,No se pudo discretizar (¿el tramo objetivo es mayor que el elemento?),
+js/app.js (L340),mensaje/JS,Nodo de intersección creado (#…); … tramos,
+js/app.js (L346),mensaje/JS,Seleccione 2 o más elementos colineales (Ctrl+clic) para unir,
+js/app.js (L351),mensaje/JS,No se pudo unir: …,
+js/app.js (L357),mensaje/JS,… elementos unidos → Elemento #…,
+js/app.js (L364),mensaje/JS,Seleccione exactamente 2 elementos que se intersecten (Ctrl+clic) para unirlos,
+js/app.js (L375),mensaje/JS,Nuevo modelo … creado,
+js/app.js (L392),mensaje/JS,… área(s) actualizadas,
+js/app.js (L401),mensaje/JS,Material aplicado a … elemento(s),
+js/app.js (L401),mensaje/JS,Sección aplicada a … elemento(s),
+js/app.js (L401),mensaje/JS,Copiado …: +… elemento(s),
+js/app.js (L401),mensaje/JS,Espejado en …=…: +… elemento(s),
+js/app.js (L418),mensaje/JS,… elemento(s) divididos en … (… tramos),
+js/app.js (L421),mensaje/JS,Seleccione elementos para ocultar,
+js/app.js (L421),mensaje/JS,Seleccione elementos,
+js/app.js (L423),mensaje/JS,… elemento(s) oculto(s) · Vista → Mostrar todo para revertir,
+js/app.js (L433),mensaje/JS,Seleccione elementos para agrupar,
+js/app.js (L448),mensaje/JS,Seleccione 3 nodos (CST) o 4 nodos (QUAD) para crear un elemento de área,
+js/app.js (L453),mensaje/JS,Espesor inválido,
+js/app.js (L460),mensaje/JS,No se pudo crear el área (nodos repetidos o inexistentes),
+js/app.js (L470),mensaje/JS,Un área necesita 3 (CST) o 4 (QUAD) nodos,
+js/app.js (L510),mensaje/JS,Seleccione 4 nodos esquina del panel (en cualquier orden),
+js/app.js (L511),mensaje/JS,Mallar panel (4 esquinas),
+js/app.js (L518),mensaje/JS,"Valores inválidos (nx, ny ≥ 1; t > 0)",
+js/app.js (L519),mensaje/JS,Demasiados elementos (>2500). Reduzca nx·ny.,
+js/app.js (L546),mensaje/JS,El nodo … no existe,
+js/app.js (L546),mensaje/JS,El elemento … no existe,
+js/app.js (L546),mensaje/JS,El área … no existe,
+js/app.js (L546),mensaje/JS,El diafragma … no existe,
+js/app.js (L549),mensaje/JS,Seleccione ≥3 nodos que formen el contorno de la región,
+js/app.js (L556),mensaje/JS,"Región mallada: … celdas (… quad + … tri, …) · h=… m",
+js/app.js (L557),mensaje/JS,"Valores inválidos (h>0, t>0)",
+js/app.js (L566),mensaje/JS,No se pudo mallar la región:,
+js/app.js (L578),mensaje/JS,🔲 Mallar región libre,
+js/app.js (L640),mensaje/JS,No hay elementos de área en el modelo,
+js/app.js (L640),mensaje/JS,No hay elementos,
+js/app.js (L641),mensaje/JS,Suavizar malla (calidad),
+js/app.js (L641),mensaje/JS,nº de iteraciones (1–20),
+js/app.js (L655),mensaje/JS,"Seleccione exactamente 2 nodos (1º = maestro, 2º = esclavo)",
+js/app.js (L657),mensaje/JS,Crear link / coupling,
+js/app.js (L677),mensaje/JS,Seleccione los 4 nodos de las ESQUINAS del panel,
+js/app.js (L678),mensaje/JS,El muro de relleno (puntal diagonal 2D) requiere un modelo PLANO X–Z,
+js/app.js (L690),mensaje/JS,Muro de relleno — puntal diagonal equivalente,
+js/app.js (L702),mensaje/JS,"Muro de relleno insertado: puntal w=… cm (A=… cm²), 2 diagonales solo-compresión. Corra Análisis → No lineal para activar una diagonal.",
+js/app.js (L711),mensaje/JS,Macromodelo «…» no registrado,
+js/app.js (L711),mensaje/JS,Macromodelo «…» insertado (… elemento(s) calibrados),
+js/app.js (L712),mensaje/JS,«…» requiere un modelo …,
+js/app.js (L737),mensaje/JS,Seleccione nodos,
+js/app.js (L758),mensaje/JS,"Indique un desplazamiento (dX, dY o dZ)",
+js/app.js (L759),mensaje/JS,Seleccione nodos o elementos para mover,
+js/app.js (L763),mensaje/JS,"… nodo(s) movidos (…, …, …)",
+js/app.js (L768),mensaje/JS,"Indique un desplazamiento (dX, dY o dZ) ≠ 0",
+js/app.js (L770),mensaje/JS,Seleccione nodos o elementos para copiar,
+js/app.js (L829),mensaje/JS,Seleccione nodos o elementos para espejar,
+js/app.js (L860),mensaje/JS,No hay caso de carga,
+js/app.js (L861),mensaje/JS,El caso espectral no admite cargas nodales,
+js/app.js (L877),mensaje/JS,El caso espectral no admite cargas distribuidas,
+js/app.js (L893),mensaje/JS,El caso espectral no admite cargas de temperatura,
+js/app.js (L907),mensaje/JS,Área no encontrada,
+js/app.js (L922),mensaje/JS,Discretizar Todos los Elementos,
+js/app.js (L925),etiqueta/HTML,Modo … — T = … s,
+js/app.js (L925),mensaje/JS,Modo … (… Hz),
+js/app.js (L927),etiqueta/HTML,Nº de partes por elemento,
+js/app.js (L928),etiqueta/HTML,Longitud de tramo (m),
+js/app.js (L997),mensaje/JS,Elemento incompleto,
+js/app.js (L1020),etiqueta/HTML,⬇ Exportar matrices a CSV,
+js/app.js (L1024),mensaje/JS,Matrices del Elemento #…,
+js/app.js (L1044),mensaje/JS,Modelo vacío,
+js/app.js (L1066),etiqueta/HTML,⬇ Exportar K y M globales a CSV,
+js/app.js (L1070),mensaje/JS,Matrices Globales K y M,
+js/app.js (L1131),etiqueta/HTML,Abrir ejemplo,
+js/app.js (L1134),mensaje/JS,¿Descartar los cambios no guardados y abrir el ejemplo?,
+js/app.js (L1144),mensaje/JS,No se pudo abrir: …,
+js/app.js (L1216),mensaje/JS,Ejecute el análisis primero (F5) para ver el DCL,
+js/app.js (L1218),mensaje/JS,Sin resultados para este elemento,
+js/app.js (L1290),mensaje/JS,Definir Ejes de Grilla,
+js/app.js (L1295),mensaje/JS,"Importado de …: … nodos, … barras${warnings.length ?",
+js/app.js (L1295),mensaje/JS,"IFC importado: … nodos, … barras${stats.areas ?",
+js/app.js (L1297),etiqueta/HTML,"Ejes X (A, B, C…) — dirección X global",
+js/app.js (L1299),etiqueta/HTML,"Ejes Y (1, 2, 3…) — dirección Y global",
+js/app.js (L1301),etiqueta/HTML,Niveles Z (pisos),
+js/app.js (L1304),etiqueta/HTML,Ver ……,
+js/app.js (L1326),mensaje/JS,Nada que deshacer,
+js/app.js (L1332),mensaje/JS,Deshecho,
+js/app.js (L1337),mensaje/JS,Nada que rehacer,
+js/app.js (L1343),mensaje/JS,Rehecho,
+js/app.js (L1349),mensaje/JS,El modelo no tiene suficientes nodos,
+js/app.js (L1354),mensaje/JS,No se encontraron nuevos pisos (nodos en el mismo nivel Z),
+js/app.js (L1366),mensaje/JS,… diafragma(s) creado(s) automáticamente…,
+js/app.js (L1392),mensaje/JS,Diafragma … creado — asigne nodos en el panel,
+js/app.js (L1397),etiqueta/HTML,sin ejecutar,
+js/app.js (L1447),etiqueta/HTML,✓ resultados,
+js/app.js (L1455),tooltip,Incluir en «Analizar seleccionados»,
+js/app.js (L1458),etiqueta/HTML,Ejecutar…,
+js/app.js (L1483),tooltip,Cerrar,
+js/app.js (L1485),etiqueta/HTML,Estático / lineal,
+js/app.js (L1486),etiqueta/HTML,Avanzados (NL-lite),
+js/app.js (L1490),tooltip,"Elegir qué casos de carga correr (LC1, LC2, …)",
+js/app.js (L1490),mensaje/JS,⚙ Elegir casos a correr,
+js/app.js (L1492),mensaje/JS,Espectro…,
+js/app.js (L1500),mensaje/JS,Pandeo lineal…,
+js/app.js (L1500),mensaje/JS,Pandeo lineal,
+js/app.js (L1504),mensaje/JS,Time-history…,
+js/app.js (L1508),mensaje/JS,Cargas móviles / líneas de influencia,
+js/app.js (L1512),etiqueta/HTML,▶ Analizar seleccionados,
+js/app.js (L1512),tooltip,"Corre en orden los análisis marcados, con parámetros por defecto (sin diálogos)",
+js/app.js (L1538),mensaje/JS,Marque al menos un análisis,
+js/app.js (L1577),mensaje/JS,Lote …/…: ……,
+js/app.js (L1580),mensaje/JS,Lote detenido en «…»: …,
+js/app.js (L1589),mensaje/JS,No hay resultados estáticos,
+js/app.js (L1593),mensaje/JS,No hay resultados modales,
+js/app.js (L1598),mensaje/JS,Caso espectral no encontrado,
+js/app.js (L1598),mensaje/JS,Caso espectral,
+js/app.js (L1603),mensaje/JS,No hay resultados no lineales,
+js/app.js (L1606),mensaje/JS,No hay resultados P-Delta,
+js/app.js (L1609),mensaje/JS,No hay resultados de pandeo,
+js/app.js (L1612),mensaje/JS,No hay resultados de rótulas plásticas,
+js/app.js (L1615),mensaje/JS,No hay resultados de pushover,
+js/app.js (L1618),mensaje/JS,No hay resultados de time-history,
+js/app.js (L1621),mensaje/JS,No hay resultados de etapas constructivas,
+js/app.js (L1624),mensaje/JS,No hay resultados de cargas móviles,
+js/app.js (L1627),mensaje/JS,No hay resultados de time-history no lineal,
+js/app.js (L1682),mensaje/JS,No hay casos de carga estáticos que correr,
+js/app.js (L1705),mensaje/JS,No marcaste ningún caso,
+js/app.js (L1715),mensaje/JS,El modelo debe tener nodos y elementos (barras o áreas),
+js/app.js (L1715),mensaje/JS,El modelo debe tener nodos y elementos,
+js/app.js (L1725),mensaje/JS,Analizando…,
+js/app.js (L1770),mensaje/JS,No hay casos de carga estáticos que analizar,
+js/app.js (L1787),mensaje/JS,Sin resultados: cree un caso de carga estático o ejecute F6+F7 para los espectrales,
+js/app.js (L1796),mensaje/JS,Corotacional OK · … pasos · gran rotación · … caso(s),
+js/app.js (L1811),mensaje/JS,Análisis cancelado,
+js/app.js (L1813),mensaje/JS,Error: …,
+js/app.js (L1819),mensaje/JS,Modo: Resultados,
+js/app.js (L1854),mensaje/JS,No se pudo diagnosticar: …,
+js/app.js (L1856),mensaje/JS,"Sin GDL sueltos: no se detectaron nodos con rigidez nula. Si el análisis falla, el mecanismo puede ser de varios GDL acoplados (p.ej. barras colineales rotuladas).",
+js/app.js (L2022),mensaje/JS,"¿Descartar TODOS los resultados calculados (estático, modal, espectro, NL, diseño) y revertir la malla auto-discretizada? Si sólo quieres volver a ver el modelo sin borrar nada, usa «Vista modelo» en la barra.",
+js/app.js (L2091),mensaje/JS,Resultados exportados,
+js/app.js (L2108),mensaje/JS,Diagramas (…/…)…,
+js/app.js (L2167),mensaje/JS,Ya estás en la vista del modelo,
+js/app.js (L2174),etiqueta/HTML,Salir,
+js/app.js (L2179),etiqueta/HTML,Ver resultados,
+js/app.js (L2180),mensaje/JS,Vista del modelo (los resultados se conservan — usa «Ver resultados» para volver),
+js/app.js (L2207),mensaje/JS,No hay resultados que limpiar,
+js/app.js (L2208),mensaje/JS,"¿Descartar TODOS los resultados calculados (estático, modal, espectro, NL, diseño) y revertir la malla auto-discretizada?\n\nSi sólo quieres volver a ver el modelo sin borrar nada, usa «Vista modelo» en la barra.",
+js/app.js (L2280),mensaje/JS,No hay resultados — ejecute el análisis primero,
+js/app.js (L2311),mensaje/JS,Ese caso aún no tiene resultados (córrelo primero),
+js/app.js (L2328),mensaje/JS,El modelo no tiene apoyos,
+js/app.js (L2344),mensaje/JS,Análisis modal…,
+js/app.js (L2459),mensaje/JS,Error modal: …,
+js/app.js (L2464),mensaje/JS,Modo: Modal,
+js/app.js (L2468),etiqueta/HTML,N° de modos,
+js/app.js (L2478),mensaje/JS,Análisis Modal,
+js/app.js (L2485),etiqueta/HTML,Número de modos a extraer (1–50),
+js/app.js (L2497),etiqueta/HTML,Método de extracción,
+js/app.js (L2499),etiqueta/HTML,"Iteración inversa (Stodola) — robusto, modo a modo",
+js/app.js (L2500),etiqueta/HTML,"Iteración de subespacio (Bathe) — bloque, rápido con muchos modos",
+js/app.js (L2505),tooltip,Modal sobre K+Kg(estado): la fuerza axial del estado de referencia rigidiza (tracción) o ablanda (compresión) las frecuencias. Como en SAP2000 (modal sobre un caso no lineal).,
+js/app.js (L2511),etiqueta/HTML,Estado de referencia (carga que genera Kg),
+js/app.js (L2694),mensaje/JS,No hay resultados modales — ejecute Análisis Modal primero,
+js/app.js (L2698),mensaje/JS,Resultados modales exportados,
+js/app.js (L2703),mensaje/JS,No hay resultados espectrales — ejecute Espectro de Respuesta primero,
+js/app.js (L2703),mensaje/JS,Espectro de Respuesta,
+js/app.js (L2707),mensaje/JS,Resultados espectrales exportados,
+js/app.js (L2713),mensaje/JS,Ejecute primero el Análisis Modal (F6),
+js/app.js (L2724),mensaje/JS,Espectro omitido en el lote: defínalo una vez manualmente para fijar la curva.,
+js/app.js (L2727),placeholder,"Pegue el registro: dos columnas «t a» (s, m/s²) o una columna «a» con Δt. Líneas con # o texto se ignoran.",
+js/app.js (L2733),etiqueta/HTML,Aceptar,
+js/app.js (L2739),etiqueta/HTML,Calcular,
+js/app.js (L2739),mensaje/JS,Caso «…» guardado sin calcular. Use «Calcular» (o F7) para correrlo.,
+js/app.js (L2739),mensaje/JS,Caso «…» creado (sin calcular).,
+js/app.js (L2788),mensaje/JS,Error espectro: …,
+js/app.js (L2793),mensaje/JS,Modo: Espectro,
+js/app.js (L2815),mensaje/JS,Acelerograma vacío o no reconocido.,
+js/app.js (L2892),mensaje/JS,Time-history OK · … modos · … · PGA … m/s² · u_máx … m (nodo …) · T₁=…s,
+js/app.js (L2892),mensaje/JS,Time-history NL OK · … pisos · … · T₁=…s · u_techo máx … m · … piso(s) en fluencia,
+js/app.js (L2896),mensaje/JS,Time-history: …,
+js/app.js (L2900),mensaje/JS,Modo: Time-history,
+js/app.js (L2922),tooltip,"ID del nodo, elemento o área a monitorear",
+js/app.js (L2946),mensaje/JS,Time-history modal (acelerograma en la base),
+js/app.js (L2951),etiqueta/HTML,Dirección de excitación,
+js/app.js (L2952),etiqueta/HTML,Z (vertical),
+js/app.js (L2954),etiqueta/HTML,Amortiguamiento ζ (%),
+js/app.js (L2954),etiqueta/HTML,Amortiguamiento ζ,
+js/app.js (L2959),etiqueta/HTML,Demo — Pulso de Ricker (sintético),
+js/app.js (L2960),etiqueta/HTML,Demo — Armónico (sintético),
+js/app.js (L2961),etiqueta/HTML,Demo — Sismo sintético (NO es real),
+js/app.js (L2962),etiqueta/HTML,Pegar / cargar registro (t a) o (a)…,
+js/app.js (L2966),placeholder,"Pegue el registro: dos columnas «t a» (s, m/s²) o una columna «a» con Δt.\nLíneas con # o texto se ignoran.",
+js/app.js (L2968),etiqueta/HTML,Δt si es 1 columna (s),
+js/app.js (L2973),etiqueta/HTML,"Escalar a PGA (m/s², 0 = no escalar)",
+js/app.js (L2996),mensaje/JS,Registro:,
+js/app.js (L3206),tooltip,Registro/caso dinámico a mostrar,
+js/app.js (L3210),etiqueta/HTML,Centro de masa,
+js/app.js (L3211),tooltip,"ID del nodo, elemento, área o diafragma (piso) a monitorear",
+js/app.js (L3218),tooltip,Velocidad de animación,
+js/app.js (L3225),tooltip,Ir al instante de máxima respuesta,
+js/app.js (L3226),etiqueta/HTML,⤓ CSV,
+js/app.js (L3279),mensaje/JS,Cargas móviles OK · … · máx … … · mín … …,
+js/app.js (L3296),mensaje/JS,Historia exportada (…),
+js/app.js (L3296),mensaje/JS,Historia exportada,
+js/app.js (L3308),mensaje/JS,Etapas constructivas (staged),
+js/app.js (L3311),mensaje/JS,Las etapas constructivas requieren elementos de barra,
+js/app.js (L3322),mensaje/JS,Etapas OK · … fases · δmax acumulado … m · activos finales …,
+js/app.js (L3326),mensaje/JS,Etapas: …,
+js/app.js (L3348),etiqueta/HTML,Todos los elementos (…),
+js/app.js (L3349),etiqueta/HTML,Grupo «…» (…),
+js/app.js (L3350),etiqueta/HTML,— ninguna —,
+js/app.js (L3358),etiqueta/HTML,Añadir etapa con,
+js/app.js (L3359),etiqueta/HTML,peso propio nuevo,
+js/app.js (L3360),etiqueta/HTML,➕ Añadir,
+js/app.js (L3364),etiqueta/HTML,Caso de SERVICIO en la última etapa (estructura terminada),
+js/app.js (L3378),tooltip,Subir,
+js/app.js (L3379),tooltip,Bajar,
+js/app.js (L3380),tooltip,Quitar,
+js/app.js (L3382),etiqueta/HTML,Sin etapas. Añade al menos una.,
+js/app.js (L3393),mensaje/JS,El grupo no tiene elementos,
+js/app.js (L3424),mensaje/JS,"Selecciona los elementos del tendón (en orden, del ancla activa a la pasiva)",
+js/app.js (L3431),mensaje/JS,Caso de carga inexistente,
+js/app.js (L3436),mensaje/JS,Tendón aplicado a «…» · P=… kN · w_eq=… kN/m · L=… m,
+js/app.js (L3439),mensaje/JS,Tendón: …,
+js/app.js (L3445),mensaje/JS,Pretensado por tendón — cargas equivalentes,
+js/app.js (L3447),etiqueta/HTML,(crea un caso de carga primero),
+js/app.js (L3455),etiqueta/HTML,Caso de carga destino,
+js/app.js (L3458),etiqueta/HTML,e inicial (m),
+js/app.js (L3459),etiqueta/HTML,e centro (m),
+js/app.js (L3460),etiqueta/HTML,e final (m),
+js/app.js (L3463),etiqueta/HTML,"Quiebres «s,e» por línea (s∈[0,1], e ↓+ en m)",
+js/app.js (L3469),etiqueta/HTML,Efectiva P directa,
+js/app.js (L3469),etiqueta/HTML,Tesado + pérdidas,
+js/app.js (L3470),etiqueta/HTML,P (kN),
+js/app.js (L3473),etiqueta/HTML,P₀ gato (kN),
+js/app.js (L3474),etiqueta/HTML,μ (1/rad),
+js/app.js (L3476),etiqueta/HTML,Pérdida tanto alzado,
+js/app.js (L3478),etiqueta/HTML,Resolver estático tras aplicar,
+js/app.js (L3496),mensaje/JS,Selecciona un caso de carga,
+js/app.js (L3518),mensaje/JS,Selecciona los elementos de la PISTA (en orden a lo largo del recorrido),
+js/app.js (L3541),mensaje/JS,Cargas móviles: …,
+js/app.js (L3559),etiqueta/HTML,Línea de influencia (carga unitaria),
+js/app.js (L3559),etiqueta/HTML,Envolvente (tren de cargas),
+js/app.js (L3560),etiqueta/HTML,Posiciones de barrido,
+js/app.js (L3563),etiqueta/HTML,Reacción de apoyo,
+js/app.js (L3563),etiqueta/HTML,Esfuerzo en sección,
+js/app.js (L3567),etiqueta/HTML,Fz (vertical),
+js/app.js (L3571),etiqueta/HTML,Posición ξ (0–1),
+js/app.js (L3575),etiqueta/HTML,"Tren «offset,P» por línea (offset m respecto al eje de referencia, P en kN ↓)",
+js/app.js (L3612),mensaje/JS,Define al menos un eje del tren,
+js/app.js (L3658),etiqueta/HTML,Pista L = … m · … posiciones,
+js/app.js (L3660),etiqueta/HTML,⬇ CSV,
+js/app.js (L3671),mensaje/JS,Resultado exportado,
+js/app.js (L3686),mensaje/JS,El time-history no lineal (edificio de corte) requiere diafragmas rígidos por piso. Use «auto-detectar diafragmas» o defínalos.,
+js/app.js (L3692),mensaje/JS,No se pudo armar el edificio de corte: …,
+js/app.js (L3693),mensaje/JS,No se identificaron pisos (diafragmas).,
+js/app.js (L3702),mensaje/JS,Cada piso necesita masa y rigidez > 0 (edite la tabla).,
+js/app.js (L3739),mensaje/JS,Time-history no lineal: …,
+js/app.js (L3807),mensaje/JS,Time-history NO LINEAL — edificio de corte (rótulas),
+js/app.js (L3826),etiqueta/HTML,Endurec. α,
+js/app.js (L3835),etiqueta/HTML,Botón de re-semilla de Vy a un coef. de corte basal Cy·peso:,
+js/app.js (L3837),etiqueta/HTML,↻ Vy = Cy·peso acumulado,
+js/app.js (L3848),placeholder,"Registro: «t a» (s, m/s²) o una columna «a» con Δt.",
+js/app.js (L3848),etiqueta/HTML,ancho máx cm,
+js/app.js (L3849),etiqueta/HTML,alto máx cm,
+js/app.js (L3850),etiqueta/HTML,Δt si 1 columna (s),
+js/app.js (L3855),etiqueta/HTML,"Escalar a PGA (m/s², 0 = no)",
+js/app.js (L3928),tooltip,Ir al pico,
+js/app.js (L4030),etiqueta/HTML,Reglas simples de ingeniería para una sección inicial (antes del análisis). El resultado es editable y preliminar — requiere verificación posterior.,
+js/app.js (L4036),mensaje/JS,Ejecute el análisis estático (F5) antes de diseñar.,
+js/app.js (L4064),mensaje/JS,No hay elementos en el alcance con resultados de diseño.,
+js/app.js (L4084),etiqueta/HTML,D/C objetivo,
+js/app.js (L4124),etiqueta/HTML,Diseñar,
+js/app.js (L4129),etiqueta/HTML,Límite de dimensiones (opcional):,
+js/app.js (L4134),tooltip,Recorrer sólo las secciones marcadas como pilar o viga (según el «Tipo de elemento» de la sección).,
+js/app.js (L4136),etiqueta/HTML,Todas,
+js/app.js (L4137),etiqueta/HTML,🟦 Sólo pilares,
+js/app.js (L4138),etiqueta/HTML,🟩 Sólo vigas,
+js/app.js (L4139),etiqueta/HTML,· Sólo genéricas,
+js/app.js (L4141),tooltip,D/C objetivo: la selección prefiere candidatos con D/C cerca de este valor (sin pasar de 1).,
+js/app.js (L4142),etiqueta/HTML,Acero:,
+js/app.js (L4142),tooltip,Familias de acero permitidas como candidatas (sólo aplica a secciones de acero/aluminio).,
+js/app.js (L4153),etiqueta/HTML,⚠ compartida = la sección la usan también elementos fuera del alcance.,
+js/app.js (L4154),etiqueta/HTML,✓ Aplicar al modelo,
+js/app.js (L4203),mensaje/JS,No hay propuestas seleccionadas,
+js/app.js (L4218),mensaje/JS,Diseño aplicado a … sección(es). Recalcule el análisis (F5) y vuelva a verificar. Ctrl+Z deshace.,
+js/app.js (L4228),mensaje/JS,Ejecute el análisis (F5) y verifique el diseño antes de exportar el reporte.,
+js/app.js (L4253),mensaje/JS,Reporte de diseño exportado · … elementos · … no cumplen,
+js/app.js (L4261),mensaje/JS,No hay barras para chequear nudos SCWB,
+js/app.js (L4270),mensaje/JS,No hay nudos viga-columna (se necesita ≥1 columna y ≥1 viga concurrentes; se clasifica por verticalidad),
+js/app.js (L4275),mensaje/JS,Nudos SCWB: … nudo(s) viga-columna · … NO cumple(n) · γ=…,
+js/app.js (L4297),etiqueta/HTML,γ = ΣMnc ≥ γ·ΣMnb,
+js/app.js (L4308),etiqueta/HTML,Mn ≈ Fy·Zz por barra. Clasificación columna/viga por verticalidad. Clic en una fila para centrar el nudo. Rojo = no cumple.,
+js/app.js (L4322),mensaje/JS,⚡ Predimensionar (preliminar),
+js/app.js (L4327),etiqueta/HTML,Hormigón armado,
+js/app.js (L4330),etiqueta/HTML,Luz / altura L (m),
+js/app.js (L4331),etiqueta/HTML,Carga q (kN/m),
+js/app.js (L4332),etiqueta/HTML,Axial N (kN),
+js/app.js (L4333),etiqueta/HTML,f'c (MPa),
+js/app.js (L4336),etiqueta/HTML,Crear sección y asignar a la selección de elementos,
+js/app.js (L4372),mensaje/JS,Sección «…» creada${selEls.length ?,
+js/app.js (L4374),mensaje/JS,"Predimensionado: ${p.profile || Object.entries(p.dims).map(([k, v]) =>",
+js/app.js (L4402),etiqueta/HTML,#¿NOMBRE?,
+js/app.js (L4406),mensaje/JS,Active «Análisis no lineal (NL-lite)» en ⚙ Configuración primero,
+js/app.js (L4406),mensaje/JS,Active «Análisis no lineal (NL-lite)» en ⚙ Configuración,
+js/app.js (L4406),mensaje/JS,⚙ Configuración,
+js/app.js (L4411),mensaje/JS,Modelo vacío: agregue nodos y elementos,
+js/app.js (L4433),mensaje/JS,No hay elementos válidos para el análisis no lineal,
+js/app.js (L4443),mensaje/JS,Todos los nodos están restringidos (sin GDL libres),
+js/app.js (L4443),mensaje/JS,Todos los nodos están restringidos,
+js/app.js (L4485),mensaje/JS,Error no lineal: …,
+js/app.js (L4488),mensaje/JS,El análisis no lineal no produjo pasos (¿mecanismo?),
+js/app.js (L4490),mensaje/JS,No convergió en el paso …/… (tangente singular o carga excesiva). Se muestran los pasos logrados.,
+js/app.js (L4490),mensaje/JS,Corotacional: no convergió en el paso …/…. Se muestran los pasos logrados.,
+js/app.js (L4491),mensaje/JS,No lineal OK · … pasos · … caso(s) combinados,
+js/app.js (L4506),mensaje/JS,La viga corotacional es 2D: requiere un modelo PLANO X–Z (Archivo → Nuevo → 2D).,
+js/app.js (L4508),mensaje/JS,No hay elementos para el análisis,
+js/app.js (L4526),mensaje/JS,No hay elementos válidos en el plano,
+js/app.js (L4567),mensaje/JS,Error corotacional: …,
+js/app.js (L4570),mensaje/JS,El análisis no produjo pasos (¿mecanismo?),
+js/app.js (L4722),mensaje/JS,Sin GDL libres,
+js/app.js (L4765),mensaje/JS,Pandeo: λcr = … · carga crítica = λcr × carga de referencia,
+js/app.js (L4765),mensaje/JS,Pandeo: …,
+js/app.js (L4774),mensaje/JS,Modo: Pandeo,
+js/app.js (L4787),etiqueta/HTML,Número de modos de pandeo (1–20),
+js/app.js (L4872),etiqueta/HTML,Sin elementos en compresión para este modo.,
+js/app.js (L4891),mensaje/JS,Defina al menos un caso de carga.,
+js/app.js (L4904),mensaje/JS,Estado lineal inestable (mecanismo).,
+js/app.js (L4906),mensaje/JS,Estado lineal singular.,
+js/app.js (L4916),mensaje/JS,Tangente singular: la carga iguala o supera la de pandeo (λcr ≤ 1). Reduzca la carga o ejecute Pandeo.,
+js/app.js (L4918),mensaje/JS,Divergió: la carga alcanza la de pandeo.,
+js/app.js (L4975),mensaje/JS,"El form-finding necesita ≥ 2 nodos ancla (apoyos, o bordes de la selección). Restrinja algunos nodos o seleccione los elementos a formar.",
+js/app.js (L4983),mensaje/JS,Sin elementos para formar la red.,
+js/app.js (L5026),mensaje/JS,Form-finding:,
+js/app.js (L5049),mensaje/JS,Form-finding (densidades de fuerza),
+js/app.js (L5057),etiqueta/HTML,Densidad de fuerza q = N/L [kN/m] (mayor q → forma más tensa/recta),
+js/app.js (L5063),etiqueta/HTML,Coordenadas a ajustar,
+js/app.js (L5065),etiqueta/HTML,Sólo vertical (Z) — mantiene las luces en planta (recomendado),
+js/app.js (L5066),etiqueta/HTML,"3D (x, y, z) — redistribuye también en planta (redes/mallas)",
+js/app.js (L5077),mensaje/JS,q debe ser un número > 0,
+js/app.js (L5205),mensaje/JS,Defina al menos un caso de carga (patrón de carga del pushover).,
+js/app.js (L5209),mensaje/JS,"El patrón de carga es nulo (los casos no tienen cargas, o el peso propio no está activo). Asigne cargas antes de correr rótulas.",
+js/app.js (L5427),etiqueta/HTML,"Caso de espectro (elige uno guardado para editar sus parámetros, o crea uno nuevo)",
+js/app.js (L5480),etiqueta/HTML,g (×9.81 → m/s²),
+js/app.js (L5488),etiqueta/HTML,"Espectro — T (s), Sa (una pareja por línea)",
+js/app.js (L5492),etiqueta/HTML,Curva Sa(T) (se dibuja desde los datos de arriba),
+js/app.js (L5512),mensaje/JS,Rótulas plásticas (material elasto-plástico),
+js/app.js (L5517),etiqueta/HTML,Mp para los elementos SELECCIONADOS [kN·m],
+js/app.js (L5529),etiqueta/HTML,Momento plástico Mp [kN·m] (capacidad …),
+js/app.js (L5536),etiqueta/HTML,Comportamiento de la rótula (curva constitutiva),
+js/app.js (L5538),etiqueta/HTML,Dúctil — perfectamente plástica (meseta ∞),
+js/app.js (L5539),etiqueta/HTML,Dúctil con caída — meseta hasta θu/δu y luego cae,
+js/app.js (L5540),etiqueta/HTML,Frágil — caída inmediata al alcanzar la capacidad,
+js/app.js (L5546),etiqueta/HTML,Capacidad residual tras la caída [% de la capacidad],
+js/app.js (L5551),etiqueta/HTML,θu rotación última [rad] (momento),
+js/app.js (L5552),etiqueta/HTML,δu desplaz. último [m] (N/V),
+js/app.js (L5560),etiqueta/HTML,Curva constitutiva momento–giro de la rótula,
+js/app.js (L5564),etiqueta/HTML,Patrón de carga a evaluar (#45),
+js/app.js (L5583),mensaje/JS,Mp debe ser un número > 0,
+js/app.js (L5587),mensaje/JS,Mp de la selección debe ser > 0,
+js/app.js (L5657),mensaje/JS,Pushover — control de desplazamiento,
+js/app.js (L5662),etiqueta/HTML,Patrón de carga de referencia (#45),
+js/app.js (L5673),etiqueta/HTML,Idealiza las barras como reticulado (axial/cables). La imperfección dispara inestabilidades (snap-through / puntos límite).,
+js/app.js (L5703),mensaje/JS,Defina un caso de carga (patrón de referencia).,
+js/app.js (L5729),mensaje/JS,Error en pushover: …,
+js/app.js (L5731),mensaje/JS,Pushover DC:,
+js/app.js (L5833),etiqueta/HTML,Período arbitrario (escribir ↓),
+js/app.js (L5845),etiqueta/HTML,"(elige uno guardado para editar sus parámetros, o crea uno nuevo)",
+js/app.js (L5848),etiqueta/HTML,➕ Nuevo caso de espectro…,
+js/app.js (L5851),etiqueta/HTML,＋ caso,
+js/app.js (L5851),tooltip,Crear otro caso de espectro con estos parámetros (sin salir de la ventana),
+js/app.js (L5852),tooltip,Eliminar el caso de espectro seleccionado,
+js/app.js (L5852),tooltip,Eliminar,
+js/app.js (L5859),etiqueta/HTML,Dirección sísmica,
+js/app.js (L5859),etiqueta/HTML,Dirección sísmica …,
+js/app.js (L5868),etiqueta/HTML,CQC (recomendado),
+js/app.js (L5879),etiqueta/HTML,Construir espectro NCh433 / DS61,
+js/app.js (L5881),etiqueta/HTML,Zona sísmica (Ao),
+js/app.js (L5884),etiqueta/HTML,Tipo de suelo,
+js/app.js (L5887),etiqueta/HTML,Categoría (I),
+js/app.js (L5888),etiqueta/HTML,III (1.2),
+js/app.js (L5893),etiqueta/HTML,T* (s) — período fundamental,
+js/app.js (L5893),placeholder,período en s,
+js/app.js (L5894),etiqueta/HTML,Generar curva,
+js/app.js (L5901),etiqueta/HTML,Unidades de Sa,
+js/app.js (L5912),placeholder,"Aún sin espectro. Use «Generar curva» (NCh433) o pegue sus pares T, Sa.",
+js/app.js (L5915),etiqueta/HTML,(se dibuja desde los datos de arriba),
+js/app.js (L5994),tooltip,Cerrar la ventana sin más cambios,
+js/app.js (L5996),etiqueta/HTML,➕ Crear caso,
+js/app.js (L5996),tooltip,Crear un caso de espectro nuevo con estos parámetros y seguir en esta ventana,
+js/app.js (L5997),tooltip,Guardar los parámetros en el caso seleccionado y cerrar — NO ejecuta el análisis,
+js/app.js (L5998),tooltip,Guardar y ejecutar el análisis espectral,
+js/app.js (L6008),mensaje/JS,"El espectro necesita al menos 2 puntos (T,Sa)",
+js/app.js (L6073),mensaje/JS,Elige primero un caso guardado para eliminar,
+js/app.js (L6075),mensaje/JS,¿Eliminar el caso,
+js/app.js (L6075),mensaje/JS,¿Eliminar el caso de espectro «…»?,
+js/app.js (L6084),mensaje/JS,Caso de espectro «…» eliminado,
+js/app.js (L6233),mensaje/JS,Nuevo Caso / Combinación,
+js/app.js (L6238),etiqueta/HTML,Caso de carga estático,
+js/app.js (L6239),etiqueta/HTML,Caso sísmico — espectro de respuesta,
+js/app.js (L6258),etiqueta/HTML,X (E–O),
+js/app.js (L6259),etiqueta/HTML,Y (N–S),
+js/app.js (L6327),mensaje/JS,No hay caso de carga activo,
+js/app.js (L6330),mensaje/JS,Editar Caso,
+js/app.js (L6459),mensaje/JS,Combinación vacía — agregue al menos un factor,
+js/app.js (L6535),mensaje/JS,Norma NCh3171: casos D/L + … combinación(es) LRFD y servicio…,
+js/app.js (L6541),mensaje/JS,No hay combinaciones — créelas en la pestaña Combos.,
+js/app.js (L6549),mensaje/JS,Ejecutar Combinación,
+js/app.js (L6565),mensaje/JS,¿Descartar cambios no guardados y crear un nuevo modelo?,
+js/app.js (L6571),mensaje/JS,Nuevo Modelo,
+js/app.js (L6573),etiqueta/HTML,Tipo de modelo,
+js/app.js (L6575),etiqueta/HTML,Estructura 3D (espacial),
+js/app.js (L6576),etiqueta/HTML,Pórtico 2D — plano X–Z (vista ortográfica real),
+js/app.js (L6582),etiqueta/HTML,"Las funciones profesionales (editar descripción, pie de página, limitaciones, logo de empresa, motor de análisis y elementos de área) requieren un token autorizado , que se obtiene enviando una solicitud. Garantiza que la herramienta no se use con fines comerciales sin autorización. La versión académica conserva los créditos UACh · Facultad · IOC.",
+js/app.js (L6614),mensaje/JS,Nuevo modelo,
+js/app.js (L6619),mensaje/JS,¿Descartar cambios no guardados?,
+js/app.js (L6628),etiqueta/HTML,Habilitar análisis no lineal (NL-lite),
+js/app.js (L6641),mensaje/JS,Error al abrir: …,
+js/app.js (L6728),mensaje/JS,Error al cargar archivo: …,
+js/app.js (L6757),mensaje/JS,Asistente — generar modelo desde ficha,
+js/app.js (L6761),mensaje/JS,Generar modelo,
+js/app.js (L6763),placeholder,/api/asistente,
+js/app.js (L6782),etiqueta/HTML,Describe el modelo en palabras (el asistente arma la ficha),
+js/app.js (L6783),placeholder,"Ej.: edificio de 4 niveles de 3 m, planta con 3 vanos de 6 m en X y 2 de 5 m en Y, hormigón H30, vigas 25x50, pilares 35x35, salas de clases, en Valdivia, con sismo zona 2 suelo D",El hormigòn se llama G30
+js/app.js (L6787),etiqueta/HTML,Endpoint del asistente (Cloudflare Worker /api/asistente),
+js/app.js (L6789),etiqueta/HTML,✦ Pedir ficha al asistente,
+js/app.js (L6794),etiqueta/HTML,Ver / editar la ficha (JSON) — avanzado,
+js/app.js (L6807),mensaje/JS,Configure el endpoint del asistente,
+js/app.js (L6808),mensaje/JS,Escriba una descripción,
+js/app.js (L6819),mensaje/JS,Ficha recibida — pulsa «Generar modelo»,
+js/app.js (L6820),mensaje/JS,Error asistente:,
+js/app.js (L6863),mensaje/JS,Escribe qué cambiar en el modelo,
+js/app.js (L6864),mensaje/JS,No hay modelo que modificar (créalo primero),
+js/app.js (L6935),mensaje/JS,Ficha JSON inválida:,
+js/app.js (L6965),mensaje/JS,Estructura sobrepuesta — … nodo(s) coincidente(s) fundido(s),
+js/app.js (L6966),mensaje/JS,Aviso: el modelo generado era … y el actual es …; se conservó …,
+js/app.js (L6978),mensaje/JS,Error al generar:,
+js/app.js (L6983),etiqueta/HTML,✗ No era lo que pedí,
+js/app.js (L6992),etiqueta/HTML,¿El modelo es lo que pediste?,
+js/app.js (L7001),mensaje/JS,Feedback del asistente,
+js/app.js (L7001),mensaje/JS,"¿Qué esperabas? (opcional, ayuda a mejorar)",
+js/app.js (L7006),mensaje/JS,Gracias — registrado como «no era lo solicitado»,
+js/app.js (L7007),mensaje/JS,No se pudo enviar el feedback:,
+js/app.js (L7102),etiqueta/HTML,Modo profesional …,
+js/app.js (L7161),etiqueta/HTML,Desactivar modo profesional,
+js/app.js (L7162),etiqueta/HTML,Token profesional,
+js/app.js (L7162),placeholder,pegue su token,
+js/app.js (L7166),etiqueta/HTML,Memoria — encabezado,
+js/app.js (L7169),etiqueta/HTML,Subtítulo (kicker)…,
+js/app.js (L7172),etiqueta/HTML,Institución…,
+js/app.js (L7173),etiqueta/HTML,Sub-institución / unidad…,
+js/app.js (L7182),etiqueta/HTML,Memoria — contenido profesional…,
+js/app.js (L7183),etiqueta/HTML,Descripción del proyecto,
+js/app.js (L7184),etiqueta/HTML,Pie de página (vacío = pie académico),
+js/app.js (L7186),etiqueta/HTML,Logo de empresa,
+js/app.js (L7196),etiqueta/HTML,Visualización de la memoria,
+js/app.js (L7197),etiqueta/HTML,Mostrar IDs de nodos y elementos en las figuras,
+js/app.js (L7198),etiqueta/HTML,Amplificar las formas modales para que se observen,
+js/app.js (L7210),etiqueta/HTML,Funciones avanzadas (profesional)…,
+js/app.js (L7211),etiqueta/HTML,Motor de análisis (elija uno),
+js/app.js (L7213),etiqueta/HTML,Elementos de área (membrana / placa / Shell lineal elástico),
+js/app.js (L7221),etiqueta/HTML,Modificadores de sección por defecto (rigidez),
+js/app.js (L7222),etiqueta/HTML,"Factores aplicados a A, I, J en el análisis (p.ej. sección agrietada ACI: viga 0.35, columna 0.70). Editables por sección en la pestaña Sec.",
+js/app.js (L7229),etiqueta/HTML,Aplicar estos modificadores a TODAS las secciones,
+js/app.js (L7231),etiqueta/HTML,"Los parámetros de diseño (Fy, f′c, φ, cuantía…) usan valores normativos estándar.",
+js/app.js (L7239),mensaje/JS,Modo profesional activado,
+js/app.js (L7242),mensaje/JS,Modo profesional desactivado,
+js/app.js (L7247),mensaje/JS,Logo cargado (se aplica al guardar),
+js/app.js (L7261),mensaje/JS,Modificadores aplicados a todas las secciones,
+js/app.js (L7274),mensaje/JS,El motor seleccionado no está implementado en esta versión; se usará Normal.,
+js/app.js (L7277),mensaje/JS,Los elementos de área (membrana/placa/Shell) no están implementados aún (versión avanzada).,
+js/app.js (L7289),mensaje/JS,Configuración guardada,
+js/app.js (L7309),etiqueta/HTML,➕ Sobreponer — agregar al modelo actual (funde nodos coincidentes),
+js/app.js (L7310),etiqueta/HTML,🗑 Nueva — reemplazar el modelo actual por el generado,
+js/app.js (L7311),etiqueta/HTML,✕ Cancelar,
+js/app.js (L7420),mensaje/JS,Sin reemplazos: todo se interpretó correctamente,
+js/app.js (L7423),mensaje/JS,Resumen del asistente — ajustes realizados,
+js/app.js (L7424),etiqueta/HTML,El modelo se generó. Estos datos faltaban o no se reconocieron y se sustituyeron/estimaron:,
+js/app.js (L7524),mensaje/JS,Error al guardar: …,
+js/app.js (L7593),mensaje/JS,CSV importado con … advertencia(s),
+js/app.js (L7596),mensaje/JS,CSV importado correctamente,
+js/app.js (L7601),mensaje/JS,Advertencias al importar,
+js/app.js (L7606),mensaje/JS,Error al importar CSV: …,
+js/app.js (L7617),mensaje/JS,CSV exportado,
+js/app.js (L7623),mensaje/JS,No hay formatos de exportación registrados,
+js/app.js (L7626),mensaje/JS,🔄 Exportar a otro motor,
+js/app.js (L7640),mensaje/JS,Exportado a …${warnings.length ?,
+js/app.js (L7641),mensaje/JS,Advertencias al exportar,
+js/app.js (L7642),mensaje/JS,Error al exportar:,
+js/app.js (L7647),mensaje/JS,No hay formatos de importación registrados,
+js/app.js (L7651),mensaje/JS,🔄 Importar de otro motor,
+js/app.js (L7677),mensaje/JS,Error al importar:,
+js/app.js (L7695),mensaje/JS,No se pudo cargar el importador IFC:,
+js/app.js (L7701),mensaje/JS,Error al leer el IFC:,
+js/app.js (L7702),mensaje/JS,El IFC no contiene elementos reconocibles,
+js/app.js (L7718),mensaje/JS,Advertencias al importar IFC,
+js/app.js (L7719),mensaje/JS,Error al construir el modelo:,
+js/app.js (L7726),mensaje/JS,Modelo vacío — nada que exportar,
+js/app.js (L7738),mensaje/JS,IFC exportado: … barras${neutral.areas?.length ?,
+js/app.js (L7739),mensaje/JS,Advertencias al exportar IFC,
+js/app.js (L7740),mensaje/JS,Error al exportar IFC:,
+js/app.js (L7794),tooltip,Activar «…»,
+js/app.js (L7795),tooltip,Renombrar,
+js/app.js (L7796),tooltip,Duplicar,
+js/app.js (L7806),mensaje/JS,Renombrar modelo,
+js/app.js (L7812),mensaje/JS,¿Eliminar el modelo «…» del proyecto?,
+js/app.js (L7822),mensaje/JS,🗂 Modelos del proyecto,
+js/app.js (L7826),tooltip,Activar este modelo,
+js/app.js (L7828),tooltip,Eliminar del proyecto,
+js/app.js (L7889),mensaje/JS,Proyecto sin modelos,
+js/app.js (L7895),mensaje/JS,Proyecto cargado: … modelo(s) · activo «…»,
+js/app.js (L7926),mensaje/JS,Modelo «…» (…) agregado al proyecto,
+js/app.js (L7938),mensaje/JS,Modelo duplicado: «…»,
+js/app.js (L7943),mensaje/JS,El proyecto debe tener al menos un modelo,
+js/app.js (L7993),mensaje/JS,El archivo trae resultados que no calzan con el modelo (se ignoran),
+js/app.js (L8092),mensaje/JS,Plantilla descargada,
+js/app.js (L8175),etiqueta/HTML,Empezar nuevo (vacío),
+js/app.js (L8190),mensaje/JS,No se pudo leer el autoguardado,
+js/app.js (L8233),etiqueta/HTML,· sesión actual,
+js/app.js (L8238),mensaje/JS,No hay autoguardados temporales,
+js/app.js (L8248),etiqueta/HTML,🧹 Limpiar todos,
+js/app.js (L8259),mensaje/JS,¿Reanudar,
+js/app.js (L8261),mensaje/JS,Autoguardado reanudado,
+js/app.js (L8265),mensaje/JS,¿Eliminar TODOS los autoguardados temporales? (No afecta el modelo abierto.),
+js/app.js (L8268),mensaje/JS,Autoguardados temporales eliminados,
+js/app.js (L8299),tooltip,Eliminar este autoguardado,
+js/app.js (L8334),mensaje/JS,Trabajo autoguardado recuperado,
+js/app.js (L8410),mensaje/JS,Imagen exportada,
+js/app.js (L8416),mensaje/JS,Modelo vacío — nada que documentar,
+js/app.js (L8418),mensaje/JS,Generando memoria de cálculo…,
+js/app.js (L8434),mensaje/JS,Pop-up bloqueado — memoria descargada como HTML,
+js/app.js (L8440),mensaje/JS,Memoria generada — use «Imprimir → Guardar como PDF»,
+js/app.js (L8481),mensaje/JS,Generando memoria (Word)…,
+js/app.js (L8496),mensaje/JS,Memoria Word (.docx) descargada,
+js/app.js (L8496),mensaje/JS,Memoria Word (.docx) descargada${multi ?,
+js/app.js (L8499),mensaje/JS,No se pudo generar el .docx:,
+js/app.js (L8562),etiqueta/HTML,Documento de carácter docente. Los resultados deben ser validados por un profesional competente antes de cualquier uso en obra.,
+js/app.js (L8574),etiqueta/HTML,1. Bases de cálculo,
+js/app.js (L8625),etiqueta/HTML,Modos extraídos: …. Frecuencias y períodos de los primeros modos:,
+js/app.js (L8650),etiqueta/HTML,No hay resultados de análisis para verificar. Ejecute el análisis estático (F5) con sus combinaciones de carga antes de generar la memoria.,
+js/app.js (L8999),etiqueta/HTML,No hay casos de carga estáticos definidos.,
+js/app.js (L9013),etiqueta/HTML,Espectro de respuesta — dirección …,
+js/app.js (L9016),etiqueta/HTML,Sa(T) = S·A₀·I·α(T)/R* (NCh433 / DS61). Unidad de Sa: ….,
+js/app.js (L9039),etiqueta/HTML,Mx/My/Mrz = masa modal participante (%). Σ = acumulada.,
+js/app.js (L9042),etiqueta/HTML,No se ha ejecutado el análisis modal. Ejecute «Análisis → Análisis Modal (F6)» para documentar los modos de vibrar.,
+js/app.js (L9049),etiqueta/HTML,Deformada no disponible — ejecute el análisis estático (F5).,
+js/app.js (L9091),etiqueta/HTML,Límites como fracción de la luz L. La verificación de flecha por elemento debe contrastarse con la luz libre de cada vano.,
+js/app.js (L9261),etiqueta/HTML,🖨 Imprimir / Guardar PDF,
+js/app.js (L9270),etiqueta/HTML,1.1 Descripción del modelo,
+js/app.js (L9279),etiqueta/HTML,1.2 Métodos de diseño,
+js/app.js (L9282),etiqueta/HTML,1.3 Normas y códigos,
+js/app.js (L9285),etiqueta/HTML,1.4 Materiales y propiedades mecánicas,
+js/app.js (L9289),etiqueta/HTML,1.5 Secciones,
+js/app.js (L9293),etiqueta/HTML,1.6 Cargas y sobrecargas,
+js/app.js (L9296),etiqueta/HTML,1.7 Acción sísmica,
+js/app.js (L9299),etiqueta/HTML,1.8 Combinaciones de carga,
+js/app.js (L9302),etiqueta/HTML,1.9 Flechas admisibles,
+js/app.js (L9305),etiqueta/HTML,2. Análisis estructural,
+js/app.js (L9306),etiqueta/HTML,2.1 Modelo deformado,
+js/app.js (L9308),etiqueta/HTML,2.2 Análisis modal — modos de vibrar,
+js/app.js (L9311),etiqueta/HTML,3. Diseño de elementos (resistencia),
+js/app.js (L9314),etiqueta/HTML,4. Verificaciones de servicio,
+js/app.js (L9315),etiqueta/HTML,4.1 Deformaciones de vigas — sobrecarga de uso (sin mayorar),
+js/app.js (L9317),etiqueta/HTML,4.2 Derivas sísmicas de entrepiso — NCh433 (límite 2/1000·h),
+js/app.js (L9320),etiqueta/HTML,5. Limitaciones y alcances,
+js/app.js (L9327),etiqueta/HTML,Sin curva.,
+js/app.js (L9377),mensaje/JS,Confirmar,
+js/ui/properties.js (L77),mensaje/JS,Escribe una descripción del modelo,
+js/ui/properties.js (L85),mensaje/JS,Escribe qué cambio hacer,
+js/ui/properties.js (L108),etiqueta/HTML,"Ejecute el análisis estático (F5). Para verificar la combinación última, selecciónela como resultado mostrado y vuelva a verificar.",
+js/ui/properties.js (L111),etiqueta/HTML,Calculando…,
+js/ui/properties.js (L115),etiqueta/HTML,No hay resultados para verificar.,
+js/ui/properties.js (L137),tooltip,… — flexión … · corte … · axial … · interacción …,
+js/ui/properties.js (L145),etiqueta/HTML,⚡ Predimensionar,
+js/ui/properties.js (L145),tooltip,Predimensionar (antes del análisis): propone una sección inicial por reglas simples.,
+js/ui/properties.js (L146),etiqueta/HTML,🧮 Diseñar (auto),
+js/ui/properties.js (L146),tooltip,Diseñar (después del análisis): elige del catálogo el perfil de acero más liviano que cumple D/C≤1.,
+js/ui/properties.js (L149),etiqueta/HTML,🏛️ Nudos SCWB,
+js/ui/properties.js (L149),tooltip,Nudos columna fuerte–viga débil (ACI 18.7.3 / AISC 341): resalta en el modelo los nudos donde ΣMnc < γ·ΣMnb (no cumplen).,
+js/ui/properties.js (L149),etiqueta/HTML,… cumplen,
+js/ui/properties.js (L149),etiqueta/HTML,… no cumplen,
+js/ui/properties.js (L150),etiqueta/HTML,📄 Reporte (CSV),
+js/ui/properties.js (L150),tooltip,"Exporta un reporte de diseño (CSV): por elemento, sección, esfuerzos, D/C por chequeo (flexión/corte/axial/interacción) y el que gobierna.",
+js/ui/properties.js (L152),etiqueta/HTML,Estados:,
+js/ui/properties.js (L153),etiqueta/HTML,… ajustados,
+js/ui/properties.js (L186),etiqueta/HTML,(por defecto),
+js/ui/properties.js (L187),etiqueta/HTML,Código …,
+js/ui/properties.js (L189),etiqueta/HTML,Código de diseño,
+js/ui/properties.js (L189),tooltip,Norma de diseño por familia (como SAP2000). Ver docs/diseno.md.,
+js/ui/properties.js (L237),placeholder,factor,
+js/ui/properties.js (L263),etiqueta/HTML,capacidades: …,
+js/ui/properties.js (L271),etiqueta/HTML,Carga de colapso = … × carga de referencia.,
+js/ui/properties.js (L282),etiqueta/HTML,Secuencia de formación de rótulas (λ = factor de carga). Mp = capacidad de cada rótula [kN·m]. δctrl = desplazamiento máximo.,
+js/ui/properties.js (L309),etiqueta/HTML,Desplazamientos Nodo Master #…,
+js/ui/properties.js (L322),etiqueta/HTML,Ctrl+clic: añadir/quitar | Clic vacío: deseleccionar,
+js/ui/properties.js (L343),etiqueta/HTML,… elemento(s) — ejecute el análisis para ver fuerzas.,
+js/ui/properties.js (L343),etiqueta/HTML,Acciones · … elemento(s),
+js/ui/properties.js (L377),etiqueta/HTML,Fuerzas Internas,
+js/ui/properties.js (L388),etiqueta/HTML,… nodo(s) — ejecute el análisis para ver desplazamientos.,
+js/ui/properties.js (L388),etiqueta/HTML,Apoyo · … nodo(s),
+js/ui/properties.js (L429),etiqueta/HTML,Áreas · … seleccionada(s),
+js/ui/properties.js (L441),etiqueta/HTML,Espesor t (m),
+js/ui/properties.js (L449),etiqueta/HTML,Giro en el plano (triáng. Allman),
+js/ui/properties.js (L451),tooltip,Triángulo Allman: añade GDL de giro en-plano (supera el bloqueo del CST). Solo afecta áreas de 3 nodos.,
+js/ui/properties.js (L454),etiqueta/HTML,Eliminar … área(s),
+js/ui/properties.js (L480),tooltip,Fija las 6 GDL,
+js/ui/properties.js (L481),tooltip,"Fija traslaciones, libera giros",
+js/ui/properties.js (L482),tooltip,Solo vertical (Uz),
+js/ui/properties.js (L483),tooltip,Sin apoyo,
+js/ui/properties.js (L499),etiqueta/HTML,Aplicar a todos,
+js/ui/properties.js (L499),tooltip,Asigna la misma carga nodal a TODOS los nodos seleccionados,
+js/ui/properties.js (L500),etiqueta/HTML,Limpiar todos,
+js/ui/properties.js (L500),tooltip,Quita la carga nodal de los nodos seleccionados,
+js/ui/properties.js (L519),etiqueta/HTML,Mover / Copiar selección,
+js/ui/properties.js (L521),etiqueta/HTML,dX (m),
+js/ui/properties.js (L522),etiqueta/HTML,dY (m),
+js/ui/properties.js (L523),etiqueta/HTML,dZ (m),
+js/ui/properties.js (L527),etiqueta/HTML,Copiar ×N,
+js/ui/properties.js (L527),tooltip,Crea copias desplazadas (array),
+js/ui/properties.js (L528),tooltip,Desplaza la selección,
+js/ui/properties.js (L531),etiqueta/HTML,2ª dirección (array 2D) y espejar,
+js/ui/properties.js (L539),etiqueta/HTML,"Array 2D = grilla rep × rep₂ (usa ""Copiar ×N"").",
+js/ui/properties.js (L542),etiqueta/HTML,Espejar plano,
+js/ui/properties.js (L545),tooltip,Crea una copia reflejada de la selección,
+js/ui/properties.js (L548),etiqueta/HTML,"Ej.: dX=5, rep=10 → 10 copias cada 5 m. Con dY₂ y rep₂ se hace grilla 2D. Copias coincidentes se fusionan.",
+js/ui/properties.js (L570),etiqueta/HTML,Material a todos,
+js/ui/properties.js (L575),etiqueta/HTML,Sección a todos,
+js/ui/properties.js (L580),etiqueta/HTML,Discretizar (nº tramos c/u),
+js/ui/properties.js (L586),etiqueta/HTML,Carga w (kN/m),
+js/ui/properties.js (L589),etiqueta/HTML,Gravedad ↓,
+js/ui/properties.js (L590),etiqueta/HTML,Global +X,
+js/ui/properties.js (L591),etiqueta/HTML,Global +Y,
+js/ui/properties.js (L592),etiqueta/HTML,Local y,
+js/ui/properties.js (L593),etiqueta/HTML,Local z,
+js/ui/properties.js (L598),etiqueta/HTML,Aplicar carga,
+js/ui/properties.js (L598),tooltip,Asigna la misma carga distribuida a todos (reemplaza la previa en ese caso),
+js/ui/properties.js (L599),etiqueta/HTML,Quitar carga,
+js/ui/properties.js (L599),tooltip,Quita las cargas distribuidas de estos elementos en el caso elegido,
+js/ui/properties.js (L602),etiqueta/HTML,Temperatura ΔT (°C),
+js/ui/properties.js (L602),tooltip,Cambio uniforme de temperatura. Usa α del material → carga axial térmica.,
+js/ui/properties.js (L605),etiqueta/HTML,Aplicar ΔT,
+js/ui/properties.js (L605),tooltip,Asigna ΔT uniforme a los elementos (reemplaza la previa en ese caso),
+js/ui/properties.js (L606),etiqueta/HTML,Quitar ΔT,
+js/ui/properties.js (L606),tooltip,Quita las cargas de temperatura de estos elementos en el caso elegido,
+js/ui/properties.js (L610),etiqueta/HTML,Unir colineales,
+js/ui/properties.js (L610),tooltip,Une tramos colineales en una sola barra,
+js/ui/properties.js (L611),etiqueta/HTML,Cortar en intersección,
+js/ui/properties.js (L611),tooltip,Crea un nodo común en el cruce de los 2 elementos,
+js/ui/properties.js (L612),tooltip,Oculta los elementos (Vista → Mostrar todo para revertir),
+js/ui/properties.js (L612),tooltip,Ocultar,
+js/ui/properties.js (L612),tooltip,Mostrar,
+js/ui/properties.js (L615),etiqueta/HTML,Crear grupo (nombre),
+js/ui/properties.js (L616),placeholder,ej. Cordón superior,
+js/ui/properties.js (L645),tooltip,Seleccionar,
+js/ui/properties.js (L648),tooltip,Eliminar grupo,
+js/ui/properties.js (L667),etiqueta/HTML,"Haga clic en un nodo, elemento o área para editar sus propiedades. Ctrl+clic para seleccionar varios.",
+js/ui/properties.js (L668),etiqueta/HTML,… elemento(s) oculto(s) · Vista → Mostrar todo,
+js/ui/properties.js (L740),etiqueta/HTML,Material y espesor,
+js/ui/properties.js (L753),tooltip,Membrana = solo en-plano · Placa = solo flexión · Shell = membrana + placa (flexión),
+js/ui/properties.js (L761),tooltip,Deformación plana (ε_z=0) en vez de tensión plana (σ_z=0). Solo afecta la parte de membrana.,
+js/ui/properties.js (L765),tooltip,Triángulo Allman: añade un GDL de giro en el plano por nodo. Menos rígido que el CST en flexión en-plano (supera el bloqueo por corte).,
+js/ui/properties.js (L765),placeholder,rígido,
+js/ui/properties.js (L773),etiqueta/HTML,Eliminar Área #…,
+js/ui/properties.js (L792),etiqueta/HTML,"Carga térmica (por cara, #57)",
+js/ui/properties.js (L794),etiqueta/HTML,Caso de carga,
+js/ui/properties.js (L797),etiqueta/HTML,"🟥 Cara +Z, ΔT (°C)",
+js/ui/properties.js (L798),tooltip,"Temperatura de la cara superior (+z local, roja).",
+js/ui/properties.js (L799),etiqueta/HTML,"🟦 Cara −Z, ΔT (°C)",
+js/ui/properties.js (L800),tooltip,"Temperatura de la cara inferior (−z local, azul).",
+js/ui/properties.js (L803),tooltip,Asigna la temperatura por cara a esta área (reemplaza la previa en ese caso). Media → membrana; diferencia → momento térmico de flexión.,
+js/ui/properties.js (L804),tooltip,Quita la carga térmica de esta área en el caso elegido,
+js/ui/properties.js (L829),etiqueta/HTML,Tensiones (centro),
+js/ui/properties.js (L839),etiqueta/HTML,"Momentos de placa (kN·m/m, centro, local)",
+js/ui/properties.js (L844),etiqueta/HTML,"Deformaciones de membrana (ε, centro, local)",
+js/ui/properties.js (L855),etiqueta/HTML,"Desplazamientos nodales (δx, δy, δz)",
+js/ui/properties.js (L938),etiqueta/HTML,No hay nodos. Créelos en la vista 3D (tecla N) o con el botón de abajo.,
+js/ui/properties.js (L1027),etiqueta/HTML,No hay elementos. Créelos en la vista 3D (tecla E).,
+js/ui/properties.js (L1134),etiqueta/HTML,Masa tributaria,
+js/ui/properties.js (L1144),etiqueta/HTML,[Nodo CR],
+js/ui/properties.js (L1182),tooltip,Modelo 2D: este GDL fuera del plano se restringe automáticamente,
+js/ui/properties.js (L1197),tooltip,Modelo 2D: todos los nodos están en el plano Y=0,
+js/ui/properties.js (L1203),etiqueta/HTML,Restricciones (1 = fijo),
+js/ui/properties.js (L1206),etiqueta/HTML,Fijar Todo (empotramiento total),
+js/ui/properties.js (L1206),tooltip,"Fija las 6 GDL (3 traslaciones + 3 giros): empotramiento, resiste fuerzas y momentos.",
+js/ui/properties.js (L1208),etiqueta/HTML,Liberar Todo,
+js/ui/properties.js (L1208),tooltip,Liberar … (…): el esfuerzo … vale 0 en este extremo,
+js/ui/properties.js (L1209),etiqueta/HTML,Pin (rótula),
+js/ui/properties.js (L1209),tooltip,"Apoyo articulado: fija traslaciones, libera giros (no resiste momentos).",
+js/ui/properties.js (L1219),etiqueta/HTML,kUX (kN/m),
+js/ui/properties.js (L1222),etiqueta/HTML,kUY (kN/m),
+js/ui/properties.js (L1225),etiqueta/HTML,kUZ (kN/m),
+js/ui/properties.js (L1230),etiqueta/HTML,kRX (kN·m/rad),
+js/ui/properties.js (L1233),etiqueta/HTML,kRY (kN·m/rad),
+js/ui/properties.js (L1236),etiqueta/HTML,kRZ (kN·m/rad),
+js/ui/properties.js (L1247),tooltip,Apoyo UNILATERAL: el resorte se desactiva cuando el nodo se despega (uplift/gap). Solo-compresión = no toma tracción (fundaciones que se levantan). Se resuelve por conjunto activo en el análisis estático (#3).,
+js/ui/properties.js (L1247),etiqueta/HTML,Unilateral (a los GDL con resorte),
+js/ui/properties.js (L1249),etiqueta/HTML,Bilateral (normal),
+js/ui/properties.js (L1250),etiqueta/HTML,Solo-compresión (uplift),
+js/ui/properties.js (L1251),etiqueta/HTML,Solo-tracción,
+js/ui/properties.js (L1256),tooltip,Rigidez del resorte a lo largo de la dirección dada,
+js/ui/properties.js (L1256),etiqueta/HTML,k incl. (kN/m),
+js/ui/properties.js (L1263),tooltip,"Resorte de apoyo INCLINADO: rigidez k a lo largo de (dx,dy,dz). Genera una matriz de resorte ACOPLADA 6×6 (términos fuera de la diagonal) y se ensambla completa (#2).",
+js/ui/properties.js (L1263),etiqueta/HTML,↗ Aplicar resorte inclinado,
+js/ui/properties.js (L1264),tooltip,Quitar la matriz de resorte acoplada,
+js/ui/properties.js (L1273),etiqueta/HTML,UX (m),
+js/ui/properties.js (L1276),etiqueta/HTML,UY (m),
+js/ui/properties.js (L1279),etiqueta/HTML,UZ (m),
+js/ui/properties.js (L1284),etiqueta/HTML,RX (rad),
+js/ui/properties.js (L1287),etiqueta/HTML,RY (rad),
+js/ui/properties.js (L1290),etiqueta/HTML,RZ (rad),
+js/ui/properties.js (L1306),etiqueta/HTML,mx (ton),
+js/ui/properties.js (L1309),etiqueta/HTML,my (ton),
+js/ui/properties.js (L1312),etiqueta/HTML,mz (ton),
+js/ui/properties.js (L1317),etiqueta/HTML,Irx (ton·m²),
+js/ui/properties.js (L1318),tooltip,Inercia rotacional concentrada en el GDL de giro Rx,
+js/ui/properties.js (L1320),etiqueta/HTML,Iry (ton·m²),
+js/ui/properties.js (L1321),tooltip,Inercia rotacional concentrada en el GDL de giro Ry,
+js/ui/properties.js (L1323),etiqueta/HTML,Irz (ton·m²),
+js/ui/properties.js (L1324),tooltip,Inercia rotacional concentrada en el GDL de giro Rz,
+js/ui/properties.js (L1338),etiqueta/HTML,Eliminar Nodo #…,
+js/ui/properties.js (L1418),mensaje/JS,"Indique k > 0 y una dirección (dx,dy,dz)",
+js/ui/properties.js (L1422),mensaje/JS,Resorte inclinado (acoplado) aplicado,
+js/ui/properties.js (L1430),mensaje/JS,Resorte acoplado quitado,
+js/ui/properties.js (L1463),etiqueta/HTML,L₀ / L (pretensado si <1),
+js/ui/properties.js (L1467),etiqueta/HTML,Se usa en Análisis → No lineal (actívalo en ⚙ Configuración). El análisis lineal (F5) ignora estos campos.,
+js/ui/properties.js (L1489),tooltip,Rótula clásica: libera My y Mz en este extremo,
+js/ui/properties.js (L1490),tooltip,Quitar todas las liberaciones de este extremo,
+js/ui/properties.js (L1503),etiqueta/HTML,Nodo 1,
+js/ui/properties.js (L1504),etiqueta/HTML,Nodo 2,
+js/ui/properties.js (L1531),etiqueta/HTML,⚠ Liberar en exceso crea mecanismos (estructura inestable): el análisis lo detectará y avisará.,
+js/ui/properties.js (L1535),etiqueta/HTML,Cable / No lineal (NL-lite),
+js/ui/properties.js (L1536),tooltip,"El elemento se comporta como cable: solo resiste tracción (queda flojo en compresión, N=0). Para el análisis no lineal.",
+js/ui/properties.js (L1539),tooltip,El elemento solo resiste compresión (puntal/contacto): queda suelto en tracción (N=0). Excluyente con «Cable». Para el análisis no lineal.,
+js/ui/properties.js (L1543),tooltip,Longitud natural (sin tensión) ÷ longitud geométrica. 1 = sin pretensar. Menor que 1 = pretensado (tracción en reposo).,
+js/ui/properties.js (L1547),etiqueta/HTML,Se usa en,
+js/ui/properties.js (L1551),etiqueta/HTML,Cacho rígido (zona rígida de extremo),
+js/ui/properties.js (L1551),tooltip,"Cacho rígido / zona rígida de extremo (end length offset, como SAP2000/ETABS): tramo rígido en cada extremo de la barra. Acorta la luz flexible → más rigidez. En metros; 0 = sin cacho.",
+js/ui/properties.js (L1553),etiqueta/HTML,Cacho i — nodo … (m),
+js/ui/properties.js (L1553),tooltip,Longitud del tramo rígido en el extremo del nodo 1 (m).,
+js/ui/properties.js (L1555),etiqueta/HTML,Cacho j — nodo … (m),
+js/ui/properties.js (L1555),tooltip,Longitud del tramo rígido en el extremo del nodo 2 (m).,
+js/ui/properties.js (L1562),tooltip,"Resorte de extremo / fijación parcial (conexión semi-rígida, como «partial fixity» de SAP2000): rigidez ROTACIONAL kN·m/rad entre la barra y el nodo. Vacío = rígido; el solver lo condensa (k→∞ rígido, k→0 rótula). Afecta el análisis lineal (F5). My/Mz como en las liberaciones de arriba.",
+js/ui/properties.js (L1564),tooltip,Resorte rotacional My (flexión plano local x–z) en el extremo i.,
+js/ui/properties.js (L1566),tooltip,Resorte rotacional Mz (flexión plano local x–y) en el extremo i.,
+js/ui/properties.js (L1570),tooltip,Resorte rotacional My (flexión plano local x–z) en el extremo j.,
+js/ui/properties.js (L1572),tooltip,Resorte rotacional Mz (flexión plano local x–y) en el extremo j.,
+js/ui/properties.js (L1579),tooltip,"Viga sobre fundación elástica / resorte de LÍNEA (modelo de Winkler): módulo de balasto distribuido a lo largo de la barra, kN/m por metro (= kN/m²). Resiste la traslación transversal del miembro (suelo bajo una viga de fundación, pilote lateral…). Matriz consistente sumada a K. Afecta el análisis lineal (F5).",
+js/ui/properties.js (L1581),tooltip,Módulo de balasto en la dirección transversal local y (kN/m por m de longitud).,
+js/ui/properties.js (L1583),tooltip,Módulo de balasto en la dirección transversal local z (kN/m por m de longitud).,
+js/ui/properties.js (L1590),etiqueta/HTML,Herramientas Didácticas,
+js/ui/properties.js (L1592),tooltip,"Ver Ke local, T, Ke global y Me de este elemento — para comparar con el cálculo manual del curso",
+js/ui/properties.js (L1596),tooltip,Diagrama de cuerpo libre: fuerzas de extremo que actúan sobre el elemento + verificación ΣF=0 ΣM=0 (requiere análisis F5),
+js/ui/properties.js (L1604),etiqueta/HTML,Nº de partes,
+js/ui/properties.js (L1608),etiqueta/HTML,Dividir en N,
+js/ui/properties.js (L1608),tooltip,Divide este elemento en N tramos iguales,
+js/ui/properties.js (L1612),etiqueta/HTML,Tramo (m),
+js/ui/properties.js (L1616),etiqueta/HTML,Dividir c/L,
+js/ui/properties.js (L1616),tooltip,Divide este elemento en tramos de ≈ esta longitud,
+js/ui/properties.js (L1619),etiqueta/HTML,Para volver a unir: seleccione los tramos con Ctrl+clic y use Editar → Unir Elementos Seleccionados (o Ctrl+Z).,
+js/ui/properties.js (L1623),etiqueta/HTML,Eliminar Elemento #…,
+js/ui/properties.js (L1680),mensaje/JS,Ingrese 2 o más partes,
+js/ui/properties.js (L1685),mensaje/JS,Ingrese una longitud válida,
+js/ui/properties.js (L1690),etiqueta/HTML,Gravedad ↓ (w>0 = abajo),
+js/ui/properties.js (L1724),tooltip,"Caso de carga al que se asigna esta carga (⊕PP = incluye peso propio; 〜 = espectral, no admite cargas)",
+js/ui/properties.js (L1780),mensaje/JS,Carga aplicada,
+js/ui/properties.js (L1790),mensaje/JS,Carga eliminada,
+js/ui/properties.js (L1811),etiqueta/HTML,w en i (kN/m),
+js/ui/properties.js (L1814),etiqueta/HTML,w en j (kN/m),
+js/ui/properties.js (L1815),placeholder,#¿NOMBRE?,
+js/ui/properties.js (L1906),etiqueta/HTML,Insertar material estándar,
+js/ui/properties.js (L1907),etiqueta/HTML,— catálogo —,
+js/ui/properties.js (L1908),etiqueta/HTML,＋ Insertar,
+js/ui/properties.js (L1921),mensaje/JS,Material «…» agregado del catálogo,
+js/ui/properties.js (L1942),etiqueta/HTML,ρ (ton/m³),
+js/ui/properties.js (L1945),etiqueta/HTML,E (kN/m²),
+js/ui/properties.js (L1946),etiqueta/HTML,G (kN/m²),
+js/ui/properties.js (L1950),tooltip,"Coef. de dilatación térmica (hormigón ~1e-5, acero ~1.2e-5). Para cargas de temperatura ΔT.",
+js/ui/properties.js (L1984),etiqueta/HTML,… (MPa),
+js/ui/properties.js (L1994),etiqueta/HTML,Familia «auto»: se clasifica por el nombre y se usan las resistencias del respaldo (diseno_params.json).,
+js/ui/properties.js (L2002),tooltip,"Familia y resistencias para la verificación de diseño (AISC 360, Eurocódigo 3, ACI 318, NCh1198). Ver docs/diseno.md.",
+js/ui/properties.js (L2057),tooltip,"Editar caso (nombre, peso propio, eliminar)",
+js/ui/properties.js (L2163),mensaje/JS,＋ Agregar Factor,
+js/ui/properties.js (L2177),etiqueta/HTML,▶ Ejecutar,
+js/ui/properties.js (L2234),etiqueta/HTML,Tipo de elemento (diseño),
+js/ui/properties.js (L2234),tooltip,Clasifica la sección para el diseño: permite recorrer y diseñar sólo los pilares (o sólo las vigas). «Genérico» = sin filtrar.,
+js/ui/properties.js (L2234),etiqueta/HTML,Genérico,
+js/ui/properties.js (L2237),etiqueta/HTML,🟦 Pilar / columna,
+js/ui/properties.js (L2238),etiqueta/HTML,🟩 Viga,
+js/ui/properties.js (L2257),etiqueta/HTML,"Modificadores de rigidez (× A, I, J — p.ej. sección agrietada ACI)",
+js/ui/properties.js (L2295),mensaje/JS,Modificador de sección aplicado — recalcule el análisis (F5),
+js/ui/properties.js (L2322),etiqueta/HTML,"Vértices del contorno «x, y» por línea (m)",
+js/ui/properties.js (L2323),placeholder,"0, 0\n0.3, 0\n0.3, 0.5\n0, 0.5",
+js/ui/properties.js (L2326),etiqueta/HTML,clic = agregar · arrastrar = mover · doble clic = borrar,
+js/ui/properties.js (L2328),etiqueta/HTML,"Huecos (lazos separados por línea en blanco, opcional)",
+js/ui/properties.js (L2330),etiqueta/HTML,"Calcula A, Iz, Iy, Iyz, ejes principales, S y Z plástico. Pulse «Calcular A, I, J».",
+js/ui/properties.js (L2332),etiqueta/HTML,"Genérica: el diseño usa un rectángulo equivalente a partir de A, I.",
+js/ui/properties.js (L2341),etiqueta/HTML,Forma (diseño),
+js/ui/properties.js (L2341),tooltip,"Forma del perfil para el diseño: deriva módulos plásticos, esbelteces, etc. Ver docs/diseno.md.",
+js/ui/properties.js (L2343),etiqueta/HTML,Perfil tabulado (catálogo),
+js/ui/properties.js (L2343),mensaje/JS,"Perfil … aplicado (A, I, J y forma). Recalcule el análisis (F5).",
+js/ui/properties.js (L2344),etiqueta/HTML,— elegir perfil comercial —,
+js/ui/properties.js (L2354),etiqueta/HTML,ρ armadura (H.A.),
+js/ui/properties.js (L2354),tooltip,Cuantía longitudinal (fallback si no se dan barras explícitas),
+js/ui/properties.js (L2355),etiqueta/HTML,recubr. (mm),
+js/ui/properties.js (L2357),tooltip,Barras longitudinales explícitas para el diagrama P-M (#70). Tienen prioridad sobre ρ.,
+js/ui/properties.js (L2358),etiqueta/HTML,n sup.,
+js/ui/properties.js (L2359),etiqueta/HTML,n inf.,
+js/ui/properties.js (L2360),etiqueta/HTML,φ barra (mm),
+js/ui/properties.js (L2362),tooltip,"Estribos para el corte: φVn = φ(Vc+Vs), Vs=Av·fy·d/s (#70).",
+js/ui/properties.js (L2363),etiqueta/HTML,estribo φ (mm),
+js/ui/properties.js (L2364),etiqueta/HTML,sep. s (mm),
+js/ui/properties.js (L2366),etiqueta/HTML,"↻ Calcular A, I, J desde la forma",
+js/ui/properties.js (L2366),tooltip,"Calcula A, Iz, Iy, J, Av desde las dimensiones y los escribe en la sección (para el análisis y el diseño).",
+js/ui/properties.js (L2382),mensaje/JS,Perfil no encontrado,
+js/ui/properties.js (L2387),mensaje/JS,"A, I, J calculados desde la forma …. Recalcule el análisis (F5).",
+js/ui/properties.js (L2425),mensaje/JS,Elija una forma con dimensiones primero,
+js/ui/properties.js (L2429),mensaje/JS,Faltan dimensiones de la forma,
+js/ui/properties.js (L2435),mensaje/JS,No se pudo calcular:,
+js/ui/properties.js (L2514),mensaje/JS,El polígono necesita al menos 3 vértices,
+js/ui/properties.js (L2533),mensaje/JS,Calculadora de Sección,
+js/ui/properties.js (L2574),etiqueta/HTML,Forma de sección,
+js/ui/properties.js (L2576),etiqueta/HTML,Rectangular (b × h),
+js/ui/properties.js (L2577),etiqueta/HTML,Circular sólida (D),
+js/ui/properties.js (L2578),etiqueta/HTML,Rectangular hueca,
+js/ui/properties.js (L2579),etiqueta/HTML,Tubular circular,
+js/ui/properties.js (L2580),etiqueta/HTML,Perfil IPE (tabla),
+js/ui/properties.js (L2580),etiqueta/HTML,Perfil IPE,
+js/ui/properties.js (L2581),etiqueta/HTML,Perfil HEB (tabla),
+js/ui/properties.js (L2581),etiqueta/HTML,Perfil HEB,
+js/ui/properties.js (L2617),etiqueta/HTML,t espesor (m),
+js/ui/properties.js (L2622),etiqueta/HTML,D ext (m),
+js/ui/properties.js (L2676),etiqueta/HTML,⚠ Dimensiones inválidas,
+js/ui/properties.js (L2835),etiqueta/HTML,"No hay diafragmas definidos. Use ""Auto-detectar Pisos"" o agregue uno manualmente.",
+js/ui/properties.js (L2857),etiqueta/HTML,… nodos | Z=…,
+js/ui/properties.js (L2867),etiqueta/HTML,Z piso (m),
+js/ui/properties.js (L2870),etiqueta/HTML,Nodo CR (master) ID,
+js/ui/properties.js (L2874),etiqueta/HTML,Centro de Rigidez (CR) — calculado,
+js/ui/properties.js (L2876),etiqueta/HTML,CR x (m),
+js/ui/properties.js (L2879),etiqueta/HTML,CR y (m),
+js/ui/properties.js (L2883),etiqueta/HTML,Centro de Masa (CM) — calculado,
+js/ui/properties.js (L2885),etiqueta/HTML,CM x (m),
+js/ui/properties.js (L2888),etiqueta/HTML,CM y (m),
+js/ui/properties.js (L2892),etiqueta/HTML,Masa Concentrada,
+js/ui/properties.js (L2894),etiqueta/HTML,m (ton),
+js/ui/properties.js (L2897),etiqueta/HTML,Icm (ton·m²),
+js/ui/properties.js (L2901),etiqueta/HTML,Excentricidad Accidental,
+js/ui/properties.js (L2910),etiqueta/HTML,Nodos del Piso,
+js/ui/properties.js (L2913),etiqueta/HTML,IDs (separados por coma),
+js/ui/properties.js (L2918),etiqueta/HTML,⟳ Recalcular CM/CR,
+js/ui/properties.js (L2990),mensaje/JS,Necesitas ≥ 2 nodos válidos,
+js/ui/properties.js (L2992),mensaje/JS,CM y CR recalculados,
+js/ui/viewport.js (L218),mensaje/JS,Área: selección reiniciada,
+js/ui/viewport.js (L222),mensaje/JS,Mallado: selección reiniciada,
+js/ui/viewport.js (L1047),etiqueta/HTML,Vista 3D,
+js/ui/viewport.js (L1094),etiqueta/HTML,Eje … (Y=…),
+js/ui/viewport.js (L1096),etiqueta/HTML,Eje … (X=…),
+js/ui/viewport.js (L1455),mensaje/JS,CM Diafragma #…,
+js/ui/viewport.js (L1455),mensaje/JS,Diafragma #… seleccionado,
+js/ui/viewport.js (L1462),mensaje/JS,… seleccionado,
+js/ui/viewport.js (L1508),mensaje/JS,Nodo #… → clic para el destino (o grilla) · Esc para terminar,
+js/ui/viewport.js (L1508),mensaje/JS,Nodo #… → clic para encadenar otro tramo · Esc para terminar,
+js/ui/viewport.js (L1508),mensaje/JS,Elemento #…,
+js/ui/viewport.js (L1508),mensaje/JS,Nodo #…,
+js/ui/viewport.js (L1560),mensaje/JS,… nodo(s) inestables resaltados,
+js/ui/viewport.js (L1690),etiqueta/HTML,Nuevo nodo:,
+js/ui/viewport.js (L1759),mensaje/JS,Haga clic dentro del área de trabajo,
+js/ui/viewport.js (L1768),mensaje/JS,Los nodos deben ser distintos,
+js/ui/viewport.js (L1785),mensaje/JS,Clic sobre un nodo (las áreas se forman con nodos),
+js/ui/viewport.js (L1790),mensaje/JS,Máximo 4 nodos. Enter para crear o Esc para reiniciar.,
+js/ui/viewport.js (L1801),mensaje/JS,Seleccione 3 (CST) o 4 (QUAD) nodos,
+js/ui/viewport.js (L1827),mensaje/JS,Mallar panel: …/4 esquinas,
+js/ui/viewport.js (L1833),mensaje/JS,Clic sobre un nodo del contorno a mallar,
+js/ui/viewport.js (L1839),mensaje/JS,El panel transfinito usa 4 esquinas. Enter para mallar o Esc para reiniciar.,
+js/ui/viewport.js (L1855),mensaje/JS,El panel transfinito necesita 4 nodos esquina,
+js/ui/viewport.js (L1856),mensaje/JS,La región libre necesita ≥3 nodos de contorno,
+js/ui/viewport.js (L1991),etiqueta/HTML,Empotrado (fijar todo),
+js/ui/viewport.js (L1991),tooltip,Empotramiento total: fija las 6 GDL (resiste fuerzas y momentos).,
+js/ui/viewport.js (L1992),etiqueta/HTML,Rótula (Pin),
+js/ui/viewport.js (L1995),etiqueta/HTML,"Rodillo (libre X,Y)",
+js/ui/viewport.js (L2130),mensaje/JS,Modo: …,
+js/ui/ifcImportDialog.js (L22),etiqueta/HTML,"const esc = s => String(s ?? '').replace(/[& ""]/g, c => ({ '&': '&', ' ': '>', '""': '""' }[c]));",
+js/ui/ifcImportDialog.js (L45),etiqueta/HTML,🏗️ Importar IFC,
+js/ui/ifcImportDialog.js (L52),etiqueta/HTML,Todos los importables,
+js/ui/ifcImportDialog.js (L53),etiqueta/HTML,Ocultar no soportados,
+js/ui/ifcImportDialog.js (L60),etiqueta/HTML,IFC original,
+js/ui/ifcImportDialog.js (L64),etiqueta/HTML,PÓRTICO (a crear),
+js/ui/ifcImportDialog.js (L74),etiqueta/HTML,Importar selección,
+js/ui/ifcImportDialog.js (L86),etiqueta/HTML,Tipo Nombre Nivel,
+js/ui/ifcImportDialog.js (L87),etiqueta/HTML,Material Sección Estado Avisos,
+js/ui/ifcImportDialog.js (L100),tooltip,aproximada,
