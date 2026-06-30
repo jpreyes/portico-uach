@@ -5,15 +5,17 @@
   "compatibility_date": "2026-06-16",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
-  // Sirve la PWA como assets estáticos; el Worker los lee vía env.ASSETS y
-  // maneja /api/asistente. .assetsignore excluye lo que no debe publicarse.
+  // Sirve la PWA como assets estáticos (overlay raíz + vendor/portico-core); el
+  // Worker los lee vía env.ASSETS y maneja /api/assistant*. .assetsignore excluye
+  // lo que no debe publicarse.
   "assets": { "directory": ".", "binding": "ASSETS" },
 
   // ── Registro de consultas del asistente (para alimentar el corpus) ──
   // Guarda cada pedido (estado ok/error/incorrecto) en Cloudflare KV (namespace ASIS_LOG).
-  //   - Leer lo guardado:  GET /api/asistente/log?token=TU_TOKEN[&solo_novedosos=1][&estado=ok|error|incorrecto]
+  //   - Leer lo guardado:  GET /api/assistant/log?token=TU_TOKEN[&solo_novedosos=1][&estado=ok|error|incorrecto]
   //     Devuelve conteo{ok,error,incorrecto,novedoso}, registros, corpus_sugerido y revisar[].
-  //   - Feedback del usuario (sin token):  POST /api/asistente/feedback { id, comentario? } → marca 'incorrecto'.
+  //   - Feedback del usuario (sin token):  POST /api/assistant/feedback { id, comentario? } → marca 'incorrecto'.
+  //   (Se acepta /api/asistente* como alias histórico.)
   //   Pendiente del usuario en el dashboard: crear el secreto ASIS_LOG_TOKEN
   //   (Worker → Settings → Variables and Secrets → Add → Secret) para poder leer /log.
   //

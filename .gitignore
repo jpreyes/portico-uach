@@ -4,7 +4,17 @@ dist/
 Thumbs.db
 *.log
 npm-debug.log*
+
+# ── Archivos de agentes de IA (guía de desarrollo local): NO se versionan ──
+#    La arquitectura/convenciones públicas viven en el README y en docs/EXTENDING.md
+#    del core (vendor/portico-core).
+CLAUDE.md
+AGENTS.md
+GEMINI.md
 .claude/
+.cursor/
+.cursorrules
+.github/copilot-instructions.md
 
 # Archivos del profesor (fuente local, NO se publican): Excel de normas y PDFs
 excel/

@@ -1,5 +1,5 @@
 // ──────────────────────────────────────────────────────────────────────────────
-// Service Worker de PÓRTICO — soporte offline (PWA)
+// Service Worker de PORTICO — soporte offline (PWA)
 //
 // Estrategia: "network-first con respaldo en caché".
 //   • En línea  → siempre intenta la red (evita servir módulos viejos durante el
@@ -9,20 +9,23 @@
 // Al subir la versión de la app, suba también CACHE_VERSION para forzar una
 // limpieza completa de la caché antigua en la próxima visita en línea.
 // ──────────────────────────────────────────────────────────────────────────────
-const CACHE_VERSION = 'v169';
+const CACHE_VERSION = 'v2';
 const CACHE = `portico-${CACHE_VERSION}`;
 
 // Núcleo mínimo para que la app arranque aunque sea la primera vez sin red.
 // El resto de módulos (Three.js, solver, ui, ejemplos) se cachean al vuelo
 // en la primera visita en línea gracias a la estrategia network-first.
+// Overlay UACh: el código (css/js/lib) vive en el submodule vendor/portico-core/;
+// branding/manifest/icons viven en la raíz del overlay.
 const SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './style.css?v=215',
-  './ui-v2.css?v=215',
-  './js/app.js?v=215',
-  './lib/numeric.js',
+  './branding.default.json',
+  './vendor/portico-core/style.css?v=2',
+  './vendor/portico-core/ui-v2.css?v=2',
+  './vendor/portico-core/js/app.js?v=2',
+  './vendor/portico-core/lib/numeric.js',
   './icons/icon.svg',
   './icons/icon-192.png',
   './icons/icon-512.png',

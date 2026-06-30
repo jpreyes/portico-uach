@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PÓRTICO · Análisis y Diseño Estructural 3D — IOC · UACh</title>
-  <meta name="description" content="PÓRTICO: análisis y diseño estructural 3D en el navegador. Barras y áreas (muros/losas/cáscaras); estático, modal, espectro NCh433, pandeo, P-Δ y no lineal (pushover, time-history); diseño en acero, hormigón, madera y aluminio con derivas y flechas de norma; importar/exportar IFC (BIM) y asistente con IA. Docente · UACh.">
-  <meta property="og:title" content="PÓRTICO · Análisis y Diseño Estructural 3D">
-  <meta property="og:description" content="Barras y áreas 3D; estático/modal/espectro/no lineal; diseño acero·hormigón·madera·aluminio; derivas NCh433; IFC/BIM; asistente IA. En el navegador, sin instalar.">
+  <title>PORTICO · 3D Structural Analysis &amp; Design</title>
+  <meta name="description" content="PORTICO — open source (AGPL) 3D structural analysis and design (FEM) in the browser: bars and areas, modal and spectrum, nonlinear and pushover, multi-code design of steel, concrete, timber and aluminum. No install required.">
+  <meta property="og:title" content="PORTICO · 3D Structural Analysis &amp; Design">
+  <meta property="og:description" content="Open source 3D structural analysis and design (FEM) that runs entirely in the browser.">
   <meta property="og:type" content="website">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 21 V8 Q4 5 7 5 H17 Q20 5 20 8 V21' fill='none' stroke='%2338bdf8' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
   <!-- PWA -->
@@ -15,10 +15,10 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="PÓRTICO">
+  <meta name="apple-mobile-web-app-title" content="PORTICO">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <!-- Captura temprana del evento de instalación PWA (puede dispararse antes
-       de que el resto de scripts se ejecute). -->
+  <!-- Early capture of the PWA install event (it may fire before the rest of
+       the scripts run). -->
   <script>
     // Tema: claro por defecto; aplica el guardado antes de pintar (sin flash).
     try { document.documentElement.dataset.theme = localStorage.getItem('portico_theme') || 'light'; } catch (e) {}
@@ -33,13 +33,13 @@
       window.dispatchEvent(new Event('pwa-installed'));
     });
   </script>
-  <link rel="stylesheet" href="style.css?v=215">
-  <link rel="stylesheet" href="ui-v2.css?v=215">
+  <link rel="stylesheet" href="vendor/portico-core/style.css?v=2">
+  <link rel="stylesheet" href="vendor/portico-core/ui-v2.css?v=2">
   <script type="importmap">
   {
     "imports": {
-      "three": "./lib/three/three.module.js",
-      "three/addons/": "./lib/three/addons/"
+      "three": "./vendor/portico-core/lib/three/three.module.js",
+      "three/addons/": "./vendor/portico-core/lib/three/addons/"
     }
   }
   </script>
@@ -50,13 +50,12 @@
   <!-- �?�? MENUBAR �?�? -->
   <header id="menubar">
     <div class="brand">
-      <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true">
+      <svg class="brand-mark" data-brand-logo viewBox="0 0 24 24" aria-hidden="true">
         <path d="M4 21 V8 Q4 5 7 5 H17 Q20 5 20 8 V21" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
         <circle cx="4" cy="21" r="2" fill="var(--teal)"/>
         <circle cx="20" cy="21" r="2" fill="var(--teal)"/>
       </svg>
-      PÓRTICO
-      <img class="brand-uach" src="icons/UACh-escudo.svg" alt="Universidad Austral de Chile" title="Universidad Austral de Chile">
+      <span data-brand="appName">PORTICO</span> <span class="brand-sub" data-brand="tagline">Análisis y diseño estructural 3D</span>
     </div>
 
     <nav id="menu-nav">
@@ -187,7 +186,7 @@
       <div class="menu-root">
         <span class="menu-label">Asistente</span>
         <ul class="menu-drop">
-          <li data-action="asistente">Generar modelo desde ficha…</li>
+          <li data-action="assistant">Generar modelo desde ficha…</li>
         </ul>
       </div>
 
@@ -198,7 +197,7 @@
           <li data-action="help-signos">Convenciones de Signos y Ejes</li>
           <li data-action="help-ejemplos">Ejemplos Guiados</li>
           <li class="sep"></li>
-          <li data-action="help-acerca">Acerca de PÓRTICO</li>
+          <li data-action="help-acerca">Acerca de PORTICO</li>
         </ul>
       </div>
 
@@ -211,9 +210,16 @@
         <select id="project-select"></select>
         <button id="btn-project" type="button"></button>
       </div>
-      <span id="academic-badge" title="Versión académica · Universidad Austral de Chile" style="background:#0d9488;color:#fff;border-radius:6px;font-size:10px;font-weight:700;padding:3px 7px;margin-right:8px;letter-spacing:.5px">ACADEMIC</span>
+      <!-- Insignias de extensión (capas superiores: Pro / white-label). Las pinta
+           App._initExtensions() desde lo registrado en js/ext/extensions.js. -->
+      <span id="ext-badges"></span>
       <button id="btn-config" type="button" title="Configuración (memoria, visualización, modificadores de sección)"
         style="background:var(--bg4);border:1px solid var(--border2);color:var(--text);border-radius:6px;cursor:pointer;font-size:14px;line-height:1;padding:4px 8px;margin-right:6px">⚙</button>
+      <select id="lang-select" data-i18n-skip title="Idioma / Language"
+        style="background:var(--bg4);border:1px solid var(--border2);color:var(--text);border-radius:6px;cursor:pointer;font-size:12px;line-height:1;padding:4px 6px;margin-right:8px">
+        <option value="es">ES</option>
+        <option value="en">EN</option>
+      </select>
       <button id="btn-theme" type="button" title="Cambiar tema claro/oscuro"
         style="background:var(--bg4);border:1px solid var(--border2);color:var(--text);border-radius:6px;cursor:pointer;font-size:14px;line-height:1;padding:4px 8px;margin-right:10px">🌙</button>
       <label class="unit-label" for="unit-select">Unidades</label>
@@ -356,6 +362,10 @@
 
     <!-- VIEWPORT AREA -->
     <div id="viewport-wrap">
+      <!-- Barras superiores del viewport apiladas en COLUMNA: cada barra reflowa con
+           flex-wrap y la columna crece hacia abajo → nunca se montan al angostar la
+           ventana o mover el panel derecho. -->
+      <div id="vp-top-bars">
       <div id="vp-overlays">
         <div class="vp-ctrl">
           <label>Z piso</label>
@@ -372,13 +382,7 @@
             Imán
           </label>
         </div>
-        <div class="vp-ctrl">
-          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:11px;color:var(--text-muted)"
-            title="Fijar nodos: impide mover un nodo al arrastrarlo con el mouse (evita moverlo sin querer). Desmárcalo para poder arrastrar los nodos seleccionados.">
-            <input type="checkbox" id="drag-lock" style="accent-color:var(--accent);cursor:pointer">
-            🔒 Fijar
-          </label>
-        </div>
+        <!-- Arrastre de nodos: plano de movimiento + seguro «Fijar» (van juntos) -->
         <div class="vp-ctrl">
           <label title="Plano de arrastre de nodos: en qué plano se mueve el nodo al arrastrarlo (XY = horizontal, XZ = vertical frontal, YZ = vertical lateral).">Plano</label>
           <select id="drag-plane" title="Plano de arrastre de nodos" style="max-width:64px">
@@ -386,6 +390,11 @@
             <option value="xz">XZ</option>
             <option value="yz">YZ</option>
           </select>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:11px;color:var(--text-muted);border-left:1px solid var(--border);padding-left:7px;margin-left:3px"
+            title="Fijar nodos: impide mover un nodo al arrastrarlo con el mouse (evita moverlo sin querer). Desmárcalo para poder arrastrar los nodos seleccionados.">
+            <input type="checkbox" id="drag-lock" style="accent-color:var(--accent);cursor:pointer">
+            🔒 Fijar
+          </label>
         </div>
         <div class="vp-ctrl">
           <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:11px;color:var(--text-muted)"
@@ -520,6 +529,7 @@
           <button id="modal-export-btn" class="modal-action-btn">↓ CSV</button>
         </div>
       </div>
+      </div><!-- /#vp-top-bars -->
 
       <div id="results-banner">MODO RESULTADOS — haga clic sobre nodos y elementos para ver valores</div>
       <div id="viewport-container"></div>
@@ -528,21 +538,24 @@
     <!-- PANEL RESIZE HANDLE -->
     <div id="panel-resize-handle" title="Arrastrar para redimensionar"></div>
 
+    <!-- SCRIM para cerrar el panel en móvil -->
+    <div id="panel-scrim"></div>
+
     <!-- RIGHT PANEL -->
     <aside id="panel">
       <!-- Vertical super-tabs -->
       <div id="panel-vtabs">
-        <button class="vtab active" data-vtab="modelo">Modelo</button>
-        <button class="vtab" data-vtab="asistente">Asistente</button>
-        <button class="vtab" data-vtab="resultados">Resultados</button>
-        <button class="vtab" data-vtab="diseno">Diseño</button>
-        <button class="vtab" data-vtab="temporales" title="Autoguardados temporales: copias automáticas de las sesiones recientes (reanudar / eliminar)">Temporales</button>
+        <button class="vtab active" data-vtab="model">Modelo</button>
+        <button class="vtab" data-vtab="assistant">Asistente</button>
+        <button class="vtab" data-vtab="results">Resultados</button>
+        <button class="vtab" data-vtab="design">Diseño</button>
+        <button class="vtab" data-vtab="temp" title="Autoguardados temporales: copias automáticas de las sesiones recientes (reanudar / eliminar)">Temporales</button>
       </div>
 
       <div id="panel-content">
 
         <!-- �?�? MODELO �?�? -->
-        <div id="vpanel-modelo" class="vpanel-content active">
+        <div id="vpanel-model" class="vpanel-content active">
           <div id="panel-tabs">
             <button class="ptab active" data-tab="sel">Sel.</button>
             <button class="ptab" data-tab="nodos">Nodos</button>
@@ -602,7 +615,7 @@
         </div>
 
         <!-- �?�? RESULTADOS �?�? -->
-        <div id="vpanel-resultados" class="vpanel-content">
+        <div id="vpanel-results" class="vpanel-content">
           <div id="res-tabs">
             <button class="rtab active" data-rtab="modal">Modal</button>
             <button class="rtab" data-rtab="estatico">Estático</button>
@@ -655,16 +668,16 @@
         </div>
 
         <!-- DISEÑO -->
-        <div id="vpanel-diseno" class="vpanel-content">
+        <div id="vpanel-design" class="vpanel-content">
           <div style="padding:8px">
             <p class="panel-hint">Verificación de <b>flexión, corte y axial</b> (razón D/C = demanda/capacidad) por elemento. Acero LRFD (AISC 360), hormigón ACI 318, madera NCh1198 con valores normativos estándar.</p>
             <button class="btn-add" id="btn-verificar-diseno" style="background:rgba(14,127,192,0.12);color:var(--accent);border-color:var(--accent)">⚙ Verificar diseño</button>
-            <div id="diseno-body" style="margin-top:8px"></div>
+            <div id="design-body" style="margin-top:8px"></div>
           </div>
         </div>
 
         <!-- ── ASISTENTE ── -->
-        <div id="vpanel-asistente" class="vpanel-content">
+        <div id="vpanel-assistant" class="vpanel-content">
           <div style="padding:8px">
             <p class="panel-hint">Describe la estructura en palabras y el asistente arma la ficha y genera el modelo (geometría, secciones, cargas NCh y combinaciones).</p>
             <div class="prop-field">
@@ -688,7 +701,7 @@
         </div>
 
         <!-- ══ TEMPORALES (autoguardados, #82) ══ -->
-        <div id="vpanel-temporales" class="vpanel-content">
+        <div id="vpanel-temp" class="vpanel-content">
           <div style="padding:8px">
             <div class="prop-title" style="margin-bottom:4px">Autoguardados temporales</div>
             <p class="panel-hint" style="margin-top:0">Copias automáticas de las sesiones recientes (cada ~5 min). Reanude una (descarta el trabajo actual no guardado), elimine las que no use, o límpielas todas.</p>
@@ -713,6 +726,9 @@
     <span id="sb-units">kN — m</span>
   </footer>
 
+<!-- Botón flotante para abrir/cerrar el panel en móvil -->
+<button id="panel-toggle-btn" title="Panel" aria-label="Abrir panel">⊞</button>
+
 </div><!-- /#app -->
 
 <!-- Modal dialog (genérico) -->
@@ -731,7 +747,7 @@
 <div id="help-overlay" class="hidden">
   <div id="help-box">
     <header id="help-header">
-      <span class="help-brand">PÓRTICO — Ayuda</span>
+      <span class="help-brand">PORTICO — Ayuda</span>
       <nav id="help-nav">
         <button class="help-tab active" data-hsec="guia">Guía Rápida</button>
         <button class="help-tab" data-hsec="signos">Convenciones</button>
@@ -866,18 +882,18 @@
           <p class="help-note">Cargando…</p>
         </div>
         <details class="help-prof">
-          <summary>📋 Instrucciones para el docente: cómo agregar ejemplos</summary>
+          <summary>📋 Cómo agregar ejemplos al proyecto</summary>
           <ol class="help-steps" style="margin-top:8px">
-            <li>Modele el ejemplo en PÓRTICO y guárdelo con Archivo → Guardar (ej.: <code>viga_simple.s3d</code>).</li>
+            <li>Modele el ejemplo en PORTICO y guárdelo con Archivo → Guardar (ej.: <code>simple_beam.s3d</code>).</li>
             <li>Copie el archivo a la carpeta <code>examples/</code> del proyecto.</li>
             <li>Cree o edite <code>examples/index.json</code> con una entrada por ejemplo:</li>
           </ol>
 <pre>[
   {
-    "archivo":     "viga_simple.s3d",
-    "titulo":      "1. Viga simplemente apoyada",
-    "descripcion": "UDL de 10 kN/m sobre 6 m. Verificar M_centro = wL²/8 = 45 kN·m.",
-    "observar":    "Active el DCL del elemento y compare con el cálculo manual."
+    "file":        "simple_beam.s3d",
+    "title":       "1. Simply supported beam",
+    "description": "10 kN/m UDL over 6 m. Check M_mid = wL²/8 = 45 kN·m.",
+    "note":        "Toggle the element FBD and compare with the hand calc."
   }
 ]</pre>
           <p>La lista se actualiza al reabrir esta ayuda. Los ejemplos se abren con un clic
@@ -893,65 +909,49 @@
             <circle cx="4" cy="21" r="2" fill="var(--teal)"/><circle cx="20" cy="21" r="2" fill="var(--teal)"/>
           </svg>
           <div>
-            <h2 style="margin:0">PÓRTICO</h2>
-            <p style="margin:2px 0 0;color:var(--text-muted)">Laboratorio virtual de análisis y diseño estructural 3D
-              · <b id="help-version">versión 87</b> · junio 2026</p>
+            <h2 style="margin:0">PORTICO</h2>
+            <p style="margin:2px 0 0;color:var(--text-muted)">Análisis y diseño estructural 3D
+              · <b id="help-version">versión 87</b> · open source (AGPL-3.0)</p>
           </div>
         </div>
-        <p><b>Material docente</b> desarrollado por el <b>Dr. Juan Patricio Reyes C.</b> —
-           Instituto de Obras Civiles, Facultad de Ciencias de la Ingeniería,
-           <b>Universidad Austral de Chile</b>.</p>
-        <p>Dirigido a estudiantes de <b>Arquitectura</b>, <b>Construcción</b> e
-           <b>Ingeniería Civil en Obras Civiles</b>: una herramienta para <i>ver por dentro</i>
-           lo que el software comercial esconde — matrices, transformaciones, equilibrio,
-           formas modales — y conectarlo con el cálculo manual del curso.</p>
-        <div class="help-logos">
-          <img src="icons/UACh-color-negro.svg" alt="Universidad Austral de Chile">
-          <img src="icons/Facultad-color-negro.svg" alt="Facultad de Ciencias de la Ingeniería">
-          <img class="logo-chip" src="icons/IOC-color.svg" alt="Instituto de Obras Civiles">
-        </div>
+        <p><b>PORTICO</b> — plataforma open source de análisis <b>y diseño</b> estructural 3D (FEM)
+           que corre íntegramente en el navegador. Modelado de barras y áreas, análisis lineal y no
+           lineal, y verificación de diseño multinorma — sin instalar nada y sin enviar datos a
+           ningún servidor.</p>
         <h2>Capacidades</h2>
         <ul class="help-list">
-          <li><b>Modelado.</b> Barras 3D Timoshenko (12 GDL) con liberaciones/rótulas, fijación
-              parcial (resorte de extremo) y cachos rígidos; <b>elementos de área</b>: membrana
-              (CST/QUAD), placa (MITC4/DKT) y cáscara, con mallador (recombinación Blossom,
-              refinamiento adaptativo).</li>
-          <li><b>Apoyos y conexiones.</b> Diafragmas rígidos, masas nodales (traslacional y
-              rotacional), apoyos elásticos diagonales y acoplados 6×6, <b>resortes unilaterales
-              (uplift)</b> y de <b>suelo no lineal (p-y/t-z/q-z)</b>, links/coupling,
-              asentamientos prescritos y gradiente térmico.</li>
-          <li><b>Cargas.</b> Nodales, distribuidas uniformes y <b>trapezoidales</b>, temperatura,
-              peso propio, pretensado por tendón y <b>cargas móviles / líneas de influencia</b>;
-              casos y combinaciones (incl. LRFD/servicio de la NCh3171).</li>
-          <li><b>Análisis.</b> Estático, modal (Stodola y subespacio de Bathe, con K<sub>g</sub>),
-              <b>espectro de respuesta NCh433/DS61</b> (CQC/SRSS), pandeo lineal, P-Δ; <b>no
-              lineal</b>: cables/solo-tracción-compresión, rótulas plásticas (pushover por carga),
-              pushover por control de desplazamiento, form-finding, gran rotación corotacional,
-              time-history modal y no lineal; <b>etapas constructivas</b>.</li>
-          <li><b>Diseño (verificación) multinorma.</b> Acero (AISC 360 / Eurocódigo 3), aluminio
-              (Eurocódigo 9), hormigón armado y madera (NCh1198 / EN 338); predimensionado y
-              auto-selección de perfiles; razón D/C, <b>flechas de servicio</b> y
-              <b>derivas sísmicas de entrepiso (NCh433)</b>.</li>
-          <li><b>Interoperabilidad.</b> <b>Importar/Exportar IFC (BIM)</b> con vista comparada;
-              intercambio con SAP2000, ETABS, Abaqus/CalculiX, OpenSees, SOFISTIK y VECTOR;
-              CSV y proyectos <b>multi-modelo</b>.</li>
-          <li><b>Productividad y docencia.</b> <b>Asistente con IA</b> (descripción en palabras →
-              modelo), <b>memoria de cálculo en PDF y Word</b>, matrices Ke/T/K/M y globales, DCL
-              con verificación de equilibrio. Aplicación <b>instalable y offline</b> (PWA).</li>
+          <li><b>Modelado:</b> barras 3D tipo Timoshenko (12 GDL) y elementos de área (membrana/placa/cáscara); mallado libre y mapeado.</li>
+          <li><b>Apoyos y conexiones:</b> empotrado/rótula, apoyos elásticos (resortes), liberaciones, links, cachos rígidos, diafragmas rígidos y masas nodales.</li>
+          <li><b>Cargas:</b> nodales, distribuidas uniformes y trapeciales, térmicas, peso propio; casos y combinaciones.</li>
+          <li><b>Análisis:</b> estático, modal, espectro de respuesta (CQC/SRSS), P-Δ, pandeo lineal, no lineal (cables, gran rotación), pushover y time-history.</li>
+          <li><b>Diseño multinorma:</b> acero (AISC/EC3/NCh), hormigón (ACI/EC2), madera y aluminio (EC9), con auto-diseño y reporte; verificación de derivas.</li>
+          <li><b>Interoperabilidad:</b> formato <code>.s3d</code> (JSON), importación CSV, IFC/BIM y asistente IA para generar modelos desde texto.</li>
         </ul>
-        <h2>Alcances y limitaciones (¡léalas!)</h2>
+        <h2>Alcances y limitaciones</h2>
         <ul class="help-list">
-          <li>Herramienta de carácter <b>docente</b>: para proyectos reales use software profesional
-              validado y el criterio de un ingeniero calculista competente.</li>
-          <li>Las <b>verificaciones de diseño son orientativas</b> (resistencia, flechas, derivas):
-              no reemplazan el detallamiento normativo completo ni el diseño de conexiones.</li>
-          <li>Los elementos de área son <b>lineal-elásticos</b>; la importación IFC de muros/losas
-              se limita por ahora a contornos de 3–4 vértices.</li>
-          <li>La <b>dinámica no lineal de alta fidelidad</b> del modelo completo (rótulas por barra
-              + cáscaras NL) está en integración.</li>
+          <li>Los resultados de <b>diseño</b> son orientativos: requieren la revisión y el criterio de un ingeniero calculista.</li>
+          <li>Los elementos de área se resuelven en régimen <b>lineal-elástico</b>.</li>
+          <li>La dinámica no lineal de alta fidelidad depende del esquema de integración y del modelo constitutivo elegido.</li>
+          <li>Verifique siempre contra una solución analítica o software de referencia antes de usarlo en proyectos reales.</li>
         </ul>
         <p class="help-note">Tecnologías: JavaScript (ES Modules) · Three.js · numeric.js — corre
           íntegramente en su navegador, sin enviar datos a ningún servidor.</p>
+
+        <h2>Código fuente y licencia</h2>
+        <p>PÓRTICO-UACh es la capa académica de la Universidad Austral de Chile (Instituto de Obras Civiles), construida sobre el motor open source portico-core. Ambos se distribuyen bajo licencia GNU AGPL-3.0: usted puede usarlo, estudiarlo, modificarlo y redistribuirlo, y tiene derecho a obtener el código fuente correspondiente, incluso al usar la aplicación a través de la red (AGPL §13).</p>
+        <ul class="help-list">
+          <li><b>Motor (portico-core):</b>
+            <a href="https://github.com/jpreyes/portico-core" target="_blank" rel="noopener noreferrer">github.com/jpreyes/portico-core</a></li>
+          <li><b>Capa académica (este sitio):</b>
+            <a href="https://github.com/jpreyes/portico-uach" target="_blank" rel="noopener noreferrer">github.com/jpreyes/portico-uach</a></li>
+          <li><b>Licencia:</b>
+            <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener noreferrer">GNU Affero General Public License v3.0</a> ·
+            <a href="https://github.com/jpreyes/portico-uach/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">LICENSE</a></li>
+          <li><b>Bibliotecas de terceros:</b>
+            <a href="https://github.com/mrdoob/three.js" target="_blank" rel="noopener noreferrer">Three.js</a> ·
+            <a href="https://github.com/sloisel/numeric" target="_blank" rel="noopener noreferrer">numeric.js</a> (MIT).</li>
+        </ul>
+        <p class="help-note">© Instituto de Obras Civiles, Universidad Austral de Chile. PÓRTICO-UACh es 100% académico: todas las funciones están disponibles, sin licencias de pago. El asistente IA, cuando está habilitado, usa un servicio LLM externo; el resto corre íntegramente en su navegador.</p>
       </section>
 
     </div>
@@ -964,10 +964,9 @@
     style="position:fixed;top:14px;right:16px;z-index:9100;background:var(--bg4,#e2e8f1);border:1px solid var(--border2,#bcc8d8);color:var(--text,#1b2533);border-radius:8px;cursor:pointer;font-size:17px;line-height:1;padding:6px 10px">🌙</button>
   <div class="landing-card">
   <header class="landing-inst">
-    <img class="inst-logo" src="icons/UACh-color-negro.svg" alt="Universidad Austral de Chile">
     <div class="inst-names">
-      <strong>Universidad Austral de Chile</strong>
-      <span>Facultad de Ciencias de la Ingeniería · Instituto de Obras Civiles</span>
+      <strong>PORTICO</strong>
+      <span>Análisis y diseño estructural 3D · open source</span>
     </div>
   </header>
 
@@ -991,19 +990,13 @@
       <circle class="frame-node" cx="322" cy="60" r="6"/>
     </svg>
 
-    <h1 class="hero-title">PÓRTICO</h1>
-    <p class="hero-tag">Laboratorio virtual de análisis y diseño estructural 3D</p>
-    <p class="hero-desc">
-      Modele estructuras 3D de <b>barras y de áreas</b> (muros, losas, cáscaras); analice
-      en <b>estático, modal, espectro de respuesta (NCh433), pandeo, P-Δ y no lineal</b>
-      (cables, rótulas plásticas, pushover, time-history); <b>verifique el diseño</b> en
-      acero, hormigón, madera y aluminio, con <b>derivas y flechas de norma</b>; e
-      <b>importe/exporte IFC (BIM)</b> y otros motores. Todo en su navegador, sin instalar nada.
-    </p>
+    <h1 class="hero-title" data-brand="appName">PORTICO</h1>
+    <p class="hero-tag" data-brand="tagline">Análisis y diseño estructural 3D</p>
+    <p class="hero-desc">Modele barras y áreas en 3D, ejecute análisis estático, modal, de espectro, no lineal y pushover, y verifique el diseño de acero, hormigón, madera y aluminio — directamente en su navegador, sin instalar nada.</p>
     <div class="hero-chips">
-      <span>Barras + áreas 3D</span><span>Estático · Modal</span><span>Espectro NCh433</span>
-      <span>Pandeo · P-Δ</span><span>No lineal · Pushover</span><span>Diseño acero/hormigón/madera/aluminio</span>
-      <span>Derivas sísmicas</span><span>IFC / BIM</span><span>Asistente IA</span>
+      <span>Barras + áreas</span><span>Espectro NCh433</span><span>Pandeo · P-Δ</span>
+      <span>No lineal · pushover</span><span>Diseño acero/hormigón/madera</span>
+      <span>Derivas</span><span>IFC / BIM</span><span>Asistente IA</span>
     </div>
     <div class="hero-actions">
       <button id="btn-enter">Entrar al laboratorio (vacío) <span class="arrow">→</span></button>
@@ -1015,15 +1008,8 @@
     <div id="install-hint" class="install-hint" hidden></div>
   </main>
 
-  <footer class="landing-credit">
-    <div class="landing-logos">
-      <img src="icons/Facultad-color-negro.svg" alt="Facultad de Ciencias de la Ingeniería">
-      <img class="logo-chip" src="icons/IOC-color.svg" alt="Instituto de Obras Civiles">
-    </div>
-    Material docente desarrollado por <strong>Dr. Juan Patricio Reyes C.</strong> —
-    Instituto de Obras Civiles, Universidad Austral de Chile.<br>
-    Para estudiantes de <strong>Arquitectura</strong>, <strong>Construcción</strong> e
-    <strong>Ingeniería Civil en Obras Civiles</strong>.
+  <footer class="landing-credit" data-brand="description">
+    PORTICO — plataforma open source de análisis y diseño estructural 3D.
   </footer>
   </div><!-- /.landing-card -->
 
@@ -1077,14 +1063,14 @@
   // aún está inicializando (p.ej. mostrando "¿recuperar sesión?"), dejamos el flag
   // y la app abre el diálogo al terminar (evita chocar con el modal de arranque).
   function abrirAsistente() {
-    window.__porticoGoAsistente = true;
+    window.__porticoGoAssistant = true;
     enter();   // oculta la portada
     const go = () => {
       const app = window.app;
       if (app && app._ready) {
-        if (window.__porticoGoAsistente && typeof app.asistenteDialog === 'function') {
-          window.__porticoGoAsistente = false;
-          app.asistenteDialog();
+        if (window.__porticoGoAssistant && typeof app.assistantDialog === 'function') {
+          window.__porticoGoAssistant = false;
+          app.assistantDialog();
         }
       } else {
         setTimeout(go, 120);   // init en curso → la app lo abrirá al terminar
@@ -1101,14 +1087,14 @@
     }
   });
 
-  // ── Botón "Instalar app" (PWA) ──
+  // ── "Install app" button (PWA) ──
   const installBtn = document.getElementById('btn-install');
   const hint = document.getElementById('install-hint');
   const standalone = window.matchMedia('(display-mode: standalone)').matches ||
                      window.navigator.standalone === true;
 
   if (standalone) {
-    // Ya está instalada y abierta como app → no mostrar el botón
+    // Already installed and opened as an app → don't show the button
     installBtn.hidden = true;
   } else {
     installBtn.classList.toggle('ready', !!window.__pwaInstall);
@@ -1116,7 +1102,7 @@
     window.addEventListener('pwa-installed', () => {
       installBtn.hidden = true;
       hint.hidden = false;
-      hint.textContent = '✓ App instalada. Búscala en tu menú de aplicaciones.';
+      hint.textContent = '✓ App installed. Find it in your applications menu.';
     });
 
     installBtn.addEventListener('click', async () => {
@@ -1129,11 +1115,11 @@
           installBtn.hidden = true;
         }
       } else {
-        // Sin prompt nativo (ya instalada, Firefox o Safari): mostrar instrucciones
+        // No native prompt (already installed, Firefox or Safari): show instructions
         hint.hidden = false;
-        hint.innerHTML = 'Para instalar: usa el ícono <b>⊕ / instalar</b> de la barra de ' +
-          'direcciones, o el menú <b>⋮ → Instalar PÓRTICO</b>. En iPhone/iPad: ' +
-          '<b>Compartir → Agregar a inicio</b>.';
+        hint.innerHTML = 'To install: use the <b>⊕ / install</b> icon in the address ' +
+          'bar, or the <b>⋮ → Install PORTICO</b> menu. On iPhone/iPad: ' +
+          '<b>Share → Add to Home Screen</b>.';
       }
     });
   }
@@ -1144,13 +1130,16 @@
      a horizontal, pero la app sigue siendo usable; se puede cerrar. -->
 <div id="rotate-hint">
   <span class="rotate-ico">⟲📱</span>
-  <span class="rotate-txt"><b>Mejor en horizontal</b> — PÓRTICO se ve mejor apaisado, pero puedes seguir usándolo en vertical.</span>
+  <span class="rotate-txt"><b>Mejor en horizontal</b> — PORTICO se ve mejor apaisado, pero puedes seguir usándolo en vertical.</span>
   <button type="button" class="rotate-close" onclick="this.parentElement.style.display='none'" aria-label="Cerrar aviso">✕</button>
 </div>
 
 <!-- numeric.js para solver (Fase 2+) -->
-<script src="lib/numeric.js"></script>
-<script type="module" src="js/app.js?v=215"></script>
+<script src="vendor/portico-core/lib/numeric.js"></script>
+<!-- Overlay UACh: registra las contribuciones (badge académico, etc.) por los
+     seams del core ANTES de que app.js cree la App. -->
+<script type="module" src="overlay/bootstrap.js?v=2"></script>
+<script type="module" src="vendor/portico-core/js/app.js?v=2"></script>
 
 <!-- PWA: registrar el service worker (offline). Solo en contexto seguro
      (https o localhost); el navegador deja navigator.serviceWorker undefined

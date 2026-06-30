@@ -1,7 +1,7 @@
 {
-  "name": "PÓRTICO — Análisis Estructural 3D",
+  "name": "PÓRTICO — Análisis Estructural 3D (UACh)",
   "short_name": "PÓRTICO",
-  "description": "Laboratorio virtual de análisis estructural 3D. Material docente del Instituto de Obras Civiles, Universidad Austral de Chile.",
+  "description": "Plataforma académica de análisis estructural 3D (FEM) del Instituto de Obras Civiles, Universidad Austral de Chile.",
   "lang": "es-CL",
   "dir": "ltr",
   "start_url": "./index.html",

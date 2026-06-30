@@ -1,0 +1,3 @@
+[submodule "vendor/portico-core"]
+	path = vendor/portico-core
+	url = https://github.com/jpreyes/portico-core

@@ -1,0 +1,19 @@
+{
+  "appName": "PÓRTICO",
+  "tagline": "Análisis y diseño estructural 3D",
+  "description": "PÓRTICO — plataforma académica de análisis y diseño estructural 3D del Instituto de Obras Civiles, Universidad Austral de Chile.",
+  "logos": {
+    "primary": "icons/UACh-escudo.svg",
+    "institutional": [
+      "icons/UACh-color-blanco.svg",
+      "icons/Facultad-color-blanco.svg",
+      "icons/IOC-color.svg"
+    ]
+  },
+  "showInstitutional": true,
+  "links": {
+    "academic": "https://www.uach.cl/",
+    "professional": "",
+    "repo": "https://github.com/jpreyes/portico-uach"
+  }
+}

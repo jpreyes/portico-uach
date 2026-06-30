@@ -1,4 +1,8 @@
 # Archivos que NO se publican como assets del sitio (Cloudflare).
+# Overlay UACh: se sirven la raíz (index.html, branding.default.json, manifest,
+# sw.js, overlay/, icons/, assistant/ datos, examples/) y el CÓDIGO del submodule
+# (vendor/portico-core/js, /lib, /style.css, /ui-v2.css, /assistant/*.js que app.js
+# importa). Todo lo demás del submodule (su .git, docs, tools, tests…) se excluye.
 .git/
 .github/
 .claude/
@@ -7,17 +11,32 @@ node_modules/
 excel/
 worker/
 referencias/
-# La app carga examples/portico_simple.s3d al iniciar → NO excluir la carpeta;
-# solo el artefacto de prueba pesado.
-examples/portico_simple_v3.s3d
+tools/
+docs/
 *.md
 *.log
 .dev.vars
 .gitignore
+.gitmodules
 .assetsignore
 wrangler.jsonc
 package*.json
-# Herramientas del asistente que no deben servirse (sí se sirven reglas.json y los .csv)
-asistente/*.mjs
-asistente/ficha.schema.json
-asistente/n8n_flujo.json
+
+# ── Submodule portico-core: servir SOLO lo que la app usa en runtime ──
+#   SÍ se sirven: vendor/portico-core/{js,lib,style.css,ui-v2.css} y los .js de
+#   vendor/portico-core/assistant (generator.js/loads.js, importados por app.js).
+#   El resto no se necesita (los datos assistant/ y examples/ se sirven desde la raíz).
+vendor/portico-core/.git
+vendor/portico-core/.github/
+vendor/portico-core/.claude/
+vendor/portico-core/node_modules/
+vendor/portico-core/tools/
+vendor/portico-core/docs/
+vendor/portico-core/excel/
+vendor/portico-core/referencias/
+vendor/portico-core/presets/
+vendor/portico-core/examples/
+vendor/portico-core/test_*.mjs
+vendor/portico-core/serve.py
+vendor/portico-core/wrangler.jsonc
+vendor/portico-core/.assetsignore
