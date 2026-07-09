@@ -21,5 +21,13 @@
   //
   // PÓRTICO es 100% académico (Universidad Austral de Chile): no hay modo profesional
   // ni tokens PRO. Todas las funciones están siempre disponibles, sin licencia.
-  "kv_namespaces": [ { "binding": "ASIS_LOG", "id": "a74d6e66bda9466cbcd9a6c01ef5d052" } ]
+  "kv_namespaces": [ { "binding": "ASIS_LOG", "id": "a74d6e66bda9466cbcd9a6c01ef5d052" } ],
+
+  // ── Asistente conversacional (agente opennodex) ──
+  // El chat (overlay/asistente-chat.js) llama a /api/assistant/agent y /api/assistant/models,
+  // que el Worker reenvía al servicio `ui` de opennodex (el agente real: herramientas +
+  // motor nodex, LLM vía el gateway opencode Zen). OPENNODEX_URL es su URL base.
+  // Si el backend exige auth, cree el SECRETO OPENNODEX_TOKEN (NO lo ponga aquí):
+  //   npx wrangler secret put OPENNODEX_TOKEN
+  "vars": { "OPENNODEX_URL": "https://opennodex.conmuta.cl" }
 }

@@ -1,5 +1,13 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // Cloudflare Worker (capa UACh) — sirve la PWA (assets) y expone la API del asistente.
+//
+//   ── Asistente conversacional (opennodex, PRIMARIO) ──
+//   POST /api/assistant/agent      body { prompt, src?, model?, mode?, history?, attachments? }
+//                                  → PROXY al agente opennodex (${OPENNODEX_URL}/api/agent):
+//                                    { text, toolCalls, runId, updatedSrc, history, usage }
+//   GET  /api/assistant/models     → PROXY a ${OPENNODEX_URL}/api/models (ids del gateway)
+//
+//   ── Generador NL→spec (FALLBACK, serverless, sin backend) ──
 //   POST /api/assistant            body { message } → LLM → spec  (RAG few-shot)
 //                                  body { spec }    → devuelve el spec tal cual
 //   POST /api/assistant/modificar  body { message, model?, selection? } → { ops }
@@ -7,17 +15,33 @@
 //   GET  /api/assistant/log?token= → registro KV (revisión semanal)
 //   resto de rutas                 → assets estáticos (PÓRTICO: overlay + vendor/portico-core)
 //
-// El LLM SÓLO traduce lenguaje natural → spec estructurado (spec.schema.json del
-// core); el modelo lo construye el CLIENTE de forma determinista (generator.js del
+// El asistente PRIMARIO es el agente real de opennodex (herramientas + motor nodex),
+// que corre como servicio HTTP aparte; este Worker sólo hace de PROXY para que la
+// credencial/URL vivan del lado servidor y el navegador hable con su propio origen.
+// El puente .ndx↔portico ocurre en el CLIENTE (overlay/asistente-chat.js): exporta el
+// modelo a .ndx (src), y reimporta el updatedSrc que devuelve el agente.
+//
+// El FALLBACK NL→spec sólo traduce lenguaje natural → spec estructurado (spec.schema.json
+// del core); el modelo lo construye el CLIENTE de forma determinista (generator.js del
 // core). Por eso el worker NO importa el generador ni genera nada server-side.
 //
-// La API key vive como SECRETO del Worker (env.OPENAI_API_KEY / env.OPENROUTER_API_KEY),
-// nunca en el código ni en el navegador:  npx wrangler secret put OPENROUTER_API_KEY
+// SECRETOS del Worker (nunca en el código ni en el navegador):
+//   env.OPENNODEX_URL      base del backend del agente (default: opennodex.conmuta.cl)
+//   env.OPENNODEX_TOKEN    bearer opcional si el backend exige auth
+//   env.OPENAI_API_KEY / env.OPENROUTER_API_KEY   sólo para el fallback NL→spec
+//     npx wrangler secret put OPENNODEX_TOKEN
 //
 // Compatibilidad de rutas: el core pide al endpoint que el usuario configura
 // (p.ej. .../api/assistant) y le añade /modificar, /feedback. Aceptamos además el
 // segmento histórico /api/asistente (español) como alias.
 // ──────────────────────────────────────────────────────────────────────────────
+
+// Backend del agente opennodex (servicio `ui`). Configurable por secreto del Worker;
+// el default apunta a la instancia académica. Se normaliza sin la barra final.
+const OPENNODEX_DEFAULT = 'https://opennodex.conmuta.cl';
+const backendBase = (env) => (env.OPENNODEX_URL || OPENNODEX_DEFAULT).replace(/\/+$/, '');
+const backendHeaders = (env, extra = {}) =>
+  ({ ...extra, ...(env.OPENNODEX_TOKEN ? { Authorization: `Bearer ${env.OPENNODEX_TOKEN}` } : {}) });
 
 // Modelos gratis de OpenRouter en cascada: si uno está rate-limited (429) o caído
 // (5xx), se prueba el siguiente. env.OPENROUTER_MODEL fuerza uno solo.
@@ -251,7 +275,60 @@ export default {
       return json({ total: reg.length, conteo, registros: reg, corpus_sugerido, revisar });
     }
 
-    // ── Generar spec desde texto (o devolver el spec recibido) ──
+    // ── Asistente conversacional (PRIMARIO): proxy al agente opennodex ──
+    // GET /api/assistant/models → lista de modelos del gateway (para el selector).
+    if (path === '/api/assistant/models') {
+      try {
+        const r = await fetch(`${backendBase(env)}/api/models`, { headers: backendHeaders(env) });
+        const body = await r.text();
+        return new Response(body, { status: r.status, headers: { 'Content-Type': 'application/json; charset=utf-8' } });
+      } catch (e) {
+        return json({ error: `No se pudo contactar el backend del asistente (${backendBase(env)}): ${String(e.message || e)}` }, 502);
+      }
+    }
+
+    // POST /api/assistant/agent → un turno del agente. Reenvía el cuerpo tal cual al
+    // backend (que corre el loop real con herramientas + motor nodex) y devuelve su
+    // respuesta { text, toolCalls, runId, updatedSrc, history, usage }. El puente
+    // .ndx↔portico (export/import) lo hace el cliente; aquí sólo pasamos el src.
+    if (path === '/api/assistant/agent') {
+      if (request.method !== 'POST') return json({ error: 'Use POST' }, 405);
+      let body;
+      try { body = await request.json(); } catch { return json({ error: 'JSON inválido en la solicitud' }, 400); }
+      const prompt = body.prompt ?? body.message ?? body.mensaje ?? '';
+      if (!prompt) return json({ error: 'Envíe { prompt }' }, 400);
+      const payload = {
+        prompt,
+        src: typeof body.src === 'string' ? body.src : '',
+        mode: body.mode || 'plan',
+        history: Array.isArray(body.history) ? body.history : [],
+        attachments: Array.isArray(body.attachments) ? body.attachments : [],
+      };
+      if (body.model) payload.model = body.model;   // omitir → el backend usa su default
+      try {
+        const r = await fetch(`${backendBase(env)}/api/agent`, {
+          method: 'POST',
+          headers: backendHeaders(env, { 'Content-Type': 'application/json' }),
+          body: JSON.stringify(payload),
+        });
+        const data = await r.json().catch(() => null);
+        if (!r.ok || !data || data.error) {
+          const msg = (data && (data.error || data.message)) || `HTTP ${r.status}`;
+          try { await registrarConsulta(env, { mensaje: prompt, estado: 'error', error: String(msg) }); } catch { /* no bloquear */ }
+          return json({ error: String(msg) }, r.ok ? 502 : (r.status || 502));
+        }
+        let logId = null;
+        try { logId = await registrarConsulta(env, { mensaje: prompt, estado: 'ok', llm: { modelo: data.model } }); } catch { /* no bloquear */ }
+        const hdr = data.model ? { 'X-Asistente-Modelo': String(data.model) } : {};
+        return json({ ...data, _logId: logId }, 200, hdr);
+      } catch (e) {
+        const msg = String(e.message || e);
+        try { await registrarConsulta(env, { mensaje: prompt, estado: 'error', error: msg }); } catch { /* no bloquear */ }
+        return json({ error: `No se pudo contactar el backend del asistente (${backendBase(env)}): ${msg}` }, 502);
+      }
+    }
+
+    // ── Generar spec desde texto (o devolver el spec recibido) ── (FALLBACK)
     if (path === '/api/assistant') {
       if (request.method !== 'POST') return json({ error: 'Use POST' }, 405);
       let body;

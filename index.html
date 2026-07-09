@@ -678,6 +678,47 @@
 
         <!-- ── ASISTENTE ── -->
         <div id="vpanel-assistant" class="vpanel-content">
+          <style>
+            #asis-chat-log { display:flex; flex-direction:column; gap:8px; max-height:52vh; overflow-y:auto; padding:4px 2px; }
+            .asis-msg { border-radius:8px; padding:7px 10px; line-height:1.45; word-wrap:break-word; font-size:13px; }
+            .asis-user { background:rgba(14,127,192,0.14); align-self:flex-end; max-width:92%; }
+            .asis-agent { background:rgba(255,255,255,0.04); border:1px solid var(--border); }
+            .asis-tool { background:rgba(45,212,191,0.10); color:var(--text-muted); font-size:12px; }
+            .asis-msg.warn { background:rgba(210,153,34,0.12); color:var(--warn); }
+            .asis-tag { color:var(--text-muted); font-weight:600; }
+            .asis-footer { color:var(--text-muted); font-size:11px; margin-top:5px; }
+            .asis-err { color:#f85149; }
+            .asis-code { background:rgba(0,0,0,0.28); border:1px solid var(--border); border-radius:6px; padding:8px; overflow-x:auto; font-size:12px; margin:5px 0; }
+            .asis-msg.md h4, .asis-msg.md h6 { margin:6px 0 3px; }
+            .asis-msg.md ul { margin:4px 0; padding-left:18px; }
+            #asis-chat-stat { min-height:14px; color:var(--text-muted); font-size:11px; }
+            #asis-chat-stat.busy { color:var(--accent); }
+            .asis-ctrl { background:rgba(255,255,255,0.05); color:inherit; border:1px solid var(--border); border-radius:6px; padding:4px 6px; font:inherit; font-size:12px; }
+            .asis-basic > summary { cursor:pointer; padding:8px; color:var(--text-muted); font-size:12px; }
+          </style>
+          <!-- Chat del agente opennodex (asistente primario) -->
+          <div id="asis-chat" style="padding:8px;display:flex;flex-direction:column;gap:6px">
+            <p class="panel-hint" style="margin:0">Chat con el asistente de ingeniería (opennodex). Pídele modelar, analizar, dimensionar o revisar: trabaja sobre el modelo actual y puede construirlo o modificarlo.</p>
+            <div id="asis-chat-log"></div>
+            <div id="asis-chat-stat"></div>
+            <textarea id="asis-chat-input" rows="3" class="sp-textarea" placeholder="Ej.: modela un pórtico de acero de 2 niveles de 3 m y 2 vanos de 5 m, perfiles IPE, y verifica derivas…  (Enter envía · Shift+Enter salto de línea)"></textarea>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+              <select id="asis-chat-mode" class="asis-ctrl" title="preguntar: responde sin tocar el modelo · planificar: sólo propone · aplicar: construye/modifica el modelo">
+                <option value="ask">preguntar</option>
+                <option value="plan">planificar</option>
+                <option value="apply">aplicar</option>
+              </select>
+              <select id="asis-chat-model" class="asis-ctrl" title="modelo del gateway"><option value="">(modelo por defecto)</option></select>
+              <button class="btn-add" id="asis-chat-new" title="Empezar una conversación nueva" style="margin-left:auto">＋ nueva</button>
+              <button class="btn-add" id="asis-chat-send" style="background:rgba(14,127,192,0.16);color:var(--accent);border-color:var(--accent)">Enviar ▸</button>
+            </div>
+            <small style="color:var(--text-muted)">El agente corre como servicio externo; la credencial vive del lado servidor, nunca en el navegador. Puede reemplazar el modelo actual.</small>
+            <small style="color:var(--warn)">⚠ El puente sólo transfiere la <b>geometría</b> (nodos y barras). Los apoyos y las cargas del modelo del agente no se importan: reespecifícalos en PÓRTICO.</small>
+          </div>
+
+          <!-- Modo básico (generador NL→spec de un turno): fallback sin el agente -->
+          <details class="asis-basic">
+          <summary>Modo básico — generar/modificar desde ficha (sin IA conversacional)</summary>
           <div style="padding:8px">
             <p class="panel-hint">Describe la estructura en palabras y el asistente arma la ficha y genera el modelo (geometría, secciones, cargas NCh y combinaciones).</p>
             <div class="prop-field">
@@ -698,6 +739,7 @@
             </div>
             <button class="btn-add" id="btn-asis-side-mod" style="margin-top:8px;background:rgba(45,212,191,0.12);color:var(--teal);border-color:var(--teal)">✦ Aplicar cambio</button>
           </div>
+          </details>
         </div>
 
         <!-- ══ TEMPORALES (autoguardados, #82) ══ -->
@@ -1140,6 +1182,8 @@
      seams del core ANTES de que app.js cree la App. -->
 <script type="module" src="overlay/bootstrap.js?v=2"></script>
 <script type="module" src="vendor/portico-core/js/app.js?v=2"></script>
+<!-- Chat del asistente (agente opennodex): se carga tras app.js; espera a window.app. -->
+<script type="module" src="overlay/asistente-chat.js?v=2"></script>
 
 <!-- PWA: registrar el service worker (offline). Solo en contexto seguro
      (https o localhost); el navegador deja navigator.serviceWorker undefined
