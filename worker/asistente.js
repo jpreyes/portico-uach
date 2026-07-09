@@ -287,6 +287,43 @@ export default {
       }
     }
 
+    // POST /api/assistant/agent/stream → un turno del agente con progreso EN VIVO
+    // (NDJSON). Reenvía el cuerpo al backend y hace PASS-THROUGH del stream, para que
+    // el cliente muestre rondas/herramientas/texto mientras el agente trabaja (apply
+    // puede tardar >1 min). No registra en KV (el resultado va dentro del stream).
+    if (path === '/api/assistant/agent/stream') {
+      if (request.method !== 'POST') return json({ error: 'Use POST' }, 405);
+      let body;
+      try { body = await request.json(); } catch { return json({ error: 'JSON inválido en la solicitud' }, 400); }
+      const prompt = body.prompt ?? body.message ?? body.mensaje ?? '';
+      if (!prompt) return json({ error: 'Envíe { prompt }' }, 400);
+      const payload = {
+        prompt,
+        src: typeof body.src === 'string' ? body.src : '',
+        mode: body.mode || 'plan',
+        history: Array.isArray(body.history) ? body.history : [],
+        attachments: Array.isArray(body.attachments) ? body.attachments : [],
+      };
+      if (body.model) payload.model = body.model;
+      try {
+        const r = await fetch(`${backendBase(env)}/api/agent/stream`, {
+          method: 'POST',
+          headers: backendHeaders(env, { 'Content-Type': 'application/json' }),
+          body: JSON.stringify(payload),
+        });
+        if (!r.ok || !r.body) {
+          const t = await r.text().catch(() => '');
+          return json({ error: `HTTP ${r.status} ${t.slice(0, 160)}` }, r.status || 502);
+        }
+        return new Response(r.body, {
+          status: 200,
+          headers: { 'Content-Type': 'application/x-ndjson; charset=utf-8', 'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no' },
+        });
+      } catch (e) {
+        return json({ error: `No se pudo contactar el backend del asistente (${backendBase(env)}): ${String(e.message || e)}` }, 502);
+      }
+    }
+
     // POST /api/assistant/agent → un turno del agente. Reenvía el cuerpo tal cual al
     // backend (que corre el loop real con herramientas + motor nodex) y devuelve su
     // respuesta { text, toolCalls, runId, updatedSrc, history, usage }. El puente

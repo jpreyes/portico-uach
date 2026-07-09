@@ -40,6 +40,7 @@ function loadCfg() {
 let cfg = loadCfg();
 const trimBase = (u) => String(u || '').trim().replace(/\/+$/, '');
 const agentUrl  = () => (cfg.endpoint ? `${trimBase(cfg.endpoint)}/api/agent`  : '/api/assistant/agent');
+const agentStreamUrl = () => (cfg.endpoint ? `${trimBase(cfg.endpoint)}/api/agent/stream` : '/api/assistant/agent/stream');
 const modelsUrl = () => (cfg.endpoint ? `${trimBase(cfg.endpoint)}/api/models` : '/api/assistant/models');
 const authHeaders = () => (cfg.endpoint && cfg.token ? { Authorization: `Bearer ${cfg.token}` } : {});
 
@@ -168,6 +169,29 @@ function offerFallback(rawPrompt) {
   div.appendChild(btn);
 }
 
+// Aplica el resultado final del agente (texto + deck) a la UI/modelo.
+function renderResult(data, mode, prevSrc) {
+  conversation = Array.isArray(data.history) ? data.history : conversation;   // hilar memoria
+  const footer = `<div class="asis-footer">[${esc(data.mode || mode)}${data.runId ? ` · run ${esc(String(data.runId))}` : ''}${data.model ? ` · ${esc(String(data.model))}` : ''}]</div>`;
+  // Si veníamos transmitiendo texto en vivo, reusar esa burbuja; si no, crear una.
+  if (data._streamEl) { data._streamEl.classList.add('md'); data._streamEl.innerHTML = renderMarkdown(data.text || data._streamed || '(sin respuesta)') + footer; }
+  else bubble('agent', renderMarkdown(data.text || '(sin respuesta)') + footer, 'md');
+
+  if (typeof data.updatedSrc === 'string' && data.updatedSrc && data.updatedSrc !== prevSrc) {
+    try {
+      const { info, warnings } = applyDeck(data.updatedSrc);
+      bubble('tool', `✎ ${esc(info)}`);
+      if (warnings.length) bubble('tool', `⚠ ${esc(warnings.slice(0, 8).join(' · '))}`, 'warn');
+      noteGeometryOnly(data.updatedSrc);
+    } catch (e) {
+      bubble('tool', `⚠ el agente propuso un deck que PÓRTICO no pudo importar (${esc(String(e.message || e))}). El .ndx quedó en la respuesta.`, 'warn');
+    }
+  } else {
+    const proposed = extractDeck(data.text);
+    if (proposed) offerLoadDeck(proposed);
+  }
+}
+
 async function send() {
   if (sending) return;
   const ta = $('asis-chat-input');
@@ -181,41 +205,65 @@ async function send() {
 
   bubble('user', `<span class="asis-tag">[${esc(mode)}]</span> ${esc(raw)}`);
   const stat = $('asis-chat-stat');
+  const log = $('asis-chat-log');
   const t0 = Date.now();
-  if (stat) { stat.classList.add('busy'); stat.textContent = '⠋ trabajando…'; }
   const frames = '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'; let fi = 0;
-  const tick = stat ? setInterval(() => { stat.textContent = `${frames[fi = (fi + 1) % frames.length]} trabajando… · ${((Date.now() - t0) / 1000).toFixed(1)}s`; }, 100) : null;
+  let label = 'trabajando…', liveTok = 0;
+  if (stat) stat.classList.add('busy');
+  const tick = stat ? setInterval(() => {
+    stat.textContent = `${frames[fi = (fi + 1) % frames.length]} ${label} · ${((Date.now() - t0) / 1000).toFixed(1)}s${liveTok ? ` · ~${liveTok} tok` : ''}`;
+  }, 100) : null;
+
+  const body = { prompt: raw, src: currentDeck(), mode, history: conversation };
+  if (model) body.model = model;
 
   try {
-    const body = { prompt: raw, src: currentDeck(), mode, history: conversation };
-    if (model) body.model = model;
-    const r = await fetch(agentUrl(), { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify(body) });
-    const data = await r.json().catch(() => ({}));
-    if (tick) clearInterval(tick);
-    if (!r.ok || data.error) throw new Error(data.error || `HTTP ${r.status}`);
+    // Streaming (NDJSON): muestra rondas, herramientas y texto EN VIVO — clave en
+    // modo aplicar, que puede tardar >1 min. Si el stream falla, cae al no-stream.
+    let result = null, streamEl = null, streamed = '';
+    let res;
+    try {
+      res = await fetch(agentStreamUrl(), { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify(body) });
+    } catch (netErr) { res = null; }
 
-    conversation = Array.isArray(data.history) ? data.history : conversation;   // hilar memoria
-    const tok = data.usage ? (data.usage.input || 0) + (data.usage.output || 0) : null;
-    if (stat) { stat.classList.remove('busy'); stat.textContent = `listo · ${((Date.now() - t0) / 1000).toFixed(1)}s${tok != null ? ` · ${tok} tok` : ''}`; }
-
-    const footer = `<div class="asis-footer">[${esc(data.mode || mode)}${data.runId ? ` · run ${esc(String(data.runId))}` : ''}${data.model ? ` · ${esc(String(data.model))}` : ''}]</div>`;
-    bubble('agent', renderMarkdown(data.text || '(sin respuesta)') + footer, 'md');
-
-    // El agente escribió el deck → reflejarlo en el modelo visible de PÓRTICO.
-    if (typeof data.updatedSrc === 'string' && data.updatedSrc && data.updatedSrc !== body.src) {
-      try {
-        const { info, warnings } = applyDeck(data.updatedSrc);
-        bubble('tool', `✎ ${esc(info)}`);
-        if (warnings.length) bubble('tool', `⚠ ${esc(warnings.slice(0, 8).join(' · '))}`, 'warn');
-        noteGeometryOnly(data.updatedSrc);
-      } catch (e) {
-        bubble('tool', `⚠ el agente propuso un deck que PÓRTICO no pudo importar (${esc(String(e.message || e))}). El .ndx quedó en la respuesta.`, 'warn');
+    if (res && res.ok && res.body) {
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let buf = '';
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        let nl;
+        while ((nl = buf.indexOf('\n')) >= 0) {
+          const line = buf.slice(0, nl).trim(); buf = buf.slice(nl + 1);
+          if (!line) continue;
+          let obj; try { obj = JSON.parse(line); } catch { continue; }
+          if (obj.ev) {
+            const e = obj.ev;
+            if (e.type === 'round') label = `trabajando… (ronda ${e.round}/${e.of})`;
+            else if (e.type === 'usage') liveTok = (e.usage.input || 0) + (e.usage.output || 0);
+            else if (e.type === 'text_delta') { if (!streamEl) streamEl = bubble('agent', ''); streamed += e.text; streamEl.textContent = streamed; if (log) log.scrollTop = log.scrollHeight; }
+            else if (e.type === 'tool') { label = `→ ${e.name}…`; bubble('tool', `→ ${esc(e.name)}`); }
+            else if (e.type === 'tool_error') bubble('tool', `✗ ${esc(e.name)}: ${esc(String(e.text || ''))}`, 'warn');
+          } else if (obj.error) { throw new Error(obj.error); }
+          else if (obj.done) result = obj.done;
+        }
       }
+      if (!result) throw new Error('el stream terminó sin resultado');
     } else {
-      // No escribió el deck: ¿propuso uno en el texto? Ofrecer cargarlo.
-      const proposed = extractDeck(data.text);
-      if (proposed) offerLoadDeck(proposed);
+      // Respaldo sin streaming
+      const r = await fetch(agentUrl(), { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify(body) });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || data.error) throw new Error(data.error || `HTTP ${r.status}`);
+      result = data;
     }
+
+    if (tick) clearInterval(tick);
+    const tok = result.usage ? (result.usage.input || 0) + (result.usage.output || 0) : liveTok;
+    if (stat) { stat.classList.remove('busy'); stat.textContent = `listo · ${((Date.now() - t0) / 1000).toFixed(1)}s${tok ? ` · ${tok} tok` : ''}`; }
+    result._streamEl = streamEl; result._streamed = streamed;
+    renderResult(result, mode, body.src);
   } catch (e) {
     if (tick) clearInterval(tick);
     if (stat) { stat.classList.remove('busy'); stat.textContent = 'error'; }
