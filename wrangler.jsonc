@@ -5,6 +5,10 @@
   "compatibility_date": "2026-06-16",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
+  // Dominio propio: Cloudflare provisiona el DNS + certificado automáticamente
+  // (jpreyes.cl es una zona activa en la misma cuenta). El sitio queda en
+  // https://portico.jpreyes.cl además del *.workers.dev.
+  "routes": [ { "pattern": "portico.jpreyes.cl", "custom_domain": true } ],
   // Sirve la PWA como assets estáticos (overlay raíz + vendor/portico-core); el
   // Worker los lee vía env.ASSETS y maneja /api/assistant*. .assetsignore excluye
   // lo que no debe publicarse.
