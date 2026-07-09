@@ -679,6 +679,10 @@
         <!-- ── ASISTENTE ── -->
         <div id="vpanel-assistant" class="vpanel-content">
           <style>
+            /* UACh: el core deja .vpanel-content en overflow:hidden (sólo #panel-body
+               del panel Modelo scrollea). Habilitamos desplazamiento vertical en los
+               demás paneles del costado derecho para que nada quede fuera de vista. */
+            #vpanel-assistant, #vpanel-design, #vpanel-results, #vpanel-temp { overflow-y:auto; overflow-x:hidden; }
             #asis-chat-log { display:flex; flex-direction:column; gap:8px; max-height:52vh; overflow-y:auto; padding:4px 2px; }
             .asis-msg { border-radius:8px; padding:7px 10px; line-height:1.45; word-wrap:break-word; font-size:13px; }
             .asis-user { background:rgba(14,127,192,0.14); align-self:flex-end; max-width:92%; }
@@ -712,7 +716,22 @@
               <button class="btn-add" id="asis-chat-new" title="Empezar una conversación nueva" style="margin-left:auto">＋ nueva</button>
               <button class="btn-add" id="asis-chat-send" style="background:rgba(14,127,192,0.16);color:var(--accent);border-color:var(--accent)">Enviar ▸</button>
             </div>
-            <small style="color:var(--text-muted)">El agente corre como servicio externo; la credencial vive del lado servidor, nunca en el navegador. Puede reemplazar el modelo actual.</small>
+            <!-- Proveedor: usar tu propio backend/clave, o dejar el servicio gratis por defecto -->
+            <details class="asis-basic" id="asis-provider">
+              <summary>⚙ Proveedor — usar tu propio backend/clave (opcional)</summary>
+              <div style="display:flex;flex-direction:column;gap:6px;padding:6px 2px">
+                <label style="font-size:12px;color:var(--text-muted)">Endpoint del backend <span style="opacity:.7">(vacío = servicio gratis por defecto)</span>
+                  <input id="asis-cfg-endpoint" class="asis-ctrl" style="width:100%;margin-top:3px" placeholder="https://opennodex.conmuta.cl" autocomplete="off" spellcheck="false"></label>
+                <label style="font-size:12px;color:var(--text-muted)">Token / API key <span style="opacity:.7">(opcional)</span>
+                  <input id="asis-cfg-token" type="password" class="asis-ctrl" style="width:100%;margin-top:3px" placeholder="Bearer del backend" autocomplete="off"></label>
+                <div style="display:flex;gap:6px">
+                  <button class="btn-add" id="asis-cfg-save" style="background:rgba(14,127,192,0.12);color:var(--accent);border-color:var(--accent)">Guardar</button>
+                  <button class="btn-add" id="asis-cfg-clear">Volver al gratis</button>
+                </div>
+                <small style="color:var(--text-muted)">El endpoint debe ser un backend <b>opennodex</b> (expone <code>/api/agent</code> y <code>/api/models</code>). El token se guarda <b>sólo en este navegador</b>. Vacío usa el servicio gratis por defecto (clave del lado servidor).</small>
+              </div>
+            </details>
+            <small style="color:var(--text-muted)">El agente corre como servicio externo; con el proveedor por defecto la credencial vive del lado servidor, nunca en el navegador. Puede reemplazar el modelo actual.</small>
             <small style="color:var(--warn)">⚠ El puente sólo transfiere la <b>geometría</b> (nodos y barras). Los apoyos y las cargas del modelo del agente no se importan: reespecifícalos en PÓRTICO.</small>
           </div>
 
