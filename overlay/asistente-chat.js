@@ -216,6 +216,9 @@ async function send() {
 
   const body = { prompt: raw, src: currentDeck(), mode, history: conversation };
   if (model) body.model = model;
+  // toolset: 'authoring' (recortado, ~mitad de tokens/ronda; issue #7) por defecto;
+  // 'full' añade SHM/twin/diagnóstico. El backend fuerza 'authoring' en el camino gratis.
+  body.toolset = $('asis-chat-full')?.checked ? 'full' : 'authoring';
 
   try {
     // Streaming (NDJSON): muestra rondas, herramientas y texto EN VIVO — clave en

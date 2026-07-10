@@ -43,6 +43,16 @@ const backendBase = (env) => (env.OPENNODEX_URL || OPENNODEX_DEFAULT).replace(/\
 const backendHeaders = (env, extra = {}) =>
   ({ ...extra, ...(env.OPENNODEX_TOKEN ? { Authorization: `Bearer ${env.OPENNODEX_TOKEN}` } : {}) });
 
+// Reenvía las opciones del agente que el backend acepta (issue #7 / BYO):
+//   toolset  'authoring' (set recortado, ~mitad de tokens/ronda) | 'full'
+//   maxRounds cap de rondas por turno
+//   provider { baseURL, apiKey } proveedor LLM propio (el backend valida SSRF)
+function forwardAgentOpts(body, payload) {
+  if (body.toolset === 'authoring' || body.toolset === 'full') payload.toolset = body.toolset;
+  if (Number.isFinite(body.maxRounds)) payload.maxRounds = body.maxRounds;
+  if (body.provider && typeof body.provider === 'object') payload.provider = body.provider;
+}
+
 // Modelos gratis de OpenRouter en cascada: si uno está rate-limited (429) o caído
 // (5xx), se prueba el siguiente. env.OPENROUTER_MODEL fuerza uno solo.
 const MODELS_FREE = [
@@ -305,6 +315,7 @@ export default {
         attachments: Array.isArray(body.attachments) ? body.attachments : [],
       };
       if (body.model) payload.model = body.model;
+      forwardAgentOpts(body, payload);
       try {
         const r = await fetch(`${backendBase(env)}/api/agent/stream`, {
           method: 'POST',
@@ -342,6 +353,7 @@ export default {
         attachments: Array.isArray(body.attachments) ? body.attachments : [],
       };
       if (body.model) payload.model = body.model;   // omitir → el backend usa su default
+      forwardAgentOpts(body, payload);
       try {
         const r = await fetch(`${backendBase(env)}/api/agent`, {
           method: 'POST',
