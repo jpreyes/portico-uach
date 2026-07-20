@@ -255,6 +255,14 @@ export default {
     const url = new URL(request.url);
     const path = normPath(url.pathname);   // acepta /api/asistente* como alias
 
+    // ── Manuales / tutoriales in-app (pestaña «Documentación») ──
+    // app.js del core los pide como /docs/<x> (relativo a la página); en el overlay
+    // viven en el submódulo, así que se sirven desde vendor/portico-core/docs/<x>.
+    if (request.method === 'GET' && path.startsWith('/docs/')) {
+      const target = new URL('/vendor/portico-core' + path, url.origin);
+      return env.ASSETS.fetch(new Request(target, request));
+    }
+
     // ── Lectura del registro de consultas (revisión semanal) ──
     // GET /api/assistant/log?token=TOKEN[&solo_novedosos=1][&estado=ok|error|incorrecto][&limite=50]
     if (path === '/api/assistant/log') {

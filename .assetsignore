@@ -31,7 +31,6 @@ vendor/portico-core/.github/
 vendor/portico-core/.claude/
 vendor/portico-core/node_modules/
 vendor/portico-core/tools/
-vendor/portico-core/docs/
 vendor/portico-core/excel/
 vendor/portico-core/referencias/
 vendor/portico-core/presets/
@@ -40,3 +39,8 @@ vendor/portico-core/test_*.mjs
 vendor/portico-core/serve.py
 vendor/portico-core/wrangler.jsonc
 vendor/portico-core/.assetsignore
+
+# Excepción: SÍ servir los manuales/tutoriales/validaciones del submódulo (pestaña
+# «Documentación»). El Worker reescribe /docs/<x> → vendor/portico-core/docs/<x>.
+# Re-incluye sus .md pese al `*.md` global de más arriba.
+!vendor/portico-core/docs/**
